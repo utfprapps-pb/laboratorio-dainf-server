@@ -1,7 +1,31 @@
 package br.com.utfpr.gerenciamento.server.controller;
 
-import org.springframework.web.bind.annotation.RestController;
+import br.com.utfpr.gerenciamento.server.model.Grupo;
+import br.com.utfpr.gerenciamento.server.service.GrupoService;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
 
 @RestController
+@RequestMapping("grupo")
 public class GrupoController {
+
+    @Autowired
+    private GrupoService grupoService;
+
+    @GetMapping
+    public List<Grupo> findAll() {
+        return grupoService.findAll();
+    }
+
+    @GetMapping("{id}")
+    public Grupo findOne(@PathVariable("id") Long id) {
+        return grupoService.findOne(id);
+    }
+
+    @PostMapping
+    public Grupo save(@RequestBody Grupo grupo) {
+        return grupoService.save(grupo);
+    }
 }
