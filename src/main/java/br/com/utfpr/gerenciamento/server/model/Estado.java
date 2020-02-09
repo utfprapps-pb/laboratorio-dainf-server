@@ -23,7 +23,10 @@ public class Estado {
     @Column(name = "nome")
     private String nome;
 
+    @Column(name = "uf")
+    private String uf;
+
     @ManyToOne
-    @JoinColumn(name = "idPais", referencedColumnName = "id")
+    @JoinColumn(name = "pais_id", referencedColumnName = "id")
     private Pais pais;
 }

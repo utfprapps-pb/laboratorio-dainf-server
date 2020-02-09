@@ -19,7 +19,7 @@ public class Grupo {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "id")
-    private Long idGrupo;
+    private Long id;
 
     @NotEmpty(message = "O campo 'Descrição' é de preenchimento obrigatório.")
     @Column(name = "descricao", length = 50, nullable = false)
