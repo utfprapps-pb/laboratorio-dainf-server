@@ -28,4 +28,9 @@ public class GrupoController {
     public Grupo save(@RequestBody Grupo grupo) {
         return grupoService.save(grupo);
     }
+
+    @DeleteMapping("{id}")
+    public void delete(@PathVariable("id") Long id) {
+        grupoService.delete(id);
+    }
 }
