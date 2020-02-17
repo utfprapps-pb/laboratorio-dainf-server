@@ -28,4 +28,9 @@ public class FornecedorController {
     public Fornecedor save(@RequestBody Fornecedor fornecedor) {
         return fornecedorService.save(fornecedor);
     }
+
+    @GetMapping("/complete")
+    public List<Fornecedor> complete(@RequestParam("query") String query) {
+        return fornecedorService.completeFornecedor(query);
+    }
 }

@@ -33,4 +33,9 @@ public class GrupoController {
     public void delete(@PathVariable("id") Long id) {
         grupoService.delete(id);
     }
+
+    @GetMapping("/complete")
+    public List<Grupo> complete(@RequestParam("query") String query) {
+        return grupoService.completeGrupo(query);
+    }
 }
