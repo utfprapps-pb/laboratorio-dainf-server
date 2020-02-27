@@ -33,4 +33,9 @@ public class FornecedorController {
     public List<Fornecedor> complete(@RequestParam("query") String query) {
         return fornecedorService.completeFornecedor(query);
     }
+
+    @DeleteMapping("{id}")
+    public void delete(@PathVariable("id") Long id) {
+        fornecedorService.delete(id);
+    }
 }

@@ -1,6 +1,8 @@
 package br.com.utfpr.gerenciamento.server.controller;
 
+import br.com.utfpr.gerenciamento.server.model.Permissao;
 import br.com.utfpr.gerenciamento.server.model.Usuario;
+import br.com.utfpr.gerenciamento.server.service.PermissaoService;
 import br.com.utfpr.gerenciamento.server.service.UsuarioService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
@@ -13,6 +15,9 @@ public class UsuarioController {
 
     @Autowired
     private UsuarioService usuarioService;
+
+    @Autowired
+    private PermissaoService permissaoService;
 
     @GetMapping
     public List<Usuario> findAll() {
@@ -28,6 +33,16 @@ public class UsuarioController {
     public Usuario save(@RequestBody Usuario usuario) {
         return usuarioService.save(usuario);
     }
+
+    @GetMapping("/permissao")
+    public List<Permissao> findAllPermissao() {
+        return permissaoService.findAll();
+    }
+
+//    @PostMapping
+//    public Usuario redefinirSenha() {
+//
+//    }
 
     @DeleteMapping("{id}")
     public void delete(@PathVariable("id") Long id) {

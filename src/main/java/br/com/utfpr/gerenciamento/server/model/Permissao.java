@@ -20,7 +20,7 @@ public class Permissao implements Serializable, GrantedAuthority {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "id")
-    private Integer id;
+    private Long id;
 
     @Column(name = "nome", length = 20, nullable = false)
     private String nome;
