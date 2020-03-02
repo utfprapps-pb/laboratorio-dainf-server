@@ -1,6 +1,9 @@
 package br.com.utfpr.gerenciamento.server.model;
 
+import br.com.utfpr.gerenciamento.server.config.CustomAuthorityDeserializer;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
@@ -41,10 +44,11 @@ public class Usuario implements Serializable, UserDetails {
     @Column(name = "email", length = 100, nullable = false)
     private String email;
 
-    @ManyToMany(cascade = CascadeType.ALL,
+    @ManyToMany(cascade = {CascadeType.MERGE, CascadeType.PERSIST},
             fetch = FetchType.EAGER)
     private Set<Permissao> permissoes;
 
+    @JsonDeserialize(using = CustomAuthorityDeserializer.class)
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
         List<GrantedAuthority> list = new ArrayList<>();
