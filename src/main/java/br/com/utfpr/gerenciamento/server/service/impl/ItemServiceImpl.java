@@ -7,6 +7,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
+
 @Service
 public class ItemServiceImpl extends CrudServiceImpl<Item, Long> implements ItemService {
 
@@ -16,5 +18,12 @@ public class ItemServiceImpl extends CrudServiceImpl<Item, Long> implements Item
     @Override
     protected JpaRepository<Item, Long> getRepository() {
         return itemRepository;
+    }
+
+    @Override
+    public List<Item> cidadeComplete(String query) {
+        if ("".equalsIgnoreCase(query)) {
+            return itemRepository.findAll();
+        } return itemRepository.findByNomeLikeIgnoreCase("%" + query + "%");
     }
 }

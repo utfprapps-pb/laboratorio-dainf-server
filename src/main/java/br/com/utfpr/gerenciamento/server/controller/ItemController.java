@@ -1,6 +1,8 @@
 package br.com.utfpr.gerenciamento.server.controller;
 
+import br.com.utfpr.gerenciamento.server.model.Cidade;
 import br.com.utfpr.gerenciamento.server.model.Item;
+import br.com.utfpr.gerenciamento.server.service.CrudService;
 import br.com.utfpr.gerenciamento.server.service.ItemService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
@@ -9,28 +11,18 @@ import java.util.List;
 
 @RestController
 @RequestMapping("item")
-public class ItemController {
+public class ItemController extends CrudController<Item, Long> {
 
     @Autowired
     private ItemService itemService;
 
-    @GetMapping
-    public List<Item> findAll() {
-        return itemService.findAll();
+    @Override
+    protected CrudService<Item, Long> getService() {
+        return itemService;
     }
 
-    @GetMapping("{id}")
-    public Item findOne(@PathVariable("id") Long id) {
-        return itemService.findOne(id);
-    }
-
-    @PostMapping
-    public Item save(@RequestBody Item item) {
-        return itemService.save(item);
-    }
-
-    @DeleteMapping("{id}")
-    public void delete(@PathVariable("id") Long id) {
-        itemService.delete(id);
+    @GetMapping("/complete")
+    public List<Item> complete(@RequestParam("query") String query) {
+        return itemService.cidadeComplete(query);
     }
 }

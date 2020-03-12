@@ -1,6 +1,7 @@
 package br.com.utfpr.gerenciamento.server.controller;
 
 import br.com.utfpr.gerenciamento.server.model.Fornecedor;
+import br.com.utfpr.gerenciamento.server.service.CrudService;
 import br.com.utfpr.gerenciamento.server.service.FornecedorService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
@@ -9,33 +10,18 @@ import java.util.List;
 
 @RestController
 @RequestMapping("fornecedor")
-public class FornecedorController {
+public class FornecedorController extends CrudController<Fornecedor, Long> {
 
     @Autowired
     private FornecedorService fornecedorService;
 
-    @GetMapping
-    public List<Fornecedor> findAll() {
-        return fornecedorService.findAll();
-    }
-
-    @GetMapping("{id}")
-    public Fornecedor findOne(@PathVariable("id") Long id) {
-        return fornecedorService.findOne(id);
-    }
-
-    @PostMapping
-    public Fornecedor save(@RequestBody Fornecedor fornecedor) {
-        return fornecedorService.save(fornecedor);
+    @Override
+    protected CrudService<Fornecedor, Long> getService() {
+        return fornecedorService;
     }
 
     @GetMapping("/complete")
     public List<Fornecedor> complete(@RequestParam("query") String query) {
         return fornecedorService.completeFornecedor(query);
-    }
-
-    @DeleteMapping("{id}")
-    public void delete(@PathVariable("id") Long id) {
-        fornecedorService.delete(id);
     }
 }
