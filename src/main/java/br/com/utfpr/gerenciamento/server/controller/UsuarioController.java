@@ -67,4 +67,14 @@ public class UsuarioController {
     public void delete(@PathVariable("id") Long id) {
         usuarioService.delete(id);
     }
+
+    @GetMapping("/complete")
+    public List<Usuario> complete(@RequestParam("query") String query) {
+        return usuarioService.usuarioComplete(query);
+    }
+
+    @GetMapping("/find-by-username")
+    public Usuario findByUsername(@RequestParam("username") String username) {
+        return usuarioService.findByUsername(username);
+    }
 }

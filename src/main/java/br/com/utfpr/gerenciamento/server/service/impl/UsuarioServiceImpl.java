@@ -10,6 +10,8 @@ import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
+
 @Service
 public class UsuarioServiceImpl extends CrudServiceImpl<Usuario, Long>
         implements UsuarioService, UserDetailsService {
@@ -29,5 +31,18 @@ public class UsuarioServiceImpl extends CrudServiceImpl<Usuario, Long>
             throw new UsernameNotFoundException("Usuário não encontrado");
         }
         return usuario;
+    }
+
+    @Override
+    public List<Usuario> usuarioComplete(String query) {
+        if ("".equalsIgnoreCase(query)) {
+            return usuarioRepository.findAll();
+        }
+        return usuarioRepository.findByNomeLikeIgnoreCase("%" + query + "%");
+    }
+
+    @Override
+    public Usuario findByUsername(String username) {
+        return usuarioRepository.findByUsername(username);
     }
 }

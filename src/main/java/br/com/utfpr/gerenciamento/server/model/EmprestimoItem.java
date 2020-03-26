@@ -25,7 +25,7 @@ public class EmprestimoItem {
     @Column(name = "qtde", nullable = false)
     private BigDecimal qtde;
 
-    @Column(name = "devolvido", nullable = false)
+    @Column(name = "devolvido")
     private BigDecimal devolvido;
 
     @ManyToOne(fetch = FetchType.LAZY)
