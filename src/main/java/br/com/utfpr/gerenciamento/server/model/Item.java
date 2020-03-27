@@ -39,7 +39,7 @@ public class Item {
     @Column(name = "valor", nullable = false)
     private BigDecimal valor;
 
-    @Min(value = 1, message = "O valor deve ser maior que R$ 0.00.")
+    @Min(value = 1, message = "O valor deve ser maior que 0.")
     @Column(name = "qtde_minima", nullable = false)
     private BigDecimal qtdeMinima;
 
