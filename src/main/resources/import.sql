@@ -7,6 +7,7 @@ INSERT INTO PERMISSAO (NOME) values('ROLE_ALUNO');
 -- INSERT USUARIO
 INSERT INTO USUARIO (NOME, USERNAME, PASSWORD, EMAIL) VALUES ('Gustavo', 'adm', '$2a$10$hsZieH24owDilakjMNiOZ.nWXyktnKXIEO8xha6ir71RuNnaJy37i', 'gzaffani@alunos.utfpr.edu.br');
 INSERT INTO USUARIO (NOME, USERNAME, PASSWORD, EMAIL) VALUES ('Zaffani', 'zaffani', '$2a$10$hsZieH24owDilakjMNiOZ.nWXyktnKXIEO8xha6ir71RuNnaJy37i', 'gzaffani@alunos.utfpr.edu.br');
+INSERT INTO USUARIO (NOME, USERNAME, PASSWORD, EMAIL) VALUES ('Vinicius', 'vinicius', '$2a$10$kcDpG6r2c0karXuOK114Hejk7iguH.tFswB1aenCydA6bmzixjCCC', 'gzaffani@alunos.utfpr.edu.br');
 
 -- INSERT PERMISSÕES DOS USUÁRIOS
 INSERT INTO USUARIO_PERMISSOES(USUARIO_ID, PERMISSOES_ID) VALUES (1, 1);
