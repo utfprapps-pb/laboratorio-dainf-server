@@ -9,6 +9,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.web.bind.annotation.*;
 
+import java.security.Principal;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -76,5 +77,10 @@ public class UsuarioController {
     @GetMapping("/find-by-username")
     public Usuario findByUsername(@RequestParam("username") String username) {
         return usuarioService.findByUsername(username);
+    }
+
+    @GetMapping("/user-info")
+    public Principal principal(Principal principal) {
+        return principal;
     }
 }
