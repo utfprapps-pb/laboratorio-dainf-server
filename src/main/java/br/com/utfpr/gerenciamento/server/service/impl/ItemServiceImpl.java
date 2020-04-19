@@ -26,4 +26,9 @@ public class ItemServiceImpl extends CrudServiceImpl<Item, Long> implements Item
             return itemRepository.findAll();
         } return itemRepository.findByNomeLikeIgnoreCase("%" + query + "%");
     }
+
+    @Override
+    public List<Item> findByGrupo(Long id) {
+        return itemRepository.findByGrupoId(id);
+    }
 }

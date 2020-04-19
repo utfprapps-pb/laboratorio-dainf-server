@@ -7,4 +7,6 @@ import java.util.List;
 public interface ItemService extends CrudService<Item, Long> {
 
     List<Item> cidadeComplete(String query);
+
+    List<Item> findByGrupo(Long id);
 }
