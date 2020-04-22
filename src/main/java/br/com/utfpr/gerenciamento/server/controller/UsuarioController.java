@@ -74,6 +74,11 @@ public class UsuarioController {
         return usuarioService.usuarioComplete(query);
     }
 
+    @GetMapping("/complete-custom")
+    public List<Usuario> completeByUserOrDocOrNome(@RequestParam("query") String query) {
+        return usuarioService.usuarioCompleteByUserAndDocAndNome(query);
+    }
+
     @GetMapping("/find-by-username")
     public Usuario findByUsername(@RequestParam("username") String username) {
         return usuarioService.findByUsername(username);

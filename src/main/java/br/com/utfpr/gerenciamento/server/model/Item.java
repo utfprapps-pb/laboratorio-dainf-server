@@ -6,8 +6,6 @@ import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 
 import javax.persistence.*;
-import javax.validation.constraints.DecimalMin;
-import javax.validation.constraints.Min;
 import javax.validation.constraints.NotEmpty;
 import java.math.BigDecimal;
 import java.math.BigInteger;
@@ -35,11 +33,9 @@ public class Item {
     @Column(name = "siorg")
     private BigInteger siorg;
 
-    @DecimalMin(value = "0.01", message = "O valor deve ser maior que R$ 0.00.")
-    @Column(name = "valor", nullable = false)
-    private BigDecimal valor;
+    @Column(name = "valor", columnDefinition = "NUMERIC (19,2) DEFAULT '0.00'")
+    private BigDecimal valor = new BigDecimal(0);
 
-    @Min(value = 1, message = "O valor deve ser maior que 0.")
     @Column(name = "qtde_minima", nullable = false)
     private BigDecimal qtdeMinima;
 
@@ -49,7 +45,6 @@ public class Item {
     @Column(name = "devolver")
     private Boolean devolver;
 
-    @DecimalMin(value = "0.01", message = "O valor deve ser maior que R$ 0.00.")
     @Column(name = "saldo")
     private BigDecimal saldo;
 

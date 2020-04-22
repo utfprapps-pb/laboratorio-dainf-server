@@ -2,6 +2,7 @@ package br.com.utfpr.gerenciamento.server.controller;
 
 import br.com.utfpr.gerenciamento.server.model.Saida;
 import br.com.utfpr.gerenciamento.server.service.CrudService;
+import br.com.utfpr.gerenciamento.server.service.ItemService;
 import br.com.utfpr.gerenciamento.server.service.SaidaService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -13,9 +14,40 @@ public class SaidaController extends CrudController<Saida, Long> {
 
     @Autowired
     private SaidaService saidaService;
+    @Autowired
+    private ItemService itemService;
 
     @Override
     protected CrudService<Saida, Long> getService() {
         return saidaService;
+    }
+
+    @Override
+    public void preSave(Saida object) {
+        object.getSaidaItem().stream().forEach(saidaItem -> {
+            if (saidaItem.getItem() != null) {
+                itemService.saldoItemIsValid(
+                        itemService.getSaldoItem(saidaItem.getItem().getId()), saidaItem.getQtde()
+                );
+            }
+        });
+    }
+
+    @Override
+    public void postSave(Saida object) {
+        object.getSaidaItem().stream().forEach(saidaItem -> {
+            itemService.diminuiSaldoItem(
+                    saidaItem.getItem().getId(), saidaItem.getQtde()
+            );
+        });
+    }
+
+    @Override
+    public void postDelete(Saida object) {
+        object.getSaidaItem().stream().forEach(saidaItem -> {
+            itemService.aumentaSaldoItem(
+                    saidaItem.getItem().getId(), saidaItem.getQtde()
+            );
+        });
     }
 }

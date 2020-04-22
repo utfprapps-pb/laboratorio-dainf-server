@@ -7,7 +7,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Service;
 
+import java.math.BigDecimal;
 import java.util.List;
+import java.util.Optional;
 
 @Service
 public class ItemServiceImpl extends CrudServiceImpl<Item, Long> implements ItemService {
@@ -30,5 +32,38 @@ public class ItemServiceImpl extends CrudServiceImpl<Item, Long> implements Item
     @Override
     public List<Item> findByGrupo(Long id) {
         return itemRepository.findByGrupoId(id);
+    }
+
+    @Override
+    public void diminuiSaldoItem(Long idItem, BigDecimal qtde) {
+        Item itemToSave = itemRepository.findById(idItem).get();
+        if (this.saldoItemIsValid(itemToSave.getSaldo(), qtde)) {
+            itemToSave.setSaldo(itemToSave.getSaldo().subtract(qtde));
+            itemRepository.save(itemToSave);
+        }
+    }
+
+    @Override
+    public void aumentaSaldoItem(Long idItem, BigDecimal qtde) {
+        Item itemToSave = itemRepository.findById(idItem).get();
+        itemToSave.setSaldo(itemToSave.getSaldo().add(qtde));
+        itemRepository.save(itemToSave);
+    }
+
+
+    @Override
+    public BigDecimal getSaldoItem(Long idItem) {
+        return itemRepository.findById(idItem).get().getSaldo();
+    }
+
+    @Override
+    public Boolean saldoItemIsValid(BigDecimal saldoItem, BigDecimal qtdeVerificar) {
+        if (saldoItem.compareTo(new BigDecimal(0)) <= 0) {
+            throw new RuntimeException("Saldo menor ou igual a 0");
+        } else if (saldoItem.compareTo(qtdeVerificar) < 0) {
+            throw new RuntimeException("Saldo menor que a quantidade informada");
+        } else {
+            return true;
+        }
     }
 }

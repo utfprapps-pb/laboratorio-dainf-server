@@ -21,19 +21,29 @@ public abstract class CrudController<T, ID extends Serializable> {
 
     @PostMapping
     public T save(@RequestBody T object) {
-        return getService().save(object);
+        preSave(object);
+        T toReturn = getService().save(object);
+        postSave(object);
+        return toReturn;
     }
+
+    public void preSave(T object) {}
+
+    public void postSave(T object) {}
 
     @GetMapping("{id}")
     public T findone(@PathVariable("id") ID id) {
         return getService().findOne(id);
     }
 
-
     @DeleteMapping("{id}")
     public void delete(@PathVariable("id") ID id) {
+        T object = getService().findOne(id);
         getService().delete(id);
+        postDelete(object);
     }
+
+    public void postDelete(T object) {}
 
     @GetMapping("exists/{id}")
     public boolean exists(@PathVariable ID id) {

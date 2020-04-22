@@ -45,4 +45,12 @@ public class UsuarioServiceImpl extends CrudServiceImpl<Usuario, Long>
     public Usuario findByUsername(String username) {
         return usuarioRepository.findByUsername(username);
     }
+
+    @Override
+    public List<Usuario> usuarioCompleteByUserAndDocAndNome(String query) {
+        if ("".equalsIgnoreCase(query)) {
+            return usuarioRepository.findAllCustom();
+        }
+        return usuarioRepository.findUsuarioCompleteCustom("%" + query.toUpperCase() + "%");
+    }
 }

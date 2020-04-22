@@ -35,8 +35,11 @@ public class Usuario implements Serializable, UserDetails {
     @Column(name = "nome", length = 255, nullable = false)
     private String nome;
 
-    @Column(name = "username", length = 100, nullable = false)
+    @Column(name = "username", length = 100, nullable = false, unique = true)
     private String username;
+
+    @Column(name = "documento", length = 25)
+    private String documento;
 
     @Column(name = "password", length = 1024, nullable = false)
     private String password;
