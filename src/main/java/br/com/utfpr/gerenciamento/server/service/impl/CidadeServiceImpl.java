@@ -1,6 +1,7 @@
 package br.com.utfpr.gerenciamento.server.service.impl;
 
 import br.com.utfpr.gerenciamento.server.model.Cidade;
+import br.com.utfpr.gerenciamento.server.model.Estado;
 import br.com.utfpr.gerenciamento.server.repository.CidadeRepository;
 import br.com.utfpr.gerenciamento.server.service.CidadeService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -26,6 +27,15 @@ public class CidadeServiceImpl extends CrudServiceImpl<Cidade, Long> implements 
             return this.cidadeRepository.findAll();
         } else {
             return this.cidadeRepository.findByNomeLikeIgnoreCase("%" + query + "%");
+        }
+    }
+
+    @Override
+    public List<Cidade> completeByEstado(String query, Estado estado) {
+        if ("".equalsIgnoreCase(query)) {
+            return this.cidadeRepository.findAllByEstado(estado);
+        } else {
+            return this.cidadeRepository.findByNomeLikeIgnoreCaseAndEstado("%" + query + "%", estado);
         }
     }
 }

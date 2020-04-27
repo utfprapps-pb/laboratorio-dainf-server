@@ -47,6 +47,9 @@ public class Emprestimo {
     @JoinColumn(name = "usuario_emprestimo_id", referencedColumnName = "id")
     private Usuario usuarioEmprestimo;
 
+    @Column(name = "observacao")
+    private String observacao;
+
     @NotNull(message = "Deve ser escolhido ao menos 1 produto.")
     @OneToMany(mappedBy = "emprestimo",
             cascade = {CascadeType.ALL}, orphanRemoval = true)

@@ -16,7 +16,7 @@ public abstract class CrudController<T, ID extends Serializable> {
 
     @GetMapping
     public List<T> findAll() {
-        return getService().findAll();
+        return getService().findAll(Sort.by("id"));
     }
 
     @PostMapping

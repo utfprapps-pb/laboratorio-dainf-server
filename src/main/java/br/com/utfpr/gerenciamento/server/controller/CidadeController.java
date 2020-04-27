@@ -1,6 +1,7 @@
 package br.com.utfpr.gerenciamento.server.controller;
 
 import br.com.utfpr.gerenciamento.server.model.Cidade;
+import br.com.utfpr.gerenciamento.server.model.Estado;
 import br.com.utfpr.gerenciamento.server.service.CidadeService;
 import br.com.utfpr.gerenciamento.server.service.CrudService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -23,5 +24,11 @@ public class CidadeController extends CrudController<Cidade, Long> {
     @GetMapping("/complete")
     public List<Cidade> complete(@RequestParam("query") String query) {
         return cidadeService.cidadeComplete(query);
+    }
+
+    @PostMapping("/complete-by-estado")
+    public List<Cidade> complete(@RequestParam("query") String query,
+                                 @RequestBody Estado estado) {
+        return cidadeService.completeByEstado(query, estado);
     }
 }
