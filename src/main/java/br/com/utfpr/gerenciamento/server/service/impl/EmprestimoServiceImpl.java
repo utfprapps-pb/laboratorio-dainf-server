@@ -1,6 +1,9 @@
 package br.com.utfpr.gerenciamento.server.service.impl;
 
+import br.com.utfpr.gerenciamento.server.ennumeation.StatusDevolucao;
 import br.com.utfpr.gerenciamento.server.model.Emprestimo;
+import br.com.utfpr.gerenciamento.server.model.EmprestimoDevolucaoItem;
+import br.com.utfpr.gerenciamento.server.model.EmprestimoItem;
 import br.com.utfpr.gerenciamento.server.model.dashboards.DashboardEmprestimoDia;
 import br.com.utfpr.gerenciamento.server.model.dashboards.DashboardItensEmprestados;
 import br.com.utfpr.gerenciamento.server.repository.EmprestimoRepository;
@@ -10,6 +13,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
+import java.util.ArrayList;
 import java.util.List;
 
 @Service
@@ -36,5 +40,20 @@ public class EmprestimoServiceImpl extends CrudServiceImpl<Emprestimo, Long> imp
     @Override
     public List<DashboardItensEmprestados> findItensMaisEmprestados(LocalDate dtIni, LocalDate dtFim) {
         return emprestimoRepository.findItensMaisEmprestados(dtIni, dtFim);
+    }
+
+    @Override
+    public List<EmprestimoDevolucaoItem> createEmprestimoItemDevolucao(List<EmprestimoItem> emprestimoItem) {
+        List<EmprestimoDevolucaoItem> toReturn = new ArrayList<>();
+        emprestimoItem.stream().filter(empItem -> empItem.getItem().getDevolver().equals(true))
+                .forEach(empItem1 -> {
+                    EmprestimoDevolucaoItem empDevItem = new EmprestimoDevolucaoItem();
+                    empDevItem.setItem(empItem1.getItem());
+                    empDevItem.setQtde(empItem1.getQtde());
+                    empDevItem.setStatusDevolucao(StatusDevolucao.P);
+                    empDevItem.setEmprestimo(empItem1.getEmprestimo());
+                    toReturn.add(empDevItem);
+                });
+        return toReturn;
     }
 }

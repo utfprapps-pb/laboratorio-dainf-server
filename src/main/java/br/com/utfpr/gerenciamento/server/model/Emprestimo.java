@@ -36,6 +36,11 @@ public class Emprestimo {
 
     @JsonSerialize(using = LocalDateSerializer.class)
     @JsonDeserialize(using = LocalDateDeserializer.class)
+    @Column(name = "prazo_devolucao")
+    private LocalDate prazoDevolucao;
+
+    @JsonSerialize(using = LocalDateSerializer.class)
+    @JsonDeserialize(using = LocalDateDeserializer.class)
     @Column(name = "data_devolucao")
     private LocalDate dataDevolucao;
 
@@ -55,4 +60,9 @@ public class Emprestimo {
             cascade = {CascadeType.ALL}, orphanRemoval = true)
     @JsonManagedReference
     private List<EmprestimoItem> emprestimoItem;
+
+    @OneToMany(mappedBy = "emprestimo",
+            cascade = {CascadeType.ALL}, orphanRemoval = true)
+    @JsonManagedReference
+    private List<EmprestimoDevolucaoItem> emprestimoDevolucaoItem;
 }

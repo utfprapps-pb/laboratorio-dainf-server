@@ -1,5 +1,6 @@
 package br.com.utfpr.gerenciamento.server.model;
 
+import br.com.utfpr.gerenciamento.server.ennumeation.StatusDevolucao;
 import com.fasterxml.jackson.annotation.JsonBackReference;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -14,8 +15,8 @@ import java.math.BigDecimal;
 @NoArgsConstructor
 @AllArgsConstructor
 @EqualsAndHashCode(of = {"id"})
-@Table(name = "emprestimo_item")
-public class EmprestimoItem {
+@Table(name = "emprestimo_devolucao_item")
+public class EmprestimoDevolucaoItem {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -24,6 +25,10 @@ public class EmprestimoItem {
 
     @Column(name = "qtde", nullable = false)
     private BigDecimal qtde;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "status", length = 1)
+    private StatusDevolucao statusDevolucao;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "item_id", referencedColumnName = "id", nullable = false)
