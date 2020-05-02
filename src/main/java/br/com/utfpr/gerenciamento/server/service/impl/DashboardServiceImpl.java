@@ -10,6 +10,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
+import java.time.chrono.ChronoLocalDate;
+import java.time.temporal.Temporal;
 import java.util.List;
 
 @Service
@@ -28,9 +30,16 @@ public class DashboardServiceImpl implements DashboardService {
 
         DashboardEmprestimoCountRange toReturn = new DashboardEmprestimoCountRange();
         toReturn.setTotal(emprestimoList.size());
-        toReturn.setEmAtraso(1);
-        toReturn.setEmAndamento(2);
-        toReturn.setFinalizado(3);
+        toReturn.setEmAtraso((int) emprestimoList
+                .stream()
+                .filter(emprestimo -> emprestimo.getPrazoDevolucao().isBefore(LocalDate.now()))
+                .count());
+        toReturn.setEmAndamento((int) emprestimoList.stream()
+                .filter(emprestimo -> emprestimo.getDataDevolucao() == null
+                        && (emprestimo.getPrazoDevolucao().isEqual(LocalDate.now())
+                        || emprestimo.getPrazoDevolucao().isAfter(LocalDate.now())))
+                .count());
+        toReturn.setFinalizado((int) emprestimoList.stream().filter(emprestimo -> emprestimo.getDataDevolucao() != null).count());
         return toReturn;
     }
 

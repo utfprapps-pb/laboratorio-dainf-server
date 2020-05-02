@@ -19,11 +19,10 @@ public interface UsuarioRepository extends JpaRepository<Usuario, Long> {
             " ON UE.USUARIO_ID = U.ID " +
             "LEFT JOIN PERMISSAO P " +
             " ON P.ID = UE.PERMISSOES_ID " +
-            "WHERE P.NOME = 'ROLE_ALUNO' " +
-            " OR P.NOME = 'ROLE_PROFESSOR' " +
-            " AND ((UPPER(U.DOCUMENTO) LIKE :QUERY) " +
+            "WHERE ((UPPER(U.DOCUMENTO) LIKE :QUERY) " +
             " OR (UPPER(U.NOME) LIKE :QUERY) " +
-            " OR (UPPER(U.USERNAME) LIKE :QUERY))", nativeQuery = true)
+            " OR (UPPER(U.USERNAME) LIKE :QUERY)) " , nativeQuery = true)
+            //" AND ((P.NOME = 'ROLE_ALUNO') OR (P.NOME = 'ROLE_PROFESSOR'))", nativeQuery = true)
     List<Usuario> findUsuarioCompleteCustom(@Param("QUERY") String query);
 
     @Query(value="SELECT U.* " +
