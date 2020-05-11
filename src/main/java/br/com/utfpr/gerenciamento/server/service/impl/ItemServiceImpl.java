@@ -23,10 +23,17 @@ public class ItemServiceImpl extends CrudServiceImpl<Item, Long> implements Item
     }
 
     @Override
-    public List<Item> cidadeComplete(String query) {
+    public List<Item> itemComplete(String query, Boolean hasEstoque) {
+        BigDecimal zero = new BigDecimal(0);
         if ("".equalsIgnoreCase(query)) {
-            return itemRepository.findAll();
-        } return itemRepository.findByNomeLikeIgnoreCase("%" + query + "%");
+            if (hasEstoque) return itemRepository.findAllBySaldoIsGreaterThan(zero);
+            else return itemRepository.findAll();
+        } else {
+            if (hasEstoque) {
+                return itemRepository
+                        .findByNomeLikeIgnoreCaseAndSaldoIsGreaterThan("%" + query + "%", zero);
+            } else return itemRepository.findByNomeLikeIgnoreCase("%" + query + "%");
+        }
     }
 
     @Override

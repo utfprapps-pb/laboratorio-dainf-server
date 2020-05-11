@@ -16,6 +16,7 @@ public class CompraController extends CrudController<Compra, Long> {
     private CompraService compraService;
     @Autowired
     private ItemService itemService;
+    private Compra compraOld;
 
     @Override
     protected CrudService<Compra, Long> getService() {
@@ -23,10 +24,24 @@ public class CompraController extends CrudController<Compra, Long> {
     }
 
     @Override
+    public void preSave(Compra object) {
+        if (object.getId() != null) {
+            compraOld = compraService.findOne(object.getId());
+        }
+    }
+
+    @Override
     public void postSave(Compra object) {
+        // aumenta o novo saldo do item
         object.getCompraItem().stream().forEach(compraItem ->
                 itemService.aumentaSaldoItem(compraItem.getItem().getId(), compraItem.getQtde())
         );
+        // remove o saldo antigo do item
+        if (compraOld != null) {
+            compraOld.getCompraItem().stream().forEach(compraItem ->
+                    itemService.diminuiSaldoItem(compraItem.getItem().getId(), compraItem.getQtde())
+            );
+        }
     }
 
     @Override

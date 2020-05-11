@@ -3,6 +3,7 @@ package br.com.utfpr.gerenciamento.server.security;
 import br.com.utfpr.gerenciamento.server.service.impl.UsuarioServiceImpl;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
 import org.springframework.security.config.annotation.method.configuration.EnableGlobalMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
@@ -23,7 +24,15 @@ public class WebSecurity extends WebSecurityConfigurerAdapter {
     @Override
     protected void configure(HttpSecurity http) throws Exception {
         http.csrf().disable().authorizeRequests()
-                .antMatchers("/dashboard/**").permitAll()
+//                .antMatchers("/cidade/**",
+//                        "/estado/**",
+//                        "/pais/**",
+//                        "/fornecedor/**",
+//                        "/compra/**",
+//                        "/entrada/**",
+//                        "/grupo/**",
+//                        "/saida/**").hasRole("LABORATORISTA")
+                .antMatchers("/usuario/user-info").permitAll()
                 .anyRequest().authenticated()
                 .and()
                 .addFilter(new JWTAuthenticationFilter(authenticationManager()))

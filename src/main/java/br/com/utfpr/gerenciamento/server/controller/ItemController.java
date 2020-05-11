@@ -4,10 +4,7 @@ import br.com.utfpr.gerenciamento.server.model.Item;
 import br.com.utfpr.gerenciamento.server.service.CrudService;
 import br.com.utfpr.gerenciamento.server.service.ItemService;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
@@ -24,7 +21,8 @@ public class ItemController extends CrudController<Item, Long> {
     }
 
     @GetMapping("/complete")
-    public List<Item> complete(@RequestParam("query") String query) {
-        return itemService.cidadeComplete(query);
+    public List<Item> complete(@RequestParam("query") String query,
+                               @RequestParam("hasEstoque") Boolean hasEstoque) {
+        return itemService.itemComplete(query, hasEstoque);
     }
 }

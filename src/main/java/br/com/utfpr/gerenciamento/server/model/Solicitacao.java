@@ -45,4 +45,7 @@ public class Solicitacao {
             cascade = {CascadeType.ALL}, orphanRemoval = true)
     @JsonManagedReference
     private List<SolicitacaoItem> solicitacaoItem;
+
+    @Column(name = "observacao")
+    private String observacao;
 }
