@@ -3,15 +3,13 @@ package br.com.utfpr.gerenciamento.server.controller;
 import br.com.utfpr.gerenciamento.server.ennumeation.StatusDevolucao;
 import br.com.utfpr.gerenciamento.server.model.Emprestimo;
 import br.com.utfpr.gerenciamento.server.model.EmprestimoDevolucaoItem;
+import br.com.utfpr.gerenciamento.server.model.filter.EmprestimoFilter;
 import br.com.utfpr.gerenciamento.server.service.CrudService;
 import br.com.utfpr.gerenciamento.server.service.EmprestimoService;
 import br.com.utfpr.gerenciamento.server.service.ItemService;
 import br.com.utfpr.gerenciamento.server.service.SaidaService;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDate;
 import java.util.List;
@@ -55,6 +53,14 @@ public class EmprestimoController extends CrudController<Emprestimo, Long> {
 
     @Override
     public void preSave(Emprestimo object) {
+        // se está editando, ele retorna o saldo de todos os itens, para depois baixar novamente com os valores atualizados
+        if (object.getId() != null) {
+            Emprestimo old = emprestimoService.findOne(object.getId());
+            old.getEmprestimoItem().stream().forEach(empItem -> {
+                        itemService.aumentaSaldoItem(empItem.getItem().getId(), empItem.getQtde());
+                    }
+            );
+        }
         object.getEmprestimoItem().stream().forEach(saidaItem -> {
             if (saidaItem.getItem() != null) {
                 itemService.saldoItemIsValid(
@@ -68,7 +74,7 @@ public class EmprestimoController extends CrudController<Emprestimo, Long> {
     @Override
     public void postSave(Emprestimo object) {
         object.getEmprestimoItem().stream().forEach(saidaItem ->
-                itemService.diminuiSaldoItem(saidaItem.getItem().getId(), saidaItem.getQtde())
+                itemService.diminuiSaldoItem(saidaItem.getItem().getId(), saidaItem.getQtde(), true)
         );
     }
 
@@ -77,5 +83,15 @@ public class EmprestimoController extends CrudController<Emprestimo, Long> {
         object.getEmprestimoItem().stream().forEach(saidaItem ->
                 itemService.aumentaSaldoItem(saidaItem.getItem().getId(), saidaItem.getQtde())
         );
+    }
+
+    @PostMapping("filter")
+    public List<Emprestimo> filter(@RequestBody EmprestimoFilter emprestimoFilter) {
+        return emprestimoService.filter(emprestimoFilter);
+    }
+
+    @GetMapping("find-all-by-username/{username}")
+    public List<Emprestimo> findAllByUsuarioEmprestimo(@PathVariable("username") String username) {
+        return emprestimoService.findAllUsuarioEmprestimo(username);
     }
 }

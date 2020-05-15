@@ -33,4 +33,25 @@ public interface UsuarioRepository extends JpaRepository<Usuario, Long> {
             " ON P.ID = UE.PERMISSOES_ID " +
             "WHERE P.ID IN (3, 4) ", nativeQuery = true)
     List<Usuario> findAllCustom();
+
+    @Query(value="SELECT DISTINCT U.* " +
+            "FROM USUARIO U  " +
+            "LEFT JOIN USUARIO_PERMISSOES UE " +
+            " ON UE.USUARIO_ID = U.ID " +
+            "LEFT JOIN PERMISSAO P " +
+            " ON P.ID = UE.PERMISSOES_ID " +
+            "WHERE P.ID IN (1, 2) ", nativeQuery = true)
+    List<Usuario> findAllCustomLab();
+
+    @Query(value="SELECT DISTINCT U.* " +
+            "FROM USUARIO U  " +
+            "LEFT JOIN USUARIO_PERMISSOES UE " +
+            " ON UE.USUARIO_ID = U.ID " +
+            "LEFT JOIN PERMISSAO P " +
+            " ON P.ID = UE.PERMISSOES_ID " +
+            "WHERE ((UPPER(U.DOCUMENTO) LIKE :QUERY) " +
+            " OR (UPPER(U.NOME) LIKE :QUERY) " +
+            " OR (UPPER(U.USERNAME) LIKE :QUERY)) " +
+            " AND P.ID IN (1, 2) " , nativeQuery = true)
+    List<Usuario> findUsuarioCompleteCustomLab(@Param("QUERY") String query);
 }

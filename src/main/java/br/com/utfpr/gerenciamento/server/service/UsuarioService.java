@@ -11,4 +11,6 @@ public interface UsuarioService extends CrudService<Usuario, Long> {
     Usuario findByUsername(String username);
 
     List<Usuario> usuarioCompleteByUserAndDocAndNome(String query);
+
+    List<Usuario> usuarioCompleteLab(String query);
 }

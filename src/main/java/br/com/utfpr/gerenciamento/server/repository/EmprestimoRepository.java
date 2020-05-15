@@ -1,6 +1,7 @@
 package br.com.utfpr.gerenciamento.server.repository;
 
 import br.com.utfpr.gerenciamento.server.model.Emprestimo;
+import br.com.utfpr.gerenciamento.server.model.Usuario;
 import br.com.utfpr.gerenciamento.server.model.dashboards.DashboardEmprestimoDia;
 import br.com.utfpr.gerenciamento.server.model.dashboards.DashboardItensEmprestados;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -31,4 +32,6 @@ public interface EmprestimoRepository extends JpaRepository<Emprestimo, Long> {
             "GROUP BY i.nome")
     List<DashboardItensEmprestados> findItensMaisEmprestados(@Param("dtIni") LocalDate dtIni,
                                                              @Param("dtFim") LocalDate dtFim);
+
+    List<Emprestimo> findAllByUsuarioEmprestimo(Usuario usuario);
 }

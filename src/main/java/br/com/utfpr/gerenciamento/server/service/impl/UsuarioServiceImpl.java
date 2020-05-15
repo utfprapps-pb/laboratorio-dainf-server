@@ -1,5 +1,6 @@
 package br.com.utfpr.gerenciamento.server.service.impl;
 
+import br.com.utfpr.gerenciamento.server.model.Permissao;
 import br.com.utfpr.gerenciamento.server.model.Usuario;
 import br.com.utfpr.gerenciamento.server.repository.UsuarioRepository;
 import br.com.utfpr.gerenciamento.server.service.UsuarioService;
@@ -10,6 +11,7 @@ import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 
+import java.util.ArrayList;
 import java.util.List;
 
 @Service
@@ -52,5 +54,13 @@ public class UsuarioServiceImpl extends CrudServiceImpl<Usuario, Long>
             return usuarioRepository.findAllCustom();
         }
         return usuarioRepository.findUsuarioCompleteCustom("%" + query.toUpperCase() + "%");
+    }
+
+    @Override
+    public List<Usuario> usuarioCompleteLab(String query) {
+        if ("".equalsIgnoreCase(query)) {
+            return usuarioRepository.findAllCustomLab();
+        }
+        return usuarioRepository.findUsuarioCompleteCustomLab("%" + query.toUpperCase() + "%");
     }
 }

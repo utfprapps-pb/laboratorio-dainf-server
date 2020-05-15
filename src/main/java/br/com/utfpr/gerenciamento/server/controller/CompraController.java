@@ -26,7 +26,11 @@ public class CompraController extends CrudController<Compra, Long> {
     @Override
     public void preSave(Compra object) {
         if (object.getId() != null) {
+            // remove o saldo antigo do item
             compraOld = compraService.findOne(object.getId());
+            compraOld.getCompraItem().stream().forEach(compraItem ->
+                    itemService.diminuiSaldoItem(compraItem.getItem().getId(), compraItem.getQtde(), false)
+            );
         }
     }
 
@@ -36,18 +40,12 @@ public class CompraController extends CrudController<Compra, Long> {
         object.getCompraItem().stream().forEach(compraItem ->
                 itemService.aumentaSaldoItem(compraItem.getItem().getId(), compraItem.getQtde())
         );
-        // remove o saldo antigo do item
-        if (compraOld != null) {
-            compraOld.getCompraItem().stream().forEach(compraItem ->
-                    itemService.diminuiSaldoItem(compraItem.getItem().getId(), compraItem.getQtde())
-            );
-        }
     }
 
     @Override
     public void postDelete(Compra object) {
         object.getCompraItem().stream().forEach(compraItem ->
-                itemService.diminuiSaldoItem(compraItem.getItem().getId(), compraItem.getQtde())
+                itemService.diminuiSaldoItem(compraItem.getItem().getId(), compraItem.getQtde(), true)
         );
     }
 }

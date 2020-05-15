@@ -5,6 +5,7 @@ import br.com.utfpr.gerenciamento.server.model.EmprestimoDevolucaoItem;
 import br.com.utfpr.gerenciamento.server.model.EmprestimoItem;
 import br.com.utfpr.gerenciamento.server.model.dashboards.DashboardEmprestimoDia;
 import br.com.utfpr.gerenciamento.server.model.dashboards.DashboardItensEmprestados;
+import br.com.utfpr.gerenciamento.server.model.filter.EmprestimoFilter;
 
 import java.time.LocalDate;
 import java.util.List;
@@ -18,4 +19,8 @@ public interface EmprestimoService extends CrudService<Emprestimo, Long> {
     List<DashboardItensEmprestados> findItensMaisEmprestados(LocalDate dtIni, LocalDate dtFim);
 
     List<EmprestimoDevolucaoItem> createEmprestimoItemDevolucao(List<EmprestimoItem> emprestimoItem);
+
+    List<Emprestimo> filter(EmprestimoFilter emprestimoFilter);
+
+    List<Emprestimo> findAllUsuarioEmprestimo(String username);
 }

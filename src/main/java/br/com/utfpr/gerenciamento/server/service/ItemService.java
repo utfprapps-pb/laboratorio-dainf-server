@@ -11,7 +11,7 @@ public interface ItemService extends CrudService<Item, Long> {
 
     List<Item> findByGrupo(Long id);
 
-    void diminuiSaldoItem(Long idItem, BigDecimal qtde);
+    void diminuiSaldoItem(Long idItem, BigDecimal qtde, boolean needValidationSaldo);
 
     void aumentaSaldoItem(Long idItem, BigDecimal qtde);
 

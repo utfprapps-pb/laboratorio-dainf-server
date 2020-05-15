@@ -42,9 +42,9 @@ public class ItemServiceImpl extends CrudServiceImpl<Item, Long> implements Item
     }
 
     @Override
-    public void diminuiSaldoItem(Long idItem, BigDecimal qtde) {
+    public void diminuiSaldoItem(Long idItem, BigDecimal qtde, boolean needValidationSaldo) {
         Item itemToSave = itemRepository.findById(idItem).get();
-        if (this.saldoItemIsValid(itemToSave.getSaldo(), qtde)) {
+        if (!needValidationSaldo || this.saldoItemIsValid(itemToSave.getSaldo(), qtde)) {
             itemToSave.setSaldo(itemToSave.getSaldo().subtract(qtde));
             itemRepository.save(itemToSave);
         }

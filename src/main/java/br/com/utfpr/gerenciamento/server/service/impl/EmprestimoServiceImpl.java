@@ -4,10 +4,14 @@ import br.com.utfpr.gerenciamento.server.ennumeation.StatusDevolucao;
 import br.com.utfpr.gerenciamento.server.model.Emprestimo;
 import br.com.utfpr.gerenciamento.server.model.EmprestimoDevolucaoItem;
 import br.com.utfpr.gerenciamento.server.model.EmprestimoItem;
+import br.com.utfpr.gerenciamento.server.model.Usuario;
 import br.com.utfpr.gerenciamento.server.model.dashboards.DashboardEmprestimoDia;
 import br.com.utfpr.gerenciamento.server.model.dashboards.DashboardItensEmprestados;
+import br.com.utfpr.gerenciamento.server.model.filter.EmprestimoFilter;
+import br.com.utfpr.gerenciamento.server.repository.EmprestimoFilterRepository;
 import br.com.utfpr.gerenciamento.server.repository.EmprestimoRepository;
 import br.com.utfpr.gerenciamento.server.service.EmprestimoService;
+import br.com.utfpr.gerenciamento.server.service.UsuarioService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Service;
@@ -21,6 +25,10 @@ public class EmprestimoServiceImpl extends CrudServiceImpl<Emprestimo, Long> imp
 
     @Autowired
     private EmprestimoRepository emprestimoRepository;
+    @Autowired
+    private EmprestimoFilterRepository emprestimoFilterRepository;
+    @Autowired
+    private UsuarioService usuarioService;
 
     @Override
     protected JpaRepository<Emprestimo, Long> getRepository() {
@@ -55,5 +63,16 @@ public class EmprestimoServiceImpl extends CrudServiceImpl<Emprestimo, Long> imp
                     toReturn.add(empDevItem);
                 });
         return toReturn;
+    }
+
+    @Override
+    public List<Emprestimo> filter(EmprestimoFilter emprestimoFilter) {
+        return emprestimoFilterRepository.filter(emprestimoFilter);
+    }
+
+    @Override
+    public List<Emprestimo> findAllUsuarioEmprestimo(String username) {
+        var usuario = usuarioService.findByUsername(username);
+        return emprestimoRepository.findAllByUsuarioEmprestimo(usuario);
     }
 }
