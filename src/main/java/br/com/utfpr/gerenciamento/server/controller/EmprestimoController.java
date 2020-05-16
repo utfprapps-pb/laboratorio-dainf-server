@@ -31,6 +31,11 @@ public class EmprestimoController extends CrudController<Emprestimo, Long> {
         return emprestimoService;
     }
 
+    @Override
+    public List<Emprestimo> findAll() {
+        return this.emprestimoService.findAllEmprestimosAbertos();
+    }
+
     @PostMapping("save-devolucao")
     public Emprestimo saveDevolucao(@RequestBody Emprestimo emprestimo) {
         emprestimo.setDataDevolucao(LocalDate.now());
@@ -83,6 +88,7 @@ public class EmprestimoController extends CrudController<Emprestimo, Long> {
         object.getEmprestimoItem().stream().forEach(saidaItem ->
                 itemService.aumentaSaldoItem(saidaItem.getItem().getId(), saidaItem.getQtde())
         );
+        saidaService.deleteSaidaByEmprestimo(object.getId());
     }
 
     @PostMapping("filter")

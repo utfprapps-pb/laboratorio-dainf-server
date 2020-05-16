@@ -23,4 +23,6 @@ public interface EmprestimoService extends CrudService<Emprestimo, Long> {
     List<Emprestimo> filter(EmprestimoFilter emprestimoFilter);
 
     List<Emprestimo> findAllUsuarioEmprestimo(String username);
+
+    List<Emprestimo> findAllEmprestimosAbertos();
 }

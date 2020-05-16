@@ -12,4 +12,6 @@ public interface SaidaService extends CrudService<Saida, Long> {
     List<DashboardItensSaidas> findItensMaisSaidas(LocalDate dtIni, LocalDate dtFim);
 
     void createSaidaByDevolucaoEmprestimo(List<EmprestimoDevolucaoItem> emprestimoDevolucaoItem);
+
+    void deleteSaidaByEmprestimo(Long idEmprestimo);
 }

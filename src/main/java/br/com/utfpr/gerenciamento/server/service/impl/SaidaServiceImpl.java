@@ -34,6 +34,7 @@ public class SaidaServiceImpl extends CrudServiceImpl<Saida, Long> implements Sa
     public void createSaidaByDevolucaoEmprestimo(List<EmprestimoDevolucaoItem> emprestimoDevolucaoItem) {
         Saida saida = new Saida();
         List<SaidaItem> saidaItemList = new ArrayList<>();
+        saida.setIdEmprestimo(emprestimoDevolucaoItem.get(0).getEmprestimo().getId());
         saida.setDataSaida(LocalDate.now());
         saida.setObservacao("Saída originada do empréstimo: "
                 + emprestimoDevolucaoItem.get(0).getEmprestimo().getId());
@@ -49,5 +50,11 @@ public class SaidaServiceImpl extends CrudServiceImpl<Saida, Long> implements Sa
 
         saida.setSaidaItem(saidaItemList);
         saidaRepository.save(saida);
+    }
+
+    @Override
+    public void deleteSaidaByEmprestimo(Long idEmprestimo) {
+        var saidaToDelete = saidaRepository.findByIdEmprestimo(idEmprestimo);
+        saidaRepository.delete(saidaToDelete);
     }
 }

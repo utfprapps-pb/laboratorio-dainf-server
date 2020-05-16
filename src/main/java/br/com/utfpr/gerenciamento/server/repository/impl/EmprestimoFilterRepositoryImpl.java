@@ -35,8 +35,13 @@ public class EmprestimoFilterRepositoryImpl implements EmprestimoFilterRepositor
         if (emprestimoFilter != null) {
 
             if (emprestimoFilter.getUsuarioEmprestimo() != null) {
-                where.append("UE.ID = :USUARIO_EMPRESTIMO_ID ");
-                params.addValue("USUARIO_EMPRESTIMO_ID", emprestimoFilter.getUsuarioEmprestimo().getId());
+                if (emprestimoFilter.getUsuarioEmprestimo().getId() != null) {
+                    where.append("UE.ID = :USUARIO_EMPRESTIMO_ID ");
+                    params.addValue("USUARIO_EMPRESTIMO_ID", emprestimoFilter.getUsuarioEmprestimo().getId());
+                } else {
+                    where.append("UE.USERNAME = :USERNAME");
+                    params.addValue("USERNAME", emprestimoFilter.getUsuarioEmprestimo().getUsername());
+                }
             }
 
             if (emprestimoFilter.getUsuarioResponsalvel() != null) {

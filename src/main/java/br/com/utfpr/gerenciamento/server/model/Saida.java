@@ -44,4 +44,8 @@ public class Saida {
     @ManyToOne
     @JoinColumn(name = "usuario_id", referencedColumnName = "id")
     private Usuario usuarioResponsavel;
+
+    // utilizado apenas para ter um vínculo quando uma devolução tiver uma saída
+    @Column(name = "emprestimo_id")
+    private Long idEmprestimo;
 }

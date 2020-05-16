@@ -21,4 +21,6 @@ public interface SaidaRepository extends JpaRepository<Saida, Long> {
             "GROUP BY i.nome")
     List<DashboardItensSaidas> findItensMaisSaidas(@Param("dtIni") LocalDate dtIni,
                                                    @Param("dtFim") LocalDate dtFim);
+
+    Saida findByIdEmprestimo(Long idEmprestimo);
 }
