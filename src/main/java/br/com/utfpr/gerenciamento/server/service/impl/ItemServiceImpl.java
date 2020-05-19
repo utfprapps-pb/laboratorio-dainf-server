@@ -4,6 +4,8 @@ import br.com.utfpr.gerenciamento.server.model.Item;
 import br.com.utfpr.gerenciamento.server.model.ItemImage;
 import br.com.utfpr.gerenciamento.server.repository.ItemRepository;
 import br.com.utfpr.gerenciamento.server.service.ItemService;
+import org.apache.commons.codec.binary.Base64;
+import org.apache.commons.io.IOUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Service;
@@ -11,10 +13,9 @@ import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.multipart.MultipartHttpServletRequest;
 
 import javax.servlet.http.HttpServletRequest;
-import java.io.BufferedOutputStream;
-import java.io.File;
-import java.io.FileOutputStream;
+import java.io.*;
 import java.math.BigDecimal;
+import java.nio.charset.StandardCharsets;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
@@ -126,5 +127,26 @@ public class ItemServiceImpl extends CrudServiceImpl<Item, Long> implements Item
         }
         item.getImageItem().addAll(list);
         itemRepository.save(item);
+    }
+
+    @Override
+    public List<String> getImagesItem(Long idItem) {
+        Item i = itemRepository.getOne(idItem);
+        List<String> toReturn = new ArrayList<>();
+        for (ItemImage image : i.getImageItem()) {
+            try {
+                toReturn.add(encodeFileToBase64Binary(image.getCaminhoImage() + image.getNameImage()));
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+        return toReturn;
+    }
+
+    private static String encodeFileToBase64Binary(String fileName) throws IOException {
+        File file = new File(fileName);
+        FileInputStream fi = new FileInputStream(file);
+        byte[] encoded = Base64.encodeBase64(IOUtils.toByteArray(fi));
+        return new String(encoded, StandardCharsets.US_ASCII);
     }
 }

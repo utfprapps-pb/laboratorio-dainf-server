@@ -24,4 +24,6 @@ public interface ItemService extends CrudService<Item, Long> {
     void saveImages(MultipartHttpServletRequest files,
                     HttpServletRequest request,
                     Long idItem);
+
+    List<String> getImagesItem(Long idItem);
 }

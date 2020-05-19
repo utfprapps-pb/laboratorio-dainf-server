@@ -34,4 +34,9 @@ public class ItemController extends CrudController<Item, Long> {
                        HttpServletRequest request) {
         itemService.saveImages(images, request, idItem);
     }
+
+    @GetMapping("imagens/{idItem}")
+    public List<String> findAllImagesByItem(@PathVariable("idItem") Long idItem) {
+        return itemService.getImagesItem(idItem);
+    }
 }
