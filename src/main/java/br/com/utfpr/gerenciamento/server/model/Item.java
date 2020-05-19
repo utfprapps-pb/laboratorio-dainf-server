@@ -1,5 +1,6 @@
 package br.com.utfpr.gerenciamento.server.model;
 
+import com.fasterxml.jackson.annotation.JsonManagedReference;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
@@ -9,6 +10,7 @@ import javax.persistence.*;
 import javax.validation.constraints.NotEmpty;
 import java.math.BigDecimal;
 import java.math.BigInteger;
+import java.util.List;
 
 @Data
 @Entity
@@ -51,4 +53,9 @@ public class Item {
     @ManyToOne
     @JoinColumn(name = "grupo_id", referencedColumnName = "id")
     private Grupo grupo;
+
+    @OneToMany(mappedBy = "item",
+            cascade = {CascadeType.ALL}, orphanRemoval = true)
+    @JsonManagedReference
+    private List<ItemImage> imageItem;
 }

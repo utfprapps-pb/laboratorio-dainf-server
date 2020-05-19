@@ -1,6 +1,5 @@
 package br.com.utfpr.gerenciamento.server.controller;
 
-
 import br.com.utfpr.gerenciamento.server.service.CrudService;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -27,9 +26,11 @@ public abstract class CrudController<T, ID extends Serializable> {
         return toReturn;
     }
 
-    public void preSave(T object) {}
+    public void preSave(T object) {
+    }
 
-    public void postSave(T object) {}
+    public void postSave(T object) {
+    }
 
     @GetMapping("{id}")
     public T findone(@PathVariable("id") ID id) {
@@ -43,7 +44,8 @@ public abstract class CrudController<T, ID extends Serializable> {
         postDelete(object);
     }
 
-    public void postDelete(T object) {}
+    public void postDelete(T object) {
+    }
 
     @GetMapping("exists/{id}")
     public boolean exists(@PathVariable ID id) {

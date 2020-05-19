@@ -1,15 +1,24 @@
 package br.com.utfpr.gerenciamento.server.service.impl;
 
 import br.com.utfpr.gerenciamento.server.model.Item;
+import br.com.utfpr.gerenciamento.server.model.ItemImage;
 import br.com.utfpr.gerenciamento.server.repository.ItemRepository;
 import br.com.utfpr.gerenciamento.server.service.ItemService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
+import org.springframework.web.multipart.MultipartHttpServletRequest;
 
+import javax.servlet.http.HttpServletRequest;
+import java.io.BufferedOutputStream;
+import java.io.File;
+import java.io.FileOutputStream;
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
 import java.util.List;
-import java.util.Optional;
 
 @Service
 public class ItemServiceImpl extends CrudServiceImpl<Item, Long> implements ItemService {
@@ -72,5 +81,50 @@ public class ItemServiceImpl extends CrudServiceImpl<Item, Long> implements Item
         } else {
             return true;
         }
+    }
+
+    @Override
+    public void saveImages(MultipartHttpServletRequest files,
+                           HttpServletRequest request,
+                           Long idItem) {
+        Item item = itemRepository.getOne(idItem);
+        var anexos = files.getFiles("anexos[]");
+
+        File dir = new File(request.getServletContext()
+                .getRealPath("/images/"));
+        if (!dir.exists()) {
+            dir.mkdirs();
+        }
+        String caminhoAnexo = request.getServletContext()
+                .getRealPath("/images/");
+
+        List<ItemImage> list = new ArrayList<>();
+        for (MultipartFile anexo : anexos) {
+            String extensao = anexo.getOriginalFilename().substring(
+                    anexo.getOriginalFilename().lastIndexOf(".")
+            );
+
+            String fileName = LocalDateTime.now().format(DateTimeFormatter.ofPattern("ddMMyyyy'_'HHmm'_'SSSSSS"));
+            String nomeArquivo = idItem + "_" + fileName + extensao;
+
+            try {
+                FileOutputStream fileOut = new FileOutputStream(
+                        new File(caminhoAnexo + nomeArquivo)
+                );
+                BufferedOutputStream stream = new BufferedOutputStream(fileOut);
+                stream.write(anexo.getBytes());
+                stream.close();
+
+                ItemImage image = new ItemImage();
+                image.setCaminhoImage(caminhoAnexo);
+                image.setNameImage(nomeArquivo);
+                image.setItem(item);
+                list.add(image);
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
+        item.getImageItem().addAll(list);
+        itemRepository.save(item);
     }
 }
