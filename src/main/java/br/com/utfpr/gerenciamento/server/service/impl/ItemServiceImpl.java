@@ -2,6 +2,7 @@ package br.com.utfpr.gerenciamento.server.service.impl;
 
 import br.com.utfpr.gerenciamento.server.model.Item;
 import br.com.utfpr.gerenciamento.server.model.ItemImage;
+import br.com.utfpr.gerenciamento.server.repository.ItemImageRepository;
 import br.com.utfpr.gerenciamento.server.repository.ItemRepository;
 import br.com.utfpr.gerenciamento.server.service.ItemService;
 import org.apache.commons.codec.binary.Base64;
@@ -20,12 +21,15 @@ import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
 @Service
 public class ItemServiceImpl extends CrudServiceImpl<Item, Long> implements ItemService {
 
     @Autowired
     private ItemRepository itemRepository;
+    @Autowired
+    private ItemImageRepository itemImageRepository;
 
     @Override
     protected JpaRepository<Item, Long> getRepository() {
@@ -130,17 +134,27 @@ public class ItemServiceImpl extends CrudServiceImpl<Item, Long> implements Item
     }
 
     @Override
-    public List<String> getImagesItem(Long idItem) {
+    public List<ItemImage> getImagesItem(Long idItem) {
         Item i = itemRepository.getOne(idItem);
-        List<String> toReturn = new ArrayList<>();
         for (ItemImage image : i.getImageItem()) {
             try {
-                toReturn.add(encodeFileToBase64Binary(image.getCaminhoImage() + image.getNameImage()));
+                image.setBase64(encodeFileToBase64Binary(image.getCaminhoImage() + image.getNameImage()));
             } catch (IOException e) {
                 e.printStackTrace();
             }
         }
-        return toReturn;
+        return i.getImageItem();
+    }
+
+    @Override
+    public void deleteImage(ItemImage image, Long idItem) {
+        File file = new File(image.getCaminhoImage(), image.getNameImage());
+        if (file.exists()) {
+            file.delete();
+        }
+        Item i = this.findOne(idItem);
+        i.getImageItem().removeIf(itemImage -> itemImage.getId().equals(image.getId()));
+        this.save(i);
     }
 
     private static String encodeFileToBase64Binary(String fileName) throws IOException {

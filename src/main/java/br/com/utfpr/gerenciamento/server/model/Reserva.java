@@ -36,6 +36,11 @@ public class Reserva {
     @Column(name = "data_reserva")
     private LocalDate dataReserva;
 
+    @JsonSerialize(using = LocalDateSerializer.class)
+    @JsonDeserialize(using = LocalDateDeserializer.class)
+    @Column(name = "data_retirada")
+    private LocalDate dataRetirada;
+
     @Column(name = "observacao")
     private String observacao;
 

@@ -1,17 +1,20 @@
 package br.com.utfpr.gerenciamento.server.service.impl;
 
 import br.com.utfpr.gerenciamento.server.ennumeation.StatusDevolucao;
+import br.com.utfpr.gerenciamento.server.model.Email;
 import br.com.utfpr.gerenciamento.server.model.Emprestimo;
 import br.com.utfpr.gerenciamento.server.model.EmprestimoDevolucaoItem;
 import br.com.utfpr.gerenciamento.server.model.EmprestimoItem;
-import br.com.utfpr.gerenciamento.server.model.Usuario;
 import br.com.utfpr.gerenciamento.server.model.dashboards.DashboardEmprestimoDia;
 import br.com.utfpr.gerenciamento.server.model.dashboards.DashboardItensEmprestados;
 import br.com.utfpr.gerenciamento.server.model.filter.EmprestimoFilter;
+import br.com.utfpr.gerenciamento.server.model.modelTemplate.EmprestimoTemplate;
 import br.com.utfpr.gerenciamento.server.repository.EmprestimoFilterRepository;
 import br.com.utfpr.gerenciamento.server.repository.EmprestimoRepository;
+import br.com.utfpr.gerenciamento.server.service.EmailService;
 import br.com.utfpr.gerenciamento.server.service.EmprestimoService;
 import br.com.utfpr.gerenciamento.server.service.UsuarioService;
+import br.com.utfpr.gerenciamento.server.util.DateUtil;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Service;
@@ -19,6 +22,8 @@ import org.springframework.stereotype.Service;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 @Service
 public class EmprestimoServiceImpl extends CrudServiceImpl<Emprestimo, Long> implements EmprestimoService {
@@ -29,6 +34,9 @@ public class EmprestimoServiceImpl extends CrudServiceImpl<Emprestimo, Long> imp
     private EmprestimoFilterRepository emprestimoFilterRepository;
     @Autowired
     private UsuarioService usuarioService;
+    @Autowired
+    private EmailService emailService;
+    private static final Logger LOGGER = Logger.getLogger(EmprestimoServiceImpl.class.getName());
 
     @Override
     protected JpaRepository<Emprestimo, Long> getRepository() {
@@ -79,5 +87,59 @@ public class EmprestimoServiceImpl extends CrudServiceImpl<Emprestimo, Long> imp
     @Override
     public List<Emprestimo> findAllEmprestimosAbertos() {
         return emprestimoRepository.findAllByDataDevolucaoIsNullOrderById();
+    }
+
+    @Override
+    public void sendEmailConfirmacaoEmprestimo(Emprestimo emprestimo) {
+        sendEmail(converterEmprestimoToObjectTemplate(emprestimo), emprestimo.getUsuarioEmprestimo().getEmail(),
+                "Confirmação de Empréstimo", "templateConfirmacaoEmprestimo");
+    }
+
+    @Override
+    public void sendEmailConfirmacaoDevolucao(Emprestimo emprestimo) {
+        sendEmail(converterEmprestimoToObjectTemplate(emprestimo), emprestimo.getUsuarioEmprestimo().getEmail(),
+                "Confirmação de Devolução do Empréstimo", "templateDevolucaoEmprestimo");
+    }
+
+    @Override
+    public void sendEmailPrazoDevolucaoProximo() {
+        List<Emprestimo> emprestimos = emprestimoRepository
+                .findByDataDevolucaoIsNullAndPrazoDevolucaoEquals(LocalDate.now().plusDays(3));
+        if (emprestimos.size() > 0) {
+            emprestimos.forEach(emprestimo -> {
+                sendEmail(converterEmprestimoToObjectTemplate(emprestimo), emprestimo.getUsuarioEmprestimo().getEmail(),
+                        "Empréstimo próximo da data de devolução", "templateProximoPrazoDevolucaoEmprestimo");
+                LOGGER.log(Level.INFO, "Email de aviso enviado com sucesso para: " + emprestimo.getUsuarioEmprestimo().getEmail());
+            });
+        } else {
+            LOGGER.log(Level.INFO, "Nenhum empréstimo vencerá daqui 3 dias.");
+        }
+    }
+
+    private EmprestimoTemplate converterEmprestimoToObjectTemplate(Emprestimo e) {
+        EmprestimoTemplate toReturn = new EmprestimoTemplate();
+        toReturn.setUsuarioEmprestimo(e.getUsuarioEmprestimo().getNome());
+        toReturn.setDtEmprestimo(DateUtil.parseLocalDateToString(e.getDataEmprestimo()));
+        toReturn.setDtPrazoDevolucao(DateUtil.parseLocalDateToString(e.getPrazoDevolucao()));
+        toReturn.setDtDevolucao(
+                e.getDataDevolucao() != null ? DateUtil.parseLocalDateToString(e.getDataDevolucao()) : null
+        );
+        toReturn.setUsuarioResponsavel(e.getUsuarioResponsavel().getNome());
+        toReturn.setEmprestimoItem(e.getEmprestimoItem());
+        toReturn.setEmprestimoDevolucaoItem(e.getEmprestimoDevolucaoItem());
+        return toReturn;
+    }
+
+    private void sendEmail(Object objectTemplate, String to, String titleEmail, String nameTemplate) {
+        Email email = new Email()
+                .setPara(to)
+                .setDe("zaffanigustavo@gmail.com")
+                .setTitulo(titleEmail)
+                .setConteudo(emailService.buildTemplateEmail(objectTemplate, nameTemplate));
+        try {
+            emailService.enviar(email);
+        } catch (Exception exception) {
+            exception.printStackTrace();
+        }
     }
 }

@@ -27,4 +27,9 @@ public class ReservaController extends CrudController<Reserva, Long> {
     public List<Reserva> findAllByUsername(@PathVariable("username") String username) {
         return reservaService.findAllByUsername(username);
     }
+
+    @GetMapping("find-all-by-item/{idItem}")
+    public List<Reserva> findAllByIdItem(@PathVariable("idItem") Long idItem) {
+        return reservaService.findAllByIdItem(idItem);
+    }
 }

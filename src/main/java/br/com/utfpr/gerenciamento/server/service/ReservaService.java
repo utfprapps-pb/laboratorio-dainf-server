@@ -7,4 +7,6 @@ import java.util.List;
 public interface ReservaService extends CrudService<Reserva, Long> {
 
     List<Reserva> findAllByUsername(String username);
+
+    List<Reserva> findAllByIdItem(Long idItem);
 }

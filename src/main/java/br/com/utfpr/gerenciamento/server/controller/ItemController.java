@@ -1,6 +1,7 @@
 package br.com.utfpr.gerenciamento.server.controller;
 
 import br.com.utfpr.gerenciamento.server.model.Item;
+import br.com.utfpr.gerenciamento.server.model.ItemImage;
 import br.com.utfpr.gerenciamento.server.service.CrudService;
 import br.com.utfpr.gerenciamento.server.service.ItemService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -36,7 +37,13 @@ public class ItemController extends CrudController<Item, Long> {
     }
 
     @GetMapping("imagens/{idItem}")
-    public List<String> findAllImagesByItem(@PathVariable("idItem") Long idItem) {
+    public List<ItemImage> findAllImagesByItem(@PathVariable("idItem") Long idItem) {
         return itemService.getImagesItem(idItem);
+    }
+
+    @PostMapping("delete-image/{idItem}")
+    public void deleteImageItem(@PathVariable("idItem") Long idItem,
+                                @RequestBody ItemImage itemImage) {
+        itemService.deleteImage(itemImage, idItem);
     }
 }

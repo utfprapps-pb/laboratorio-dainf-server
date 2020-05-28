@@ -28,4 +28,9 @@ public class ReservaServiceImpl extends CrudServiceImpl<Reserva, Long> implement
         var usuario = usuarioService.findByUsername(username);
         return reservaRepository.findAllByUsuario(usuario);
     }
+
+    @Override
+    public List<Reserva> findAllByIdItem(Long idItem) {
+        return reservaRepository.findReservaByIdItem(idItem);
+    }
 }

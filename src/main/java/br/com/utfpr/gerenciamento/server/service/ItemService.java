@@ -1,6 +1,7 @@
 package br.com.utfpr.gerenciamento.server.service;
 
 import br.com.utfpr.gerenciamento.server.model.Item;
+import br.com.utfpr.gerenciamento.server.model.ItemImage;
 import org.springframework.web.multipart.MultipartHttpServletRequest;
 
 import javax.servlet.http.HttpServletRequest;
@@ -25,5 +26,7 @@ public interface ItemService extends CrudService<Item, Long> {
                     HttpServletRequest request,
                     Long idItem);
 
-    List<String> getImagesItem(Long idItem);
+    List<ItemImage> getImagesItem(Long idItem);
+
+    void deleteImage(ItemImage image, Long idItem);
 }

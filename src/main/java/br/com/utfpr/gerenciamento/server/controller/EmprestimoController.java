@@ -53,6 +53,7 @@ public class EmprestimoController extends CrudController<Emprestimo, Long> {
         if (listItensToSaida.size() > 0) {
             saidaService.createSaidaByDevolucaoEmprestimo(listItensToSaida);
         }
+        emprestimoService.sendEmailConfirmacaoDevolucao(emprestimo);
         return toReturn;
     }
 
@@ -81,6 +82,7 @@ public class EmprestimoController extends CrudController<Emprestimo, Long> {
         object.getEmprestimoItem().stream().forEach(saidaItem ->
                 itemService.diminuiSaldoItem(saidaItem.getItem().getId(), saidaItem.getQtde(), true)
         );
+        emprestimoService.sendEmailConfirmacaoEmprestimo(object);
     }
 
     @Override

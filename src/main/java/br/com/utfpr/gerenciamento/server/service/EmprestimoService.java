@@ -25,4 +25,10 @@ public interface EmprestimoService extends CrudService<Emprestimo, Long> {
     List<Emprestimo> findAllUsuarioEmprestimo(String username);
 
     List<Emprestimo> findAllEmprestimosAbertos();
+
+    void sendEmailConfirmacaoEmprestimo(Emprestimo emprestimo);
+
+    void sendEmailConfirmacaoDevolucao(Emprestimo emprestimo);
+
+    void sendEmailPrazoDevolucaoProximo();
 }
