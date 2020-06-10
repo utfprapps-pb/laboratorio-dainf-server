@@ -1,11 +1,17 @@
 package br.com.utfpr.gerenciamento.server.service.impl;
 
 import br.com.utfpr.gerenciamento.server.model.Relatorio;
+import br.com.utfpr.gerenciamento.server.model.RelatorioParamsValue;
 import br.com.utfpr.gerenciamento.server.repository.RelatorioRepository;
 import br.com.utfpr.gerenciamento.server.service.RelatorioService;
+import br.com.utfpr.gerenciamento.server.util.FileUtil;
+import net.sf.jasperreports.engine.*;
+import net.sf.jasperreports.engine.design.JasperDesign;
+import net.sf.jasperreports.engine.xml.JRXmlLoader;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.context.ApplicationContext;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartHttpServletRequest;
 
@@ -14,14 +20,21 @@ import java.io.BufferedOutputStream;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.sql.Connection;
+import java.sql.SQLException;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 @Service
 public class RelatorioServiceImpl extends CrudServiceImpl<Relatorio, Long> implements RelatorioService {
 
     @Autowired
     private RelatorioRepository relatorioRepository;
+
     @Autowired
-    private ApplicationContext applicationContext;
+    @Qualifier("jdbcTemplate")
+    private JdbcTemplate jdbcTemplate;
 
     @Override
     protected JpaRepository<Relatorio, Long> getRepository() {
@@ -33,13 +46,12 @@ public class RelatorioServiceImpl extends CrudServiceImpl<Relatorio, Long> imple
                                HttpServletRequest request,
                                Long idRelatorio) throws IOException {
         Relatorio relatorio = relatorioRepository.getOne(idRelatorio);
-
-        File dir = applicationContext.getResource("classpath:/static/report").getFile();
-        var fileUpload = file.getFile("anexo");
-
+        this.deleteFileCurrent(relatorio);
+        File dir = new File(FileUtil.getAbsolutePathRaiz() + File.separator + "report");
         if (!dir.exists()) {
             dir.mkdirs();
         }
+        var fileUpload = file.getFile("anexo");
         String fileName = fileUpload.getOriginalFilename();
 
         try {
@@ -54,5 +66,44 @@ public class RelatorioServiceImpl extends CrudServiceImpl<Relatorio, Long> imple
         }
         relatorio.setNameReport(fileName);
         this.save(relatorio);
+    }
+
+    public void deleteFileCurrent(Relatorio relatorio) {
+        if (relatorio.getNameReport() != null) {
+            deleteFileReport(relatorio.getNameReport());
+        }
+    }
+
+    @Override
+    public JasperPrint generateReport(Long idRelatorio, List<RelatorioParamsValue> paramsRel) throws SQLException, JRException {
+        Relatorio relatorio = relatorioRepository.getOne(idRelatorio);
+        Connection conn = jdbcTemplate.getDataSource().getConnection();
+        String path = new File(FileUtil.getAbsolutePathRaiz() +
+                File.separator +
+                "report" +
+                File.separator +
+                relatorio.getNameReport()).getPath();
+        JasperDesign design = JRXmlLoader.load(path);
+        JasperReport jasperReport = JasperCompileManager.compileReport(design);
+        Map<String, Object> parameters = new HashMap<>();
+
+        if (paramsRel != null && paramsRel.size() > 0) {
+            paramsRel.forEach(param -> parameters.put(param.getNameParam(), param.getValueParam()));
+        }
+
+        JasperPrint print = JasperFillManager.fillReport(jasperReport,
+                parameters, conn);
+        conn.close();
+        return print;
+    }
+
+    @Override
+    public void deleteFileReport(String nameRelatorio) {
+        File dir = new File(FileUtil.getAbsolutePathRaiz() +
+                File.separator +
+                "report" +
+                File.separator +
+                nameRelatorio);
+        dir.delete();
     }
 }

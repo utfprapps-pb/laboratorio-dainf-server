@@ -1,0 +1,193 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Created with Jaspersoft Studio version 6.10.0.final using JasperReports Library version 6.10.0-unknown  -->
+<jasperReport xmlns="http://jasperreports.sourceforge.net/jasperreports" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://jasperreports.sourceforge.net/jasperreports http://jasperreports.sourceforge.net/xsd/jasperreport.xsd" name="ItensSemEstoque" pageWidth="595" pageHeight="842" columnWidth="555" leftMargin="20" rightMargin="20" topMargin="20" bottomMargin="20" uuid="ab54b1da-8614-4492-88ce-1fc500668814">
+	<property name="com.jaspersoft.studio.data.defaultdataadapter" value="AdapterTCC.xml"/>
+	<property name="com.jaspersoft.studio.data.sql.tables" value=""/>
+	<property name="com.jaspersoft.studio.property.dataset.dialog.DatasetDialog.sash.w1" value="646"/>
+	<property name="com.jaspersoft.studio.property.dataset.dialog.DatasetDialog.sash.w2" value="354"/>
+	<queryString>
+		<![CDATA[SELECT 
+	I.ID COD,
+	I.NOME,
+	I.PATRIMONIO,
+	I.SIORG,
+	I.QTDE_MINIMA,
+	G.DESCRICAO GRUPO
+FROM ITEM I
+	LEFT JOIN GRUPO G
+		ON G.ID = I.GRUPO_ID
+--WHERE SALDO = 0]]>
+	</queryString>
+	<field name="cod" class="java.lang.Long">
+		<property name="com.jaspersoft.studio.field.label" value="cod"/>
+		<property name="com.jaspersoft.studio.field.tree.path" value="item"/>
+	</field>
+	<field name="nome" class="java.lang.String">
+		<property name="com.jaspersoft.studio.field.label" value="nome"/>
+		<property name="com.jaspersoft.studio.field.tree.path" value="item"/>
+	</field>
+	<field name="patrimonio" class="java.math.BigDecimal">
+		<property name="com.jaspersoft.studio.field.label" value="patrimonio"/>
+		<property name="com.jaspersoft.studio.field.tree.path" value="item"/>
+	</field>
+	<field name="siorg" class="java.math.BigDecimal">
+		<property name="com.jaspersoft.studio.field.label" value="siorg"/>
+		<property name="com.jaspersoft.studio.field.tree.path" value="item"/>
+	</field>
+	<field name="qtde_minima" class="java.math.BigDecimal">
+		<property name="com.jaspersoft.studio.field.label" value="qtde_minima"/>
+		<property name="com.jaspersoft.studio.field.tree.path" value="item"/>
+	</field>
+	<field name="grupo" class="java.lang.String">
+		<property name="com.jaspersoft.studio.field.label" value="grupo"/>
+		<property name="com.jaspersoft.studio.field.tree.path" value="grupo"/>
+	</field>
+	<background>
+		<band splitType="Stretch"/>
+	</background>
+	<title>
+		<band height="30" splitType="Stretch">
+			<textField>
+				<reportElement x="0" y="0" width="550" height="30" uuid="279cde8c-a5ac-48dc-8f3a-b9bd700f5a57">
+					<property name="com.jaspersoft.studio.unit.width" value="px"/>
+				</reportElement>
+				<box padding="1">
+					<topPen lineWidth="1.0"/>
+					<leftPen lineWidth="1.0"/>
+					<bottomPen lineWidth="1.0"/>
+					<rightPen lineWidth="1.0"/>
+				</box>
+				<textElement textAlignment="Center" verticalAlignment="Middle">
+					<font size="16" isBold="true"/>
+				</textElement>
+				<textFieldExpression><![CDATA["ITENS SEM SALDO"]]></textFieldExpression>
+			</textField>
+		</band>
+	</title>
+	<pageHeader>
+		<band height="35" splitType="Stretch"/>
+	</pageHeader>
+	<columnHeader>
+		<band height="27" splitType="Stretch">
+			<staticText>
+				<reportElement x="0" y="0" width="50" height="27" uuid="69bb22db-39c0-4f72-bb62-0ede5738c88f">
+					<property name="com.jaspersoft.studio.spreadsheet.connectionID" value="6dc8dba9-afbd-4068-bb44-0bd611474a8e"/>
+				</reportElement>
+				<box padding="0"/>
+				<textElement verticalAlignment="Middle">
+					<font size="14" isBold="true"/>
+				</textElement>
+				<text><![CDATA[Cod]]></text>
+			</staticText>
+			<staticText>
+				<reportElement x="50" y="0" width="190" height="27" uuid="dd7f7c55-a6d7-4d51-8d93-ca2ad4c3ef57">
+					<property name="com.jaspersoft.studio.spreadsheet.connectionID" value="4fe1e574-cc95-44ba-bcc4-b0280672033d"/>
+				</reportElement>
+				<textElement verticalAlignment="Middle">
+					<font size="14" isBold="true"/>
+				</textElement>
+				<text><![CDATA[Nome]]></text>
+			</staticText>
+			<staticText>
+				<reportElement x="243" y="0" width="90" height="27" uuid="995577b4-b4f4-4935-b1f8-cab43ce56853">
+					<property name="com.jaspersoft.studio.spreadsheet.connectionID" value="09e7dabe-8135-4653-8983-1e33dd6e4f69"/>
+				</reportElement>
+				<textElement textAlignment="Left" verticalAlignment="Middle">
+					<font size="14" isBold="true"/>
+				</textElement>
+				<text><![CDATA[Patrimonio]]></text>
+			</staticText>
+			<staticText>
+				<reportElement x="333" y="0" width="100" height="27" uuid="66dc2eed-7d10-4c42-8176-9eda93cad053">
+					<property name="com.jaspersoft.studio.spreadsheet.connectionID" value="e96482da-a416-44e4-83cb-30c97463e5b2"/>
+				</reportElement>
+				<textElement verticalAlignment="Middle">
+					<font size="14" isBold="true"/>
+				</textElement>
+				<text><![CDATA[Siorg]]></text>
+			</staticText>
+			<staticText>
+				<reportElement x="436" y="0" width="114" height="27" uuid="ac69f7a7-4aad-4ed9-a3e1-fb9218391b6d">
+					<property name="com.jaspersoft.studio.spreadsheet.connectionID" value="cdd31364-97c6-49cd-ab3d-ebbda3cd179f"/>
+				</reportElement>
+				<textElement verticalAlignment="Middle">
+					<font size="14" isBold="true"/>
+				</textElement>
+				<text><![CDATA[Grupo]]></text>
+			</staticText>
+		</band>
+	</columnHeader>
+	<detail>
+		<band height="30" splitType="Stretch">
+			<textField>
+				<reportElement x="0" y="0" width="50" height="30" uuid="d10780c7-4909-4a4c-bec2-8b705d13878b">
+					<property name="com.jaspersoft.studio.spreadsheet.connectionID" value="6dc8dba9-afbd-4068-bb44-0bd611474a8e"/>
+				</reportElement>
+				<textElement textAlignment="Left" verticalAlignment="Middle">
+					<font size="12"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{cod}]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement x="50" y="0" width="190" height="30" uuid="eb12268d-4294-4e13-b833-ea964da86c84">
+					<property name="com.jaspersoft.studio.spreadsheet.connectionID" value="4fe1e574-cc95-44ba-bcc4-b0280672033d"/>
+				</reportElement>
+				<textElement verticalAlignment="Middle">
+					<font size="12"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{nome}]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement x="243" y="0" width="90" height="30" uuid="4e25f2ef-014e-49aa-ad56-53c5e54aec44">
+					<property name="com.jaspersoft.studio.spreadsheet.connectionID" value="09e7dabe-8135-4653-8983-1e33dd6e4f69"/>
+				</reportElement>
+				<textElement verticalAlignment="Middle">
+					<font size="12"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{patrimonio}]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement x="333" y="0" width="100" height="30" uuid="ee4da4ff-9a26-473a-bc75-5cf9898645dc">
+					<property name="com.jaspersoft.studio.spreadsheet.connectionID" value="e96482da-a416-44e4-83cb-30c97463e5b2"/>
+				</reportElement>
+				<textElement verticalAlignment="Middle">
+					<font size="12"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{siorg}]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement x="436" y="0" width="114" height="30" uuid="3d58b1b0-fb5e-4928-8aeb-2b5ec88d2e6c">
+					<property name="com.jaspersoft.studio.spreadsheet.connectionID" value="cdd31364-97c6-49cd-ab3d-ebbda3cd179f"/>
+				</reportElement>
+				<textElement verticalAlignment="Middle">
+					<font size="12"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{grupo}]]></textFieldExpression>
+			</textField>
+		</band>
+	</detail>
+	<columnFooter>
+		<band height="45" splitType="Stretch"/>
+	</columnFooter>
+	<pageFooter>
+		<band height="30" splitType="Stretch">
+			<textField>
+				<reportElement x="350" y="0" width="100" height="30" uuid="4677ff13-590d-47b7-98ae-24584648dba8"/>
+				<textElement textAlignment="Right"/>
+				<textFieldExpression><![CDATA["Página " + $V{PAGE_NUMBER}]]></textFieldExpression>
+			</textField>
+			<textField evaluationTime="Report">
+				<reportElement x="450" y="0" width="100" height="30" uuid="1e5f3bfc-1fd5-4fa5-a7ec-fde3773101fb"/>
+				<textElement textAlignment="Left"/>
+				<textFieldExpression><![CDATA[" de " + $V{PAGE_NUMBER}]]></textFieldExpression>
+			</textField>
+			<textField pattern="MMMMM dd, yyyy">
+				<reportElement x="0" y="0" width="100" height="30" uuid="1f2d16eb-6db6-4d30-b957-5d10807f9951"/>
+				<textFieldExpression><![CDATA[new java.util.Date()]]></textFieldExpression>
+			</textField>
+		</band>
+	</pageFooter>
+	<summary>
+		<band height="42" splitType="Stretch"/>
+	</summary>
+</jasperReport>

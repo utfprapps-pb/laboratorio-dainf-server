@@ -1,0 +1,193 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Created with Jaspersoft Studio version 6.10.0.final using JasperReports Library version 6.10.0-unknown  -->
+<jasperReport xmlns="http://jasperreports.sourceforge.net/jasperreports" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://jasperreports.sourceforge.net/jasperreports http://jasperreports.sourceforge.net/xsd/jasperreport.xsd" name="HistoricoEmprestimoUsuario" pageWidth="595" pageHeight="842" columnWidth="555" leftMargin="20" rightMargin="20" topMargin="20" bottomMargin="20" uuid="ba830fde-da8b-40b8-afbb-5ad5fedd2528">
+	<property name="com.jaspersoft.studio.data.defaultdataadapter" value="AdapterTCC.xml"/>
+	<property name="com.jaspersoft.studio.data.sql.tables" value=""/>
+	<parameter name="DOCUMENTO" class="java.lang.String"/>
+	<queryString>
+		<![CDATA[SELECT 
+	E.ID COD,
+	U.NOME,
+	E.DATA_EMPRESTIMO,
+	E.PRAZO_DEVOLUCAO,
+	E.DATA_DEVOLUCAO,
+	CASE WHEN (DATA_DEVOLUCAO IS NULL AND PRAZO_DEVOLUCAO < CURRENT_DATE) THEN 'Em atraso'
+		WHEN (DATA_DEVOLUCAO IS NULL) THEN 'Em andamento'
+		ELSE 'Finalizado' END SITUACAO
+FROM EMPRESTIMO E
+	LEFT JOIN USUARIO U
+		ON U.ID = E.USUARIO_EMPRESTIMO_ID
+WHERE U.DOCUMENTO = $P{DOCUMENTO} 
+ORDER BY E.ID]]>
+	</queryString>
+	<field name="cod" class="java.lang.Long">
+		<property name="com.jaspersoft.studio.field.label" value="cod"/>
+		<property name="com.jaspersoft.studio.field.tree.path" value="emprestimo"/>
+	</field>
+	<field name="nome" class="java.lang.String">
+		<property name="com.jaspersoft.studio.field.label" value="nome"/>
+		<property name="com.jaspersoft.studio.field.tree.path" value="usuario"/>
+	</field>
+	<field name="data_emprestimo" class="java.sql.Date">
+		<property name="com.jaspersoft.studio.field.label" value="data_emprestimo"/>
+		<property name="com.jaspersoft.studio.field.tree.path" value="emprestimo"/>
+	</field>
+	<field name="prazo_devolucao" class="java.sql.Date">
+		<property name="com.jaspersoft.studio.field.label" value="prazo_devolucao"/>
+		<property name="com.jaspersoft.studio.field.tree.path" value="emprestimo"/>
+	</field>
+	<field name="data_devolucao" class="java.sql.Date">
+		<property name="com.jaspersoft.studio.field.label" value="data_devolucao"/>
+		<property name="com.jaspersoft.studio.field.tree.path" value="emprestimo"/>
+	</field>
+	<field name="situacao" class="java.lang.String">
+		<property name="com.jaspersoft.studio.field.label" value="situacao"/>
+	</field>
+	<background>
+		<band splitType="Stretch"/>
+	</background>
+	<title>
+		<band height="30" splitType="Stretch">
+			<textField>
+				<reportElement x="0" y="0" width="550" height="30" uuid="1df547bb-1ef6-4120-9f26-32e1c3150fce">
+					<property name="com.jaspersoft.studio.unit.width" value="px"/>
+				</reportElement>
+				<box padding="1">
+					<topPen lineWidth="1.0"/>
+					<leftPen lineWidth="1.0"/>
+					<bottomPen lineWidth="1.0"/>
+					<rightPen lineWidth="1.0"/>
+				</box>
+				<textElement textAlignment="Center" verticalAlignment="Middle">
+					<font size="16" isBold="true"/>
+				</textElement>
+				<textFieldExpression><![CDATA["HISTÓRICO DE EMPRÉSTIMO | USUÁRIO: " + $F{nome}]]></textFieldExpression>
+			</textField>
+		</band>
+	</title>
+	<pageHeader>
+		<band height="35" splitType="Stretch"/>
+	</pageHeader>
+	<columnHeader>
+		<band height="20" splitType="Stretch">
+			<staticText>
+				<reportElement x="0" y="0" width="50" height="20" uuid="2a046c3a-210e-4458-9ee8-b22b6193c300">
+					<property name="com.jaspersoft.studio.spreadsheet.connectionID" value="73da70e0-693d-4733-87f8-06f7ee93b1e4"/>
+				</reportElement>
+				<textElement textAlignment="Center" verticalAlignment="Middle">
+					<font size="13" isBold="true"/>
+				</textElement>
+				<text><![CDATA[Cod.]]></text>
+			</staticText>
+			<staticText>
+				<reportElement x="51" y="0" width="129" height="20" uuid="bbd2880d-d255-4d74-b670-9d58a37603a6">
+					<property name="com.jaspersoft.studio.spreadsheet.connectionID" value="5f967a09-7cfa-4b6a-86d4-fae69ef4cd73"/>
+				</reportElement>
+				<textElement textAlignment="Center" verticalAlignment="Middle">
+					<font size="14" isBold="true"/>
+				</textElement>
+				<text><![CDATA[Dt do Empréstimo]]></text>
+			</staticText>
+			<staticText>
+				<reportElement x="186" y="0" width="138" height="20" uuid="186daf2e-3e9b-45e9-aea6-bd55b7b0f784">
+					<property name="com.jaspersoft.studio.spreadsheet.connectionID" value="9a94836d-1043-4110-bdc4-8e0a36b3c9d6"/>
+				</reportElement>
+				<textElement textAlignment="Center" verticalAlignment="Middle">
+					<font size="14" isBold="true"/>
+				</textElement>
+				<text><![CDATA[Prazo Devolução]]></text>
+			</staticText>
+			<staticText>
+				<reportElement x="448" y="0" width="100" height="20" uuid="18835fca-1609-4d3d-9adb-3e6cb411783d">
+					<property name="com.jaspersoft.studio.spreadsheet.connectionID" value="c15ff95f-d229-4d3d-be95-78d9840e273d"/>
+				</reportElement>
+				<textElement textAlignment="Center" verticalAlignment="Middle">
+					<font size="13" isBold="true"/>
+				</textElement>
+				<text><![CDATA[Situação]]></text>
+			</staticText>
+			<staticText>
+				<reportElement x="330" y="0" width="110" height="20" uuid="d913e990-e63d-41ad-bc36-70bc32f12158">
+					<property name="com.jaspersoft.studio.spreadsheet.connectionID" value="c57841ca-ff1e-4f40-93f5-8d3bf87086c0"/>
+				</reportElement>
+				<textElement textAlignment="Center" verticalAlignment="Middle">
+					<font size="14" isBold="true"/>
+				</textElement>
+				<text><![CDATA[Dt Devolução]]></text>
+			</staticText>
+		</band>
+	</columnHeader>
+	<detail>
+		<band height="30" splitType="Stretch">
+			<textField>
+				<reportElement x="0" y="0" width="50" height="30" uuid="1051004f-a214-470a-962a-f68a7641e978">
+					<property name="com.jaspersoft.studio.spreadsheet.connectionID" value="73da70e0-693d-4733-87f8-06f7ee93b1e4"/>
+				</reportElement>
+				<textElement textAlignment="Center" verticalAlignment="Middle">
+					<font size="12"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{cod}]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement x="51" y="0" width="129" height="30" uuid="789bf770-90a8-437e-be34-fd0d4de9de07">
+					<property name="com.jaspersoft.studio.spreadsheet.connectionID" value="5f967a09-7cfa-4b6a-86d4-fae69ef4cd73"/>
+				</reportElement>
+				<textElement textAlignment="Center" verticalAlignment="Middle">
+					<font size="12"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{data_emprestimo}]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement x="186" y="0" width="138" height="30" uuid="9e3a2ee3-bfab-4d9d-ac16-a357fa64cb53">
+					<property name="com.jaspersoft.studio.spreadsheet.connectionID" value="9a94836d-1043-4110-bdc4-8e0a36b3c9d6"/>
+				</reportElement>
+				<textElement textAlignment="Center" verticalAlignment="Middle">
+					<font size="12"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{prazo_devolucao}]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement x="448" y="0" width="100" height="30" uuid="30f0b6de-eab3-4bda-9147-8b6bab70d088">
+					<property name="com.jaspersoft.studio.spreadsheet.connectionID" value="8885827e-0896-4e52-b9af-99fc630ae548"/>
+				</reportElement>
+				<textElement textAlignment="Center" verticalAlignment="Middle">
+					<font size="12"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{situacao}]]></textFieldExpression>
+			</textField>
+			<textField isBlankWhenNull="true">
+				<reportElement x="330" y="0" width="110" height="30" uuid="014a7901-58c9-4d74-9ef5-2adcd490a2f5">
+					<property name="com.jaspersoft.studio.spreadsheet.connectionID" value="c57841ca-ff1e-4f40-93f5-8d3bf87086c0"/>
+				</reportElement>
+				<textElement textAlignment="Center" verticalAlignment="Middle">
+					<font size="12"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{data_devolucao}]]></textFieldExpression>
+			</textField>
+		</band>
+	</detail>
+	<columnFooter>
+		<band height="45" splitType="Stretch"/>
+	</columnFooter>
+	<pageFooter>
+		<band height="30" splitType="Stretch">
+			<textField>
+				<reportElement x="350" y="0" width="100" height="30" uuid="b97d414d-e851-4228-ba79-c453ea7d01ed"/>
+				<textElement textAlignment="Right"/>
+				<textFieldExpression><![CDATA["Página " + $V{PAGE_NUMBER}]]></textFieldExpression>
+			</textField>
+			<textField evaluationTime="Report">
+				<reportElement x="450" y="0" width="100" height="30" uuid="44a79e8d-eb61-4d07-91db-6ba9d52a8a9a"/>
+				<textElement textAlignment="Left"/>
+				<textFieldExpression><![CDATA[" de " + $V{PAGE_NUMBER}]]></textFieldExpression>
+			</textField>
+			<textField pattern="MMMMM dd, yyyy">
+				<reportElement x="0" y="0" width="100" height="30" uuid="2037a3c5-d6b5-421f-b3bf-55067cf9b5f2"/>
+				<textFieldExpression><![CDATA[new java.util.Date()]]></textFieldExpression>
+			</textField>
+		</band>
+	</pageFooter>
+	<summary>
+		<band height="42" splitType="Stretch"/>
+	</summary>
+</jasperReport>
