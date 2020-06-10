@@ -33,7 +33,9 @@ public class ItemController extends CrudController<Item, Long> {
     public void upload(@RequestParam("idItem") Long idItem,
                        MultipartHttpServletRequest images,
                        HttpServletRequest request) {
-        itemService.saveImages(images, request, idItem);
+        if (images.getFile("anexos[]") != null) {
+            itemService.saveImages(images, request, idItem);
+        }
     }
 
     @GetMapping("imagens/{idItem}")

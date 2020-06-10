@@ -1,6 +1,7 @@
 package br.com.utfpr.gerenciamento.server.service.impl;
 
 import br.com.utfpr.gerenciamento.server.ennumeation.StatusDevolucao;
+import br.com.utfpr.gerenciamento.server.ennumeation.TipoItem;
 import br.com.utfpr.gerenciamento.server.model.Email;
 import br.com.utfpr.gerenciamento.server.model.Emprestimo;
 import br.com.utfpr.gerenciamento.server.model.EmprestimoDevolucaoItem;
@@ -61,7 +62,7 @@ public class EmprestimoServiceImpl extends CrudServiceImpl<Emprestimo, Long> imp
     @Override
     public List<EmprestimoDevolucaoItem> createEmprestimoItemDevolucao(List<EmprestimoItem> emprestimoItem) {
         List<EmprestimoDevolucaoItem> toReturn = new ArrayList<>();
-        emprestimoItem.stream().filter(empItem -> empItem.getItem().getDevolver().equals(true))
+        emprestimoItem.stream().filter(empItem -> empItem.getItem().getTipoItem().equals(TipoItem.C))
                 .forEach(empItem1 -> {
                     EmprestimoDevolucaoItem empDevItem = new EmprestimoDevolucaoItem();
                     empDevItem.setItem(empItem1.getItem());

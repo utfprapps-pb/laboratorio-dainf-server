@@ -1,5 +1,6 @@
 package br.com.utfpr.gerenciamento.server.model;
 
+import br.com.utfpr.gerenciamento.server.ennumeation.TipoItem;
 import com.fasterxml.jackson.annotation.JsonManagedReference;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -44,8 +45,9 @@ public class Item {
     @Column(name = "localizacao")
     private String localizacao;
 
-    @Column(name = "devolver")
-    private Boolean devolver;
+    @Enumerated(EnumType.STRING)
+    @Column(name = "tipo_item")
+    private TipoItem tipoItem;
 
     @Column(name = "saldo")
     private BigDecimal saldo;

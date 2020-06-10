@@ -5,6 +5,7 @@ import br.com.utfpr.gerenciamento.server.model.ItemImage;
 import br.com.utfpr.gerenciamento.server.repository.ItemImageRepository;
 import br.com.utfpr.gerenciamento.server.repository.ItemRepository;
 import br.com.utfpr.gerenciamento.server.service.ItemService;
+import br.com.utfpr.gerenciamento.server.util.FileUtil;
 import org.apache.commons.codec.binary.Base64;
 import org.apache.commons.io.IOUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -92,16 +93,13 @@ public class ItemServiceImpl extends CrudServiceImpl<Item, Long> implements Item
     public void saveImages(MultipartHttpServletRequest files,
                            HttpServletRequest request,
                            Long idItem) {
-        Item item = itemRepository.getOne(idItem);
+        Item item = this.findOne(idItem);
         var anexos = files.getFiles("anexos[]");
 
-        File dir = new File(request.getServletContext()
-                .getRealPath("/images/"));
+        File dir = new File(FileUtil.getAbsolutePathRaiz() + File.separator + "images-item");
         if (!dir.exists()) {
             dir.mkdirs();
         }
-        String caminhoAnexo = request.getServletContext()
-                .getRealPath("/images/");
 
         List<ItemImage> list = new ArrayList<>();
         for (MultipartFile anexo : anexos) {
@@ -114,14 +112,15 @@ public class ItemServiceImpl extends CrudServiceImpl<Item, Long> implements Item
 
             try {
                 FileOutputStream fileOut = new FileOutputStream(
-                        new File(caminhoAnexo + nomeArquivo)
+                        new File(dir + File.separator + nomeArquivo)
                 );
                 BufferedOutputStream stream = new BufferedOutputStream(fileOut);
                 stream.write(anexo.getBytes());
                 stream.close();
+                fileOut.close();
 
                 ItemImage image = new ItemImage();
-                image.setCaminhoImage(caminhoAnexo);
+                image.setCaminhoImage(dir.getAbsolutePath());
                 image.setNameImage(nomeArquivo);
                 image.setItem(item);
                 list.add(image);
@@ -130,15 +129,15 @@ public class ItemServiceImpl extends CrudServiceImpl<Item, Long> implements Item
             }
         }
         item.getImageItem().addAll(list);
-        itemRepository.save(item);
+        this.save(item);
     }
 
     @Override
     public List<ItemImage> getImagesItem(Long idItem) {
-        Item i = itemRepository.getOne(idItem);
+        Item i = this.findOne(idItem);
         for (ItemImage image : i.getImageItem()) {
             try {
-                image.setBase64(encodeFileToBase64Binary(image.getCaminhoImage() + image.getNameImage()));
+                image.setBase64(encodeFileToBase64Binary(image.getCaminhoImage() + File.separator + image.getNameImage()));
             } catch (IOException e) {
                 e.printStackTrace();
             }
@@ -148,7 +147,7 @@ public class ItemServiceImpl extends CrudServiceImpl<Item, Long> implements Item
 
     @Override
     public void deleteImage(ItemImage image, Long idItem) {
-        File file = new File(image.getCaminhoImage(), image.getNameImage());
+        File file = new File(image.getCaminhoImage() + File.separator + image.getNameImage());
         if (file.exists()) {
             file.delete();
         }
@@ -161,6 +160,7 @@ public class ItemServiceImpl extends CrudServiceImpl<Item, Long> implements Item
         File file = new File(fileName);
         FileInputStream fi = new FileInputStream(file);
         byte[] encoded = Base64.encodeBase64(IOUtils.toByteArray(fi));
+        fi.close();
         return new String(encoded, StandardCharsets.US_ASCII);
     }
 }
