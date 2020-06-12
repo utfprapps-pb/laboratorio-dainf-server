@@ -1,9 +1,14 @@
 package br.com.utfpr.gerenciamento.server.service.impl;
 
+import br.com.utfpr.gerenciamento.server.model.Email;
 import br.com.utfpr.gerenciamento.server.model.Reserva;
+import br.com.utfpr.gerenciamento.server.model.Usuario;
+import br.com.utfpr.gerenciamento.server.model.modelTemplateEmail.ReservaTemplate;
 import br.com.utfpr.gerenciamento.server.repository.ReservaRepository;
+import br.com.utfpr.gerenciamento.server.service.EmailService;
 import br.com.utfpr.gerenciamento.server.service.ReservaService;
 import br.com.utfpr.gerenciamento.server.service.UsuarioService;
+import br.com.utfpr.gerenciamento.server.util.DateUtil;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Service;
@@ -17,6 +22,8 @@ public class ReservaServiceImpl extends CrudServiceImpl<Reserva, Long> implement
     private ReservaRepository reservaRepository;
     @Autowired
     private UsuarioService usuarioService;
+    @Autowired
+    private EmailService emailService;
 
     @Override
     protected JpaRepository<Reserva, Long> getRepository() {
@@ -32,5 +39,36 @@ public class ReservaServiceImpl extends CrudServiceImpl<Reserva, Long> implement
     @Override
     public List<Reserva> findAllByIdItem(Long idItem) {
         return reservaRepository.findReservaByIdItem(idItem);
+    }
+
+    @Override
+    public void finalizarReserva(Long idReserva) {
+        var reserva = this.findOne(idReserva);
+        emailService.sendEmailWithTemplate(
+                converterObjectToTemplateEmail(reserva),
+                reserva.getUsuario().getEmail(),
+                "Reserva Finalizada",
+                "templateFinalizacaoReserva"
+        );
+        this.delete(idReserva);
+    }
+
+    @Override
+    public void sendEmailConfirmacaoReserva(Reserva reserva) {
+        emailService.sendEmailWithTemplate(
+                converterObjectToTemplateEmail(reserva),
+                reserva.getUsuario().getEmail(),
+                "Confirmação de Reserva de Materiais",
+                "templateConfirmacaoReserva"
+        );
+    }
+
+    public ReservaTemplate converterObjectToTemplateEmail(Reserva reserva) {
+        ReservaTemplate toReturn = new ReservaTemplate();
+        toReturn.setUsuario(reserva.getUsuario().getNome());
+        toReturn.setDtReserva(DateUtil.parseLocalDateToString(reserva.getDataReserva()));
+        toReturn.setDtRetirada(DateUtil.parseLocalDateToString(reserva.getDataRetirada()));
+        toReturn.setReservaItem(reserva.getReservaItem());
+        return toReturn;
     }
 }

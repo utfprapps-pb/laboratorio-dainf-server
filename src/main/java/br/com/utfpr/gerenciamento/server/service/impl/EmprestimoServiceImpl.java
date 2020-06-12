@@ -9,7 +9,7 @@ import br.com.utfpr.gerenciamento.server.model.EmprestimoItem;
 import br.com.utfpr.gerenciamento.server.model.dashboards.DashboardEmprestimoDia;
 import br.com.utfpr.gerenciamento.server.model.dashboards.DashboardItensEmprestados;
 import br.com.utfpr.gerenciamento.server.model.filter.EmprestimoFilter;
-import br.com.utfpr.gerenciamento.server.model.modelTemplate.EmprestimoTemplate;
+import br.com.utfpr.gerenciamento.server.model.modelTemplateEmail.EmprestimoTemplate;
 import br.com.utfpr.gerenciamento.server.repository.EmprestimoFilterRepository;
 import br.com.utfpr.gerenciamento.server.repository.EmprestimoRepository;
 import br.com.utfpr.gerenciamento.server.service.EmailService;
@@ -92,14 +92,28 @@ public class EmprestimoServiceImpl extends CrudServiceImpl<Emprestimo, Long> imp
 
     @Override
     public void sendEmailConfirmacaoEmprestimo(Emprestimo emprestimo) {
-        sendEmail(converterEmprestimoToObjectTemplate(emprestimo), emprestimo.getUsuarioEmprestimo().getEmail(),
-                "Confirmação de Empréstimo", "templateConfirmacaoEmprestimo");
+        String template;
+        if (emprestimo.getEmprestimoDevolucaoItem().size() > 0) {
+            template = "templateConfirmacaoEmprestimo";
+        } else {
+            template = "templateConfirmacaoFinalizacaoEmprestimo";
+        }
+        emailService.sendEmailWithTemplate(
+                converterEmprestimoToObjectTemplate(emprestimo),
+                emprestimo.getUsuarioEmprestimo().getEmail(),
+                "Confirmação de Empréstimo",
+                template
+        );
     }
 
     @Override
     public void sendEmailConfirmacaoDevolucao(Emprestimo emprestimo) {
-        sendEmail(converterEmprestimoToObjectTemplate(emprestimo), emprestimo.getUsuarioEmprestimo().getEmail(),
-                "Confirmação de Devolução do Empréstimo", "templateDevolucaoEmprestimo");
+        emailService.sendEmailWithTemplate(
+                converterEmprestimoToObjectTemplate(emprestimo),
+                emprestimo.getUsuarioEmprestimo().getEmail(),
+                "Confirmação de Devolução do Empréstimo",
+                "templateDevolucaoEmprestimo"
+        );
     }
 
     @Override
@@ -108,8 +122,11 @@ public class EmprestimoServiceImpl extends CrudServiceImpl<Emprestimo, Long> imp
                 .findByDataDevolucaoIsNullAndPrazoDevolucaoEquals(LocalDate.now().plusDays(3));
         if (emprestimos.size() > 0) {
             emprestimos.forEach(emprestimo -> {
-                sendEmail(converterEmprestimoToObjectTemplate(emprestimo), emprestimo.getUsuarioEmprestimo().getEmail(),
-                        "Empréstimo próximo da data de devolução", "templateProximoPrazoDevolucaoEmprestimo");
+                emailService.sendEmailWithTemplate(
+                        converterEmprestimoToObjectTemplate(emprestimo),
+                        emprestimo.getUsuarioEmprestimo().getEmail(),
+                        "Empréstimo próximo da data de devolução",
+                        "templateProximoPrazoDevolucaoEmprestimo");
                 LOGGER.log(Level.INFO, "Email de aviso enviado com sucesso para: " + emprestimo.getUsuarioEmprestimo().getEmail());
             });
         } else {
@@ -129,18 +146,5 @@ public class EmprestimoServiceImpl extends CrudServiceImpl<Emprestimo, Long> imp
         toReturn.setEmprestimoItem(e.getEmprestimoItem());
         toReturn.setEmprestimoDevolucaoItem(e.getEmprestimoDevolucaoItem());
         return toReturn;
-    }
-
-    private void sendEmail(Object objectTemplate, String to, String titleEmail, String nameTemplate) {
-        Email email = new Email()
-                .setPara(to)
-                .setDe("zaffanigustavo@gmail.com")
-                .setTitulo(titleEmail)
-                .setConteudo(emailService.buildTemplateEmail(objectTemplate, nameTemplate));
-        try {
-            emailService.enviar(email);
-        } catch (Exception exception) {
-            exception.printStackTrace();
-        }
     }
 }

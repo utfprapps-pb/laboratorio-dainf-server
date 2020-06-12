@@ -1,0 +1,172 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Created with Jaspersoft Studio version 6.10.0.final using JasperReports Library version 6.10.0-unknown  -->
+<jasperReport xmlns="http://jasperreports.sourceforge.net/jasperreports" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://jasperreports.sourceforge.net/jasperreports http://jasperreports.sourceforge.net/xsd/jasperreport.xsd" name="ItensAtingiramQtdeMinima" pageWidth="595" pageHeight="842" columnWidth="555" leftMargin="20" rightMargin="20" topMargin="20" bottomMargin="20" uuid="c14f9e24-5507-4e04-a591-9bfb7ff4287c">
+	<property name="com.jaspersoft.studio.data.defaultdataadapter" value="AdapterTCC.xml"/>
+	<property name="com.jaspersoft.studio.data.sql.tables" value=""/>
+	<queryString>
+		<![CDATA[SELECT 
+	I.ID COD,
+	I.NOME,
+	I.QTDE_MINIMA,
+	I.SALDO,
+	G.DESCRICAO GRUPO	
+FROM ITEM I
+	LEFT JOIN GRUPO G
+		ON G.ID = I.GRUPO_ID
+WHERE SALDO <= QTDE_MINIMA]]>
+	</queryString>
+	<field name="cod" class="java.lang.Long">
+		<property name="com.jaspersoft.studio.field.label" value="cod"/>
+		<property name="com.jaspersoft.studio.field.tree.path" value="item"/>
+	</field>
+	<field name="nome" class="java.lang.String">
+		<property name="com.jaspersoft.studio.field.label" value="nome"/>
+		<property name="com.jaspersoft.studio.field.tree.path" value="item"/>
+	</field>
+	<field name="qtde_minima" class="java.math.BigDecimal">
+		<property name="com.jaspersoft.studio.field.label" value="qtde_minima"/>
+		<property name="com.jaspersoft.studio.field.tree.path" value="item"/>
+	</field>
+	<field name="saldo" class="java.math.BigDecimal">
+		<property name="com.jaspersoft.studio.field.label" value="saldo"/>
+		<property name="com.jaspersoft.studio.field.tree.path" value="item"/>
+	</field>
+	<field name="grupo" class="java.lang.String">
+		<property name="com.jaspersoft.studio.field.label" value="grupo"/>
+		<property name="com.jaspersoft.studio.field.tree.path" value="grupo"/>
+	</field>
+	<background>
+		<band splitType="Stretch"/>
+	</background>
+	<title>
+		<band height="39" splitType="Stretch">
+			<textField>
+				<reportElement x="0" y="0" width="550" height="30" uuid="cf3d0fe5-afd2-40fe-8ac6-1c31321c988d">
+					<property name="com.jaspersoft.studio.unit.width" value="px"/>
+				</reportElement>
+				<box padding="1">
+					<topPen lineWidth="1.0"/>
+					<leftPen lineWidth="1.0"/>
+					<bottomPen lineWidth="1.0"/>
+					<rightPen lineWidth="1.0"/>
+				</box>
+				<textElement textAlignment="Center" verticalAlignment="Middle">
+					<font size="16" isBold="true"/>
+				</textElement>
+				<textFieldExpression><![CDATA["ITENS QUE ATINGIRAM A QTDE MÍNIMA"]]></textFieldExpression>
+			</textField>
+		</band>
+	</title>
+	<columnHeader>
+		<band height="28" splitType="Stretch">
+			<staticText>
+				<reportElement x="0" y="0" width="40" height="20" uuid="0965e079-1619-4689-aed2-958f61d005f5">
+					<property name="com.jaspersoft.studio.spreadsheet.connectionID" value="49a92120-03d6-42d5-8643-c2d54dfa8f60"/>
+				</reportElement>
+				<textElement textAlignment="Center" verticalAlignment="Middle">
+					<font size="14" isBold="true"/>
+				</textElement>
+				<text><![CDATA[Cód]]></text>
+			</staticText>
+			<staticText>
+				<reportElement x="40" y="0" width="230" height="20" uuid="69efd67d-d586-4129-879f-2da2a3556776">
+					<property name="com.jaspersoft.studio.spreadsheet.connectionID" value="3d33a4c1-3a77-4546-bece-9df6bc8f2df0"/>
+				</reportElement>
+				<textElement textAlignment="Center" verticalAlignment="Middle">
+					<font size="14" isBold="true"/>
+				</textElement>
+				<text><![CDATA[Nome]]></text>
+			</staticText>
+			<staticText>
+				<reportElement x="425" y="0" width="68" height="20" uuid="ac56c1ce-df1e-4768-89ae-fec6ba4bee01">
+					<property name="com.jaspersoft.studio.spreadsheet.connectionID" value="fda3a3eb-f05a-42b7-b3ec-c1ac8a9bc2b9"/>
+				</reportElement>
+				<textElement textAlignment="Center" verticalAlignment="Middle">
+					<font size="14" isBold="true"/>
+				</textElement>
+				<text><![CDATA[Qtde Mín.]]></text>
+			</staticText>
+			<staticText>
+				<reportElement x="493" y="0" width="57" height="20" uuid="c98e29f1-5c9f-40da-9f2a-8e0fb61e20e0">
+					<property name="com.jaspersoft.studio.spreadsheet.connectionID" value="2f7c98c1-abe6-4769-86e0-8b143a764f3a"/>
+				</reportElement>
+				<textElement textAlignment="Center" verticalAlignment="Middle">
+					<font size="14" isBold="true"/>
+				</textElement>
+				<text><![CDATA[Saldo]]></text>
+			</staticText>
+			<staticText>
+				<reportElement x="270" y="0" width="155" height="20" uuid="5aca087e-bf2f-4097-a464-7650f49929fd">
+					<property name="com.jaspersoft.studio.spreadsheet.connectionID" value="c079c1f4-b49b-4c66-8748-7e118ba40a17"/>
+				</reportElement>
+				<textElement textAlignment="Center" verticalAlignment="Middle">
+					<font size="14" isBold="true"/>
+				</textElement>
+				<text><![CDATA[Grupo]]></text>
+			</staticText>
+		</band>
+	</columnHeader>
+	<detail>
+		<band height="20" splitType="Stretch">
+			<textField>
+				<reportElement x="0" y="0" width="40" height="20" uuid="5f28beb1-0368-4a3d-a6ed-b2177af320f4">
+					<property name="com.jaspersoft.studio.spreadsheet.connectionID" value="49a92120-03d6-42d5-8643-c2d54dfa8f60"/>
+				</reportElement>
+				<textElement textAlignment="Center" verticalAlignment="Middle">
+					<font size="12"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{cod}]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement x="40" y="0" width="230" height="20" uuid="585581da-ecb6-4849-b24c-21ede2cce66e">
+					<property name="com.jaspersoft.studio.spreadsheet.connectionID" value="3d33a4c1-3a77-4546-bece-9df6bc8f2df0"/>
+				</reportElement>
+				<textElement textAlignment="Center" verticalAlignment="Middle">
+					<font size="12"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{nome}]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement x="425" y="0" width="68" height="20" uuid="f3efc566-020b-477d-81c0-f8d266a71aaf">
+					<property name="com.jaspersoft.studio.spreadsheet.connectionID" value="fda3a3eb-f05a-42b7-b3ec-c1ac8a9bc2b9"/>
+				</reportElement>
+				<textElement textAlignment="Center" verticalAlignment="Middle">
+					<font size="12"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{qtde_minima}]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement x="493" y="0" width="57" height="20" uuid="fd7d8aab-84f8-4904-a581-26443fe5adb0">
+					<property name="com.jaspersoft.studio.spreadsheet.connectionID" value="2f7c98c1-abe6-4769-86e0-8b143a764f3a"/>
+				</reportElement>
+				<textElement textAlignment="Center" verticalAlignment="Middle">
+					<font size="12"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{saldo}]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement x="270" y="0" width="155" height="20" uuid="0b506d32-401e-4ba0-9ab7-ffa8f1fd799f">
+					<property name="com.jaspersoft.studio.spreadsheet.connectionID" value="c079c1f4-b49b-4c66-8748-7e118ba40a17"/>
+				</reportElement>
+				<textElement textAlignment="Center" verticalAlignment="Middle">
+					<font size="12"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{grupo}]]></textFieldExpression>
+			</textField>
+		</band>
+	</detail>
+	<pageFooter>
+		<band height="30" splitType="Stretch">
+			<textField pattern="dd/MM/yyyy HH:mm:ss">
+				<reportElement x="0" y="0" width="100" height="30" uuid="e3935b66-a48b-4f8f-832e-d92763857825"/>
+				<textElement verticalAlignment="Middle"/>
+				<textFieldExpression><![CDATA[new java.util.Date()]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement x="350" y="0" width="200" height="30" uuid="11a51520-e89b-4a02-a953-0ce7840c927f"/>
+				<textElement textAlignment="Right" verticalAlignment="Middle"/>
+				<textFieldExpression><![CDATA["Página " + $V{PAGE_NUMBER} + " de " + $V{PAGE_NUMBER}]]></textFieldExpression>
+			</textField>
+		</band>
+	</pageFooter>
+</jasperReport>

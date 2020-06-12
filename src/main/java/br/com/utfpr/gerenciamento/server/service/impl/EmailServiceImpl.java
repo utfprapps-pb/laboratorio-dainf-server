@@ -29,32 +29,37 @@ public class EmailServiceImpl implements EmailService {
 
     @Override
     public void enviar(Email email) throws Exception {
+        new Thread(() -> {
+            try {
+                MimeMessage message = javaMailSender.createMimeMessage();
 
-        MimeMessage message = javaMailSender.createMimeMessage();
+                MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
 
-        MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
+                helper.setFrom(email.getDe(), "Laboratório de Informática - UTFPR/PB");
+                helper.setReplyTo(email.getDe());
 
-        helper.setFrom(email.getDe(), "Laboratório de Informática - UTFPR/PB");
-        helper.setReplyTo(email.getDe());
+                if (email.getPara() != null && !email.getPara().equals("")) {
+                    helper.setBcc(email.getPara());
+                } else if (email.getParaList() != null && email.getParaList().size() > 0) {
+                    helper.setBcc(email.getParaList().toArray(new String[0]));
+                } else {
+                    throw new Exception("Nenhum email encontrado para envio.");
+                }
 
-        if (email.getPara() != null && !email.getPara().equals("")) {
-            helper.setBcc(email.getPara());
-        } else if (email.getParaList() != null && email.getParaList().size() > 0) {
-            helper.setBcc(email.getParaList().toArray(new String[0]));
-        } else {
-            throw new Exception("Nenhum email encontrado para envio.");
-        }
+                helper.setSubject(email.getTitulo());
+                helper.setText(email.getConteudo(), true);
 
-        helper.setSubject(email.getTitulo());
-        helper.setText(email.getConteudo(), true);
+                for (Map.Entry<String, byte[]> entry : email.getFileMap().entrySet()) {
+                    helper.addAttachment(entry.getKey(), new ByteArrayResource(entry.getValue()));
+                }
 
-        for (Map.Entry<String, byte[]> entry : email.getFileMap().entrySet()) {
-            helper.addAttachment(entry.getKey(), new ByteArrayResource(entry.getValue()));
-        }
-
-        javaMailSender.setUsername("dainf.labs@gmail.com");
-        javaMailSender.setPassword("tcc-mail@2020");
-        javaMailSender.send(message);
+                javaMailSender.setUsername("dainf.labs@gmail.com");
+                javaMailSender.setPassword("tcc-mail@2020");
+                javaMailSender.send(message);
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }).start();
     }
 
     @Override
@@ -67,6 +72,20 @@ public class EmailServiceImpl implements EmailService {
         } catch (Exception ex) {
             ex.printStackTrace();
             return null;
+        }
+    }
+
+    @Override
+    public void sendEmailWithTemplate(Object objectTemplate, String to, String titleEmail, String nameTemplate) {
+        Email email = new Email()
+                .setPara(to)
+                .setDe("dainf.labs@gmail.com")
+                .setTitulo(titleEmail)
+                .setConteudo(this.buildTemplateEmail(objectTemplate, nameTemplate));
+        try {
+            this.enviar(email);
+        } catch (Exception exception) {
+            exception.printStackTrace();
         }
     }
 }

@@ -4,10 +4,7 @@ import br.com.utfpr.gerenciamento.server.ennumeation.StatusDevolucao;
 import br.com.utfpr.gerenciamento.server.model.Emprestimo;
 import br.com.utfpr.gerenciamento.server.model.EmprestimoDevolucaoItem;
 import br.com.utfpr.gerenciamento.server.model.filter.EmprestimoFilter;
-import br.com.utfpr.gerenciamento.server.service.CrudService;
-import br.com.utfpr.gerenciamento.server.service.EmprestimoService;
-import br.com.utfpr.gerenciamento.server.service.ItemService;
-import br.com.utfpr.gerenciamento.server.service.SaidaService;
+import br.com.utfpr.gerenciamento.server.service.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
@@ -25,6 +22,8 @@ public class EmprestimoController extends CrudController<Emprestimo, Long> {
     private ItemService itemService;
     @Autowired
     private SaidaService saidaService;
+    @Autowired
+    private ReservaService reservaService;
 
     @Override
     protected CrudService<Emprestimo, Long> getService() {
@@ -34,6 +33,16 @@ public class EmprestimoController extends CrudController<Emprestimo, Long> {
     @Override
     public List<Emprestimo> findAll() {
         return this.emprestimoService.findAllEmprestimosAbertos();
+    }
+
+    @PostMapping("save-emprestimo")
+    public Emprestimo save(@RequestBody Emprestimo emprestimo,
+                           @RequestParam("idReserva") Long idReserva) {
+        preSave(emprestimo);
+        Emprestimo toReturn = getService().save(emprestimo);
+        postSave(emprestimo);
+        if (idReserva != 0) reservaService.finalizarReserva(idReserva);
+        return toReturn;
     }
 
     @PostMapping("save-devolucao")
@@ -75,6 +84,11 @@ public class EmprestimoController extends CrudController<Emprestimo, Long> {
             }
         });
         object.setEmprestimoDevolucaoItem(emprestimoService.createEmprestimoItemDevolucao(object.getEmprestimoItem()));
+
+        // caso tiver apenas materiais permanentes no empréstimo, será setado a data de devolução, para finalizar o empréstimo
+        if (object.getEmprestimoDevolucaoItem().size() <= 0) {
+            object.setDataDevolucao(LocalDate.now());
+        }
     }
 
     @Override

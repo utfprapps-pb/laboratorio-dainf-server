@@ -7,4 +7,6 @@ public interface EmailService {
     void enviar(Email email) throws Exception;
 
     String buildTemplateEmail(Object object, String nameTemplate);
+
+    void sendEmailWithTemplate(Object objectTemplate, String to, String titleEmail, String nameTemplate);
 }

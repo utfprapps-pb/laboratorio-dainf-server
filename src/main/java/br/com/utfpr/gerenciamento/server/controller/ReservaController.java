@@ -32,4 +32,9 @@ public class ReservaController extends CrudController<Reserva, Long> {
     public List<Reserva> findAllByIdItem(@PathVariable("idItem") Long idItem) {
         return reservaService.findAllByIdItem(idItem);
     }
+
+    @Override
+    public void postSave(Reserva object) {
+        reservaService.sendEmailConfirmacaoReserva(object);
+    }
 }

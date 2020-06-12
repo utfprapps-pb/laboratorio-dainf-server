@@ -1,6 +1,8 @@
 package br.com.utfpr.gerenciamento.server.repository.impl;
 
 import br.com.utfpr.gerenciamento.server.model.Emprestimo;
+import br.com.utfpr.gerenciamento.server.model.Permissao;
+import br.com.utfpr.gerenciamento.server.model.Usuario;
 import br.com.utfpr.gerenciamento.server.model.filter.EmprestimoFilter;
 import br.com.utfpr.gerenciamento.server.repository.EmprestimoFilterRepository;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -9,9 +11,10 @@ import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.stereotype.Repository;
 
+import java.util.Arrays;
+import java.util.HashSet;
 import java.util.List;
-
-// TODO: 15/05/2020 Necessário finalizar
+import java.util.Set;
 
 @Repository
 public class EmprestimoFilterRepositoryImpl implements EmprestimoFilterRepository {
@@ -88,8 +91,39 @@ public class EmprestimoFilterRepositoryImpl implements EmprestimoFilterRepositor
         if (where.toString().length() > 0) {
             sql = sql + " WHERE " + where.toString();
         }
-        return jdbcTemplate.query(sql, params, new BeanPropertyRowMapper<>(Emprestimo.class));
+        List<Emprestimo> toReturn = jdbcTemplate.query(sql, params, new BeanPropertyRowMapper<>(Emprestimo.class));
+        setUsuarioOnEmprestimo(toReturn);
+        return toReturn;
+    }
 
+    private void setUsuarioOnEmprestimo(List<Emprestimo> emprestimoList) {
+        emprestimoList.forEach(emprestimo -> {
+            String sql = "SELECT U.* FROM USUARIO U" +
+                    " LEFT JOIN EMPRESTIMO E" +
+                    " ON E.USUARIO_EMPRESTIMO_ID = U.ID" +
+                    " WHERE E.ID = :IDEMPRESTIMO";
+            MapSqlParameterSource params = new MapSqlParameterSource();
+            params.addValue("IDEMPRESTIMO", emprestimo.getId());
+            Usuario usuario = jdbcTemplate.queryForObject(sql, params, new BeanPropertyRowMapper<>(Usuario.class));
+            setPermissaoUsuario(usuario);
+            emprestimo.setUsuarioEmprestimo(usuario);
+        });
+    }
+
+    private void setPermissaoUsuario(Usuario usuario) {
+        String sql = "SELECT " +
+                " P.ID," +
+                " P.NOME" +
+                " FROM USUARIO_PERMISSOES U" +
+                " LEFT JOIN PERMISSAO P" +
+                " ON P.ID = U.PERMISSOES_ID" +
+                " WHERE U.USUARIO_ID = :IDUSUARIO";
+        MapSqlParameterSource params = new MapSqlParameterSource();
+        params.addValue("IDUSUARIO", usuario.getId());
+        List<Permissao> p = jdbcTemplate.query(sql, params, new BeanPropertyRowMapper<>(Permissao.class));
+        Set<Permissao> permissoes = new HashSet<>();
+        p.forEach(permissao -> permissoes.add(permissao));
+        usuario.setPermissoes(permissoes);
     }
 
     private void putAnd(StringBuilder where, MapSqlParameterSource params) {

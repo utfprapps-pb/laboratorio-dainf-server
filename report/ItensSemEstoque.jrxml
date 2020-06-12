@@ -9,14 +9,14 @@
 		<![CDATA[SELECT 
 	I.ID COD,
 	I.NOME,
-	I.PATRIMONIO,
-	I.SIORG,
+	TRUNC(I.PATRIMONIO) PATRIMONIO,
+	TRUNC(I.SIORG) SIORG,
 	I.QTDE_MINIMA,
 	G.DESCRICAO GRUPO
 FROM ITEM I
 	LEFT JOIN GRUPO G
 		ON G.ID = I.GRUPO_ID
---WHERE SALDO = 0]]>
+WHERE SALDO = 0]]>
 	</queryString>
 	<field name="cod" class="java.lang.Long">
 		<property name="com.jaspersoft.studio.field.label" value="cod"/>
@@ -46,7 +46,7 @@ FROM ITEM I
 		<band splitType="Stretch"/>
 	</background>
 	<title>
-		<band height="30" splitType="Stretch">
+		<band height="38" splitType="Stretch">
 			<textField>
 				<reportElement x="0" y="0" width="550" height="30" uuid="279cde8c-a5ac-48dc-8f3a-b9bd700f5a57">
 					<property name="com.jaspersoft.studio.unit.width" value="px"/>
@@ -64,11 +64,8 @@ FROM ITEM I
 			</textField>
 		</band>
 	</title>
-	<pageHeader>
-		<band height="35" splitType="Stretch"/>
-	</pageHeader>
 	<columnHeader>
-		<band height="27" splitType="Stretch">
+		<band height="34" splitType="Stretch">
 			<staticText>
 				<reportElement x="0" y="0" width="50" height="27" uuid="69bb22db-39c0-4f72-bb62-0ede5738c88f">
 					<property name="com.jaspersoft.studio.spreadsheet.connectionID" value="6dc8dba9-afbd-4068-bb44-0bd611474a8e"/>
@@ -95,7 +92,7 @@ FROM ITEM I
 				<textElement textAlignment="Left" verticalAlignment="Middle">
 					<font size="14" isBold="true"/>
 				</textElement>
-				<text><![CDATA[Patrimonio]]></text>
+				<text><![CDATA[Patrimônio]]></text>
 			</staticText>
 			<staticText>
 				<reportElement x="333" y="0" width="100" height="27" uuid="66dc2eed-7d10-4c42-8176-9eda93cad053">
@@ -166,28 +163,18 @@ FROM ITEM I
 			</textField>
 		</band>
 	</detail>
-	<columnFooter>
-		<band height="45" splitType="Stretch"/>
-	</columnFooter>
 	<pageFooter>
 		<band height="30" splitType="Stretch">
 			<textField>
-				<reportElement x="350" y="0" width="100" height="30" uuid="4677ff13-590d-47b7-98ae-24584648dba8"/>
-				<textElement textAlignment="Right"/>
-				<textFieldExpression><![CDATA["Página " + $V{PAGE_NUMBER}]]></textFieldExpression>
+				<reportElement x="350" y="0" width="200" height="30" uuid="e776fa17-97f2-49ab-8925-8852e26ef02c"/>
+				<textElement textAlignment="Right" verticalAlignment="Middle"/>
+				<textFieldExpression><![CDATA["Página " + $V{PAGE_NUMBER} + " de " + $V{PAGE_NUMBER}]]></textFieldExpression>
 			</textField>
-			<textField evaluationTime="Report">
-				<reportElement x="450" y="0" width="100" height="30" uuid="1e5f3bfc-1fd5-4fa5-a7ec-fde3773101fb"/>
-				<textElement textAlignment="Left"/>
-				<textFieldExpression><![CDATA[" de " + $V{PAGE_NUMBER}]]></textFieldExpression>
-			</textField>
-			<textField pattern="MMMMM dd, yyyy">
-				<reportElement x="0" y="0" width="100" height="30" uuid="1f2d16eb-6db6-4d30-b957-5d10807f9951"/>
+			<textField pattern="dd/MM/yyyy HH:mm:ss">
+				<reportElement x="0" y="0" width="100" height="30" uuid="3f8a2a0f-3d19-45b8-8606-f930a5a7f752"/>
+				<textElement verticalAlignment="Middle"/>
 				<textFieldExpression><![CDATA[new java.util.Date()]]></textFieldExpression>
 			</textField>
 		</band>
 	</pageFooter>
-	<summary>
-		<band height="42" splitType="Stretch"/>
-	</summary>
 </jasperReport>

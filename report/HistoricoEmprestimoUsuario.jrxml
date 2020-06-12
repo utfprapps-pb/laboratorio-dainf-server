@@ -47,7 +47,7 @@ ORDER BY E.ID]]>
 		<band splitType="Stretch"/>
 	</background>
 	<title>
-		<band height="30" splitType="Stretch">
+		<band height="37" splitType="Stretch">
 			<textField>
 				<reportElement x="0" y="0" width="550" height="30" uuid="1df547bb-1ef6-4120-9f26-32e1c3150fce">
 					<property name="com.jaspersoft.studio.unit.width" value="px"/>
@@ -65,11 +65,8 @@ ORDER BY E.ID]]>
 			</textField>
 		</band>
 	</title>
-	<pageHeader>
-		<band height="35" splitType="Stretch"/>
-	</pageHeader>
 	<columnHeader>
-		<band height="20" splitType="Stretch">
+		<band height="26" splitType="Stretch">
 			<staticText>
 				<reportElement x="0" y="0" width="50" height="20" uuid="2a046c3a-210e-4458-9ee8-b22b6193c300">
 					<property name="com.jaspersoft.studio.spreadsheet.connectionID" value="73da70e0-693d-4733-87f8-06f7ee93b1e4"/>
@@ -128,7 +125,7 @@ ORDER BY E.ID]]>
 				</textElement>
 				<textFieldExpression><![CDATA[$F{cod}]]></textFieldExpression>
 			</textField>
-			<textField>
+			<textField pattern="dd/MM/yyyy">
 				<reportElement x="51" y="0" width="129" height="30" uuid="789bf770-90a8-437e-be34-fd0d4de9de07">
 					<property name="com.jaspersoft.studio.spreadsheet.connectionID" value="5f967a09-7cfa-4b6a-86d4-fae69ef4cd73"/>
 				</reportElement>
@@ -137,7 +134,7 @@ ORDER BY E.ID]]>
 				</textElement>
 				<textFieldExpression><![CDATA[$F{data_emprestimo}]]></textFieldExpression>
 			</textField>
-			<textField>
+			<textField pattern="dd/MM/yyyy">
 				<reportElement x="186" y="0" width="138" height="30" uuid="9e3a2ee3-bfab-4d9d-ac16-a357fa64cb53">
 					<property name="com.jaspersoft.studio.spreadsheet.connectionID" value="9a94836d-1043-4110-bdc4-8e0a36b3c9d6"/>
 				</reportElement>
@@ -155,7 +152,7 @@ ORDER BY E.ID]]>
 				</textElement>
 				<textFieldExpression><![CDATA[$F{situacao}]]></textFieldExpression>
 			</textField>
-			<textField isBlankWhenNull="true">
+			<textField pattern="dd/MM/yyyy" isBlankWhenNull="true">
 				<reportElement x="330" y="0" width="110" height="30" uuid="014a7901-58c9-4d74-9ef5-2adcd490a2f5">
 					<property name="com.jaspersoft.studio.spreadsheet.connectionID" value="c57841ca-ff1e-4f40-93f5-8d3bf87086c0"/>
 				</reportElement>
@@ -166,28 +163,18 @@ ORDER BY E.ID]]>
 			</textField>
 		</band>
 	</detail>
-	<columnFooter>
-		<band height="45" splitType="Stretch"/>
-	</columnFooter>
 	<pageFooter>
 		<band height="30" splitType="Stretch">
 			<textField>
-				<reportElement x="350" y="0" width="100" height="30" uuid="b97d414d-e851-4228-ba79-c453ea7d01ed"/>
-				<textElement textAlignment="Right"/>
-				<textFieldExpression><![CDATA["Página " + $V{PAGE_NUMBER}]]></textFieldExpression>
+				<reportElement x="350" y="0" width="200" height="30" uuid="57adb3d4-b722-4141-8dab-694c91ad2c2d"/>
+				<textElement textAlignment="Right" verticalAlignment="Middle"/>
+				<textFieldExpression><![CDATA["Página " + $V{PAGE_NUMBER} + " de " + $V{PAGE_NUMBER}]]></textFieldExpression>
 			</textField>
-			<textField evaluationTime="Report">
-				<reportElement x="450" y="0" width="100" height="30" uuid="44a79e8d-eb61-4d07-91db-6ba9d52a8a9a"/>
-				<textElement textAlignment="Left"/>
-				<textFieldExpression><![CDATA[" de " + $V{PAGE_NUMBER}]]></textFieldExpression>
-			</textField>
-			<textField pattern="MMMMM dd, yyyy">
-				<reportElement x="0" y="0" width="100" height="30" uuid="2037a3c5-d6b5-421f-b3bf-55067cf9b5f2"/>
+			<textField pattern="dd/MM/yyyy HH:mm:ss">
+				<reportElement x="0" y="0" width="100" height="30" uuid="7595412e-d6f7-4244-b876-cb44cd8bc8bc"/>
+				<textElement verticalAlignment="Middle"/>
 				<textFieldExpression><![CDATA[new java.util.Date()]]></textFieldExpression>
 			</textField>
 		</band>
 	</pageFooter>
-	<summary>
-		<band height="42" splitType="Stretch"/>
-	</summary>
 </jasperReport>

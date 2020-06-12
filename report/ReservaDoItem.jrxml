@@ -1,0 +1,183 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Created with Jaspersoft Studio version 6.10.0.final using JasperReports Library version 6.10.0-unknown  -->
+<jasperReport xmlns="http://jasperreports.sourceforge.net/jasperreports" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://jasperreports.sourceforge.net/jasperreports http://jasperreports.sourceforge.net/xsd/jasperreport.xsd" name="ReservaDoItem" pageWidth="595" pageHeight="842" columnWidth="555" leftMargin="20" rightMargin="20" topMargin="20" bottomMargin="20" uuid="2834f128-85de-44dc-8ca2-71c81e6e9a71">
+	<property name="com.jaspersoft.studio.data.defaultdataadapter" value="AdapterTCC.xml"/>
+	<property name="com.jaspersoft.studio.data.sql.tables" value=""/>
+	<parameter name="ID_ITEM" class="java.lang.Integer"/>
+	<queryString>
+		<![CDATA[SELECT
+	R.ID COD,
+	R.DATA_RESERVA,
+	R.DATA_RETIRADA,
+	RI.QTDE,
+	U.NOME USUARIO_RESERVA,
+	I.NOME ITEM
+FROM RESERVA R
+	LEFT JOIN RESERVA_ITEM RI
+		ON RI.RESERVA_ID = R.ID
+	LEFT JOIN ITEM I
+		ON I.ID = RI.ITEM_ID
+	LEFT JOIN USUARIO U
+		ON U.ID = R.USUARIO_ID
+WHERE I.ID =  $P{ID_ITEM} 
+ORDER BY DATA_RETIRADA]]>
+	</queryString>
+	<field name="cod" class="java.lang.Long">
+		<property name="com.jaspersoft.studio.field.label" value="cod"/>
+		<property name="com.jaspersoft.studio.field.tree.path" value="reserva"/>
+	</field>
+	<field name="data_reserva" class="java.sql.Date">
+		<property name="com.jaspersoft.studio.field.label" value="data_reserva"/>
+		<property name="com.jaspersoft.studio.field.tree.path" value="reserva"/>
+	</field>
+	<field name="data_retirada" class="java.sql.Date">
+		<property name="com.jaspersoft.studio.field.label" value="data_retirada"/>
+		<property name="com.jaspersoft.studio.field.tree.path" value="reserva"/>
+	</field>
+	<field name="qtde" class="java.math.BigDecimal">
+		<property name="com.jaspersoft.studio.field.label" value="qtde"/>
+		<property name="com.jaspersoft.studio.field.tree.path" value="reserva_item"/>
+	</field>
+	<field name="usuario_reserva" class="java.lang.String">
+		<property name="com.jaspersoft.studio.field.label" value="usuario_reserva"/>
+		<property name="com.jaspersoft.studio.field.tree.path" value="usuario"/>
+	</field>
+	<field name="item" class="java.lang.String">
+		<property name="com.jaspersoft.studio.field.label" value="item"/>
+		<property name="com.jaspersoft.studio.field.tree.path" value="item"/>
+	</field>
+	<background>
+		<band splitType="Stretch"/>
+	</background>
+	<title>
+		<band height="38" splitType="Stretch">
+			<textField>
+				<reportElement x="0" y="0" width="550" height="30" uuid="2257ee0c-ac67-4cab-96d9-f469f7998147">
+					<property name="com.jaspersoft.studio.unit.width" value="px"/>
+				</reportElement>
+				<box padding="1">
+					<topPen lineWidth="1.0"/>
+					<leftPen lineWidth="1.0"/>
+					<bottomPen lineWidth="1.0"/>
+					<rightPen lineWidth="1.0"/>
+				</box>
+				<textElement textAlignment="Center" verticalAlignment="Middle">
+					<font size="16" isBold="true"/>
+				</textElement>
+				<textFieldExpression><![CDATA["RESERVAS DO ITEM: " + $F{item}]]></textFieldExpression>
+			</textField>
+		</band>
+	</title>
+	<columnHeader>
+		<band height="20" splitType="Stretch">
+			<staticText>
+				<reportElement x="0" y="0" width="40" height="20" uuid="335e4c51-789d-4521-a661-abb4338f3493">
+					<property name="com.jaspersoft.studio.spreadsheet.connectionID" value="d1f7ceb5-300c-4525-b15a-6ad64ebdfe69"/>
+				</reportElement>
+				<textElement textAlignment="Center" verticalAlignment="Middle">
+					<font size="14" isBold="true"/>
+				</textElement>
+				<text><![CDATA[Cod]]></text>
+			</staticText>
+			<staticText>
+				<reportElement x="40" y="0" width="100" height="20" uuid="026fcc16-c7a2-44c6-acc4-a62cd1b91f0f">
+					<property name="com.jaspersoft.studio.spreadsheet.connectionID" value="7c0e0776-cec6-4f9d-9511-68d3b798bb5d"/>
+				</reportElement>
+				<textElement textAlignment="Center" verticalAlignment="Middle">
+					<font size="14" isBold="true"/>
+				</textElement>
+				<text><![CDATA[Dt Reserva]]></text>
+			</staticText>
+			<staticText>
+				<reportElement x="140" y="0" width="100" height="20" uuid="34591bdd-6056-4745-bad2-a76eab31a133">
+					<property name="com.jaspersoft.studio.spreadsheet.connectionID" value="ba95944d-ab5f-444f-994b-bb574f83449f"/>
+				</reportElement>
+				<textElement textAlignment="Center" verticalAlignment="Middle">
+					<font size="14" isBold="true"/>
+				</textElement>
+				<text><![CDATA[Dt Retirada]]></text>
+			</staticText>
+			<staticText>
+				<reportElement x="240" y="0" width="222" height="20" uuid="7592517b-432f-4070-99a3-33f81a16609c">
+					<property name="com.jaspersoft.studio.spreadsheet.connectionID" value="16f603c3-024f-42da-adbc-4b2cda9b9d65"/>
+				</reportElement>
+				<textElement textAlignment="Center" verticalAlignment="Middle">
+					<font size="14" isBold="true"/>
+				</textElement>
+				<text><![CDATA[Usuário da Reserva]]></text>
+			</staticText>
+			<staticText>
+				<reportElement x="462" y="0" width="88" height="20" uuid="2eac963a-6b39-4988-b33b-5bb2c7d1ac79">
+					<property name="com.jaspersoft.studio.spreadsheet.connectionID" value="6aea2635-c17e-49ac-9f43-998979c7ac4c"/>
+				</reportElement>
+				<textElement textAlignment="Center" verticalAlignment="Middle">
+					<font size="14" isBold="true"/>
+				</textElement>
+				<text><![CDATA[Qtde]]></text>
+			</staticText>
+		</band>
+	</columnHeader>
+	<detail>
+		<band height="24" splitType="Stretch">
+			<textField>
+				<reportElement x="0" y="0" width="40" height="20" uuid="10a112fc-fa6d-4a30-95d9-fc671846e378">
+					<property name="com.jaspersoft.studio.spreadsheet.connectionID" value="d1f7ceb5-300c-4525-b15a-6ad64ebdfe69"/>
+				</reportElement>
+				<textElement textAlignment="Center" verticalAlignment="Middle">
+					<font size="12"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{cod}]]></textFieldExpression>
+			</textField>
+			<textField pattern="dd/MM/yyyy">
+				<reportElement x="40" y="0" width="100" height="20" uuid="9b2582da-dab1-4ee6-81d3-3c7ea4d915dd">
+					<property name="com.jaspersoft.studio.spreadsheet.connectionID" value="7c0e0776-cec6-4f9d-9511-68d3b798bb5d"/>
+				</reportElement>
+				<textElement textAlignment="Center" verticalAlignment="Middle">
+					<font size="12"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{data_reserva}]]></textFieldExpression>
+			</textField>
+			<textField pattern="dd/MM/yyyy">
+				<reportElement x="140" y="0" width="100" height="20" uuid="37746bd8-4964-485d-b845-1b291ad0b4f3">
+					<property name="com.jaspersoft.studio.spreadsheet.connectionID" value="ba95944d-ab5f-444f-994b-bb574f83449f"/>
+				</reportElement>
+				<textElement textAlignment="Center" verticalAlignment="Middle">
+					<font size="12"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{data_retirada}]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement x="240" y="0" width="222" height="20" uuid="eb7096fb-17b1-4512-a7bc-97926358ea7b">
+					<property name="com.jaspersoft.studio.spreadsheet.connectionID" value="16f603c3-024f-42da-adbc-4b2cda9b9d65"/>
+				</reportElement>
+				<textElement textAlignment="Center" verticalAlignment="Middle">
+					<font size="12"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{usuario_reserva}]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement x="462" y="0" width="88" height="20" uuid="6dd6856f-0e85-4f62-a9be-e6f0d1365e8a">
+					<property name="com.jaspersoft.studio.spreadsheet.connectionID" value="6aea2635-c17e-49ac-9f43-998979c7ac4c"/>
+				</reportElement>
+				<textElement textAlignment="Center" verticalAlignment="Middle">
+					<font size="12"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{qtde}]]></textFieldExpression>
+			</textField>
+		</band>
+	</detail>
+	<pageFooter>
+		<band height="30" splitType="Stretch">
+			<textField>
+				<reportElement x="350" y="0" width="200" height="30" uuid="4c4dfcd3-3338-4167-9871-5424489dc431"/>
+				<textElement textAlignment="Right" verticalAlignment="Middle"/>
+				<textFieldExpression><![CDATA["Página " + $V{PAGE_NUMBER} + " de " + $V{PAGE_NUMBER}]]></textFieldExpression>
+			</textField>
+			<textField pattern="dd/MM/yyyy HH:mm:ss">
+				<reportElement x="0" y="0" width="100" height="30" uuid="45e4d1a3-28cd-4e2d-a737-c79e2afd6117"/>
+				<textElement verticalAlignment="Middle"/>
+				<textFieldExpression><![CDATA[new java.util.Date()]]></textFieldExpression>
+			</textField>
+		</band>
+	</pageFooter>
+</jasperReport>

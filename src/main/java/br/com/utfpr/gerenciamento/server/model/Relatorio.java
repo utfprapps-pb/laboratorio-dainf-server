@@ -23,9 +23,6 @@ public class Relatorio {
     @Column(name = "nome", nullable = false)
     private String nome;
 
-//    @Column(name = "caminho_report")
-//    private String caminhoReport;
-
     @Column(name = "name_report")
     private String nameReport;
 

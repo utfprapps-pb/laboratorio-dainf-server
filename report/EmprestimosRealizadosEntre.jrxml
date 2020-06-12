@@ -44,7 +44,7 @@ WHERE E.DATA_EMPRESTIMO BETWEEN TO_DATE($P{DT_INI} ,'dd/MM/yyyy') AND TO_DATE( $
 		<band splitType="Stretch"/>
 	</background>
 	<title>
-		<band height="30" splitType="Stretch">
+		<band height="33" splitType="Stretch">
 			<textField>
 				<reportElement x="0" y="0" width="550" height="30" uuid="58ef092c-6ab5-47f7-94e8-1a05dbc3caf7">
 					<property name="com.jaspersoft.studio.unit.width" value="px"/>
@@ -62,11 +62,8 @@ WHERE E.DATA_EMPRESTIMO BETWEEN TO_DATE($P{DT_INI} ,'dd/MM/yyyy') AND TO_DATE( $
 			</textField>
 		</band>
 	</title>
-	<pageHeader>
-		<band height="35" splitType="Stretch"/>
-	</pageHeader>
 	<columnHeader>
-		<band height="18" splitType="Stretch">
+		<band height="23" splitType="Stretch">
 			<staticText>
 				<reportElement x="0" y="0" width="40" height="18" uuid="41e31133-99c0-4228-aa14-287a6621d73d">
 					<property name="com.jaspersoft.studio.spreadsheet.connectionID" value="1c044057-0c56-4792-8c5e-e8a4c629d866"/>
@@ -163,28 +160,18 @@ WHERE E.DATA_EMPRESTIMO BETWEEN TO_DATE($P{DT_INI} ,'dd/MM/yyyy') AND TO_DATE( $
 			</textField>
 		</band>
 	</detail>
-	<columnFooter>
-		<band height="45" splitType="Stretch"/>
-	</columnFooter>
 	<pageFooter>
-		<band height="54" splitType="Stretch">
-			<textField pattern="MMMMM dd, yyyy">
-				<reportElement x="0" y="0" width="100" height="30" uuid="6d223a2f-b950-4926-aa11-8006902c2e5a"/>
-				<textFieldExpression><![CDATA[new java.util.Date()]]></textFieldExpression>
-			</textField>
+		<band height="30" splitType="Stretch">
 			<textField>
-				<reportElement x="350" y="0" width="100" height="30" uuid="d4d1fe7f-e1c8-427f-8203-4d85cf8f2ec2"/>
-				<textElement textAlignment="Right"/>
-				<textFieldExpression><![CDATA["Página " + $V{PAGE_NUMBER}]]></textFieldExpression>
+				<reportElement x="350" y="0" width="200" height="30" uuid="08e03c38-bd11-4cf4-9e26-a1d78911a7c0"/>
+				<textElement textAlignment="Right" verticalAlignment="Middle"/>
+				<textFieldExpression><![CDATA["Página " + $V{PAGE_NUMBER} + " de " + $V{PAGE_NUMBER}]]></textFieldExpression>
 			</textField>
-			<textField evaluationTime="Report">
-				<reportElement x="450" y="0" width="100" height="30" uuid="5032004f-bff1-4630-81ba-385c29fcc16d"/>
-				<textElement textAlignment="Left"/>
-				<textFieldExpression><![CDATA[" de " + $V{PAGE_NUMBER}]]></textFieldExpression>
+			<textField pattern="dd/MM/yyyy HH:mm:ss">
+				<reportElement x="0" y="0" width="100" height="30" uuid="53adf8b5-b40c-416b-ba1a-018b170c74a1"/>
+				<textElement verticalAlignment="Middle"/>
+				<textFieldExpression><![CDATA[new java.util.Date()]]></textFieldExpression>
 			</textField>
 		</band>
 	</pageFooter>
-	<summary>
-		<band height="42" splitType="Stretch"/>
-	</summary>
 </jasperReport>
