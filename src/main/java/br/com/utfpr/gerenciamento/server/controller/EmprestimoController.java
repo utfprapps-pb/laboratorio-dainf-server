@@ -5,6 +5,7 @@ import br.com.utfpr.gerenciamento.server.model.Emprestimo;
 import br.com.utfpr.gerenciamento.server.model.EmprestimoDevolucaoItem;
 import br.com.utfpr.gerenciamento.server.model.filter.EmprestimoFilter;
 import br.com.utfpr.gerenciamento.server.service.*;
+import br.com.utfpr.gerenciamento.server.util.DateUtil;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
@@ -115,5 +116,11 @@ public class EmprestimoController extends CrudController<Emprestimo, Long> {
     @GetMapping("find-all-by-username/{username}")
     public List<Emprestimo> findAllByUsuarioEmprestimo(@PathVariable("username") String username) {
         return emprestimoService.findAllUsuarioEmprestimo(username);
+    }
+
+    @GetMapping("change-prazo-devolucao")
+    public void changePrazoDevolucao(@RequestParam("id") Long id,
+                                     @RequestParam("novaData") String novaData) {
+        emprestimoService.changePrazoDevolucao(id, DateUtil.parseStringToLocalDate(novaData));
     }
 }

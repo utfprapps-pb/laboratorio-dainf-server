@@ -76,7 +76,7 @@ public class RelatorioServiceImpl extends CrudServiceImpl<Relatorio, Long> imple
 
     @Override
     public JasperPrint generateReport(Long idRelatorio, List<RelatorioParamsValue> paramsRel) throws SQLException, JRException {
-        Relatorio relatorio = relatorioRepository.getOne(idRelatorio);
+        Relatorio relatorio = this.findOne(idRelatorio);
         Connection conn = jdbcTemplate.getDataSource().getConnection();
         String path = new File(FileUtil.getAbsolutePathRaiz() +
                 File.separator +

@@ -41,7 +41,7 @@ public class Usuario implements Serializable, UserDetails {
     @Column(name = "documento", length = 25)
     private String documento;
 
-    @Column(name = "password", length = 1024, nullable = false)
+    @Column(name = "password", length = 255, nullable = false)
     private String password;
 
     @Column(name = "email", length = 100, nullable = false)

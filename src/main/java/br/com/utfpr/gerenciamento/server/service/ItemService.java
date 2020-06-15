@@ -22,11 +22,13 @@ public interface ItemService extends CrudService<Item, Long> {
 
     Boolean saldoItemIsValid(BigDecimal saldoItem, BigDecimal qtdeVerificar);
 
-    void saveImages(MultipartHttpServletRequest files,
-                    HttpServletRequest request,
-                    Long idItem);
+    void saveImages(MultipartHttpServletRequest files, HttpServletRequest request, Long idItem);
 
     List<ItemImage> getImagesItem(Long idItem);
 
     void deleteImage(ItemImage image, Long idItem);
+
+    void sendNotificationItensAtingiramQtdeMin();
+
+    void copyImagesItem(List<ItemImage> itemImages, Long id);
 }

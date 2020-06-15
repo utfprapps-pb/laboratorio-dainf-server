@@ -46,7 +46,7 @@ public class Item {
     private String localizacao;
 
     @Enumerated(EnumType.STRING)
-    @Column(name = "tipo_item")
+    @Column(name = "tipo_item", length = 1)
     private TipoItem tipoItem;
 
     @Column(name = "saldo")

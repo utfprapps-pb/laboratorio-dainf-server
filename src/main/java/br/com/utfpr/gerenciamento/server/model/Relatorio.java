@@ -26,8 +26,8 @@ public class Relatorio {
     @Column(name = "name_report")
     private String nameReport;
 
-    @OneToMany(mappedBy = "relatorio",
-            cascade = {CascadeType.ALL}, orphanRemoval = true)
+    @OneToMany(mappedBy = "relatorio", cascade = {CascadeType.ALL},
+            orphanRemoval = true)
     @JsonManagedReference
     private List<RelatorioParams> paramsList;
 }

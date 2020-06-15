@@ -2,7 +2,6 @@ package br.com.utfpr.gerenciamento.server.service.impl;
 
 import br.com.utfpr.gerenciamento.server.ennumeation.StatusDevolucao;
 import br.com.utfpr.gerenciamento.server.ennumeation.TipoItem;
-import br.com.utfpr.gerenciamento.server.model.Email;
 import br.com.utfpr.gerenciamento.server.model.Emprestimo;
 import br.com.utfpr.gerenciamento.server.model.EmprestimoDevolucaoItem;
 import br.com.utfpr.gerenciamento.server.model.EmprestimoItem;
@@ -88,6 +87,18 @@ public class EmprestimoServiceImpl extends CrudServiceImpl<Emprestimo, Long> imp
     @Override
     public List<Emprestimo> findAllEmprestimosAbertos() {
         return emprestimoRepository.findAllByDataDevolucaoIsNullOrderById();
+    }
+
+    @Override
+    public void changePrazoDevolucao(Long idEmprestimo, LocalDate novaData) {
+        var emprestimo = this.findOne(idEmprestimo);
+        emprestimo.setPrazoDevolucao(novaData);
+        this.save(emprestimo);
+        emailService.sendEmailWithTemplate(
+                converterEmprestimoToObjectTemplate(emprestimo),
+                emprestimo.getUsuarioEmprestimo().getEmail(),
+                "Alteração do prazo de devolução",
+                "templateAlteracaoPrazoDevolucao");
     }
 
     @Override

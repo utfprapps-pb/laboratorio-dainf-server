@@ -17,10 +17,27 @@ public class ItemController extends CrudController<Item, Long> {
 
     @Autowired
     private ItemService itemService;
+    private List<ItemImage> imagesToCopy;
 
     @Override
     protected CrudService<Item, Long> getService() {
         return itemService;
+    }
+
+    @Override
+    public void preSave(Item object) {
+        if (object.getId() == null && object.getImageItem() != null && object.getImageItem().size() > 0) {
+            this.imagesToCopy = object.getImageItem();
+            object.setImageItem(null);
+        }
+    }
+
+    @Override
+    public void postSave(Item object) {
+        if (this.imagesToCopy != null) {
+            itemService.copyImagesItem(this.imagesToCopy, object.getId());
+        }
+        this.imagesToCopy = null;
     }
 
     @GetMapping("/complete")

@@ -55,23 +55,23 @@
 </head>
 <body>
 <div class="header">
-    <p class="headerTitulo">Confirmação de Empréstimo</p>
+    <p class="headerTitulo">Notificação do Sistema</p>
 </div>
 <div>
     <div class="article">
-        <p>Olá ${usuarioEmprestimo},</p>
+        <p>Olá,</p>
         <br/><br/>
-        <p>O prazo de devolução do empréstimo que você realizou no dia ${dtEmprestimo} vence em 3 dias (${dtPrazoDevolucao}).</p>
+        <p>Alguns itens atingiram o seu estoque mínimo.</p>
         <br/>
-        <p>Caso seja necessário aumentar o prazo de devolução, favor entrar em contato conosco.</p>
+        <p>Em anexo estão as informações dos respectivos itens.</p>
         <br/><br/>
         <p>Att,</p>
-        <p>${usuarioResponsavel}</p>
+        <p>Laboratório de Informática - UTFPR/PB</p>
     </div>
 </div>
 
 <footer class="footer">
-    <p class="footerP">Laboratório de Informática - UTFPR/PB </p>
+    <p class="footerP">Laboratório de Informática - UTFPR/PB</p>
 </footer>
 </body>
 </html>

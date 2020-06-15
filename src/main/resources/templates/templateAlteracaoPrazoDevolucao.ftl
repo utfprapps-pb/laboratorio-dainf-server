@@ -55,15 +55,15 @@
 </head>
 <body>
 <div class="header">
-    <p class="headerTitulo">Confirmação de Empréstimo</p>
+    <p class="headerTitulo">Confirmação da alteração do prazo de devolução do empréstimo</p>
 </div>
 <div>
     <div class="article">
         <p>Olá ${usuarioEmprestimo},</p>
         <br/><br/>
-        <p>O prazo de devolução do empréstimo que você realizou no dia ${dtEmprestimo} vence em 3 dias (${dtPrazoDevolucao}).</p>
+        <p>O seu empréstimo realizado no dia ${dtEmprestimo} recebeu um novo prazo de devolução, a nova data é ${dtPrazoDevolucao}.</p>
         <br/>
-        <p>Caso seja necessário aumentar o prazo de devolução, favor entrar em contato conosco.</p>
+        <p>Qualquer dúvida, entrar em contato conosco.</p>
         <br/><br/>
         <p>Att,</p>
         <p>${usuarioResponsavel}</p>

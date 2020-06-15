@@ -32,7 +32,8 @@ public class DashboardServiceImpl implements DashboardService {
         toReturn.setTotal(emprestimoList.size());
         toReturn.setEmAtraso((int) emprestimoList
                 .stream()
-                .filter(emprestimo -> emprestimo.getPrazoDevolucao().isBefore(LocalDate.now()))
+                .filter(emprestimo -> emprestimo.getPrazoDevolucao().isBefore(LocalDate.now())
+                        && emprestimo.getDataDevolucao() == null)
                 .count());
         toReturn.setEmAndamento((int) emprestimoList.stream()
                 .filter(emprestimo -> emprestimo.getDataDevolucao() == null

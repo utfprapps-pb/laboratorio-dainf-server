@@ -23,7 +23,7 @@ public class Estado {
     @Column(name = "nome")
     private String nome;
 
-    @Column(name = "uf")
+    @Column(name = "uf", length = 2)
     private String uf;
 
     @ManyToOne

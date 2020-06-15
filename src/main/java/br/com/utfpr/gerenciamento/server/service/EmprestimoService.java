@@ -26,6 +26,8 @@ public interface EmprestimoService extends CrudService<Emprestimo, Long> {
 
     List<Emprestimo> findAllEmprestimosAbertos();
 
+    void changePrazoDevolucao(Long idEmprestimo, LocalDate novaData);
+
     void sendEmailConfirmacaoEmprestimo(Emprestimo emprestimo);
 
     void sendEmailConfirmacaoDevolucao(Emprestimo emprestimo);

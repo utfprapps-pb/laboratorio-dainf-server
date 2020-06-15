@@ -1,11 +1,14 @@
 package br.com.utfpr.gerenciamento.server.service.impl;
 
+import br.com.utfpr.gerenciamento.server.model.Email;
 import br.com.utfpr.gerenciamento.server.model.Item;
 import br.com.utfpr.gerenciamento.server.model.ItemImage;
-import br.com.utfpr.gerenciamento.server.repository.ItemImageRepository;
 import br.com.utfpr.gerenciamento.server.repository.ItemRepository;
+import br.com.utfpr.gerenciamento.server.service.EmailService;
 import br.com.utfpr.gerenciamento.server.service.ItemService;
+import br.com.utfpr.gerenciamento.server.service.RelatorioService;
 import br.com.utfpr.gerenciamento.server.util.FileUtil;
+import net.sf.jasperreports.engine.JasperExportManager;
 import org.apache.commons.codec.binary.Base64;
 import org.apache.commons.io.IOUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -18,11 +21,11 @@ import javax.servlet.http.HttpServletRequest;
 import java.io.*;
 import java.math.BigDecimal;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Optional;
 
 @Service
 public class ItemServiceImpl extends CrudServiceImpl<Item, Long> implements ItemService {
@@ -30,7 +33,9 @@ public class ItemServiceImpl extends CrudServiceImpl<Item, Long> implements Item
     @Autowired
     private ItemRepository itemRepository;
     @Autowired
-    private ItemImageRepository itemImageRepository;
+    private EmailService emailService;
+    @Autowired
+    private RelatorioService relatorioService;
 
     @Override
     protected JpaRepository<Item, Long> getRepository() {
@@ -154,6 +159,51 @@ public class ItemServiceImpl extends CrudServiceImpl<Item, Long> implements Item
         Item i = this.findOne(idItem);
         i.getImageItem().removeIf(itemImage -> itemImage.getId().equals(image.getId()));
         this.save(i);
+    }
+
+    @Override
+    public void sendNotificationItensAtingiramQtdeMin() {
+        if (itemRepository.countAllByQtdeMinimaIsLessThanSaldo() > 0) {
+            try {
+                byte[] report = JasperExportManager.exportReportToPdf(
+                        relatorioService.generateReport(6L, null)
+                );
+                Email email = new Email()
+                        .setPara("dainf.labs@gmail.com")
+                        .setDe("dainf.labs@gmail.com")
+                        .setTitulo("Notificação: Itens que atingiram o estoque mínimo")
+                        .setConteudo(emailService.buildTemplateEmail(null, "templateNotificacaoEstoqueMinimo"))
+                        .addFile("itensAtingiramEstoqueMin.pdf", report);
+                emailService.enviar(email);
+
+            } catch (Exception ex) {
+                ex.printStackTrace();
+            }
+        }
+    }
+
+    @Override
+    public void copyImagesItem(List<ItemImage> itemImages, Long id) {
+        var item = this.findOne(id);
+        List<ItemImage> toReturn = new ArrayList<>();
+        itemImages.stream().forEach(itemImage -> {
+            File by = new File(itemImage.getCaminhoImage() + File.separator + itemImage.getNameImage());
+            String extensao = by.getAbsolutePath().substring(by.getAbsolutePath().lastIndexOf("."));
+            String fileName = id.toString() + "_" + LocalDateTime.now().format(DateTimeFormatter.ofPattern("ddMMyyyy'_'HHmm'_'SSSSSS")) + extensao;
+            File to = new File(itemImage.getCaminhoImage() + File.separator + fileName);
+            try {
+                Files.copy(by.toPath(), to.toPath());
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+            ItemImage image = new ItemImage();
+            image.setCaminhoImage(itemImage.getCaminhoImage());
+            image.setNameImage(fileName);
+            image.setItem(item);
+            toReturn.add(image);
+        });
+        item.setImageItem(toReturn);
+        this.save(item);
     }
 
     private static String encodeFileToBase64Binary(String fileName) throws IOException {

@@ -18,4 +18,7 @@ public interface ItemRepository extends JpaRepository<Item, Long> {
     List<Item> findByNomeLikeIgnoreCaseAndSaldoIsGreaterThan(String query, BigDecimal saldo);
 
     List<Item> findByGrupoId(Long idGrupo);
+
+    @Query("SELECT COUNT(i.id) FROM Item i WHERE i.saldo <= i.qtdeMinima")
+    long countAllByQtdeMinimaIsLessThanSaldo();
 }

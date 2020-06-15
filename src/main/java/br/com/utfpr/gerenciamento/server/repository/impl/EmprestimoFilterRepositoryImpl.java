@@ -91,6 +91,7 @@ public class EmprestimoFilterRepositoryImpl implements EmprestimoFilterRepositor
         if (where.toString().length() > 0) {
             sql = sql + " WHERE " + where.toString();
         }
+        sql = sql + " ORDER BY E.ID";
         List<Emprestimo> toReturn = jdbcTemplate.query(sql, params, new BeanPropertyRowMapper<>(Emprestimo.class));
         setUsuarioOnEmprestimo(toReturn);
         return toReturn;
