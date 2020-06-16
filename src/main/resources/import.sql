@@ -8,11 +8,11 @@ INSERT INTO PERMISSAO (ID, NOME) values(4, 'ROLE_ALUNO');
 INSERT INTO USUARIO (NOME, USERNAME, PASSWORD, EMAIL, DOCUMENTO) VALUES ('Gustavo Henrique Zaffani', 'gustavo', '$2a$10$kcDpG6r2c0karXuOK114Hejk7iguH.tFswB1aenCydA6bmzixjCCC', 'gzaffani@alunos.utfpr.edu.br', '1234');
 INSERT INTO USUARIO (NOME, USERNAME, PASSWORD, EMAIL, DOCUMENTO) VALUES ('Thiago Zaffani', 'thiago', '$2a$10$kcDpG6r2c0karXuOK114Hejk7iguH.tFswB1aenCydA6bmzixjCCC', 'gzaffani@alunos.utfpr.edu.br', '2345');
 INSERT INTO USUARIO (NOME, USERNAME, PASSWORD, EMAIL, DOCUMENTO) VALUES ('Vinicius Pegorini', 'vinicius', '$2a$10$kcDpG6r2c0karXuOK114Hejk7iguH.tFswB1aenCydA6bmzixjCCC', 'gzaffani@alunos.utfpr.edu.br', '3456');
-INSERT INTO USUARIO (NOME, USERNAME, PASSWORD, EMAIL, DOCUMENTO) VALUES ('João da Silva', 'joao', '$2a$10$kcDpG6r2c0karXuOK114Hejk7iguH.tFswB1aenCydA6bmzixjCCC', 'amd@intel.utfpr.edu.br', '4567');
-INSERT INTO USUARIO (NOME, USERNAME, PASSWORD, EMAIL, DOCUMENTO) VALUES ('Antenor de Souza', 'antenor', '$2a$10$kcDpG6r2c0karXuOK114Hejk7iguH.tFswB1aenCydA6bmzixjCCC', 'amd@intel.utfpr.edu.br', '4567');
-INSERT INTO USUARIO (NOME, USERNAME, PASSWORD, EMAIL, DOCUMENTO) VALUES ('Mainara Lorencena', 'nara', '$2a$10$kcDpG6r2c0karXuOK114Hejk7iguH.tFswB1aenCydA6bmzixjCCC', 'amd@intel.utfpr.edu.br', '4567');
-INSERT INTO USUARIO (NOME, USERNAME, PASSWORD, EMAIL, DOCUMENTO) VALUES ('Raul Cardoso', 'raul', '$2a$10$kcDpG6r2c0karXuOK114Hejk7iguH.tFswB1aenCydA6bmzixjCCC', 'amd@intel.utfpr.edu.br', '4567');
-INSERT INTO USUARIO (NOME, USERNAME, PASSWORD, EMAIL, DOCUMENTO) VALUES ('Joana de Oliveira', 'joana', '$2a$10$kcDpG6r2c0karXuOK114Hejk7iguH.tFswB1aenCydA6bmzixjCCC', 'amd@intel.utfpr.edu.br', '4567');
+INSERT INTO USUARIO (NOME, USERNAME, PASSWORD, EMAIL, DOCUMENTO) VALUES ('João da Silva', 'joao', '$2a$10$kcDpG6r2c0karXuOK114Hejk7iguH.tFswB1aenCydA6bmzixjCCC', 'gzaffani@alunos.utfpr.edu.br', '4567');
+INSERT INTO USUARIO (NOME, USERNAME, PASSWORD, EMAIL, DOCUMENTO) VALUES ('Antenor de Souza', 'antenor', '$2a$10$kcDpG6r2c0karXuOK114Hejk7iguH.tFswB1aenCydA6bmzixjCCC', 'gzaffani@alunos.utfpr.edu.br', '4567');
+INSERT INTO USUARIO (NOME, USERNAME, PASSWORD, EMAIL, DOCUMENTO) VALUES ('Mainara Lorencena', 'nara', '$2a$10$kcDpG6r2c0karXuOK114Hejk7iguH.tFswB1aenCydA6bmzixjCCC', 'gzaffani@alunos.utfpr.edu.br', '4567');
+INSERT INTO USUARIO (NOME, USERNAME, PASSWORD, EMAIL, DOCUMENTO) VALUES ('Raul Cardoso', 'raul', '$2a$10$kcDpG6r2c0karXuOK114Hejk7iguH.tFswB1aenCydA6bmzixjCCC', 'gzaffani@alunos.utfpr.edu.br', '4567');
+INSERT INTO USUARIO (NOME, USERNAME, PASSWORD, EMAIL, DOCUMENTO) VALUES ('Joana de Oliveira', 'joana', '$2a$10$kcDpG6r2c0karXuOK114Hejk7iguH.tFswB1aenCydA6bmzixjCCC', 'gzaffani@alunos.utfpr.edu.br', '4567');
 INSERT INTO USUARIO (NOME, USERNAME, PASSWORD, EMAIL, DOCUMENTO) VALUES ('Administrador', 'adm', '$2a$10$kcDpG6r2c0karXuOK114Hejk7iguH.tFswB1aenCydA6bmzixjCCC', 'gzaffani@alunos.utfpr.edu.br', '3456');
 INSERT INTO USUARIO (NOME, USERNAME, PASSWORD, EMAIL, DOCUMENTO) VALUES ('Fábio Favarim', 'favarim', '$2a$10$kcDpG6r2c0karXuOK114Hejk7iguH.tFswB1aenCydA6bmzixjCCC', 'gzaffani@alunos.utfpr.edu.br', '3456');
 

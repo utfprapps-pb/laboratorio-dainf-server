@@ -71,7 +71,7 @@
 </div>
 
 <footer class="footer">
-    <p class="footerP">Laboratório de Informática - UTFPR/PB </p>
+    <p class="footerP">Laboratório de Informática - UTFPR/PB</p>
 </footer>
 </body>
 </html>
