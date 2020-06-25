@@ -56,6 +56,9 @@ public class Item {
     @JoinColumn(name = "grupo_id", referencedColumnName = "id")
     private Grupo grupo;
 
+    @Column(name = "descricao", length = 4000)
+    private String descricao;
+
     @OneToMany(mappedBy = "item",
             cascade = {CascadeType.ALL}, orphanRemoval = true)
     @JsonManagedReference
