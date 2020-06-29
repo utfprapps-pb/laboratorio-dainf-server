@@ -3,6 +3,7 @@ package br.com.utfpr.gerenciamento.server.security;
 import br.com.utfpr.gerenciamento.server.service.impl.UsuarioServiceImpl;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
 import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
 import org.springframework.security.config.annotation.method.configuration.EnableGlobalMethodSecurity;
@@ -35,15 +36,15 @@ public class WebSecurity extends WebSecurityConfigurerAdapter {
                         "/saida/**").hasAnyRole("LABORATORISTA", "ADMINISTRADOR")
                 .antMatchers(HttpMethod.POST, "/item/**").hasAnyRole("LABORATORISTA", "ADMINISTRADOR")
                 .antMatchers(HttpMethod.DELETE, "/item/**").hasAnyRole("LABORATORISTA", "ADMINISTRADOR")
-                .antMatchers(HttpMethod.POST, "/usuario/**").hasRole("ADMINISTRADOR")
-                .antMatchers(HttpMethod.DELETE, "/usuario/**").hasRole("ADMINISTRADOR")
+//                .antMatchers(HttpMethod.POST, "/usuario/**").hasRole("ADMINISTRADOR")
+//                .antMatchers(HttpMethod.DELETE, "/usuario/**").hasRole("ADMINISTRADOR")
                 .antMatchers(HttpMethod.POST, "/emprestimo/**").hasAnyRole("LABORATORISTA", "ADMINISTRADOR")
                 .antMatchers(HttpMethod.DELETE, "/emprestimo/**").hasAnyRole("LABORATORISTA", "ADMINISTRADOR")
-                .antMatchers("/usuario/user-info").permitAll()
+                .antMatchers(HttpMethod.GET, "/usuario/user-info").permitAll()
                 .anyRequest().authenticated()
                 .and()
-                .addFilter(new JWTAuthenticationFilter(authenticationManager()))
-                .addFilter(new JWTAuthorizationFilter(authenticationManager()))
+                .addFilter(new JWTAuthenticationFilter(authenticationManager(), getApplicationContext()))
+                .addFilter(new JWTAuthorizationFilter(authenticationManager(), getApplicationContext()))
                 .sessionManagement().sessionCreationPolicy(SessionCreationPolicy.STATELESS);
     }
 

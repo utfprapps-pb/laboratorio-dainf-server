@@ -13,7 +13,7 @@ import java.io.Serializable;
 @Entity
 @NoArgsConstructor
 @AllArgsConstructor
-@EqualsAndHashCode(of = {"id"})
+@EqualsAndHashCode(of = {"id", "nome"})
 @Table(name = "permissao")
 public class Permissao implements Serializable, GrantedAuthority {
 
