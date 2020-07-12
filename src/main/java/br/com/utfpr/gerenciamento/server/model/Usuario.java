@@ -47,6 +47,9 @@ public class Usuario implements Serializable, UserDetails {
     @Column(name = "email", length = 100, nullable = false)
     private String email;
 
+    @Column(name = "telefone", length = 15, nullable = false)
+    private String telefone;
+
     @ManyToMany(cascade = {CascadeType.MERGE, CascadeType.PERSIST},
             fetch = FetchType.EAGER)
     private Set<Permissao> permissoes;

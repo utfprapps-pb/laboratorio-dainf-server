@@ -41,8 +41,14 @@ public class Fornecedor {
     @Column(name = "endereco", length = 100)
     private String endereco;
 
-    @Column(name = "observacao")
+    @Column(name = "observacao", length = 2000)
     private String observacao;
+
+    @Column(name = "email")
+    private String email;
+
+    @Column(name = "telefone", length = 15)
+    private String telefone;
 
     @NotNull(message = "O campo 'Cidade' deve ser selecionado.")
     @ManyToOne
