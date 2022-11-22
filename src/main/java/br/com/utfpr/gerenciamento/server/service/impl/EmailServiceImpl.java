@@ -54,7 +54,7 @@ public class EmailServiceImpl implements EmailService {
                 }
 
                 javaMailSender.setUsername("dainf.labs@gmail.com");
-                javaMailSender.setPassword("tcc-mail@2020");
+                javaMailSender.setPassword("liogyxxdpfbzxqxn"); //"tcc-mail@2020"
                 javaMailSender.send(message);
             } catch (Exception e) {
                 e.printStackTrace();

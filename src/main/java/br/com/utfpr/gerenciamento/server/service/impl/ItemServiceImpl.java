@@ -46,19 +46,19 @@ public class ItemServiceImpl extends CrudServiceImpl<Item, Long> implements Item
     public List<Item> itemComplete(String query, Boolean hasEstoque) {
         BigDecimal zero = new BigDecimal(0);
         if ("".equalsIgnoreCase(query)) {
-            if (hasEstoque) return itemRepository.findAllBySaldoIsGreaterThan(zero);
-            else return itemRepository.findAll();
+            if (hasEstoque) return itemRepository.findAllBySaldoIsGreaterThanOrderByNome(zero);
+            else return itemRepository.findAllByOrderByNome();
         } else {
             if (hasEstoque) {
                 return itemRepository
-                        .findByNomeLikeIgnoreCaseAndSaldoIsGreaterThan("%" + query + "%", zero);
-            } else return itemRepository.findByNomeLikeIgnoreCase("%" + query + "%");
+                        .findByNomeLikeIgnoreCaseAndSaldoIsGreaterThanOrderByNome("%" + query + "%", zero);
+            } else return itemRepository.findByNomeLikeIgnoreCaseOrderByNome("%" + query + "%");
         }
     }
 
     @Override
     public List<Item> findByGrupo(Long id) {
-        return itemRepository.findByGrupoId(id);
+        return itemRepository.findByGrupoIdOrderByNome(id);
     }
 
     @Override
@@ -101,7 +101,9 @@ public class ItemServiceImpl extends CrudServiceImpl<Item, Long> implements Item
         Item item = this.findOne(idItem);
         var anexos = files.getFiles("anexos[]");
 
-        File dir = new File(FileUtil.getAbsolutePathRaiz() + File.separator + "images-item");
+        // File dir = new File(FileUtil.getAbsolutePathRaiz() + File.separator + "images-item");
+        File dir = new File("/opt/uploads" + File.separator + "images-item");
+
         if (!dir.exists()) {
             dir.mkdirs();
         }

@@ -55,6 +55,8 @@ public class SaidaServiceImpl extends CrudServiceImpl<Saida, Long> implements Sa
     @Override
     public void deleteSaidaByEmprestimo(Long idEmprestimo) {
         var saidaToDelete = saidaRepository.findByIdEmprestimo(idEmprestimo);
-        saidaRepository.delete(saidaToDelete);
+        if (saidaToDelete  != null) {
+            saidaRepository.delete(saidaToDelete);
+        }
     }
 }

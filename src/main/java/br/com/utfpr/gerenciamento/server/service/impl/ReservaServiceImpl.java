@@ -11,6 +11,8 @@ import br.com.utfpr.gerenciamento.server.service.UsuarioService;
 import br.com.utfpr.gerenciamento.server.util.DateUtil;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -31,8 +33,15 @@ public class ReservaServiceImpl extends CrudServiceImpl<Reserva, Long> implement
     }
 
     @Override
+    public Reserva save(Reserva reserva) {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        reserva.setUsuario(usuarioService.findByUsername((String) SecurityContextHolder.getContext().getAuthentication().getPrincipal()));
+        return super.save(reserva);
+    }
+
+    @Override
     public List<Reserva> findAllByUsername(String username) {
-        var usuario = usuarioService.findByUsername(username);
+        var usuario = usuarioService.findByUsername((String) SecurityContextHolder.getContext().getAuthentication().getPrincipal());
         return reservaRepository.findAllByUsuario(usuario);
     }
 

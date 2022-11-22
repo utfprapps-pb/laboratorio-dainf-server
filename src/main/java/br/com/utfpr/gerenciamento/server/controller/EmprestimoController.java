@@ -48,7 +48,14 @@ public class EmprestimoController extends CrudController<Emprestimo, Long> {
 
     @PostMapping("save-devolucao")
     public Emprestimo saveDevolucao(@RequestBody Emprestimo emprestimo) {
-        emprestimo.setDataDevolucao(LocalDate.now());
+
+        boolean isPendente = emprestimo.getEmprestimoDevolucaoItem()
+                .stream()
+                .anyMatch(empDevItem -> empDevItem.getStatusDevolucao().equals(StatusDevolucao.P));
+        if (!isPendente) {
+            emprestimo.setDataDevolucao(LocalDate.now());
+        }
+
         Emprestimo toReturn = emprestimoService.save(emprestimo);
         emprestimo.getEmprestimoDevolucaoItem()
                 .stream()

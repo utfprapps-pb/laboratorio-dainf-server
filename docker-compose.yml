@@ -1,0 +1,18 @@
+version: "3.8"
+services:
+    labs-api:
+        image: labs-api
+        container_name: labs-api
+        build:
+            context: ./
+            dockerfile: Dockerfile
+        ports:
+         - "8099:8099"
+        volumes:
+         - ./upload:/opt/uploads
+        restart: always
+        networks:
+         - apps
+networks:
+  apps:
+    name: apps

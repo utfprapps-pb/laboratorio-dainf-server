@@ -11,14 +11,17 @@ import java.util.List;
 
 public interface ItemRepository extends JpaRepository<Item, Long> {
 
-    List<Item> findAllBySaldoIsGreaterThan(BigDecimal saldo);
+    List<Item> findAllBySaldoIsGreaterThanOrderByNome(BigDecimal saldo);
 
-    List<Item> findByNomeLikeIgnoreCase(String query);
+    List<Item> findByNomeLikeIgnoreCaseOrderByNome(String query);
 
-    List<Item> findByNomeLikeIgnoreCaseAndSaldoIsGreaterThan(String query, BigDecimal saldo);
+    List<Item> findByNomeLikeIgnoreCaseAndSaldoIsGreaterThanOrderByNome(String query, BigDecimal saldo);
 
-    List<Item> findByGrupoId(Long idGrupo);
+    List<Item> findByGrupoIdOrderByNome(Long idGrupo);
 
     @Query("SELECT COUNT(i.id) FROM Item i WHERE i.saldo <= i.qtdeMinima")
     long countAllByQtdeMinimaIsLessThanSaldo();
+
+
+    List<Item> findAllByOrderByNome();
 }
