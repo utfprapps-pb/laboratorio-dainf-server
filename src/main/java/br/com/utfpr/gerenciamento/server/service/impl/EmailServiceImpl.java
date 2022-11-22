@@ -5,6 +5,7 @@ import br.com.utfpr.gerenciamento.server.service.EmailService;
 import freemarker.template.Configuration;
 import freemarker.template.Template;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.ByteArrayResource;
 import org.springframework.mail.javamail.JavaMailSenderImpl;
 import org.springframework.mail.javamail.MimeMessageHelper;
@@ -16,6 +17,11 @@ import java.util.Map;
 
 @Service
 public class EmailServiceImpl implements EmailService {
+
+    @Value("${utfpr.email.address}")
+    private String emailAddress;
+    @Value("${utfpr.email.password}")
+    private String emailPassword;
 
     private final JavaMailSenderImpl javaMailSender;
     private final Configuration freemarkerConfiguration;
@@ -53,8 +59,8 @@ public class EmailServiceImpl implements EmailService {
                     helper.addAttachment(entry.getKey(), new ByteArrayResource(entry.getValue()));
                 }
 
-                javaMailSender.setUsername("dainf.labs@gmail.com");
-                javaMailSender.setPassword("liogyxxdpfbzxqxn"); //"tcc-mail@2020"
+                javaMailSender.setUsername(emailAddress);
+                javaMailSender.setPassword(emailPassword);
                 javaMailSender.send(message);
             } catch (Exception e) {
                 e.printStackTrace();
@@ -79,7 +85,7 @@ public class EmailServiceImpl implements EmailService {
     public void sendEmailWithTemplate(Object objectTemplate, String to, String titleEmail, String nameTemplate) {
         Email email = new Email()
                 .setPara(to)
-                .setDe("dainf.labs@gmail.com")
+                .setDe(emailAddress)
                 .setTitulo(titleEmail)
                 .setConteudo(this.buildTemplateEmail(objectTemplate, nameTemplate));
         try {
