@@ -5,13 +5,16 @@ import br.com.utfpr.gerenciamento.server.service.impl.UsuarioServiceImpl;
 import com.auth0.jwt.JWT;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.context.ApplicationContext;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.context.properties.ConfigurationProperties;
+import org.springframework.core.env.Environment;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
+import javax.annotation.PostConstruct;
 import javax.servlet.FilterChain;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
@@ -23,14 +26,18 @@ import static com.auth0.jwt.algorithms.Algorithm.HMAC512;
 
 public class JWTAuthenticationFilter extends UsernamePasswordAuthenticationFilter {
 
-    private AuthenticationManager authenticationManager;
-    @Autowired
-    private UsuarioServiceImpl usuarioService;
+    private final AuthenticationManager authenticationManager;
+    private final UsuarioServiceImpl usuarioService;
+    private String tokenSecret;
+    private  Environment env;
 
     public JWTAuthenticationFilter(AuthenticationManager authenticationManager,
-                                   ApplicationContext ctx) {
+                                   UsuarioServiceImpl usuarioService,
+                                   Environment env) {
         this.authenticationManager = authenticationManager;
-        this.usuarioService = ctx.getBean(UsuarioServiceImpl.class);
+        this.usuarioService = usuarioService;
+        this.env = env;
+        this.tokenSecret = this.env.getProperty("utfpr.token.secret");
     }
 
     @Override
@@ -59,7 +66,7 @@ public class JWTAuthenticationFilter extends UsernamePasswordAuthenticationFilte
         String token = JWT.create()
                 .withSubject(auth.getName())
                 .withExpiresAt(new Date(System.currentTimeMillis() + SecurityConstants.EXPIRATION_TIME))
-                .sign(HMAC512(SecurityConstants.SECRET.getBytes()));
+                .sign(HMAC512(tokenSecret));
         res.getWriter().write(token);
     }
 }

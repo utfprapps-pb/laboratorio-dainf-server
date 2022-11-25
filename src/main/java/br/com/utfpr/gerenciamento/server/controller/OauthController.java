@@ -41,8 +41,8 @@ public class OauthController {
     @Autowired
     PasswordEncoder passwordEncoder;
 
-    @Autowired
-    AuthenticationManager authenticationManager;;
+
+    AuthenticationManager authenticationManager;
 
     @Autowired
     UsuarioService usuarioService;
@@ -76,7 +76,7 @@ public class OauthController {
         String jwt = JWT.create()
                 .withSubject(usuario.getEmail())
                 .withExpiresAt(new Date(System.currentTimeMillis() + SecurityConstants.EXPIRATION_TIME))
-                .sign(HMAC512(SecurityConstants.SECRET.getBytes()));
+                .sign(HMAC512(""));
         TokenDto tokenDto = new TokenDto();
         tokenDto.setValue(jwt);
         return tokenDto;

@@ -1,9 +1,13 @@
 package br.com.utfpr.gerenciamento.server.security;
 
+import br.com.utfpr.gerenciamento.server.service.UsuarioService;
 import br.com.utfpr.gerenciamento.server.service.impl.UsuarioServiceImpl;
+import lombok.SneakyThrows;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.core.env.Environment;
 import org.springframework.http.HttpMethod;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
@@ -15,17 +19,34 @@ import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.security.web.SecurityFilterChain;
 
 @EnableWebSecurity
-@EnableGlobalMethodSecurity(securedEnabled = true)
-public class WebSecurity extends WebSecurityConfigurerAdapter {
+@Configuration
+public class WebSecurity {
 
-    @Autowired
-    private UsuarioServiceImpl usuarioService;
+    private final UsuarioServiceImpl usuarioService;
 
-    @Override
-    protected void configure(HttpSecurity http) throws Exception {
-        http.csrf().disable().authorizeRequests()
+    private final Environment env;
+
+    public WebSecurity(UsuarioServiceImpl usuarioService, Environment env) {
+        this.usuarioService = usuarioService;
+        this.env = env;
+    }
+
+    @Bean
+    @SneakyThrows
+    public SecurityFilterChain filterChain(HttpSecurity http) {
+        // authenticationManager -> responsável pela autenticação dos usuários
+        AuthenticationManagerBuilder authenticationManagerBuilder =
+                http.getSharedObject(AuthenticationManagerBuilder.class);
+        authenticationManagerBuilder.userDetailsService(usuarioService)
+                .passwordEncoder( passwordEncoder() );
+        AuthenticationManager authenticationManager = authenticationManagerBuilder.build();
+
+        http.cors()
+                .and()
+                .csrf().disable().authorizeRequests()
                 .antMatchers("/cidade/**",
                         "/estado/**",
                         "/pais/**",
@@ -44,15 +65,14 @@ public class WebSecurity extends WebSecurityConfigurerAdapter {
                 .antMatchers(HttpMethod.GET, "/usuario/user-info").permitAll()
                 .anyRequest().authenticated()
                 .and()
-                .addFilter(new JWTAuthenticationFilter(authenticationManager(), getApplicationContext()))
-                .addFilter(new JWTAuthorizationFilter(authenticationManager(), getApplicationContext()))
+                .authenticationManager(authenticationManager)
+                //Filtro da Autenticação
+                .addFilter(new JWTAuthenticationFilter(authenticationManager, usuarioService, env) )
+                //Filtro da Autorizaçao
+                .addFilter(new JWTAuthorizationFilter(authenticationManager, usuarioService, env) )
                 .sessionManagement().sessionCreationPolicy(SessionCreationPolicy.STATELESS);
-    }
 
-    @Bean
-    @Override
-    protected UserDetailsService userDetailsService() {
-        return usuarioService;
+        return http.build();
     }
 
     @Bean
@@ -60,20 +80,4 @@ public class WebSecurity extends WebSecurityConfigurerAdapter {
         return new BCryptPasswordEncoder();
     }
 
-    @Override
-    protected void configure(AuthenticationManagerBuilder auth) throws Exception {
-        auth.userDetailsService(userDetailsService())
-                .passwordEncoder(passwordEncoder());
-    }
-
-    @Bean
-    @Override
-    public AuthenticationManager authenticationManagerBean() throws Exception {
-        return super.authenticationManagerBean();
-    }
-
-    @Override
-    protected AuthenticationManager authenticationManager() throws Exception {
-        return super.authenticationManager();
-    }
 }

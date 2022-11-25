@@ -5,7 +5,9 @@ import br.com.utfpr.gerenciamento.server.service.impl.UsuarioServiceImpl;
 import com.auth0.jwt.JWT;
 import com.auth0.jwt.algorithms.Algorithm;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.ApplicationContext;
+import org.springframework.core.env.Environment;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -21,13 +23,18 @@ import static br.com.utfpr.gerenciamento.server.security.SecurityConstants.*;
 
 public class JWTAuthorizationFilter extends BasicAuthenticationFilter {
 
-    @Autowired
-    private UsuarioServiceImpl usuarioService;
+    private final UsuarioServiceImpl usuarioService;
+    private Environment env;
+    private String tokenSecret;
 
-    public JWTAuthorizationFilter(AuthenticationManager authManager,
-                                  ApplicationContext applicationContext) {
-        super(authManager);
-        this.usuarioService = applicationContext.getBean(UsuarioServiceImpl.class);
+
+    public JWTAuthorizationFilter(AuthenticationManager authenticationManager,
+                                  UsuarioServiceImpl usuarioService,
+                                  Environment env) {
+        super(authenticationManager);
+        this.usuarioService = usuarioService;
+        this.env = env;
+        this.tokenSecret = this.env.getProperty("utfpr.token.secret");
     }
 
     @Override
@@ -49,7 +56,7 @@ public class JWTAuthorizationFilter extends BasicAuthenticationFilter {
     private UsernamePasswordAuthenticationToken getAuthentication(HttpServletRequest request) {
         String token = request.getHeader(HEADER_STRING);
         if (token != null) {
-            String user = JWT.require(Algorithm.HMAC512(SECRET.getBytes()))
+            String user = JWT.require(Algorithm.HMAC512(tokenSecret))
                     .build()
                     .verify(token.replace(TOKEN_PREFIX, ""))
                     .getSubject();
