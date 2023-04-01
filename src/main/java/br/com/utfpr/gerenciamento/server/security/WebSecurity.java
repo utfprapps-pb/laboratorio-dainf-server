@@ -37,7 +37,6 @@ public class WebSecurity {
     @Bean
     @SneakyThrows
     public SecurityFilterChain filterChain(HttpSecurity http) {
-        // authenticationManager -> responsável pela autenticação dos usuários
         AuthenticationManagerBuilder authenticationManagerBuilder =
                 http.getSharedObject(AuthenticationManagerBuilder.class);
         authenticationManagerBuilder.userDetailsService(usuarioService)
@@ -58,11 +57,16 @@ public class WebSecurity {
                         "/saida/**").hasAnyRole("LABORATORISTA", "ADMINISTRADOR")
                 .antMatchers(HttpMethod.POST, "/item/**").hasAnyRole("LABORATORISTA", "ADMINISTRADOR")
                 .antMatchers(HttpMethod.DELETE, "/item/**").hasAnyRole("LABORATORISTA", "ADMINISTRADOR")
+
+                .antMatchers(HttpMethod.POST, "/usuario/update-user").authenticated()
+
                 .antMatchers(HttpMethod.POST, "/usuario/**").hasRole("ADMINISTRADOR")
                 .antMatchers(HttpMethod.DELETE, "/usuario/**").hasRole("ADMINISTRADOR")
                 .antMatchers(HttpMethod.POST, "/emprestimo/save-emprestimo", "/emprestimo/save-devolucao").hasAnyRole("LABORATORISTA", "ADMINISTRADOR")
                 .antMatchers(HttpMethod.DELETE, "/emprestimo/**").hasAnyRole("LABORATORISTA", "ADMINISTRADOR")
+
                 .antMatchers(HttpMethod.GET, "/usuario/user-info").permitAll()
+                .antMatchers(HttpMethod.POST, "/auth").permitAll()
                 .anyRequest().authenticated()
                 .and()
                 .authenticationManager(authenticationManager)

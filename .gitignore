@@ -4,7 +4,7 @@ target/
 !**/src/main/**
 !**/src/test/**
 
-### Config ###
+### Config Igonore ###
 .env
 
 ### STS ###

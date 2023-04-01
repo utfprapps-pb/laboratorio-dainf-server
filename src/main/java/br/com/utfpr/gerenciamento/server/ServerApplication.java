@@ -8,6 +8,8 @@ import org.springframework.boot.jdbc.DatabaseDriver;
 import org.springframework.context.annotation.Bean;
 import org.springframework.jdbc.support.DatabaseStartupValidator;
 import org.springframework.scheduling.annotation.EnableScheduling;
+import org.springframework.web.servlet.config.annotation.CorsRegistry;
+import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 
 import javax.persistence.EntityManagerFactory;
 import javax.sql.DataSource;
@@ -44,8 +46,9 @@ public class ServerApplication {
         dsv.setDataSource(dataSource);
         dsv.setTimeout(120);
         dsv.setInterval(7);
-        dsv.setValidationQuery(DatabaseDriver.POSTGRESQL.getValidationQuery());
+        // dsv.setValidationQuery(DatabaseDriver.POSTGRESQL.getValidationQuery());
         dsv.afterPropertiesSet();
         return dsv;
     }
+
 }

@@ -1,11 +1,13 @@
 package br.com.utfpr.gerenciamento.server.controller;
 
+import br.com.utfpr.gerenciamento.server.dto.UsuarioResponseDto;
 import br.com.utfpr.gerenciamento.server.model.Permissao;
 import br.com.utfpr.gerenciamento.server.model.Usuario;
 import br.com.utfpr.gerenciamento.server.service.PermissaoService;
 import br.com.utfpr.gerenciamento.server.service.UsuarioService;
 import br.com.utfpr.gerenciamento.server.util.Util;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.web.bind.annotation.*;
 
@@ -18,10 +20,14 @@ import java.util.Set;
 @RequestMapping("usuario/")
 public class UsuarioController {
 
-    @Autowired
-    private UsuarioService usuarioService;
-    @Autowired
-    private PermissaoService permissaoService;
+    private final UsuarioService usuarioService;
+
+    private final PermissaoService permissaoService;
+
+    public UsuarioController(UsuarioService usuarioService, PermissaoService permissaoService) {
+        this.usuarioService = usuarioService;
+        this.permissaoService = permissaoService;
+    }
 
     @GetMapping
     public List<Usuario> findAll() {
@@ -85,12 +91,17 @@ public class UsuarioController {
     }
 
     @GetMapping("/find-by-username")
-    public Usuario findByUsername(@RequestParam("username") String username) {
-        return usuarioService.findByUsername(username);
+    public UsuarioResponseDto findByUsername(@RequestParam("username") String username) {
+        return usuarioService.convertToDto( usuarioService.findByUsername(username) );
     }
 
     @GetMapping("/user-info")
     public Principal principal(Principal principal) {
         return principal;
+    }
+
+    @PostMapping("/update-user")
+    public void atualizarUsuario(@RequestBody Usuario usuario) {
+        usuarioService.updateUsuario(usuario);
     }
 }

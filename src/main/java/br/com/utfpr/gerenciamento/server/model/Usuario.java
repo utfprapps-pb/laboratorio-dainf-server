@@ -54,6 +54,10 @@ public class Usuario implements Serializable, UserDetails {
             fetch = FetchType.EAGER)
     private Set<Permissao> permissoes;
 
+    @Column(name = "foto_url", length = 2048)
+    private String fotoUrl;
+
+
     @JsonDeserialize(using = CustomAuthorityDeserializer.class)
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {

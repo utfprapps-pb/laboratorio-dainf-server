@@ -21,14 +21,13 @@ public class GoogleTokenVerifier {
     private static final HttpTransport transport = new NetHttpTransport();
     private static final JsonFactory jsonFactory = new GsonFactory().getDefaultInstance();
     @Value("${google.clientId}")
-    private static String CLIENT_ID;
+    private String CLIENT_ID;
 
-    public Payload verify(String idTokenString)
-            throws GeneralSecurityException, IOException {
-        return GoogleTokenVerifier.verifyToken(idTokenString);
+    public Payload verify(String idTokenString) throws GeneralSecurityException, IOException {
+        return verifyToken(idTokenString);
     }
 
-    private static Payload verifyToken(String idTokenString)
+    private Payload verifyToken(String idTokenString)
             throws GeneralSecurityException, IOException {
         final GoogleIdTokenVerifier verifier = new GoogleIdTokenVerifier.
                 Builder(transport, jsonFactory)

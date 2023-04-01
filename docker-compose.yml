@@ -1,18 +1,24 @@
-version: "3.8"
-services:
-    labs-api:
-        image: labs-api
-        container_name: labs-api
-        build:
-            context: ./
-            dockerfile: Dockerfile
-        ports:
-         - "8099:8099"
-        volumes:
-         - ./upload:/opt/uploads
-        restart: always
-        networks:
-         - apps
+version: "3.9"
+########################### NETWORK
 networks:
-  apps:
-    name: apps
+  web:
+    external: true
+  internal:
+    external: false
+
+########################### SERVICES
+services:
+  labs-api:
+    image: labs-api
+    container_name: labs-api
+    build:
+      context: ./
+      dockerfile: Dockerfile
+    ports:
+      - "8099:8099"
+    volumes:
+      - ./upload:/opt/uploads
+    restart: always
+    networks:
+      - web
+      - internal
