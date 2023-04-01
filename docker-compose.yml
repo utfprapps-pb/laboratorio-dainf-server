@@ -8,14 +8,20 @@ networks:
 
 ########################### SERVICES
 services:
-  labs-api:
-    image: labs-api
-    container_name: labs-api
+  dainf-labs-api:
+    image: dainf-labs-api
+    container_name: dainf-labs-api
     build:
       context: ./
       dockerfile: Dockerfile
     ports:
       - "8099:8099"
+    labels:
+      - traefik.enable=true
+      - traefik.docker.network=web
+      - "traefik.http.routers.dainf-labs-api.rule=Host(`app.pb.utfpr.edu.br`) && PathPrefix(`/dainf-labs-api`)"
+      - "traefik.http.routers.dainf-labs-api.entrypoints=websecure"
+      - "traefik.http.routers.dainf-labs-api.tls.certresolver=letsencrypt"
     volumes:
       - ./upload:/opt/uploads
     restart: always
