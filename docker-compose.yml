@@ -24,9 +24,15 @@ services:
       - "8099:8099"
     labels:
       - "traefik.enable=true"
-      - "traefik.http.routers.dainflabsapi.rule=Host(`app.pb.utfpr.edu.br`) && PathPrefix(`/dainf-labs-api`)"
-      - "traefik.http.routers.dainflabsapi.entrypoints=websecure"
+        # Dashboard
+      - "traefik.http.routers.dainflabsapi.rule=Host(`app.pb.utfpr.edu.br`) && (PathPrefix(`/dainf-labs-api`))"
+      - "traefik.http.routers.dainflabsapi.service=api@internal"
       - "traefik.http.routers.dainflabsapi.tls.certresolver=letsencrypt"
+      - "traefik.http.routers.dainflabsapi.entrypoints=websecure"
+
+      - "traefik.http.routers.dainflabsapi.middlewares=strip"
+      - "traefik.http.middlewares.strip.stripprefix.prefixes=/dainf-labs-api"
+
       #middlewares
       #- "traefik.http.routers.dainflabsapi.middlewares=dainflabsapi-stripprefix"
       #- "traefik.http.middlewares.dainflabsapi-stripprefix.stripprefix.prefixes=/dainf-labs-api"
