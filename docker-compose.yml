@@ -29,12 +29,12 @@ services:
       - "traefik.http.routers.dainflabsapi.tls.certresolver=letsencrypt"
 
       #middlewares
-      - "traefik.http.routers.dainflabsapi.middlewares=dainflabsapi-stripprefix"
-      - "traefik.http.middlewares.dainflabsapi-stripprefix.stripprefix.prefixes=/dainf-labs-api"
-      - "traefik.http.middlewares.dainflabsapi-stripprefix.stripprefix.forceSlash=false"
+      #- "traefik.http.routers.dainflabsapi.middlewares=dainflabsapi-stripprefix"
+      #- "traefik.http.middlewares.dainflabsapi-stripprefix.stripprefix.prefixes=/dainf-labs-api"
+      #- "traefik.http.middlewares.dainflabsapi-stripprefix.stripprefix.forceSlash=false"
 
       #services
-      - "traefik.http.services.dainflabsapi-dainflabsapi.loadbalancer.server.port=80"
+      #- "traefik.http.services.dainflabsapi-dainflabsapi.loadbalancer.server.port=80"
     volumes:
       - ./upload:/opt/uploads
     restart: unless-stopped
