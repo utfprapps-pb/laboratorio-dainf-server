@@ -23,15 +23,11 @@ services:
     ports:
       - "8099:8099"
     labels:
+        # Traefik Config
       - "traefik.enable=true"
-        # Dashboard
-      - "traefik.http.routers.dainflabsapi.rule=Host(`app.pb.utfpr.edu.br`) && (PathPrefix(`/dainf-labs-api`))"
-      - "traefik.http.routers.dainflabsapi.service=api@internal"
-      - "traefik.http.routers.dainflabsapi.tls.certresolver=letsencrypt"
-      - "traefik.http.routers.dainflabsapi.entrypoints=websecure"
-
-      - "traefik.http.routers.dainflabsapi.middlewares=strip-labs"
-      - "traefik.http.middlewares.strip-labs.stripprefix.prefixes=/dainf-labs-api"
+      - "traefik.http.routers.dainflabsapi.rule=Host(`app.pb.utfpr.edu.br`) && PathPrefix(`/dainf-labs-api`)"
+      - "traefik.http.middlewares.dainflabsapi-stripprefix.stripprefix.prefixes=/dainf-labs-api"
+      - "traefik.http.routers.dainflabsapi.middlewares=dainflabsapi-stripprefix@docker"
 
       #middlewares
       #- "traefik.http.routers.dainflabsapi.middlewares=dainflabsapi-stripprefix"
