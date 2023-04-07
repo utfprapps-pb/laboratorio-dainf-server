@@ -31,7 +31,7 @@ services:
       #middlewares
       - "traefik.http.routers.dainflabsapi.middlewares=dainflabsapi-stripprefix"
       - "traefik.http.middlewares.dainflabsapi-stripprefix.stripprefix.prefixes=/dainf-labs-api"
-      - "traefik.http.middlewares.dainflabsapistripprefix.stripprefix.forceSlash=false"
+      - "traefik.http.middlewares.dainflabsapi-stripprefix.stripprefix.forceSlash=false"
 
       #services
       - "traefik.http.services.dainflabsapi-dainflabsapi.loadbalancer.server.port=80"
