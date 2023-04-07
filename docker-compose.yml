@@ -2,6 +2,7 @@ version: "3.9"
 
 ########################### SERVICES
 services:
+  ########################### DAINF LABS API
   dainf-labs-api:
     image: dainf-labs-api
     container_name: dainf-labs-api
@@ -34,14 +35,16 @@ services:
       - utfpr
       - database
 
+########################### NETWORKS
 networks:
-  utfpr:
-    name: utfpr
+  web:
+    name: web
     driver: bridge
     external: true
     attachable: true
   database:
     name: database
-    internal: true
+    driver: bridge
+    external: false
     attachable: true
       
