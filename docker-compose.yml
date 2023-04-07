@@ -24,16 +24,9 @@ services:
       - "8099:8099"
     labels:
       - "traefik.enable=true"
-      - "traefik.http.middlewares.dainflabsapi-redirect-websecure.redirectscheme.scheme=https"
-      - "traefik.http.routers.dainflabsapi-web.middlewares=dainflabsapi-redirect-websecure"
-      - "traefik.http.routers.dainflabsapi-web.rule=Host(`app.pb.utfpr.edu.br`) && PathPrefix(`/dainf-labs-api`)"
-      - "traefik.http.routers.dainflabsapi-web.entrypoints=web"
-      - "traefik.http.routers.dainflabsapi-websecure.rule=Host(`app.pb.utfpr.edu.br`) && PathPrefix(`/dainf-labs-api`)"
-      - "traefik.http.routers.dainflabsapi-websecure.entrypoints=websecure"
-      - "traefik.http.routers.dainflabsapi-websecure.tls.certresolver=letsencrypt"
-      - "traefik.http.routers.dainflabsapi-websecure.tls=true"
-      - "traefik.http.services.dainflabsapi-websecure.loadbalancer.server.port=8099"
-
+      - "traefik.http.routers.dainflabsapi.rule=Host(`app.pb.utfpr.edu.br`) && PathPrefix(`/dainf-labs-api`)"
+      - "traefik.http.routers.dainflabsapi.entrypoints=websecure"
+      - "traefik.http.routers.dainflabsapi.tls.certresolver=letsencrypt"
       #middlewares
       #- "traefik.http.routers.dainflabsapi.middlewares=dainflabsapi-stripprefix"
       #- "traefik.http.middlewares.dainflabsapi-stripprefix.stripprefix.prefixes=/dainf-labs-api"
