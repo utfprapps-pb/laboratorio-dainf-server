@@ -30,8 +30,8 @@ services:
       - "traefik.http.routers.dainflabsapi.tls.certresolver=letsencrypt"
       - "traefik.http.routers.dainflabsapi.entrypoints=websecure"
 
-      - "traefik.http.routers.dainflabsapi.middlewares=strip"
-      - "traefik.http.middlewares.strip.stripprefix.prefixes=/dainf-labs-api"
+      - "traefik.http.routers.dainflabsapi.middlewares=strip-labs"
+      - "traefik.http.middlewares.strip-labs.stripprefix.prefixes=/dainf-labs-api"
 
       #middlewares
       #- "traefik.http.routers.dainflabsapi.middlewares=dainflabsapi-stripprefix"
