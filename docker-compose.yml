@@ -3,9 +3,9 @@ version: "3.9"
 ########################### SERVICES
 services:
   ########################### DAINF LABS API
-  dainf-labs-api:
-    image: dainf-labs-api
-    container_name: dainf-labs-api
+  dainflabsapi:
+    image: dainflabsapi
+    container_name: dainflabsapi
     build:
       context: ./
       dockerfile: Dockerfile
@@ -24,10 +24,17 @@ services:
       - "8099:8099"
     labels:
       - "traefik.enable=true"
-      - "traefik.http.routers.dainf-labs-api.rule=Host(`app.pb.utfpr.edu.br`) && PathPrefix(`/dainf-labs-api`)"
-      - "traefik.http.routers.dainf-labs-api.entrypoints=websecure"
-      - "traefik.http.routers.dainf-labs-api.tls.certresolver=letsencrypt"
-      - "traefik.http.services.dainf-labs-api.loadbalancer.server.port=8099"
+      - "traefik.http.routers.dainflabsapi.rule=Host(`app.pb.utfpr.edu.br`) && PathPrefix(`/dainf-labs-api`)"
+      - "traefik.http.routers.dainflabsapi.entrypoints=websecure"
+      - "traefik.http.routers.dainflabsapi.tls.certresolver=letsencrypt"
+
+      #middlewares
+      - "traefik.http.routers.dainflabsapi.middlewares=dainflabsapi-stripprefix"
+      - "traefik.http.middlewares.dainflabsapi-stripprefix.stripprefix.prefixes=/dainf-labs-api"
+      - "traefik.http.middlewares.dainflabsapistripprefix.stripprefix.forceSlash=false"
+
+      #services
+      - "traefik.http.services.dainflabsapi-dainflabsapi.loadbalancer.server.port=80"
     volumes:
       - ./upload:/opt/uploads
     restart: unless-stopped
