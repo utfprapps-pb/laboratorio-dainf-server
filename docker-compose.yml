@@ -21,7 +21,7 @@ services:
       - UTFPR_EMAIL_ADDRESS="${UTFPR_EMAIL_ADDRESS}"
       - UTFPR_EMAIL_PASSWORD="${UTFPR_EMAIL_PASSWORD}"
     ports:
-      - "80:8099"
+      - "8099:8099"
     labels:
         # Traefik Config
       - "traefik.enable=true"
