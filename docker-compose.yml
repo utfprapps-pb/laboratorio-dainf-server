@@ -32,7 +32,7 @@ services:
       - ./upload:/opt/uploads
     restart: always
     networks:
-      - utfpr
+      - web
       - database
 
 ########################### NETWORKS
