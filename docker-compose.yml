@@ -23,14 +23,14 @@ services:
     ports:
       - "8099:8099"
     labels:
-      - traefik.enable=true
-      - traefik.docker.network=web
+      - "traefik.enable=true"
       - "traefik.http.routers.dainf-labs-api.rule=Host(`app.pb.utfpr.edu.br`) && PathPrefix(`/dainf-labs-api`)"
       - "traefik.http.routers.dainf-labs-api.entrypoints=websecure"
       - "traefik.http.routers.dainf-labs-api.tls.certresolver=letsencrypt"
+      - "traefik.http.services.dainf-labs-api.loadbalancer.server.port=8099"
     volumes:
       - ./upload:/opt/uploads
-    restart: always
+    restart: unless-stopped
     networks:
       - web
       - database
