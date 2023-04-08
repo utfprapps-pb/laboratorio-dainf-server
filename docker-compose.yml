@@ -25,7 +25,7 @@ services:
     labels:
         # Traefik Config
       - "traefik.enable=true"
-      - "traefik.http.routers.dainflabsapi.rule=Host(`app.pb.utfpr.edu.br`) && PathPrefix(`/dainf-labs-api`)"
+      - "traefik.http.routers.dainflabsapi.rule=Host(`app.pb.utfpr.edu.br`) && PathPrefix(`/dainflabs`)"
       - "traefik.http.routers.dainflabsapi.tls.certresolver=letsencrypt"
       - "traefik.http.routers.dainflabsapi.entrypoints=websecure"
 
