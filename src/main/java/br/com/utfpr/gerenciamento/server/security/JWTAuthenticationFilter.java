@@ -44,6 +44,7 @@ public class JWTAuthenticationFilter extends UsernamePasswordAuthenticationFilte
     public Authentication attemptAuthentication(HttpServletRequest req,
                                                 HttpServletResponse res) throws AuthenticationException {
         try {
+            System.out.println("TESTE 0: ");
             Usuario credentials = new ObjectMapper().readValue(req.getInputStream(), Usuario.class);
             Usuario user = usuarioService.findByUsername(credentials.getUsername());
 
