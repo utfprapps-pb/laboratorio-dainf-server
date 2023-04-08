@@ -43,7 +43,7 @@ public class JWTAuthorizationFilter extends BasicAuthenticationFilter {
                                     FilterChain chain) throws IOException, ServletException {
         String header = req.getHeader(HEADER_STRING);
 
-        System.out.println("TESTE1: " + req.getContextPath() + " - " + req.getRequestURL());
+        System.out.println("TESTE1: " + req.getServletPath() + " - " + req.getRequestURL());
 
         if (header == null || !header.startsWith(TOKEN_PREFIX)) {
             System.out.println("TESTE2: " + header);
