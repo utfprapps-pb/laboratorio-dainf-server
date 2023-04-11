@@ -67,6 +67,7 @@ public class WebSecurity {
 
                 .antMatchers(HttpMethod.GET, "/usuario/user-info").permitAll()
                 .antMatchers(HttpMethod.POST, "/auth").permitAll()
+                .antMatchers(HttpMethod.GET, "/test").permitAll()
                 .anyRequest().authenticated()
                 .and()
                 .authenticationManager(authenticationManager)
