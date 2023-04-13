@@ -3,9 +3,9 @@ version: "3.9"
 ########################### SERVICES
 services:
   ########################### DAINF LABS API
-  dainflabsapi:
-    image: dainflabsapi
-    container_name: dainflabsapi
+  dainf-labs-api:
+    image: dainf-labs-api
+    container_name: dainf-labs-api
     build:
       context: ./
       dockerfile: Dockerfile
@@ -20,6 +20,7 @@ services:
       - UTFPR_TOKEN_SECRET=${UTFPR_TOKEN_SECRET}
       - UTFPR_EMAIL_ADDRESS=${UTFPR_EMAIL_ADDRESS}
       - UTFPR_EMAIL_PASSWORD=${UTFPR_EMAIL_PASSWORD}
+      - TZ=America/Sao_Paulo
     ports:
       - "8099:8099"
     labels:
@@ -29,13 +30,6 @@ services:
       - "traefik.http.routers.dainflabsapi.tls.certresolver=letsencrypt"
       - "traefik.http.routers.dainflabsapi.entrypoints=websecure"
 
-      #middlewares
-      #- "traefik.http.routers.dainflabsapi.middlewares=dainflabsapi-stripprefix"
-      #- "traefik.http.middlewares.dainflabsapi-stripprefix.stripprefix.prefixes=/dainf-labs-api"
-      #- "traefik.http.middlewares.dainflabsapi-stripprefix.stripprefix.forceSlash=false"
-
-      #services
-      #- "traefik.http.services.dainflabsapi-dainflabsapi.loadbalancer.server.port=80"
     volumes:
       - ./appdata/dainf-labs/upload:/opt/uploads
     restart: unless-stopped
