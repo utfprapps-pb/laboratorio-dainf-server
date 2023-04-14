@@ -3,6 +3,7 @@ pipeline {
 
     environment {
         DEPLOY_ENV="prod"
+        SPRING_PROFILES_ACTIVE=dev
         POSTGRESQL_CRED = credentials('postgres-id')
         DB_JDBC_USER = "${POSTGRESQL_CRED_USR}"
         DB_JDBC_PASSWORD = "${POSTGRESQL_CRED_PSW}"

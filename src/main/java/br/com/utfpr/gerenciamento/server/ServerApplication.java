@@ -6,6 +6,8 @@ import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.jdbc.DatabaseDriver;
 import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.PropertySource;
+import org.springframework.context.annotation.PropertySources;
 import org.springframework.jdbc.support.DatabaseStartupValidator;
 import org.springframework.scheduling.annotation.EnableScheduling;
 import org.springframework.web.servlet.config.annotation.CorsRegistry;
@@ -17,6 +19,9 @@ import java.util.stream.Stream;
 
 @EnableScheduling
 @SpringBootApplication
+@PropertySources({
+        @PropertySource("classpath:application.properties"),
+        @PropertySource("classpath:application-${DEPLOY_ENV:dev}.properties")})
 public class ServerApplication {
 
     public static void main(String[] args) {
