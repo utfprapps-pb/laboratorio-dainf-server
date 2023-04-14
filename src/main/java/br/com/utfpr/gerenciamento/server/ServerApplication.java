@@ -19,9 +19,6 @@ import java.util.stream.Stream;
 
 @EnableScheduling
 @SpringBootApplication
-@PropertySources({
-        @PropertySource("classpath:application.properties"),
-        @PropertySource("classpath:application-${DEPLOY_ENV:dev}.properties")})
 public class ServerApplication {
 
     public static void main(String[] args) {
