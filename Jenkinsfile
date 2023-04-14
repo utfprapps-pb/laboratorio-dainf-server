@@ -2,7 +2,7 @@ pipeline {
     agent any
 
     environment {
-        DEPLOY_ENV = "prod"
+        DEPLOY_ENV="prod"
         POSTGRESQL_CRED = credentials('postgres-id')
         DB_JDBC_USER = "${POSTGRESQL_CRED_USR}"
         DB_JDBC_PASSWORD = "${POSTGRESQL_CRED_PSW}"
