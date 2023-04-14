@@ -11,7 +11,7 @@ services:
       dockerfile: Dockerfile
     environment:
       - SERVER_PORT=8099
-      - DATABASE_URL=jdbc:postgresql://postgresql:5432/dainf_labs
+      - DATABASE_URL=${DATABASE_URL}
       - DATABASE_USERNAME=${DATABASE_USERNAME}
       - DATABASE_PASSWORD=${DATABASE_PASSWORD}
       - GOOGLE_CLIENT_ID=${GOOGLE_CLIENT_ID}
@@ -26,9 +26,9 @@ services:
     labels:
         # Traefik Config
       - "traefik.enable=true"
-      - "traefik.http.routers.dainflabsapi.rule=Host(`dainf-labs-api.app.pb.utfpr.edu.br`)"
-      - "traefik.http.routers.dainflabsapi.tls.certresolver=letsencrypt"
-      - "traefik.http.routers.dainflabsapi.entrypoints=websecure"
+      - "traefik.http.routers.dainf-labs-api.rule=Host(`dainf-labs-api.app.pb.utfpr.edu.br`)"
+      - "traefik.http.routers.dainf-labs-api.tls.certresolver=letsencrypt"
+      - "traefik.http.routers.dainf-labs-api.entrypoints=websecure"
 
     volumes:
       - ./appdata/dainf-labs/upload:/opt/uploads
