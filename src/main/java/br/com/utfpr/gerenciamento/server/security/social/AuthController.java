@@ -56,6 +56,13 @@ public class AuthController {
                         payload.getEmail().contains("@professores.utfpr.edu.br") ||
                         payload.getEmail().contains("@administrativo.utfpr.edu.br") ||
                         payload.getEmail().contains("@utfpr.edu.br"))) {
+
+                    if (payload.getEmail().contains("@professores.utfpr.edu.br")) {
+                        payload.getEmail().replace("professores.", "");
+                    } else if (payload.getEmail().contains("@administrativo.utfpr.edu.br")) {
+                        payload.getEmail().replace("administrativo.", "");
+                    }
+
                     String username = payload.getEmail();
                     Usuario user = usuarioRepository.findByUsername(username);
                     if (user == null) {

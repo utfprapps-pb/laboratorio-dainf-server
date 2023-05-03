@@ -4,9 +4,6 @@ import br.com.utfpr.gerenciamento.server.model.Usuario;
 import br.com.utfpr.gerenciamento.server.service.impl.UsuarioServiceImpl;
 import com.auth0.jwt.JWT;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.core.env.Environment;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -44,8 +41,12 @@ public class JWTAuthenticationFilter extends UsernamePasswordAuthenticationFilte
     public Authentication attemptAuthentication(HttpServletRequest req,
                                                 HttpServletResponse res) throws AuthenticationException {
         try {
-            System.out.println("TESTE 0: ");
             Usuario credentials = new ObjectMapper().readValue(req.getInputStream(), Usuario.class);
+            if (credentials.getUsername().contains("@professores.utfpr.edu.br")) {
+                credentials.setUsername(credentials.getUsername().replace("professores.", ""));
+            } else if (credentials.getUsername().contains("@administrativo.utfpr.edu.br")) {
+                credentials.setUsername(credentials.getUsername().replace("administrativo.", ""));
+            }
             Usuario user = usuarioService.findByUsername(credentials.getUsername());
 
             return authenticationManager.authenticate(
@@ -55,7 +56,6 @@ public class JWTAuthenticationFilter extends UsernamePasswordAuthenticationFilte
                             user.getAuthorities())
             );
         } catch (IOException e) {
-            System.out.println(e.getMessage());
             throw new RuntimeException(e);
         }
     }

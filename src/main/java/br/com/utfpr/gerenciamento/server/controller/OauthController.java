@@ -87,9 +87,9 @@ public class OauthController {
         usuario.setEmail(email);
         usuario.setPassword(passwordEncoder.encode("123456"));
         Permissao permissao = new Permissao();
-        if (email.contains("@alunos.utfpr.edu.br")) {
+        if (email.contains("@alunos.utfpr.edu.br") || email.contains("@administrativo.utfpr.edu.br") ) {
             permissao = permissaoService.findByNome("ROLE_ALUNO");
-        } else if (email.contains("@utfpr.edu.br")) {
+        } else if (email.contains("@utfpr.edu.br") || email.contains("@professores.utfpr.edu.br")) {
             permissao = permissaoService.findByNome("ROLE_PROFESSOR");
         }
         usuario.setPermissoes( new HashSet<>());
