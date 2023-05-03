@@ -2,7 +2,6 @@ pipeline {
     agent any
 
     environment {
-        DEPLOY_ENV="prod"
         SPRING_PROFILES_ACTIVE="prod"
         POSTGRESQL_CRED = credentials('postgres-id')
         DB_JDBC_USER = "${POSTGRESQL_CRED_USR}"
@@ -13,7 +12,6 @@ pipeline {
         DATABASE_PASSWORD="${POSTGRESQL_CRED_PSW}"
 
         GOOGLE_CRED = credentials('dainf_labs_google_client_id')
-
         GOOGLE_CLIENT_ID="${GOOGLE_CRED_USR}"
         GOOGLE_CLIENT_SECRET="${GOOGLE_CRED_PSW}"
         UTFPR_SECRET="123456"
@@ -22,6 +20,14 @@ pipeline {
         UTFPR_TOKEN_SECRET="${EMAIL_CRED_PSW}"
         UTFPR_EMAIL_ADDRESS="${EMAIL_CRED_USR}"
         UTFPR_EMAIL_PASSWORD="${EMAIL_CRED_PSW}"
+
+        MINIO_CRED = credentials('dainf_labs_minio_id')
+        MINIO_ENDPOINT="https://minio.app.pb.utfpr.edu.br"
+        MINIO_PORT=443
+        MINIO_ACCESS_KEY="${MINIO_CRED_USR}"
+        MINIO_SECRET_KEY="${MINIO_CRED_PSW}"
+        MINIO_SECURE=true
+        MINIO_BUCKET_NAME="dainf-labs"
     }
 
     stages {   
