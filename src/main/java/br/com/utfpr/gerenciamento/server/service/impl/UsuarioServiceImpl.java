@@ -52,6 +52,11 @@ public class UsuarioServiceImpl extends CrudServiceImpl<Usuario, Long>
 
     @Override
     public Usuario findByUsername(String username) {
+        if (username.contains("@professores.utfpr.edu.br")) {
+            username = username.replace("professores.", "");
+        } else if (username.contains("@administrativo.utfpr.edu.br")) {
+            username = username.replace("administrativo.", "");
+        }
         return usuarioRepository.findByUsername(username);
     }
 

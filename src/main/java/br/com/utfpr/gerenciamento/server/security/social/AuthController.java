@@ -101,7 +101,7 @@ public class AuthController {
                                     SecurityConstants.EXPIRATION_TIME))
                             .sign(Algorithm.HMAC512(tokenSecret));
 
-                    return  ResponseEntity.ok(new AuthenticationResponseDTO(token));
+                    return  ResponseEntity.ok(new AuthenticationResponseDTO(token, user.getUsername(), user.getNome(), user.getEmail()));
 
                 } else {
                     throw new Exception("O email precisa ser da UTFPR");

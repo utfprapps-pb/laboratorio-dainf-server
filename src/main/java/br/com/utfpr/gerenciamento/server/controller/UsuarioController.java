@@ -92,7 +92,7 @@ public class UsuarioController {
 
     @GetMapping("/find-by-username")
     public UsuarioResponseDto findByUsername(@RequestParam("username") String username) {
-        return usuarioService.convertToDto( usuarioService.findByUsername(username) );
+        return usuarioService.convertToDto(usuarioService.findByUsername(username) );
     }
 
     @GetMapping("/user-info")
