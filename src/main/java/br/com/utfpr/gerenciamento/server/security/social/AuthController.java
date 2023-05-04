@@ -49,6 +49,7 @@ public class AuthController {
         String idToken = request.getHeader("Auth-Id-Token");
         if (idToken != null) {
             final Payload payload;
+            Boolean isProfessor = false;
             try {
                 payload = googleTokenVerifier.verify(idToken.replace(SecurityConstants.TOKEN_PREFIX, ""));
                 if (payload != null && (
@@ -59,8 +60,12 @@ public class AuthController {
 
                     if (payload.getEmail().contains("@professores.utfpr.edu.br")) {
                         payload.getEmail().replace("professores.", "");
+                        isProfessor = true;
                     } else if (payload.getEmail().contains("@administrativo.utfpr.edu.br")) {
                         payload.getEmail().replace("administrativo.", "");
+                        isProfessor = false;
+                    } else if (payload.getEmail().contains("@utfpr.edu.br")) {
+                        isProfessor = true;
                     }
 
                     String username = payload.getEmail();
@@ -77,7 +82,7 @@ public class AuthController {
                         }
 
                         user.setPermissoes(new HashSet<>());
-                        if (payload.getEmail().contains("@professores.utfpr.edu.br")) {
+                        if (isProfessor) {
                             user.getPermissoes().add(permissaoService.findByNome("ROLE_PROFESSOR"));
                         } else {
                             user.getPermissoes().add(permissaoService.findByNome("ROLE_ALUNO"));
