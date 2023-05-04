@@ -59,10 +59,10 @@ public class AuthController {
                         payload.getEmail().contains("@utfpr.edu.br"))) {
 
                     if (payload.getEmail().contains("@professores.utfpr.edu.br")) {
-                        payload.getEmail().replace("professores.", "");
+                        payload.setEmail( payload.getEmail().replace("professores.", "") );
                         isProfessor = true;
                     } else if (payload.getEmail().contains("@administrativo.utfpr.edu.br")) {
-                        payload.getEmail().replace("administrativo.", "");
+                        payload.setEmail( payload.getEmail().replace("administrativo.", ""));
                         isProfessor = false;
                     } else if (payload.getEmail().contains("@utfpr.edu.br")) {
                         isProfessor = true;
