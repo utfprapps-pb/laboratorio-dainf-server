@@ -95,6 +95,6 @@ public class Usuario implements Serializable, UserDetails {
 
     @Override
     public boolean isEnabled() {
-        return true;
+        return this.emailVerificado;
     }
 }
