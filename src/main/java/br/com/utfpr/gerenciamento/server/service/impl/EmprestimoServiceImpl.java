@@ -15,7 +15,6 @@ import br.com.utfpr.gerenciamento.server.service.EmailService;
 import br.com.utfpr.gerenciamento.server.service.EmprestimoService;
 import br.com.utfpr.gerenciamento.server.service.UsuarioService;
 import br.com.utfpr.gerenciamento.server.util.DateUtil;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Service;
 
@@ -28,14 +27,19 @@ import java.util.logging.Logger;
 @Service
 public class EmprestimoServiceImpl extends CrudServiceImpl<Emprestimo, Long> implements EmprestimoService {
 
-    @Autowired
-    private EmprestimoRepository emprestimoRepository;
-    @Autowired
-    private EmprestimoFilterRepository emprestimoFilterRepository;
-    @Autowired
-    private UsuarioService usuarioService;
-    @Autowired
-    private EmailService emailService;
+    private final EmprestimoRepository emprestimoRepository;
+    private final EmprestimoFilterRepository emprestimoFilterRepository;
+    private final UsuarioService usuarioService;
+    private final EmailService emailService;
+
+
+    public EmprestimoServiceImpl(EmprestimoRepository emprestimoRepository, EmprestimoFilterRepository emprestimoFilterRepository, UsuarioService usuarioService, EmailService emailService) {
+        this.emprestimoRepository = emprestimoRepository;
+        this.emprestimoFilterRepository = emprestimoFilterRepository;
+        this.usuarioService = usuarioService;
+        this.emailService = emailService;
+    }
+
     private static final Logger LOGGER = Logger.getLogger(EmprestimoServiceImpl.class.getName());
 
     @Override

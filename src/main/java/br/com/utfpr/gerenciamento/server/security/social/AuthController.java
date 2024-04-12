@@ -49,7 +49,7 @@ public class AuthController {
         String idToken = request.getHeader("Auth-Id-Token");
         if (idToken != null) {
             final Payload payload;
-            Boolean isProfessor = false;
+            boolean isProfessor = false;
             try {
                 payload = googleTokenVerifier.verify(idToken.replace(SecurityConstants.TOKEN_PREFIX, ""));
                 if (payload != null && (
@@ -63,7 +63,6 @@ public class AuthController {
                         isProfessor = true;
                     } else if (payload.getEmail().contains("@administrativo.utfpr.edu.br")) {
                         payload.setEmail( payload.getEmail().replace("administrativo.", ""));
-                        isProfessor = false;
                     } else if (payload.getEmail().contains("@utfpr.edu.br")) {
                         isProfessor = true;
                     }

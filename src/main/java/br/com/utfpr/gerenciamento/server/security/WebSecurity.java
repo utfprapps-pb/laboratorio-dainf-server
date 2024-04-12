@@ -7,6 +7,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.core.env.Environment;
 import org.springframework.http.HttpMethod;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -29,7 +30,7 @@ public class WebSecurity {
 
     private final Environment env;
 
-    public WebSecurity(UsuarioServiceImpl usuarioService, Environment env) {
+    public WebSecurity(@Lazy UsuarioServiceImpl usuarioService, Environment env) {
         this.usuarioService = usuarioService;
         this.env = env;
     }
@@ -58,6 +59,12 @@ public class WebSecurity {
                 .antMatchers(HttpMethod.POST, "/item/**").hasAnyRole("LABORATORISTA", "ADMINISTRADOR")
                 .antMatchers(HttpMethod.DELETE, "/item/**").hasAnyRole("LABORATORISTA", "ADMINISTRADOR")
 
+                .antMatchers(HttpMethod.POST, "/usuario/new-user/**").permitAll()
+                .antMatchers(HttpMethod.POST, "/usuario/resend-confirm-email/**").permitAll()
+                .antMatchers(HttpMethod.POST, "/usuario/confirm-email/**").permitAll()
+                .antMatchers(HttpMethod.POST, "/usuario/reset-password/**").permitAll()
+                .antMatchers(HttpMethod.POST, "/usuario/request-code-reset-password/**").permitAll()
+
                 .antMatchers(HttpMethod.POST, "/usuario/update-user").authenticated()
 
                 .antMatchers(HttpMethod.POST, "/usuario/**").hasRole("ADMINISTRADOR")
@@ -66,6 +73,8 @@ public class WebSecurity {
                 .antMatchers(HttpMethod.DELETE, "/emprestimo/**").hasAnyRole("LABORATORISTA", "ADMINISTRADOR")
 
                 .antMatchers(HttpMethod.GET, "/usuario/user-info").permitAll()
+
+
                 .antMatchers(HttpMethod.POST, "/auth").permitAll()
                 .antMatchers(HttpMethod.GET, "/test").permitAll()
                 .anyRequest().authenticated()

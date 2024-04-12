@@ -150,12 +150,12 @@ public class ItemServiceImpl extends CrudServiceImpl<Item, Long> implements Item
                 byte[] report = JasperExportManager.exportReportToPdf(
                         relatorioService.generateReport(6L, null)
                 );
-                Email email = new Email()
-                        .setPara("dainf.labs@gmail.com")
-                        .setDe("dainf.labs@gmail.com")
-                        .setTitulo("Notificação: Itens que atingiram o estoque mínimo")
-                        .setConteudo(emailService.buildTemplateEmail(null, "templateNotificacaoEstoqueMinimo"))
-                        .addFile("itensAtingiramEstoqueMin.pdf", report);
+                Email email = Email.builder()
+                        .para("dainf.labs@gmail.com")
+                        .de("dainf.labs@gmail.com")
+                        .titulo("Notificação: Itens que atingiram o estoque mínimo")
+                        .conteudo(emailService.buildTemplateEmail(null, "templateNotificacaoEstoqueMinimo")).build();
+                email.addFile("itensAtingiramEstoqueMin.pdf", report);
                 emailService.enviar(email);
 
             } catch (Exception ex) {
@@ -166,6 +166,7 @@ public class ItemServiceImpl extends CrudServiceImpl<Item, Long> implements Item
 
     /**
      * This method is used when an item is duplicated, so the image array can also be transfered to the new item
+     *
      * @param itemImages
      * @param id
      */

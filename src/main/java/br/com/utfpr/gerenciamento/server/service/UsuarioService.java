@@ -1,5 +1,8 @@
 package br.com.utfpr.gerenciamento.server.service;
 
+import br.com.utfpr.gerenciamento.server.dto.ConfirmEmailRequestDto;
+import br.com.utfpr.gerenciamento.server.dto.GenericResponse;
+import br.com.utfpr.gerenciamento.server.dto.RecoverPasswordRequestDto;
 import br.com.utfpr.gerenciamento.server.dto.UsuarioResponseDto;
 import br.com.utfpr.gerenciamento.server.model.Usuario;
 
@@ -21,4 +24,11 @@ public interface UsuarioService extends CrudService<Usuario, Long> {
 
     Usuario convertToEntity(UsuarioResponseDto entityDto);
 
+    String resendEmail(ConfirmEmailRequestDto confirmEmailRequestDto);
+
+    GenericResponse sendEmailCodeRecoverPassword(String email);
+
+    GenericResponse confirmEmail(ConfirmEmailRequestDto confirmEmailRequestDto);
+
+    GenericResponse resetPassword(RecoverPasswordRequestDto recoverPasswordRequestDto);
 }
