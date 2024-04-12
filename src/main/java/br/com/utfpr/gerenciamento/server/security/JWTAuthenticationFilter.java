@@ -11,7 +11,6 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
-import javax.annotation.PostConstruct;
 import javax.servlet.FilterChain;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
@@ -25,21 +24,19 @@ public class JWTAuthenticationFilter extends UsernamePasswordAuthenticationFilte
 
     private final AuthenticationManager authenticationManager;
     private final UsuarioServiceImpl usuarioService;
-    private String tokenSecret;
-    private  Environment env;
+    private final String tokenSecret;
 
     public JWTAuthenticationFilter(AuthenticationManager authenticationManager,
                                    UsuarioServiceImpl usuarioService,
                                    Environment env) {
         this.authenticationManager = authenticationManager;
         this.usuarioService = usuarioService;
-        this.env = env;
-        this.tokenSecret = this.env.getProperty("utfpr.token.secret");
+        this.tokenSecret = env.getProperty("utfpr.token.secret");
     }
 
     @Override
-    public Authentication attemptAuthentication(HttpServletRequest req,
-                                                HttpServletResponse res) throws AuthenticationException {
+    public Authentication attemptAuthentication(HttpServletRequest req, HttpServletResponse res)
+            throws AuthenticationException {
         try {
             Usuario credentials = new ObjectMapper().readValue(req.getInputStream(), Usuario.class);
             if (credentials.getUsername().contains("@professores.utfpr.edu.br")) {
