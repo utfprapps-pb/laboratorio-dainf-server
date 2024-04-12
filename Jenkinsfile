@@ -14,9 +14,8 @@ pipeline {
         GOOGLE_CRED = credentials('dainf_labs_google_client_id')
         GOOGLE_CLIENT_ID="${GOOGLE_CRED_USR}"
         GOOGLE_CLIENT_SECRET="${GOOGLE_CRED_PSW}"
-        UTFPR_SECRET="123456"
 
-        EMAIL_CRED = credentials('dainf_labs_email_token_id')
+        EMAIL_CRED = credentials('UTFPRAPPSEmailAndPassword')
         UTFPR_TOKEN_SECRET="${EMAIL_CRED_PSW}"
         UTFPR_EMAIL_ADDRESS="${EMAIL_CRED_USR}"
         UTFPR_EMAIL_PASSWORD="${EMAIL_CRED_PSW}"
