@@ -17,4 +17,10 @@ public class PermissaoServiceImpl extends CrudServiceImpl<Permissao, Long> imple
     protected JpaRepository<Permissao, Long> getRepository() {
         return permissaoRepository;
     }
+
+
+    @Override
+    public Permissao findByNome(String nome) {
+        return permissaoRepository.findByNome(nome);
+    }
 }

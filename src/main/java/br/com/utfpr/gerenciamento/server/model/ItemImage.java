@@ -21,8 +21,8 @@ public class ItemImage {
     @Column(name = "id")
     private Long id;
 
-    @Column(name = "caminho_image")
-    private String caminhoImage;
+    @Column(name = "content_type")
+    private String contentType;
 
     @Column(name = "name_image")
     private String nameImage;
