@@ -4,6 +4,9 @@ target/
 !**/src/main/**
 !**/src/test/**
 
+### Config Igonore ###
+.env
+
 ### STS ###
 .apt_generated
 .classpath

@@ -2,12 +2,8 @@ package br.com.utfpr.gerenciamento.server.model;
 
 import br.com.utfpr.gerenciamento.server.config.CustomAuthorityDeserializer;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
-import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.EqualsAndHashCode;
-import lombok.NoArgsConstructor;
+import lombok.*;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 
@@ -18,13 +14,14 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Set;
 
-@Data
 @Entity
+@Table(name = "usuario")
+@Getter
+@Setter
 @NoArgsConstructor
 @AllArgsConstructor
 @JsonIgnoreProperties(ignoreUnknown = true)
-@EqualsAndHashCode(of = {"id"})
-@Table(name = "usuario")
+@Builder
 public class Usuario implements Serializable, UserDetails {
 
     @Id
@@ -53,6 +50,15 @@ public class Usuario implements Serializable, UserDetails {
     @ManyToMany(cascade = {CascadeType.MERGE, CascadeType.PERSIST},
             fetch = FetchType.EAGER)
     private Set<Permissao> permissoes;
+
+    @Column(name = "foto_url", length = 2048)
+    private String fotoUrl;
+
+    @Column(name = "codigo_verificacao", length = 512)
+    private String codigoVerificacao;
+
+    @Column(name = "email_verificado")
+    private Boolean emailVerificado;
 
     @JsonDeserialize(using = CustomAuthorityDeserializer.class)
     @Override
@@ -89,6 +95,6 @@ public class Usuario implements Serializable, UserDetails {
 
     @Override
     public boolean isEnabled() {
-        return true;
+        return this.emailVerificado;
     }
 }
