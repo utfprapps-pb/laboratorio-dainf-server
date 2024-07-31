@@ -1,12 +1,13 @@
 package br.com.utfpr.gerenciamento.server.minio.util;
 
 import cn.hutool.core.io.FileTypeUtil;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
 import java.io.InputStream;
 
-
+@Slf4j
 public class FileTypeUtils {
 
     private final static String IMAGE_TYPE = "image/";
@@ -17,8 +18,8 @@ public class FileTypeUtils {
 
     public static String getFileType(MultipartFile multipartFile) {
 
-        InputStream inputStream = null;
-        String type = null;
+        InputStream inputStream;
+        String type;
 
         try {
             inputStream = multipartFile.getInputStream();
@@ -28,7 +29,7 @@ public class FileTypeUtils {
                     || type.equalsIgnoreCase("GIF") || type.equalsIgnoreCase("PNG")
                     || type.equalsIgnoreCase("BMP") || type.equalsIgnoreCase("PCX")
                     || type.equalsIgnoreCase("TGA") || type.equalsIgnoreCase("PSD")
-                    || type.equalsIgnoreCase("TIFF")) {
+                    || type.equalsIgnoreCase("TIFF")|| type.equalsIgnoreCase("WEBP")) {
 
                 return IMAGE_TYPE+type;
             }
@@ -63,6 +64,7 @@ public class FileTypeUtils {
             }
 
         }catch (IOException e){
+            log.error(e.getMessage());
         }
 
         return null;
