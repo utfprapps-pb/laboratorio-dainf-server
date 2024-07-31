@@ -29,9 +29,9 @@ public class MailConfig {
         properties.setProperty("mail.smtp.auth", "true");
         properties.setProperty("mail.smtp.starttls.enable", "true");
         properties.setProperty("mail.debug", "false");
-        properties.setProperty("mail.smtp.ssl.trust", "smtp.gmail.com");
-        properties.setProperty("mail.smtp.host", "smtp.gmail.com");
-        properties.setProperty("mail.smtp.port", "587");
+        properties.setProperty("mail.smtp.ssl.trust", "smtp.utfpr.edu.br");
+        properties.setProperty("mail.smtp.host", "smtp.utfpr.edu.br");
+        properties.setProperty("mail.smtp.port", "465");
         return properties;
     }
 }

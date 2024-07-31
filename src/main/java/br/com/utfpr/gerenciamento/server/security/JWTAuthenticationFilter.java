@@ -4,8 +4,7 @@ import br.com.utfpr.gerenciamento.server.model.Usuario;
 import br.com.utfpr.gerenciamento.server.service.impl.UsuarioServiceImpl;
 import com.auth0.jwt.JWT;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.context.ApplicationContext;
+import org.springframework.core.env.Environment;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
@@ -23,21 +22,28 @@ import static com.auth0.jwt.algorithms.Algorithm.HMAC512;
 
 public class JWTAuthenticationFilter extends UsernamePasswordAuthenticationFilter {
 
-    private AuthenticationManager authenticationManager;
-    @Autowired
-    private UsuarioServiceImpl usuarioService;
+    private final AuthenticationManager authenticationManager;
+    private final UsuarioServiceImpl usuarioService;
+    private final String tokenSecret;
 
     public JWTAuthenticationFilter(AuthenticationManager authenticationManager,
-                                   ApplicationContext ctx) {
+                                   UsuarioServiceImpl usuarioService,
+                                   Environment env) {
         this.authenticationManager = authenticationManager;
-        this.usuarioService = ctx.getBean(UsuarioServiceImpl.class);
+        this.usuarioService = usuarioService;
+        this.tokenSecret = env.getProperty("utfpr.token.secret");
     }
 
     @Override
-    public Authentication attemptAuthentication(HttpServletRequest req,
-                                                HttpServletResponse res) throws AuthenticationException {
+    public Authentication attemptAuthentication(HttpServletRequest req, HttpServletResponse res)
+            throws AuthenticationException {
         try {
             Usuario credentials = new ObjectMapper().readValue(req.getInputStream(), Usuario.class);
+            if (credentials.getUsername().contains("@professores.utfpr.edu.br")) {
+                credentials.setUsername(credentials.getUsername().replace("professores.", ""));
+            } else if (credentials.getUsername().contains("@administrativo.utfpr.edu.br")) {
+                credentials.setUsername(credentials.getUsername().replace("administrativo.", ""));
+            }
             Usuario user = usuarioService.findByUsername(credentials.getUsername());
 
             return authenticationManager.authenticate(
@@ -59,7 +65,7 @@ public class JWTAuthenticationFilter extends UsernamePasswordAuthenticationFilte
         String token = JWT.create()
                 .withSubject(auth.getName())
                 .withExpiresAt(new Date(System.currentTimeMillis() + SecurityConstants.EXPIRATION_TIME))
-                .sign(HMAC512(SecurityConstants.SECRET.getBytes()));
+                .sign(HMAC512(tokenSecret));
         res.getWriter().write(token);
     }
 }
