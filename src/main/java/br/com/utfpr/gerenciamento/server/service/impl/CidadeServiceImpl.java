@@ -4,7 +4,6 @@ import br.com.utfpr.gerenciamento.server.model.Cidade;
 import br.com.utfpr.gerenciamento.server.model.Estado;
 import br.com.utfpr.gerenciamento.server.repository.CidadeRepository;
 import br.com.utfpr.gerenciamento.server.service.CidadeService;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Service;
 
@@ -13,8 +12,11 @@ import java.util.List;
 @Service
 public class CidadeServiceImpl extends CrudServiceImpl<Cidade, Long> implements CidadeService {
 
-    @Autowired
-    private CidadeRepository cidadeRepository;
+    private final CidadeRepository cidadeRepository;
+
+    public CidadeServiceImpl(CidadeRepository cidadeRepository) {
+        this.cidadeRepository = cidadeRepository;
+    }
 
     @Override
     protected JpaRepository<Cidade, Long> getRepository() {

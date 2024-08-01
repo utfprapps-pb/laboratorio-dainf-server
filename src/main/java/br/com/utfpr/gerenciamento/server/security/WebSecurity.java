@@ -1,10 +1,7 @@
 package br.com.utfpr.gerenciamento.server.security;
 
-import br.com.utfpr.gerenciamento.server.service.UsuarioService;
 import br.com.utfpr.gerenciamento.server.service.impl.UsuarioServiceImpl;
 import lombok.SneakyThrows;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Lazy;
@@ -12,22 +9,23 @@ import org.springframework.core.env.Environment;
 import org.springframework.http.HttpMethod;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
-import org.springframework.security.config.annotation.method.configuration.EnableGlobalMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
-import org.springframework.security.config.annotation.web.configuration.WebSecurityConfigurerAdapter;
+import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.config.http.SessionCreationPolicy;
-import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.web.cors.CorsConfiguration;
+import org.springframework.web.cors.CorsConfigurationSource;
+import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
+
+import java.util.List;
 
 @EnableWebSecurity
 @Configuration
 public class WebSecurity {
-
     private final UsuarioServiceImpl usuarioService;
-
     private final Environment env;
 
     public WebSecurity(@Lazy UsuarioServiceImpl usuarioService, Environment env) {
@@ -41,13 +39,14 @@ public class WebSecurity {
         AuthenticationManagerBuilder authenticationManagerBuilder =
                 http.getSharedObject(AuthenticationManagerBuilder.class);
         authenticationManagerBuilder.userDetailsService(usuarioService)
-                .passwordEncoder( passwordEncoder() );
+                .passwordEncoder(passwordEncoder());
         AuthenticationManager authenticationManager = authenticationManagerBuilder.build();
 
-        http.cors()
-                .and()
-                .csrf().disable().authorizeRequests()
-                .antMatchers("/cidade/**",
+        http.csrf(AbstractHttpConfigurer::disable);
+        http.cors(cors -> corsConfigurationSource());
+
+        http.authorizeHttpRequests((authorize) -> authorize
+                .requestMatchers("/cidade/**",
                         "/estado/**",
                         "/pais/**",
                         "/relatorio/**",
@@ -56,35 +55,42 @@ public class WebSecurity {
                         "/entrada/**",
                         "/grupo/**",
                         "/saida/**").hasAnyRole("LABORATORISTA", "ADMINISTRADOR")
-                .antMatchers(HttpMethod.POST, "/item/**").hasAnyRole("LABORATORISTA", "ADMINISTRADOR")
-                .antMatchers(HttpMethod.DELETE, "/item/**").hasAnyRole("LABORATORISTA", "ADMINISTRADOR")
+                .requestMatchers(HttpMethod.POST, "/item/**").hasAnyRole("LABORATORISTA", "ADMINISTRADOR")
+                .requestMatchers(HttpMethod.DELETE, "/item/**").hasAnyRole("LABORATORISTA", "ADMINISTRADOR")
 
-                .antMatchers(HttpMethod.POST, "/usuario/new-user/**").permitAll()
-                .antMatchers(HttpMethod.POST, "/usuario/resend-confirm-email/**").permitAll()
-                .antMatchers(HttpMethod.POST, "/usuario/confirm-email/**").permitAll()
-                .antMatchers(HttpMethod.POST, "/usuario/reset-password/**").permitAll()
-                .antMatchers(HttpMethod.POST, "/usuario/request-code-reset-password/**").permitAll()
+                .requestMatchers(HttpMethod.POST, "/usuario/new-user/**").permitAll()
+                .requestMatchers(HttpMethod.POST, "/usuario/resend-confirm-email/**").permitAll()
+                .requestMatchers(HttpMethod.POST, "/usuario/confirm-email/**").permitAll()
+                .requestMatchers(HttpMethod.POST, "/usuario/reset-password/**").permitAll()
+                .requestMatchers(HttpMethod.POST, "/usuario/request-code-reset-password/**").permitAll()
 
-                .antMatchers(HttpMethod.POST, "/usuario/update-user").authenticated()
+                .requestMatchers(HttpMethod.POST, "/usuario/update-user").authenticated()
 
-                .antMatchers(HttpMethod.POST, "/usuario/**").hasRole("ADMINISTRADOR")
-                .antMatchers(HttpMethod.DELETE, "/usuario/**").hasRole("ADMINISTRADOR")
-                .antMatchers(HttpMethod.POST, "/emprestimo/save-emprestimo", "/emprestimo/save-devolucao").hasAnyRole("LABORATORISTA", "ADMINISTRADOR")
-                .antMatchers(HttpMethod.DELETE, "/emprestimo/**").hasAnyRole("LABORATORISTA", "ADMINISTRADOR")
+                .requestMatchers(HttpMethod.POST, "/usuario/**").hasRole("ADMINISTRADOR")
+                .requestMatchers(HttpMethod.DELETE, "/usuario/**").hasRole("ADMINISTRADOR")
+                .requestMatchers(HttpMethod.POST, "/emprestimo/save-emprestimo", "/emprestimo/save-devolucao").hasAnyRole("LABORATORISTA", "ADMINISTRADOR")
+                .requestMatchers(HttpMethod.DELETE, "/emprestimo/**").hasAnyRole("LABORATORISTA", "ADMINISTRADOR")
 
-                .antMatchers(HttpMethod.GET, "/usuario/user-info").permitAll()
+                .requestMatchers(HttpMethod.GET, "/usuario/user-info").permitAll()
 
 
-                .antMatchers(HttpMethod.POST, "/auth").permitAll()
-                .antMatchers(HttpMethod.GET, "/test").permitAll()
+                .requestMatchers(HttpMethod.POST, "/auth").permitAll()
+                .requestMatchers(HttpMethod.GET, "/test").permitAll()
                 .anyRequest().authenticated()
-                .and()
-                .authenticationManager(authenticationManager)
-                //Filtro da Autenticação
-                .addFilter(new JWTAuthenticationFilter(authenticationManager, usuarioService, env) )
-                //Filtro da Autorizaçao
-                .addFilter(new JWTAuthorizationFilter(authenticationManager, usuarioService, env) )
-                .sessionManagement().sessionCreationPolicy(SessionCreationPolicy.STATELESS);
+        );
+
+        http.authenticationManager(authenticationManager)
+                .addFilter(
+                        new JWTAuthenticationFilter(authenticationManager, usuarioService, env)
+                )
+                .addFilter(
+                        new JWTAuthorizationFilter(authenticationManager, usuarioService, env)
+                )
+                .sessionManagement(sessionManagement ->
+                        sessionManagement.sessionCreationPolicy(
+                                SessionCreationPolicy.STATELESS)
+                );
+
 
         return http.build();
     }
@@ -92,6 +98,23 @@ public class WebSecurity {
     @Bean
     protected PasswordEncoder passwordEncoder() {
         return new BCryptPasswordEncoder();
+    }
+
+    @Bean
+    CorsConfigurationSource corsConfigurationSource() {
+        CorsConfiguration configuration = new CorsConfiguration();
+        configuration.setAllowedOrigins(List.of("*"));
+
+        configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS", "HEAD", "TRACE", "CONNECT"));
+
+        configuration.setAllowedHeaders(List.of("Authorization", "x-xsrf-token",
+                "Access-Control-Allow-Headers", "Origin",
+                "Accept", "X-Requested-With", "Content-Type",
+                "Access-Control-Request-Method",
+                "Access-Control-Request-Headers", "Auth-Id-Token"));
+        UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
+        source.registerCorsConfiguration("/**", configuration);
+        return source;
     }
 
 }

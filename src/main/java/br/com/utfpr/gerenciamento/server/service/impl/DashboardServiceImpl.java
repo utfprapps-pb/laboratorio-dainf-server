@@ -6,23 +6,23 @@ import br.com.utfpr.gerenciamento.server.service.CompraService;
 import br.com.utfpr.gerenciamento.server.service.DashboardService;
 import br.com.utfpr.gerenciamento.server.service.EmprestimoService;
 import br.com.utfpr.gerenciamento.server.service.SaidaService;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
-import java.time.chrono.ChronoLocalDate;
-import java.time.temporal.Temporal;
 import java.util.List;
 
 @Service
 public class DashboardServiceImpl implements DashboardService {
 
-    @Autowired
-    private EmprestimoService emprestimoService;
-    @Autowired
-    private CompraService compraService;
-    @Autowired
-    private SaidaService saidaService;
+    private final EmprestimoService emprestimoService;
+    private final CompraService compraService;
+    private final SaidaService saidaService;
+
+    public DashboardServiceImpl(EmprestimoService emprestimoService, CompraService compraService, SaidaService saidaService) {
+        this.emprestimoService = emprestimoService;
+        this.compraService = compraService;
+        this.saidaService = saidaService;
+    }
 
     @Override
     public DashboardEmprestimoCountRange findDadosEmprestimoCountRange(LocalDate dtIni, LocalDate dtFim) {

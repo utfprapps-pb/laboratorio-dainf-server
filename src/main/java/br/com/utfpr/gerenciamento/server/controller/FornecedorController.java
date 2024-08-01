@@ -3,7 +3,6 @@ package br.com.utfpr.gerenciamento.server.controller;
 import br.com.utfpr.gerenciamento.server.model.Fornecedor;
 import br.com.utfpr.gerenciamento.server.service.CrudService;
 import br.com.utfpr.gerenciamento.server.service.FornecedorService;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -12,8 +11,11 @@ import java.util.List;
 @RequestMapping("fornecedor")
 public class FornecedorController extends CrudController<Fornecedor, Long> {
 
-    @Autowired
-    private FornecedorService fornecedorService;
+    private final FornecedorService fornecedorService;
+
+    public FornecedorController(FornecedorService fornecedorService) {
+        this.fornecedorService = fornecedorService;
+    }
 
     @Override
     protected CrudService<Fornecedor, Long> getService() {

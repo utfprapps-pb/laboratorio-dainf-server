@@ -4,7 +4,6 @@ import br.com.utfpr.gerenciamento.server.model.Saida;
 import br.com.utfpr.gerenciamento.server.service.CrudService;
 import br.com.utfpr.gerenciamento.server.service.ItemService;
 import br.com.utfpr.gerenciamento.server.service.SaidaService;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -12,10 +11,13 @@ import org.springframework.web.bind.annotation.RestController;
 @RequestMapping("saida")
 public class SaidaController extends CrudController<Saida, Long> {
 
-    @Autowired
-    private SaidaService saidaService;
-    @Autowired
-    private ItemService itemService;
+    private final SaidaService saidaService;
+    private final ItemService itemService;
+
+    public SaidaController(SaidaService saidaService, ItemService itemService) {
+        this.saidaService = saidaService;
+        this.itemService = itemService;
+    }
 
     @Override
     protected CrudService<Saida, Long> getService() {

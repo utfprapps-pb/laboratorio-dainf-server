@@ -6,7 +6,6 @@ import br.com.utfpr.gerenciamento.server.model.EmprestimoDevolucaoItem;
 import br.com.utfpr.gerenciamento.server.model.filter.EmprestimoFilter;
 import br.com.utfpr.gerenciamento.server.service.*;
 import br.com.utfpr.gerenciamento.server.util.DateUtil;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDate;
@@ -17,14 +16,17 @@ import java.util.stream.Collectors;
 @RequestMapping("emprestimo")
 public class EmprestimoController extends CrudController<Emprestimo, Long> {
 
-    @Autowired
-    private EmprestimoService emprestimoService;
-    @Autowired
-    private ItemService itemService;
-    @Autowired
-    private SaidaService saidaService;
-    @Autowired
-    private ReservaService reservaService;
+    private final EmprestimoService emprestimoService;
+    private final ItemService itemService;
+    private final SaidaService saidaService;
+    private final ReservaService reservaService;
+
+    public EmprestimoController(EmprestimoService emprestimoService, ItemService itemService, SaidaService saidaService, ReservaService reservaService) {
+        this.emprestimoService = emprestimoService;
+        this.itemService = itemService;
+        this.saidaService = saidaService;
+        this.reservaService = reservaService;
+    }
 
     @Override
     protected CrudService<Emprestimo, Long> getService() {

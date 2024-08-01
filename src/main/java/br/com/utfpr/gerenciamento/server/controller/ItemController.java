@@ -4,20 +4,23 @@ import br.com.utfpr.gerenciamento.server.model.Item;
 import br.com.utfpr.gerenciamento.server.model.ItemImage;
 import br.com.utfpr.gerenciamento.server.service.CrudService;
 import br.com.utfpr.gerenciamento.server.service.ItemService;
-import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartHttpServletRequest;
 
-import javax.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletRequest;
 import java.util.List;
 
 @RestController
 @RequestMapping("item")
 public class ItemController extends CrudController<Item, Long> {
 
-    @Autowired
-    private ItemService itemService;
+    private final ItemService itemService;
     private List<ItemImage> imagesToCopy;
+
+    public ItemController(ItemService itemService) {
+        this.itemService = itemService;
+    }
 
     @Override
     protected CrudService<Item, Long> getService() {
@@ -26,7 +29,7 @@ public class ItemController extends CrudController<Item, Long> {
 
     @Override
     public void preSave(Item object) {
-        if (object.getId() == null && object.getImageItem() != null && object.getImageItem().size() > 0) {
+        if (object.getId() == null && object.getImageItem() != null && !object.getImageItem().isEmpty()) {
             this.imagesToCopy = object.getImageItem();
             object.setImageItem(null);
         }
@@ -64,5 +67,10 @@ public class ItemController extends CrudController<Item, Long> {
     public void deleteImageItem(@PathVariable("idItem") Long idItem,
                                 @RequestBody ItemImage itemImage) {
         itemService.deleteImage(itemImage, idItem);
+    }
+
+    @Override
+    public Page<Item> findAllPaged(int page, int size, String order, Boolean asc) {
+        return super.findAllPaged(page, size, order, asc);
     }
 }

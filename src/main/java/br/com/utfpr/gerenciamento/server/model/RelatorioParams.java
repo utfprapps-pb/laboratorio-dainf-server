@@ -2,13 +2,12 @@ package br.com.utfpr.gerenciamento.server.model;
 
 import br.com.utfpr.gerenciamento.server.ennumeation.TypeParamReport;
 import com.fasterxml.jackson.annotation.JsonBackReference;
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import lombok.*;
 
-import javax.persistence.*;
+import jakarta.persistence.*;
 
-@Data
+@Getter
+@Setter
 @NoArgsConstructor
 @AllArgsConstructor
 @Entity
