@@ -6,7 +6,6 @@ import br.com.utfpr.gerenciamento.server.model.SaidaItem;
 import br.com.utfpr.gerenciamento.server.model.dashboards.DashboardItensSaidas;
 import br.com.utfpr.gerenciamento.server.repository.SaidaRepository;
 import br.com.utfpr.gerenciamento.server.service.SaidaService;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Service;
 
@@ -17,8 +16,11 @@ import java.util.List;
 @Service
 public class SaidaServiceImpl extends CrudServiceImpl<Saida, Long> implements SaidaService {
 
-    @Autowired
-    private SaidaRepository saidaRepository;
+    private final SaidaRepository saidaRepository;
+
+    public SaidaServiceImpl(SaidaRepository saidaRepository) {
+        this.saidaRepository = saidaRepository;
+    }
 
     @Override
     protected JpaRepository<Saida, Long> getRepository() {

@@ -12,7 +12,6 @@ import com.google.api.client.googleapis.auth.oauth2.GoogleIdTokenVerifier;
 import com.google.api.client.http.javanet.NetHttpTransport;
 import com.google.api.client.json.JsonFactory;
 import com.google.api.client.json.gson.GsonFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -27,7 +26,6 @@ import java.io.IOException;
 import java.util.Collections;
 import java.util.Date;
 import java.util.HashSet;
-import java.util.Set;
 
 import static com.auth0.jwt.algorithms.Algorithm.HMAC512;
 
@@ -38,17 +36,23 @@ public class OauthController {
     @Value("${google.clientId}")
     String googleClientId;
 
-    @Autowired
+    final
     PasswordEncoder passwordEncoder;
 
 
     AuthenticationManager authenticationManager;
 
-    @Autowired
+    final
     UsuarioService usuarioService;
 
-    @Autowired
+    final
     PermissaoService permissaoService;
+
+    public OauthController(PasswordEncoder passwordEncoder, UsuarioService usuarioService, PermissaoService permissaoService) {
+        this.passwordEncoder = passwordEncoder;
+        this.usuarioService = usuarioService;
+        this.permissaoService = permissaoService;
+    }
 
     @PostMapping("/google")
     public ResponseEntity<TokenDto> google(@RequestBody TokenDto tokenDto) throws IOException {

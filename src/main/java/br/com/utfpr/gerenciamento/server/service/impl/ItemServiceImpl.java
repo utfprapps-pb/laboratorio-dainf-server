@@ -18,7 +18,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.multipart.MultipartHttpServletRequest;
 
-import javax.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletRequest;
 import java.io.*;
 import java.math.BigDecimal;
 import java.util.ArrayList;
@@ -26,12 +26,12 @@ import java.util.List;
 
 @Service
 public class ItemServiceImpl extends CrudServiceImpl<Item, Long> implements ItemService {
-    private ItemRepository itemRepository;
-    private EmailService emailService;
-    private RelatorioService relatorioService;
+    private final ItemRepository itemRepository;
+    private final EmailService emailService;
+    private final RelatorioService relatorioService;
     private final MinioService minioService;
     private final MinioConfig minioConfig;
-    private ItemImageRepository itemImageRepository;
+    private final ItemImageRepository itemImageRepository;
 
     public ItemServiceImpl(ItemRepository itemRepository, EmailService emailService, RelatorioService relatorioService,
                            MinioService minioService, MinioConfig minioConfig, ItemImageRepository itemImageRepository) {

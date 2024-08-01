@@ -14,9 +14,9 @@ public interface SaidaRepository extends JpaRepository<Saida, Long> {
     @Query("SELECT new br.com.utfpr.gerenciamento.server.model.dashboards.DashboardItensSaidas(SUM(si.qtde), i.nome) \n" +
             "FROM SaidaItem si " +
             "LEFT JOIN Saida s " +
-            "ON s.id = si.saida " +
+            "ON s.id = si.saida.id " +
             "LEFT JOIN Item i " +
-            "ON i.id = si.item " +
+            "ON i.id = si.item.id " +
             "WHERE s.dataSaida between :dtIni and :dtFim " +
             "GROUP BY i.nome")
     List<DashboardItensSaidas> findItensMaisSaidas(@Param("dtIni") LocalDate dtIni,

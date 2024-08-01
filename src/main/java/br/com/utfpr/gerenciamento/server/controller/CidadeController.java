@@ -4,7 +4,6 @@ import br.com.utfpr.gerenciamento.server.model.Cidade;
 import br.com.utfpr.gerenciamento.server.model.Estado;
 import br.com.utfpr.gerenciamento.server.service.CidadeService;
 import br.com.utfpr.gerenciamento.server.service.CrudService;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -13,8 +12,11 @@ import java.util.List;
 @RequestMapping("cidade")
 public class CidadeController extends CrudController<Cidade, Long> {
 
-    @Autowired
-    private CidadeService cidadeService;
+    private final CidadeService cidadeService;
+
+    public CidadeController(CidadeService cidadeService) {
+        this.cidadeService = cidadeService;
+    }
 
     @Override
     protected CrudService<Cidade, Long> getService() {

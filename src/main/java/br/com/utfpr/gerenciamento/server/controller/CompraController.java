@@ -4,7 +4,6 @@ import br.com.utfpr.gerenciamento.server.model.Compra;
 import br.com.utfpr.gerenciamento.server.service.CompraService;
 import br.com.utfpr.gerenciamento.server.service.CrudService;
 import br.com.utfpr.gerenciamento.server.service.ItemService;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -12,11 +11,14 @@ import org.springframework.web.bind.annotation.RestController;
 @RequestMapping("compra")
 public class CompraController extends CrudController<Compra, Long> {
 
-    @Autowired
-    private CompraService compraService;
-    @Autowired
-    private ItemService itemService;
+    private final CompraService compraService;
+    private final ItemService itemService;
     private Compra compraOld;
+
+    public CompraController(CompraService compraService, ItemService itemService) {
+        this.compraService = compraService;
+        this.itemService = itemService;
+    }
 
     @Override
     protected CrudService<Compra, Long> getService() {

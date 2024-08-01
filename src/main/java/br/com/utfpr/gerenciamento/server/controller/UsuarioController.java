@@ -13,7 +13,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.web.bind.annotation.*;
 
-import javax.validation.Valid;
+import jakarta.validation.Valid;
 import java.security.Principal;
 import java.util.HashSet;
 import java.util.List;
@@ -26,16 +26,13 @@ public class UsuarioController {
 
     private final UsuarioService usuarioService;
 
-    private final EmailService emailService;
-
     private final PermissaoService permissaoService;
 
     private final EmailMessageService emailMessageService;
 
-    public UsuarioController(UsuarioService usuarioService, PermissaoService permissaoService, EmailService emailService, EmailMessageService emailMessageService) {
+    public UsuarioController(UsuarioService usuarioService, PermissaoService permissaoService, EmailMessageService emailMessageService) {
         this.usuarioService = usuarioService;
         this.permissaoService = permissaoService;
-        this.emailService = emailService;
         this.emailMessageService = emailMessageService;
     }
 

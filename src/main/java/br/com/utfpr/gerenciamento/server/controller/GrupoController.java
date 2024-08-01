@@ -5,7 +5,6 @@ import br.com.utfpr.gerenciamento.server.model.Item;
 import br.com.utfpr.gerenciamento.server.service.CrudService;
 import br.com.utfpr.gerenciamento.server.service.GrupoService;
 import br.com.utfpr.gerenciamento.server.service.ItemService;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -14,10 +13,13 @@ import java.util.List;
 @RequestMapping("grupo")
 public class GrupoController extends CrudController<Grupo, Long> {
 
-    @Autowired
-    private GrupoService grupoService;
-    @Autowired
-    private ItemService itemService;
+    private final GrupoService grupoService;
+    private final ItemService itemService;
+
+    public GrupoController(GrupoService grupoService, ItemService itemService) {
+        this.grupoService = grupoService;
+        this.itemService = itemService;
+    }
 
     @Override
     protected CrudService<Grupo, Long> getService() {
