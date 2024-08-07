@@ -1,15 +1,12 @@
 package br.com.utfpr.gerenciamento.server.service.impl;
 
-import br.com.utfpr.gerenciamento.server.model.Email;
 import br.com.utfpr.gerenciamento.server.model.Reserva;
-import br.com.utfpr.gerenciamento.server.model.Usuario;
 import br.com.utfpr.gerenciamento.server.model.modelTemplateEmail.ReservaTemplate;
 import br.com.utfpr.gerenciamento.server.repository.ReservaRepository;
 import br.com.utfpr.gerenciamento.server.service.EmailService;
 import br.com.utfpr.gerenciamento.server.service.ReservaService;
 import br.com.utfpr.gerenciamento.server.service.UsuarioService;
 import br.com.utfpr.gerenciamento.server.util.DateUtil;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -20,12 +17,15 @@ import java.util.List;
 @Service
 public class ReservaServiceImpl extends CrudServiceImpl<Reserva, Long> implements ReservaService {
 
-    @Autowired
-    private ReservaRepository reservaRepository;
-    @Autowired
-    private UsuarioService usuarioService;
-    @Autowired
-    private EmailService emailService;
+    private final ReservaRepository reservaRepository;
+    private final UsuarioService usuarioService;
+    private final EmailService emailService;
+
+    public ReservaServiceImpl(ReservaRepository reservaRepository, UsuarioService usuarioService, EmailService emailService) {
+        this.reservaRepository = reservaRepository;
+        this.usuarioService = usuarioService;
+        this.emailService = emailService;
+    }
 
     @Override
     protected JpaRepository<Reserva, Long> getRepository() {

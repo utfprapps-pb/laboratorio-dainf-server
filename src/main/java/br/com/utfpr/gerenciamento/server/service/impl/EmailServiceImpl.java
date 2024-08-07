@@ -8,12 +8,12 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.ByteArrayResource;
-import org.springframework.mail.javamail.JavaMailSenderImpl;
+import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.stereotype.Service;
 import org.springframework.ui.freemarker.FreeMarkerTemplateUtils;
 
-import javax.mail.internet.MimeMessage;
+import jakarta.mail.internet.MimeMessage;
 import java.util.Map;
 
 @Service
@@ -22,14 +22,12 @@ public class EmailServiceImpl implements EmailService {
 
     @Value("${utfpr.email.address}")
     private String emailAddress;
-    @Value("${utfpr.email.password}")
-    private String emailPassword;
 
-    private final JavaMailSenderImpl javaMailSender;
+    private final JavaMailSender javaMailSender;
     private final Configuration freemarkerConfiguration;
 
     @Autowired
-    public EmailServiceImpl(JavaMailSenderImpl javaMailSender,
+    public EmailServiceImpl(JavaMailSender javaMailSender,
                             Configuration freemarkerConfiguration) {
         this.javaMailSender = javaMailSender;
         this.freemarkerConfiguration = freemarkerConfiguration;
@@ -37,7 +35,7 @@ public class EmailServiceImpl implements EmailService {
 
     @Override
     public void enviar(Email email) throws Exception {
-        // new Thread(() -> {
+        new Thread(() -> {
             try {
                 MimeMessage message = javaMailSender.createMimeMessage();
 
@@ -64,15 +62,12 @@ public class EmailServiceImpl implements EmailService {
                 }
 
                 log.info("Sending email....");
-                javaMailSender.setUsername(emailAddress);
-                javaMailSender.setPassword(emailPassword);
                 javaMailSender.send(message);
-                log.info("Email sent");
-            } catch (Exception e) {
-                log.error("Error sending email", e);
-                e.printStackTrace();
+                log.info("Email sent.");
+            } catch (Exception ex) {
+                log.error("Error sending email. ", ex);
             }
-        // }).start();
+        }).start();
     }
 
     @Override
@@ -82,7 +77,7 @@ public class EmailServiceImpl implements EmailService {
             template = freemarkerConfiguration.getTemplate(String.format("%s.ftl", nameTemplate));
             return FreeMarkerTemplateUtils.processTemplateIntoString(template, object);
         } catch (Exception ex) {
-            ex.printStackTrace();
+            log.error("Building email template. ", ex);
             return null;
         }
     }
@@ -96,8 +91,8 @@ public class EmailServiceImpl implements EmailService {
                 .conteudo(this.buildTemplateEmail(objectTemplate, nameTemplate)).build();
         try {
             this.enviar(email);
-        } catch (Exception exception) {
-            exception.printStackTrace();
+        } catch (Exception ex) {
+            log.error("Error sending email. ", ex);
         }
     }
 }

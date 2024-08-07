@@ -7,7 +7,7 @@ import br.com.utfpr.gerenciamento.server.model.RecoverPassword;
 import br.com.utfpr.gerenciamento.server.model.Usuario;
 import br.com.utfpr.gerenciamento.server.repository.RecoverPasswordRepository;
 import br.com.utfpr.gerenciamento.server.repository.UsuarioRepository;
-import br.com.utfpr.gerenciamento.server.service.EmailMessageService;
+import br.com.utfpr.gerenciamento.server.service.EmailService;
 import br.com.utfpr.gerenciamento.server.service.UsuarioService;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Value;
@@ -20,9 +20,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
-import java.util.List;
-import java.util.Objects;
-import java.util.UUID;
+import java.util.*;
 
 @Service
 public class UsuarioServiceImpl extends CrudServiceImpl<Usuario, Long> implements UsuarioService, UserDetailsService {
@@ -35,18 +33,17 @@ public class UsuarioServiceImpl extends CrudServiceImpl<Usuario, Long> implement
 
     private final ModelMapper modelMapper;
 
-    private final EmailMessageService emailMessageService;
-
     private final RecoverPasswordRepository recoverPasswordRepository;
 
+    private final EmailService emailService;
+
     public UsuarioServiceImpl(UsuarioRepository usuarioRepository, ModelMapper modelMapper,
-                              EmailMessageService emailMessageService,
-                              RecoverPasswordRepository recoverPasswordRepository, PasswordEncoder passwordEncoder) {
+                              RecoverPasswordRepository recoverPasswordRepository, PasswordEncoder passwordEncoder, EmailService emailService) {
         this.usuarioRepository = usuarioRepository;
         this.modelMapper = modelMapper;
-        this.emailMessageService = emailMessageService;
         this.recoverPasswordRepository = recoverPasswordRepository;
         this.passwordEncoder = passwordEncoder;
+        this.emailService = emailService;
     }
 
     @Override
@@ -139,16 +136,23 @@ public class UsuarioServiceImpl extends CrudServiceImpl<Usuario, Long> implement
         recoverPassword.setCode(UUID.randomUUID().toString());
         recoverPassword.setDateTime(LocalDateTime.now());
 
+        Map<String, Object> body = new HashMap<>();
+        body.put("usuario", usuario.getNome());
+        body.put("url", frontBaseUrl + "/recupear-senha/" + recoverPassword.getCode());
+
         EmailDto emailDto = EmailDto.builder()
                 .usuario(usuario.getNome())
                 .emailTo(recoverPassword.getEmail())
                 .url(frontBaseUrl + "/recupear-senha/" + recoverPassword.getCode())
                 .subject("Laboratório DAINF-PB - Recuperar senha")
                 .subjectBody("Laboratório DAINF-PB - Recuperar senha")
-                .contentBody("").build();
+                .contentBody("")
+                .body(body).build();
 
         recoverPasswordRepository.save(recoverPassword);
-        emailMessageService.sendEmail(emailDto, "templateRecoverPassword");
+        // emailMessageService.sendEmail(emailDto, "templateRecoverPassword");
+        emailService.sendEmailWithTemplate(emailDto, emailDto.getEmailTo(), emailDto.getSubject(), "templateRecoverPassword");
+
         return GenericResponse.builder().message("Uma solicitação foi enviada para o seu email.").build();
     }
 
@@ -188,7 +192,11 @@ public class UsuarioServiceImpl extends CrudServiceImpl<Usuario, Long> implement
         emailDto.setUrl(frontBaseUrl + "/confirmar-email/" + usuario.getCodigoVerificacao());
         emailDto.setSubject("Confirmação de email - Laboratório DAINF-PB (UTFPR)");
         emailDto.setSubjectBody("Confirmação de email - Laboratório DAINF-PB (UTFPR)");
-        emailMessageService.sendEmail(emailDto, "templateConfirmacaoCadastro");
+        Map<String, Object> body = new HashMap<>();
+        body.put("usuario", usuario.getNome());
+        body.put("url", emailDto.getUrl());
+
+        emailService.sendEmailWithTemplate(emailDto, emailDto.getEmailTo(), emailDto.getSubject(), "templateConfirmacaoCadastro");
     }
 
 }

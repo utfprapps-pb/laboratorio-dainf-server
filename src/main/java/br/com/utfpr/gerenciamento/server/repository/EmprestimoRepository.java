@@ -13,7 +13,7 @@ import java.util.List;
 
 public interface EmprestimoRepository extends JpaRepository<Emprestimo, Long> {
 
-    @Query("SELECT new br.com.utfpr.gerenciamento.server.model.dashboards.DashboardEmprestimoDia(COUNT(e), e.dataEmprestimo) \n" +
+    @Query("SELECT new br.com.utfpr.gerenciamento.server.model.dashboards.DashboardEmprestimoDia(COUNT(e), e.dataEmprestimo) " +
             "FROM Emprestimo e\n" +
             "WHERE e.dataEmprestimo between :dtIni and :dtFim\n" +
             "GROUP BY e.dataEmprestimo")
@@ -22,12 +22,12 @@ public interface EmprestimoRepository extends JpaRepository<Emprestimo, Long> {
 
     List<Emprestimo> findAllByDataEmprestimoBetween(LocalDate dtIni, LocalDate dtFim);
 
-    @Query("SELECT new br.com.utfpr.gerenciamento.server.model.dashboards.DashboardItensEmprestados(SUM(e.qtde), i.nome) \n" +
+    @Query("SELECT new br.com.utfpr.gerenciamento.server.model.dashboards.DashboardItensEmprestados(SUM(e.qtde), i.nome) " +
             "FROM EmprestimoItem e " +
             "LEFT JOIN Emprestimo em " +
-            "ON em.id = e.emprestimo " +
+            "ON em.id = e.emprestimo.id " +
             "LEFT JOIN Item i " +
-            "ON i.id = e.item " +
+            "ON i.id = e.item .id " +
             "WHERE em.dataEmprestimo between :dtIni and :dtFim " +
             "GROUP BY i.nome")
     List<DashboardItensEmprestados> findItensMaisEmprestados(@Param("dtIni") LocalDate dtIni,

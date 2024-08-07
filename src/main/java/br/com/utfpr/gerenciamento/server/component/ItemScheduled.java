@@ -9,8 +9,11 @@ import org.springframework.stereotype.Component;
 @Component
 public class ItemScheduled {
 
-    @Autowired
-    private ItemService itemService;
+    private final ItemService itemService;
+
+    public ItemScheduled(ItemService itemService) {
+        this.itemService = itemService;
+    }
 
     @Async
     @Scheduled(cron = "0 0 12 ? * *")

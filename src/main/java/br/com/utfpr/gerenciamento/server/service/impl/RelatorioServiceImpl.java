@@ -8,14 +8,13 @@ import br.com.utfpr.gerenciamento.server.util.FileUtil;
 import net.sf.jasperreports.engine.*;
 import net.sf.jasperreports.engine.design.JasperDesign;
 import net.sf.jasperreports.engine.xml.JRXmlLoader;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartHttpServletRequest;
 
-import javax.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletRequest;
 import java.io.BufferedOutputStream;
 import java.io.File;
 import java.io.FileOutputStream;
@@ -29,12 +28,14 @@ import java.util.Map;
 @Service
 public class RelatorioServiceImpl extends CrudServiceImpl<Relatorio, Long> implements RelatorioService {
 
-    @Autowired
-    private RelatorioRepository relatorioRepository;
+    private final RelatorioRepository relatorioRepository;
 
-    @Autowired
-    @Qualifier("jdbcTemplate")
-    private JdbcTemplate jdbcTemplate;
+    private final JdbcTemplate jdbcTemplate;
+
+    public RelatorioServiceImpl(RelatorioRepository relatorioRepository, @Qualifier("jdbcTemplate") JdbcTemplate jdbcTemplate) {
+        this.relatorioRepository = relatorioRepository;
+        this.jdbcTemplate = jdbcTemplate;
+    }
 
     @Override
     protected JpaRepository<Relatorio, Long> getRepository() {

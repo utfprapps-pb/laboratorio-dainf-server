@@ -3,7 +3,6 @@ package br.com.utfpr.gerenciamento.server.controller;
 import br.com.utfpr.gerenciamento.server.model.dashboards.*;
 import br.com.utfpr.gerenciamento.server.service.DashboardService;
 import br.com.utfpr.gerenciamento.server.util.DateUtil;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -15,8 +14,11 @@ import java.util.List;
 @RequestMapping("dashboard")
 public class HomeController {
 
-    @Autowired
-    private DashboardService dashboardService;
+    private final DashboardService dashboardService;
+
+    public HomeController(DashboardService dashboardService) {
+        this.dashboardService = dashboardService;
+    }
 
     @GetMapping("emprestimo-count-range")
     public DashboardEmprestimoCountRange findDadosEmprestimoCountRange(@RequestParam("dtIni") String dtIni,

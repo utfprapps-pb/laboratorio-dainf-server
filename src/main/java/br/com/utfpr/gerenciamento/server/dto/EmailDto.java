@@ -6,8 +6,10 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import javax.validation.constraints.Email;
-import javax.validation.constraints.NotNull;
+import jakarta.validation.constraints.Email;
+import jakarta.validation.constraints.NotNull;
+
+import java.util.Map;
 
 @Data
 @Builder
@@ -29,4 +31,6 @@ public class EmailDto {
 
     @NotNull
     private String contentBody;
+
+    private Map<String, Object> body;
 }

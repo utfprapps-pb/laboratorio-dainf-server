@@ -7,11 +7,10 @@ import br.com.utfpr.gerenciamento.server.service.RelatorioService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import net.sf.jasperreports.engine.JasperExportManager;
 import net.sf.jasperreports.engine.JasperPrint;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartHttpServletRequest;
 
-import javax.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletRequest;
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.List;
@@ -21,8 +20,11 @@ import java.util.Map;
 @RequestMapping("relatorio")
 public class RelatorioController extends CrudController<Relatorio, Long> {
 
-    @Autowired
-    private RelatorioService relatorioService;
+    private final RelatorioService relatorioService;
+
+    public RelatorioController(RelatorioService relatorioService) {
+        this.relatorioService = relatorioService;
+    }
 
     @Override
     protected CrudService<Relatorio, Long> getService() {

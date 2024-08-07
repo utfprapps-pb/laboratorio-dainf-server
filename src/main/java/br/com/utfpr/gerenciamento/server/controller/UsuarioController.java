@@ -3,7 +3,6 @@ package br.com.utfpr.gerenciamento.server.controller;
 import br.com.utfpr.gerenciamento.server.dto.*;
 import br.com.utfpr.gerenciamento.server.model.Permissao;
 import br.com.utfpr.gerenciamento.server.model.Usuario;
-import br.com.utfpr.gerenciamento.server.service.EmailMessageService;
 import br.com.utfpr.gerenciamento.server.service.EmailService;
 import br.com.utfpr.gerenciamento.server.service.PermissaoService;
 import br.com.utfpr.gerenciamento.server.service.UsuarioService;
@@ -13,7 +12,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.web.bind.annotation.*;
 
-import javax.validation.Valid;
+import jakarta.validation.Valid;
 import java.security.Principal;
 import java.util.HashSet;
 import java.util.List;
@@ -26,17 +25,14 @@ public class UsuarioController {
 
     private final UsuarioService usuarioService;
 
-    private final EmailService emailService;
-
     private final PermissaoService permissaoService;
 
-    private final EmailMessageService emailMessageService;
+    private final EmailService emailService;
 
-    public UsuarioController(UsuarioService usuarioService, PermissaoService permissaoService, EmailService emailService, EmailMessageService emailMessageService) {
+    public UsuarioController(UsuarioService usuarioService, PermissaoService permissaoService, EmailService emailService) {
         this.usuarioService = usuarioService;
         this.permissaoService = permissaoService;
         this.emailService = emailService;
-        this.emailMessageService = emailMessageService;
     }
 
     @GetMapping
@@ -146,7 +142,8 @@ public class UsuarioController {
             emailDto.setUrl(frontBaseUrl + "/confirmar-email/" + usuario.getCodigoVerificacao());
             emailDto.setSubject("Confirmação de email - Laboratório DAINF-PB (UTFPR)");
             emailDto.setSubjectBody("Confirmação de email - Laboratório DAINF-PB (UTFPR)");
-            emailMessageService.sendEmail(emailDto, "templateConfirmacaoCadastro");
+
+            emailService.sendEmailWithTemplate(emailDto, emailDto.getEmailTo(), emailDto.getSubject(), "templateConfirmacaoCadastro");
 
             return usuario;
         } catch (Exception ex) {

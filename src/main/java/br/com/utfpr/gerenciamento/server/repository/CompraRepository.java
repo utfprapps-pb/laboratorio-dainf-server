@@ -11,12 +11,12 @@ import java.util.List;
 
 public interface CompraRepository extends JpaRepository<Compra, Long> {
 
-    @Query("SELECT new br.com.utfpr.gerenciamento.server.model.dashboards.DashboardItensAdquiridos(SUM(ci.qtde), i.nome) \n" +
+    @Query("SELECT new br.com.utfpr.gerenciamento.server.model.dashboards.DashboardItensAdquiridos(SUM(ci.qtde), i.nome) " +
             "FROM CompraItem ci " +
             "LEFT JOIN Compra c " +
-            "ON c.id = ci.compra " +
+            "ON c.id = ci.compra.id " +
             "LEFT JOIN Item i " +
-            "ON i.id = ci.item " +
+            "ON i.id = ci.item.id " +
             "WHERE c.dataCompra between :dtIni and :dtFim " +
             "GROUP BY i.nome")
     List<DashboardItensAdquiridos> findItensMaisAdquiridos(@Param("dtIni") LocalDate dtIni,

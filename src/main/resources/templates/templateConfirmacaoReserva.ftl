@@ -82,7 +82,7 @@
             </tbody>
         </table>
         <br/>
-        <p>Lembre-se de ir até o laborátorio para efetuar o devido empréstimo dos materiais reservados.</p>
+        <p>Lembre-se de ir até o laboratório para efetuar o devido empréstimo dos materiais reservados.</p>
         <br/><br/>
         <p>Att,</p>
         <p>Laboratório do Departamento de Informática - UTFPR/PB</p>
