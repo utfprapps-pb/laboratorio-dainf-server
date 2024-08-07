@@ -9,6 +9,8 @@ import lombok.NoArgsConstructor;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotNull;
 
+import java.util.Map;
+
 @Data
 @Builder
 @AllArgsConstructor
@@ -29,4 +31,6 @@ public class EmailDto {
 
     @NotNull
     private String contentBody;
+
+    private Map<String, Object> body;
 }
