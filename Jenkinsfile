@@ -21,7 +21,7 @@ pipeline {
         UTFPR_EMAIL_PASSWORD="${EMAIL_CRED_PSW}"
         UTFPR_EMAIL_USERNAME="${EMAIL_CRED_USR}"
         UTFPR_EMAIL_HOST="200.19.73.102"
-        UTFPR_EMAIL_PORT="465"
+        UTFPR_EMAIL_PORT="587"
 
         UTFPR_FRONT_URL="https://dainf-labs.app.pb.utfpr.edu.br/#"
 
