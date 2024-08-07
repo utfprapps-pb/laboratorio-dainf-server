@@ -14,6 +14,6 @@ RUN sed -i 's/\r$//' mvnw
 RUN /bin/sh mvnw package -DskipTests
 
 # DELIVERY
-FROM openjdk:17
+FROM openjdk:21
 COPY --from=build /workspace/labs/target/server-0.1.jar server.jar
 ENTRYPOINT ["java", "-jar", "server.jar"]
