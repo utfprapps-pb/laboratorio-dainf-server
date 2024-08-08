@@ -1,6 +1,7 @@
 package br.com.utfpr.gerenciamento.server.model;
 
 import br.com.utfpr.gerenciamento.server.config.CustomAuthorityDeserializer;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import lombok.*;
@@ -20,7 +21,7 @@ import java.util.Set;
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
-@JsonIgnoreProperties(ignoreUnknown = true)
+@JsonIgnoreProperties(ignoreUnknown = true, value = {"emailVerificado"})
 @Builder
 public class Usuario implements Serializable, UserDetails {
 
@@ -58,7 +59,11 @@ public class Usuario implements Serializable, UserDetails {
     private String codigoVerificacao;
 
     @Column(name = "email_verificado")
-    private Boolean emailVerificado;
+    private boolean emailVerificado;
+
+    public boolean getEmailVerificado() {
+        return emailVerificado;
+    }
 
     @JsonDeserialize(using = CustomAuthorityDeserializer.class)
     @Override
