@@ -58,6 +58,7 @@ public class EmprestimoServiceImpl extends CrudServiceImpl<Emprestimo, Long> imp
         entity.setUsuarioResponsavel(usuarioRepository.getReferenceById(
                 usuarioService.findByUsername((String) SecurityContextHolder.getContext().getAuthentication().getPrincipal()).getId()
         ));
+
         return super.save(entity);
     }
 
