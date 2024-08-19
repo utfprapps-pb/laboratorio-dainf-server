@@ -11,11 +11,14 @@ import br.com.utfpr.gerenciamento.server.model.filter.EmprestimoFilter;
 import br.com.utfpr.gerenciamento.server.model.modelTemplateEmail.EmprestimoTemplate;
 import br.com.utfpr.gerenciamento.server.repository.EmprestimoFilterRepository;
 import br.com.utfpr.gerenciamento.server.repository.EmprestimoRepository;
+import br.com.utfpr.gerenciamento.server.repository.UsuarioRepository;
 import br.com.utfpr.gerenciamento.server.service.EmailService;
 import br.com.utfpr.gerenciamento.server.service.EmprestimoService;
 import br.com.utfpr.gerenciamento.server.service.UsuarioService;
 import br.com.utfpr.gerenciamento.server.util.DateUtil;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
@@ -31,13 +34,15 @@ public class EmprestimoServiceImpl extends CrudServiceImpl<Emprestimo, Long> imp
     private final EmprestimoFilterRepository emprestimoFilterRepository;
     private final UsuarioService usuarioService;
     private final EmailService emailService;
+    private final UsuarioRepository usuarioRepository;
 
 
-    public EmprestimoServiceImpl(EmprestimoRepository emprestimoRepository, EmprestimoFilterRepository emprestimoFilterRepository, UsuarioService usuarioService, EmailService emailService) {
+    public EmprestimoServiceImpl(EmprestimoRepository emprestimoRepository, EmprestimoFilterRepository emprestimoFilterRepository, UsuarioService usuarioService, EmailService emailService, UsuarioRepository usuarioRepository) {
         this.emprestimoRepository = emprestimoRepository;
         this.emprestimoFilterRepository = emprestimoFilterRepository;
         this.usuarioService = usuarioService;
         this.emailService = emailService;
+        this.usuarioRepository = usuarioRepository;
     }
 
     private static final Logger LOGGER = Logger.getLogger(EmprestimoServiceImpl.class.getName());
@@ -45,6 +50,15 @@ public class EmprestimoServiceImpl extends CrudServiceImpl<Emprestimo, Long> imp
     @Override
     protected JpaRepository<Emprestimo, Long> getRepository() {
         return emprestimoRepository;
+    }
+
+    @Override
+    public Emprestimo save(Emprestimo entity) {
+        entity.setUsuarioEmprestimo(usuarioRepository.getReferenceById(entity.getUsuarioEmprestimo().getId()));
+        entity.setUsuarioResponsavel(usuarioRepository.getReferenceById(
+                usuarioService.findByUsername((String) SecurityContextHolder.getContext().getAuthentication().getPrincipal()).getId()
+        ));
+        return super.save(entity);
     }
 
     @Override
