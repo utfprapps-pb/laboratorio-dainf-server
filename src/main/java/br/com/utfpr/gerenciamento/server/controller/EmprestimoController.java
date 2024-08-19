@@ -45,6 +45,7 @@ public class EmprestimoController extends CrudController<Emprestimo, Long> {
         Emprestimo toReturn = getService().save(emprestimo);
         postSave(emprestimo);
         if (idReserva != 0) reservaService.finalizarReserva(idReserva);
+
         return toReturn;
     }
 

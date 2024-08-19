@@ -1,0 +1,31 @@
+version: "3.8"
+services:
+    db:
+      image: "postgres:14.2"
+      container_name: database
+      ports:
+        - "5432:5432"
+      volumes:
+        - ./pgdata:/var/lib/postgresql/data
+      environment:
+        - POSTGRES_USER=postgres
+        - POSTGRES_PASSWORD=postgres
+        - POSTGRES_DB=dainf_labs        
+      networks:
+        - apps
+      restart: always
+    minio:
+      image: minio/minio:latest
+      container_name: minio
+      environment:
+        MINIO_ROOT_USER: "minio@admin"
+        MINIO_ROOT_PASSWORD: "minio@admin"
+      volumes:
+        - ./data:/data
+      ports:
+        - 9000:9000
+        - 9001:9001
+      command: server /data --console-address :9001
+networks:
+  apps:
+    name: apps
