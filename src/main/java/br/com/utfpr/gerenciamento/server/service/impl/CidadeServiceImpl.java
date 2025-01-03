@@ -6,6 +6,7 @@ import br.com.utfpr.gerenciamento.server.repository.CidadeRepository;
 import br.com.utfpr.gerenciamento.server.service.CidadeService;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
@@ -24,6 +25,7 @@ public class CidadeServiceImpl extends CrudServiceImpl<Cidade, Long> implements 
     }
 
     @Override
+    @Transactional(readOnly = true)
     public List<Cidade> cidadeComplete(String query) {
         if ("".equalsIgnoreCase(query)) {
             return this.cidadeRepository.findAll();
@@ -33,6 +35,7 @@ public class CidadeServiceImpl extends CrudServiceImpl<Cidade, Long> implements 
     }
 
     @Override
+    @Transactional(readOnly = true)
     public List<Cidade> completeByEstado(String query, Estado estado) {
         if ("".equalsIgnoreCase(query)) {
             return this.cidadeRepository.findAllByEstado(estado);

@@ -18,6 +18,7 @@ import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.*;
@@ -52,6 +53,7 @@ public class UsuarioServiceImpl extends CrudServiceImpl<Usuario, Long> implement
     }
 
     @Override
+    @Transactional(readOnly = true)
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
         Usuario usuario = usuarioRepository.findByUsernameOrEmail(username, username);
         if (usuario == null) {
@@ -61,6 +63,7 @@ public class UsuarioServiceImpl extends CrudServiceImpl<Usuario, Long> implement
     }
 
     @Override
+    @Transactional(readOnly = true)
     public List<Usuario> usuarioComplete(String query) {
         if ("".equalsIgnoreCase(query)) {
             return usuarioRepository.findAll();
@@ -69,6 +72,7 @@ public class UsuarioServiceImpl extends CrudServiceImpl<Usuario, Long> implement
     }
 
     @Override
+    @Transactional(readOnly = true)
     public Usuario findByUsername(String username) {
         if (username.contains("@professores.utfpr.edu.br")) {
             username = username.replace("professores.", "");
@@ -79,6 +83,7 @@ public class UsuarioServiceImpl extends CrudServiceImpl<Usuario, Long> implement
     }
 
     @Override
+    @Transactional(readOnly = true)
     public List<Usuario> usuarioCompleteByUserAndDocAndNome(String query) {
         if ("".equalsIgnoreCase(query)) {
             return usuarioRepository.findAllCustom();
@@ -87,6 +92,7 @@ public class UsuarioServiceImpl extends CrudServiceImpl<Usuario, Long> implement
     }
 
     @Override
+    @Transactional(readOnly = true)
     public List<Usuario> usuarioCompleteLab(String query) {
         if ("".equalsIgnoreCase(query)) {
             return usuarioRepository.findAllCustomLab();
@@ -95,6 +101,7 @@ public class UsuarioServiceImpl extends CrudServiceImpl<Usuario, Long> implement
     }
 
     @Override
+    @Transactional
     public Usuario updateUsuario(Usuario usuario) {
         if (usuario.getUsername().equals(SecurityContextHolder.getContext().getAuthentication().getPrincipal())) {
             Usuario usuarioTmp = usuarioRepository.findByUsername(usuario.getUsername());
@@ -115,6 +122,7 @@ public class UsuarioServiceImpl extends CrudServiceImpl<Usuario, Long> implement
     }
 
     @Override
+    @Transactional
     public String resendEmail(ConfirmEmailRequestDto confirmEmailRequestDto) {
         Usuario usuario = usuarioRepository.findByEmail(confirmEmailRequestDto.getEmail());
         try {
@@ -126,6 +134,7 @@ public class UsuarioServiceImpl extends CrudServiceImpl<Usuario, Long> implement
     }
 
     @Override
+    @Transactional
     public GenericResponse sendEmailCodeRecoverPassword(String email) {
         Usuario usuario = usuarioRepository.findByEmail(email);
         if (Objects.isNull(usuario))
@@ -157,6 +166,7 @@ public class UsuarioServiceImpl extends CrudServiceImpl<Usuario, Long> implement
     }
 
     @Override
+    @Transactional
     public GenericResponse confirmEmail(ConfirmEmailRequestDto confirmEmailRequestDto) {
         Usuario usuario = usuarioRepository.findByCodigoVerificacao(confirmEmailRequestDto.getCode());
         if (usuario != null) {
@@ -169,6 +179,7 @@ public class UsuarioServiceImpl extends CrudServiceImpl<Usuario, Long> implement
     }
 
     @Override
+    @Transactional
     public GenericResponse resetPassword(RecoverPasswordRequestDto recoverPasswordRequestDto) {
         RecoverPassword recoverPassword = recoverPasswordRepository.findByCode(recoverPasswordRequestDto.getCode());
         if (recoverPassword != null) {

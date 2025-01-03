@@ -8,6 +8,7 @@ import br.com.utfpr.gerenciamento.server.repository.SaidaRepository;
 import br.com.utfpr.gerenciamento.server.service.SaidaService;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
 import java.util.ArrayList;
@@ -28,11 +29,13 @@ public class SaidaServiceImpl extends CrudServiceImpl<Saida, Long> implements Sa
     }
 
     @Override
+    @Transactional(readOnly = true)
     public List<DashboardItensSaidas> findItensMaisSaidas(LocalDate dtIni, LocalDate dtFim) {
         return saidaRepository.findItensMaisSaidas(dtIni, dtFim);
     }
 
     @Override
+    @Transactional
     public void createSaidaByDevolucaoEmprestimo(List<EmprestimoDevolucaoItem> emprestimoDevolucaoItem) {
         Saida saida = new Saida();
         List<SaidaItem> saidaItemList = new ArrayList<>();
@@ -55,6 +58,7 @@ public class SaidaServiceImpl extends CrudServiceImpl<Saida, Long> implements Sa
     }
 
     @Override
+    @Transactional
     public void deleteSaidaByEmprestimo(Long idEmprestimo) {
         var saidaToDelete = saidaRepository.findByIdEmprestimo(idEmprestimo);
         if (saidaToDelete  != null) {

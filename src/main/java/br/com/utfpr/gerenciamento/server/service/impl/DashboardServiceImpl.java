@@ -7,6 +7,7 @@ import br.com.utfpr.gerenciamento.server.service.DashboardService;
 import br.com.utfpr.gerenciamento.server.service.EmprestimoService;
 import br.com.utfpr.gerenciamento.server.service.SaidaService;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
 import java.util.List;
@@ -25,6 +26,7 @@ public class DashboardServiceImpl implements DashboardService {
     }
 
     @Override
+    @Transactional(readOnly = true)
     public DashboardEmprestimoCountRange findDadosEmprestimoCountRange(LocalDate dtIni, LocalDate dtFim) {
         List<Emprestimo> emprestimoList = emprestimoService.findAllByDataEmprestimoBetween(dtIni, dtFim);
 
@@ -45,21 +47,25 @@ public class DashboardServiceImpl implements DashboardService {
     }
 
     @Override
+    @Transactional(readOnly = true)
     public List<DashboardEmprestimoDia> findTotalEmprestimoByDia(LocalDate dtIni, LocalDate dtFim) {
         return emprestimoService.countByDataEmprestimo(dtIni, dtFim);
     }
 
     @Override
+    @Transactional(readOnly = true)
     public List<DashboardItensEmprestados> findItensMaisEmprestados(LocalDate dtIni, LocalDate dtFim) {
         return emprestimoService.findItensMaisEmprestados(dtIni, dtFim);
     }
 
     @Override
+    @Transactional(readOnly = true)
     public List<DashboardItensAdquiridos> findItensMaisAdquiridos(LocalDate dtIni, LocalDate dtFim) {
         return compraService.findItensMaisAdquiridos(dtIni, dtFim);
     }
 
     @Override
+    @Transactional(readOnly = true)
     public List<DashboardItensSaidas> findItensComMaisSaidas(LocalDate dtIni, LocalDate dtFim) {
         return saidaService.findItensMaisSaidas(dtIni, dtFim);
     }

@@ -20,6 +20,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
 import java.util.ArrayList;
@@ -53,6 +54,7 @@ public class EmprestimoServiceImpl extends CrudServiceImpl<Emprestimo, Long> imp
     }
 
     @Override
+    @Transactional
     public Emprestimo save(Emprestimo entity) {
         entity.setUsuarioEmprestimo(usuarioRepository.getReferenceById(entity.getUsuarioEmprestimo().getId()));
         entity.setUsuarioResponsavel(usuarioRepository.getReferenceById(
@@ -63,21 +65,25 @@ public class EmprestimoServiceImpl extends CrudServiceImpl<Emprestimo, Long> imp
     }
 
     @Override
+    @Transactional(readOnly = true)
     public List<Emprestimo> findAllByDataEmprestimoBetween(LocalDate dtIni, LocalDate dtFim) {
         return emprestimoRepository.findAllByDataEmprestimoBetween(dtIni, dtFim);
     }
 
     @Override
+    @Transactional(readOnly = true)
     public List<DashboardEmprestimoDia> countByDataEmprestimo(LocalDate dtIni, LocalDate dtFim) {
         return emprestimoRepository.countByDataEmprestimo(dtIni, dtFim);
     }
 
     @Override
+    @Transactional(readOnly = true)
     public List<DashboardItensEmprestados> findItensMaisEmprestados(LocalDate dtIni, LocalDate dtFim) {
         return emprestimoRepository.findItensMaisEmprestados(dtIni, dtFim);
     }
 
     @Override
+    @Transactional
     public List<EmprestimoDevolucaoItem> createEmprestimoItemDevolucao(List<EmprestimoItem> emprestimoItem) {
         List<EmprestimoDevolucaoItem> toReturn = new ArrayList<>();
         emprestimoItem.stream().filter(empItem -> empItem.getItem().getTipoItem().equals(TipoItem.C))
@@ -93,22 +99,26 @@ public class EmprestimoServiceImpl extends CrudServiceImpl<Emprestimo, Long> imp
     }
 
     @Override
+    @Transactional(readOnly = true)
     public List<Emprestimo> filter(EmprestimoFilter emprestimoFilter) {
         return emprestimoFilterRepository.filter(emprestimoFilter);
     }
 
     @Override
+    @Transactional(readOnly = true)
     public List<Emprestimo> findAllUsuarioEmprestimo(String username) {
         var usuario = usuarioService.findByUsername(username);
         return emprestimoRepository.findAllByUsuarioEmprestimo(usuario);
     }
 
     @Override
+    @Transactional(readOnly = true)
     public List<Emprestimo> findAllEmprestimosAbertos() {
         return emprestimoRepository.findAllByDataDevolucaoIsNullOrderById();
     }
 
     @Override
+    @Transactional
     public void changePrazoDevolucao(Long idEmprestimo, LocalDate novaData) {
         var emprestimo = this.findOne(idEmprestimo);
         emprestimo.setPrazoDevolucao(novaData);
@@ -147,6 +157,7 @@ public class EmprestimoServiceImpl extends CrudServiceImpl<Emprestimo, Long> imp
     }
 
     @Override
+    @Transactional
     public void sendEmailPrazoDevolucaoProximo() {
         List<Emprestimo> emprestimos = emprestimoRepository
                 .findByDataDevolucaoIsNullAndPrazoDevolucaoEquals(LocalDate.now().plusDays(3));
