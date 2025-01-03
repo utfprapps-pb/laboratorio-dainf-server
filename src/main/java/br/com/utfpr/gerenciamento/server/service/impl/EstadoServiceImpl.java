@@ -5,6 +5,7 @@ import br.com.utfpr.gerenciamento.server.repository.EstadoRepository;
 import br.com.utfpr.gerenciamento.server.service.EstadoService;
  import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
@@ -23,6 +24,7 @@ public class EstadoServiceImpl extends CrudServiceImpl<Estado, Long> implements 
     }
 
     @Override
+    @Transactional(readOnly = true)
     public List<Estado> estadoComplete(String query) {
         if ("".equalsIgnoreCase(query)) {
             return estadoRepository.findAll();

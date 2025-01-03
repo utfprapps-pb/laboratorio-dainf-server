@@ -5,6 +5,7 @@ import br.com.utfpr.gerenciamento.server.repository.PermissaoRepository;
 import br.com.utfpr.gerenciamento.server.service.PermissaoService;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 @Service
 public class PermissaoServiceImpl extends CrudServiceImpl<Permissao, Long> implements PermissaoService {
@@ -22,6 +23,7 @@ public class PermissaoServiceImpl extends CrudServiceImpl<Permissao, Long> imple
 
 
     @Override
+    @Transactional(readOnly = true)
     public Permissao findByNome(String nome) {
         return permissaoRepository.findByNome(nome);
     }

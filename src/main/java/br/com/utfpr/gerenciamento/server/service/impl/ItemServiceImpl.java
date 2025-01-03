@@ -15,6 +15,7 @@ import br.com.utfpr.gerenciamento.server.service.RelatorioService;
 import net.sf.jasperreports.engine.JasperExportManager;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.multipart.MultipartHttpServletRequest;
 
@@ -49,6 +50,7 @@ public class ItemServiceImpl extends CrudServiceImpl<Item, Long> implements Item
     }
 
     @Override
+    @Transactional
     public List<Item> itemComplete(String query, Boolean hasEstoque) {
         BigDecimal zero = new BigDecimal(0);
         if ("".equalsIgnoreCase(query)) {
@@ -63,11 +65,13 @@ public class ItemServiceImpl extends CrudServiceImpl<Item, Long> implements Item
     }
 
     @Override
+    @Transactional(readOnly = true)
     public List<Item> findByGrupo(Long id) {
         return itemRepository.findByGrupoIdOrderByNome(id);
     }
 
     @Override
+    @Transactional
     public void diminuiSaldoItem(Long idItem, BigDecimal qtde, boolean needValidationSaldo) {
         Item itemToSave = itemRepository.findById(idItem).get();
         if (!needValidationSaldo || this.saldoItemIsValid(itemToSave.getSaldo(), qtde)) {
@@ -77,6 +81,7 @@ public class ItemServiceImpl extends CrudServiceImpl<Item, Long> implements Item
     }
 
     @Override
+    @Transactional
     public void aumentaSaldoItem(Long idItem, BigDecimal qtde) {
         Item itemToSave = itemRepository.findById(idItem).get();
         itemToSave.setSaldo(itemToSave.getSaldo().add(qtde));
@@ -85,6 +90,7 @@ public class ItemServiceImpl extends CrudServiceImpl<Item, Long> implements Item
 
 
     @Override
+    @Transactional(readOnly = true)
     public BigDecimal getSaldoItem(Long idItem) {
         return itemRepository.findById(idItem).get().getSaldo();
     }
@@ -101,6 +107,7 @@ public class ItemServiceImpl extends CrudServiceImpl<Item, Long> implements Item
     }
 
     @Override
+    @Transactional
     public void saveImages(MultipartHttpServletRequest files,
                            HttpServletRequest request,
                            Long idItem) {
@@ -124,11 +131,13 @@ public class ItemServiceImpl extends CrudServiceImpl<Item, Long> implements Item
     }
 
     @Override
+    @Transactional(readOnly = true)
     public List<ItemImage> getImagesItem(Long idItem) {
         return this.findOne(idItem).getImageItem();
     }
 
     @Override
+    @Transactional
     public void deleteImage(ItemImage image, Long idItem) {
         File file = new File(image.getContentType() + File.separator + image.getNameImage());
         if (file.exists()) {
@@ -171,6 +180,7 @@ public class ItemServiceImpl extends CrudServiceImpl<Item, Long> implements Item
      * @param id
      */
     @Override
+    @Transactional
     public void copyImagesItem(List<ItemImage> itemImages, Long id) {
         var item = this.findOne(id);
         List<ItemImage> toReturn = new ArrayList<>();

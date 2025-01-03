@@ -6,6 +6,7 @@ import br.com.utfpr.gerenciamento.server.repository.CompraRepository;
 import br.com.utfpr.gerenciamento.server.service.CompraService;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
 import java.util.List;
@@ -25,6 +26,7 @@ public class CompraServiceImpl extends CrudServiceImpl<Compra, Long> implements 
     }
 
     @Override
+    @Transactional(readOnly = true)
     public List<DashboardItensAdquiridos> findItensMaisAdquiridos(LocalDate dtIni, LocalDate dtFim) {
         return compraRepository.findItensMaisAdquiridos(dtIni, dtFim);
     }
