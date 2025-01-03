@@ -6,6 +6,7 @@ import br.com.utfpr.gerenciamento.server.service.SolicitacaoService;
 import br.com.utfpr.gerenciamento.server.service.UsuarioService;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
@@ -26,6 +27,7 @@ public class SolicitacaoServiceImpl extends CrudServiceImpl<Solicitacao, Long> i
     }
 
     @Override
+    @Transactional(readOnly = true)
     public List<Solicitacao> findAllByUsername(String username) {
         var usuario = usuarioService.findByUsername(username);
         return solicitacaoRepository.findAllByUsuario(usuario);

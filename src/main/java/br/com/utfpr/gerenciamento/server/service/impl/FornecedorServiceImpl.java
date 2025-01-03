@@ -5,6 +5,7 @@ import br.com.utfpr.gerenciamento.server.repository.FornecedorRepository;
 import br.com.utfpr.gerenciamento.server.service.FornecedorService;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
@@ -23,6 +24,7 @@ public class FornecedorServiceImpl extends CrudServiceImpl<Fornecedor, Long> imp
     }
 
     @Override
+    @Transactional(readOnly = true)
     public List<Fornecedor> completeFornecedor(String query) {
         if ("".equalsIgnoreCase(query)) {
             return fornecedorRepository.findAll();

@@ -5,6 +5,7 @@ import br.com.utfpr.gerenciamento.server.repository.GrupoRepository;
 import br.com.utfpr.gerenciamento.server.service.GrupoService;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
@@ -23,6 +24,7 @@ public class GrupoServiceImpl extends CrudServiceImpl<Grupo, Long> implements Gr
     }
 
     @Override
+    @Transactional(readOnly = true)
     public List<Grupo> completeGrupo(String query) {
         if ("".equalsIgnoreCase(query)) {
             return grupoRepository.findAll();

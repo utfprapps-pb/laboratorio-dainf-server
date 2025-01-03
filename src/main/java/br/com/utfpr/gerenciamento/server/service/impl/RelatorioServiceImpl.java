@@ -12,6 +12,7 @@ import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartHttpServletRequest;
 
 import jakarta.servlet.http.HttpServletRequest;
@@ -43,6 +44,7 @@ public class RelatorioServiceImpl extends CrudServiceImpl<Relatorio, Long> imple
     }
 
     @Override
+    @Transactional
     public void saveFileReport(MultipartHttpServletRequest file,
                                HttpServletRequest request,
                                Long idRelatorio) throws IOException {
@@ -76,6 +78,7 @@ public class RelatorioServiceImpl extends CrudServiceImpl<Relatorio, Long> imple
     }
 
     @Override
+    @Transactional
     public JasperPrint generateReport(Long idRelatorio, List<RelatorioParamsValue> paramsRel) throws SQLException, JRException {
         Relatorio relatorio = this.findOne(idRelatorio);
         Connection conn = jdbcTemplate.getDataSource().getConnection();
