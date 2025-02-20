@@ -107,8 +107,8 @@ public class UsuarioServiceImpl extends CrudServiceImpl<Usuario, Long> implement
             Usuario usuarioTmp = usuarioRepository.findByUsername(usuario.getUsername());
             usuarioTmp.setTelefone(usuario.getTelefone());
             usuarioTmp.setDocumento(usuario.getDocumento());
-            usuarioRepository.save(usuarioTmp);
-            return usuarioTmp;
+
+            return usuarioRepository.save(usuarioTmp);
         }
         return null;
     }

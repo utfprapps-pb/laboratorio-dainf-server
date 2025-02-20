@@ -47,6 +47,7 @@ public class UsuarioController {
 
     @PostMapping
     public Usuario save(@RequestBody Usuario usuario) {
+        // TODO - remover as regras de negócio do controller e colocar no service.
         if (!Util.isPasswordEncoded(usuario.getPassword())) {
             usuario.setPassword(new BCryptPasswordEncoder().encode(usuario.getPassword()));
         }
@@ -66,9 +67,10 @@ public class UsuarioController {
     @PostMapping("change-senha")
     public Usuario redefinirSenha(@RequestBody Usuario usuario,
                                   @RequestParam("senhaAtual") String senhaAtual) {
+        // TODO - remover as regras de negócio do controller e colocar no service.
         Usuario userTemp = usuarioService.findOne(usuario.getId());
         BCryptPasswordEncoder bCrypt = new BCryptPasswordEncoder();
-
+        usuario.setEmailVerificado(userTemp.getEmailVerificado());
         if (bCrypt.matches(senhaAtual, userTemp.getPassword())) {
             usuario.setPassword(bCrypt.encode(usuario.getPassword()));
             return usuarioService.save(usuario);
@@ -140,6 +142,7 @@ public class UsuarioController {
             emailDto.setEmailTo(usuario.getEmail());
             emailDto.setUsuario(usuario.getNome());
             emailDto.setUrl(frontBaseUrl + "/confirmar-email/" + usuario.getCodigoVerificacao());
+            // TODO - adicionar constante com o nome do laboratório.
             emailDto.setSubject("Confirmação de email - Laboratório DAINF-PB (UTFPR)");
             emailDto.setSubjectBody("Confirmação de email - Laboratório DAINF-PB (UTFPR)");
 
