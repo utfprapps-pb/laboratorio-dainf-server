@@ -80,7 +80,7 @@ public class WebSecurity {
                 .requestMatchers(HttpMethod.GET, "/usuario/user-info").permitAll()
                 .requestMatchers(HttpMethod.GET, "/usuario/**").hasRole("ADMINISTRADOR")
                 .requestMatchers(HttpMethod.GET, "/usuario/user-info").permitAll()
-                .requestMatchers(HttpMethod.POST, "/usuario/find-by-username").authenticated()
+                .requestMatchers(HttpMethod.GET, "/usuario/find-by-username").authenticated()
 
                 .requestMatchers(HttpMethod.POST, "/auth").permitAll()
                 .requestMatchers(HttpMethod.GET, "/test").permitAll()
