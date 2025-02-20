@@ -26,5 +26,7 @@ public class UsuarioResponseDto {
 
     private String fotoUrl;
 
+    private boolean emailVerificado;
+
     private Collection<? extends GrantedAuthority> authorities;
 }
