@@ -66,7 +66,10 @@ public class WebSecurity {
 
                 .requestMatchers(HttpMethod.POST, "/usuario/update-user").authenticated()
 
-                .requestMatchers(HttpMethod.GET, "/usuario/**").hasRole("ADMINISTRADOR")
+
+
+
+
                 .requestMatchers(HttpMethod.PUT, "/usuario/**").hasRole("ADMINISTRADOR")
                 .requestMatchers(HttpMethod.PATCH, "/usuario/**").hasRole("ADMINISTRADOR")
                 .requestMatchers(HttpMethod.POST, "/usuario/**").hasRole("ADMINISTRADOR")
@@ -75,7 +78,9 @@ public class WebSecurity {
                 .requestMatchers(HttpMethod.DELETE, "/emprestimo/**").hasAnyRole("LABORATORISTA", "ADMINISTRADOR")
 
                 .requestMatchers(HttpMethod.GET, "/usuario/user-info").permitAll()
-
+                .requestMatchers(HttpMethod.GET, "/usuario/**").hasRole("ADMINISTRADOR")
+                .requestMatchers(HttpMethod.GET, "/usuario/user-info").permitAll()
+                .requestMatchers(HttpMethod.POST, "/usuario/find-by-username").authenticated()
 
                 .requestMatchers(HttpMethod.POST, "/auth").permitAll()
                 .requestMatchers(HttpMethod.GET, "/test").permitAll()
