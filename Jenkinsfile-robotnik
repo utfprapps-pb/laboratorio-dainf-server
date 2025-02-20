@@ -6,7 +6,7 @@ pipeline {
         POSTGRESQL_CRED = credentials('postgres-id')
         DB_JDBC_USER = "${POSTGRESQL_CRED_USR}"
         DB_JDBC_PASSWORD = "${POSTGRESQL_CRED_PSW}"
-        SERVER_PORT=8099
+        SERVER_PORT=8110
         DATABASE_URL="jdbc:postgresql://postgresql:5432/robotnik_labs"
         DATABASE_USERNAME="${POSTGRESQL_CRED_USR}"
         DATABASE_PASSWORD="${POSTGRESQL_CRED_PSW}"
