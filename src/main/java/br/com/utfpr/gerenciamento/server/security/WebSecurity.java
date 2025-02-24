@@ -72,7 +72,7 @@ public class WebSecurity {
                 .requestMatchers(HttpMethod.GET, "/usuario/user-info").authenticated()
                 .requestMatchers(HttpMethod.GET, "/usuario/find-by-username/**").authenticated()
 
-                .requestMatchers(HttpMethod.GET, "/usuario/**").hasRole("ADMINISTRADOR")
+                // .requestMatchers(HttpMethod.GET, "/usuario/**").hasRole("ADMINISTRADOR")
                 .requestMatchers(HttpMethod.PUT, "/usuario/**").hasRole("ADMINISTRADOR")
                 .requestMatchers(HttpMethod.PATCH, "/usuario/**").hasRole("ADMINISTRADOR")
                 .requestMatchers(HttpMethod.POST, "/usuario/**").hasRole("ADMINISTRADOR")
