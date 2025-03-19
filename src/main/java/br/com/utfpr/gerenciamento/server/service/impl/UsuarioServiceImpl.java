@@ -113,6 +113,16 @@ public class UsuarioServiceImpl extends CrudServiceImpl<Usuario, Long> implement
         return null;
     }
 
+    @Override
+    @Transactional
+    public Usuario save(Usuario usuario) {
+        if (usuario.getId() != null) {
+            Usuario usuarioTmp = usuarioRepository.findByUsername(usuario.getUsername());
+            usuario.setEmailVerificado(usuarioTmp.getEmailVerificado());
+        }
+        return super.save(usuario);
+    }
+
     public UsuarioResponseDto convertToDto(Usuario entity) {
         return modelMapper.map(entity, UsuarioResponseDto.class);
     }
