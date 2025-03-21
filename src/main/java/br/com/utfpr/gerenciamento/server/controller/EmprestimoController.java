@@ -98,7 +98,7 @@ public class EmprestimoController extends CrudController<Emprestimo, Long> {
 
         // caso tiver apenas materiais permanentes no empréstimo, será setado a data de devolução, para finalizar o empréstimo
         if (object.getEmprestimoDevolucaoItem().size() <= 0) {
-            object.setDataDevolucao(LocalDate.now());
+            // object.setDataDevolucao(LocalDate.now());
         }
     }
 
