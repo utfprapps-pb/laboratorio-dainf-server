@@ -46,7 +46,7 @@ Nesse arquivo também deve ser configurado os dados do Minio para teste de uploa
 o arquivo **docker-compose-minio.yml** possui um exemplo de criação de uma instância minio em um contêiner Docker. 
 
 Também é necessário criar uma conta de email para testes, os dados da conta de email também devem ser informados no arquivo 
-**.env**, o GMail permite configuração de conta de email para envio por aplicações externas. 
+**.env**, o GMail permite configuração de conta de email para envio por aplicações externas no endereço: [https://myaccount.google.com/apppasswords](https://myaccount.google.com/apppasswords). 
 
 ```properties
 SERVER_PORT=8099
