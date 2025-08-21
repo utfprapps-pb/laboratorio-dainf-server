@@ -8,7 +8,7 @@ services:
       context: ./
       dockerfile: Dockerfile
     environment:
-      - SERVER_PORT=${SERVER_PORT}
+      - SERVER_PORT=${CONTAINER_PORT}
       - DATABASE_URL=${DATABASE_URL}
       - SPRING_DATASOURCE_USERNAME=${DATABASE_USERNAME}
       - SPRING_DATASOURCE_PASSWORD=${DATABASE_PASSWORD}
@@ -30,7 +30,7 @@ services:
       - SPRING_PROFILES_ACTIVE=${SPRING_PROFILES_ACTIVE}
       - TZ=America/Sao_Paulo
     ports:
-      - "${SERVER_PORT}:${SERVER_PORT}"
+      - "${HOST_PORT}:${CONTAINER_PORT}"
     labels:
         # Traefik Config
       - "traefik.enable=true"
