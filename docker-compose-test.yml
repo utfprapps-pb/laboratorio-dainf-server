@@ -1,7 +1,7 @@
 ########################### SERVICES
 services:
   ########################### LABS API
-  ${DOCKER_IMAGE_NAME}:
+  test-labs-api:
     image: "${DOCKER_IMAGE_NAME}:${DOCKER_TAG}"
     container_name: ${DOCKER_IMAGE_NAME}
     build:
