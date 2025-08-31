@@ -2,33 +2,32 @@ package br.com.utfpr.gerenciamento.server.service;
 
 import br.com.utfpr.gerenciamento.server.model.Item;
 import br.com.utfpr.gerenciamento.server.model.ItemImage;
-import org.springframework.web.multipart.MultipartHttpServletRequest;
-
 import jakarta.servlet.http.HttpServletRequest;
 import java.math.BigDecimal;
 import java.util.List;
+import org.springframework.web.multipart.MultipartHttpServletRequest;
 
 public interface ItemService extends CrudService<Item, Long> {
 
-    List<Item> itemComplete(String query, Boolean hasEstoque);
+  List<Item> itemComplete(String query, Boolean hasEstoque);
 
-    List<Item> findByGrupo(Long id);
+  List<Item> findByGrupo(Long id);
 
-    void diminuiSaldoItem(Long idItem, BigDecimal qtde, boolean needValidationSaldo);
+  void diminuiSaldoItem(Long idItem, BigDecimal qtde, boolean needValidationSaldo);
 
-    void aumentaSaldoItem(Long idItem, BigDecimal qtde);
+  void aumentaSaldoItem(Long idItem, BigDecimal qtde);
 
-    BigDecimal getSaldoItem(Long idItem);
+  BigDecimal getSaldoItem(Long idItem);
 
-    Boolean saldoItemIsValid(BigDecimal saldoItem, BigDecimal qtdeVerificar);
+  Boolean saldoItemIsValid(BigDecimal saldoItem, BigDecimal qtdeVerificar);
 
-    void saveImages(MultipartHttpServletRequest files, HttpServletRequest request, Long idItem);
+  void saveImages(MultipartHttpServletRequest files, HttpServletRequest request, Long idItem);
 
-    List<ItemImage> getImagesItem(Long idItem);
+  List<ItemImage> getImagesItem(Long idItem);
 
-    void deleteImage(ItemImage image, Long idItem);
+  void deleteImage(ItemImage image, Long idItem);
 
-    void sendNotificationItensAtingiramQtdeMin();
+  void sendNotificationItensAtingiramQtdeMin();
 
-    void copyImagesItem(List<ItemImage> itemImages, Long id);
+  void copyImagesItem(List<ItemImage> itemImages, Long id);
 }
