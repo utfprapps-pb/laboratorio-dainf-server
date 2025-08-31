@@ -10,8 +10,7 @@ import lombok.*;
 @Builder
 public class ConfirmEmailRequestDto {
 
-    private String code;
+  private String code;
 
-    private String email;
-
+  private String email;
 }

@@ -8,23 +8,23 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 @Service
-public class PermissaoServiceImpl extends CrudServiceImpl<Permissao, Long> implements PermissaoService {
+public class PermissaoServiceImpl extends CrudServiceImpl<Permissao, Long>
+    implements PermissaoService {
 
-    private final PermissaoRepository permissaoRepository;
+  private final PermissaoRepository permissaoRepository;
 
-    public PermissaoServiceImpl(PermissaoRepository permissaoRepository) {
-        this.permissaoRepository = permissaoRepository;
-    }
+  public PermissaoServiceImpl(PermissaoRepository permissaoRepository) {
+    this.permissaoRepository = permissaoRepository;
+  }
 
-    @Override
-    protected JpaRepository<Permissao, Long> getRepository() {
-        return permissaoRepository;
-    }
+  @Override
+  protected JpaRepository<Permissao, Long> getRepository() {
+    return permissaoRepository;
+  }
 
-
-    @Override
-    @Transactional(readOnly = true)
-    public Permissao findByNome(String nome) {
-        return permissaoRepository.findByNome(nome);
-    }
+  @Override
+  @Transactional(readOnly = true)
+  public Permissao findByNome(String nome) {
+    return permissaoRepository.findByNome(nome);
+  }
 }

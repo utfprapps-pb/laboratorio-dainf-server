@@ -6,9 +6,9 @@ import lombok.Data;
 @Data
 public class EmprestimoFilter {
 
-    private Usuario usuarioEmprestimo;
-    private Usuario usuarioResponsalvel;
-    private String dtIniEmp;
-    private String dtFimEmp;
-    private String status;
+  private Usuario usuarioEmprestimo;
+  private Usuario usuarioResponsalvel;
+  private String dtIniEmp;
+  private String dtFimEmp;
+  private String status;
 }
