@@ -1,8 +1,8 @@
 package br.com.utfpr.gerenciamento.server.service.impl;
 
 import br.com.utfpr.gerenciamento.server.dto.*;
-import br.com.utfpr.gerenciamento.server.error.EntityNotFoundException;
-import br.com.utfpr.gerenciamento.server.error.RecoverCodeInvalidException;
+import br.com.utfpr.gerenciamento.server.exception.EntityNotFoundException;
+import br.com.utfpr.gerenciamento.server.exception.RecoverCodeInvalidException;
 import br.com.utfpr.gerenciamento.server.model.RecoverPassword;
 import br.com.utfpr.gerenciamento.server.model.Usuario;
 import br.com.utfpr.gerenciamento.server.repository.RecoverPasswordRepository;

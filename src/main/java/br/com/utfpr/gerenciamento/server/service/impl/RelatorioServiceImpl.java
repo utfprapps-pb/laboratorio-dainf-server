@@ -1,5 +1,6 @@
 package br.com.utfpr.gerenciamento.server.service.impl;
 
+import br.com.utfpr.gerenciamento.server.exception.ArquivoException;
 import br.com.utfpr.gerenciamento.server.model.Relatorio;
 import br.com.utfpr.gerenciamento.server.model.RelatorioParamsValue;
 import br.com.utfpr.gerenciamento.server.repository.RelatorioRepository;
@@ -10,22 +11,28 @@ import java.io.BufferedOutputStream;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import lombok.extern.slf4j.Slf4j;
 import net.sf.jasperreports.engine.*;
 import net.sf.jasperreports.engine.design.JasperDesign;
 import net.sf.jasperreports.engine.xml.JRXmlLoader;
+import org.jfree.util.Log;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.StringUtils;
 import org.springframework.web.multipart.MultipartHttpServletRequest;
 
 @Service
+@Slf4j
 public class RelatorioServiceImpl extends CrudServiceImpl<Relatorio, Long>
     implements RelatorioService {
 
@@ -50,25 +57,33 @@ public class RelatorioServiceImpl extends CrudServiceImpl<Relatorio, Long>
   public void saveFileReport(
       MultipartHttpServletRequest file, HttpServletRequest request, Long idRelatorio)
       throws IOException {
-    Relatorio relatorio = relatorioRepository.getOne(idRelatorio);
-    this.deleteFileCurrent(relatorio);
-    File dir = new File(FileUtil.getAbsolutePathRaiz() + File.separator + "report");
-    if (!dir.exists()) {
-      dir.mkdirs();
-    }
+
     var fileUpload = file.getFile("anexo");
+    if (fileUpload == null || fileUpload.isEmpty()) {
+      throw new ArquivoException("Nenhum arquivo foi enviado");
+    }
+
     String fileName = fileUpload.getOriginalFilename();
+    if (!FileUtil.hasValidExtension(fileName, "jrxml")) {
+      throw new ArquivoException("Somente .jrxml são permitidos");
+    }
+
+    Relatorio relatorio = relatorioRepository.getOne(idRelatorio);
+    deleteFileCurrent(relatorio);
 
     try {
-      FileOutputStream fileOut = new FileOutputStream(new File(dir + File.separator + fileName));
-      BufferedOutputStream stream = new BufferedOutputStream(fileOut);
-      stream.write(fileUpload.getBytes());
-      stream.close();
+      Path reportPath = FileUtil.getSecureReportPath(fileName);
+      Files.write(reportPath, fileUpload.getBytes());
+
+      relatorio.setNameReport(FileUtil.sanitizeFileName(fileName));
+      save(relatorio);
+    } catch (ArquivoException e) {
+      log.error("Erro de segurança ao salvar relatório: {}", e.getMessage());
+      throw e;
     } catch (Exception e) {
-      e.printStackTrace();
+      log.error("Erro ao salvar arquivo de relatório: {}", e.getMessage());
+      throw new IOException("Falha ao salvar arquivo de relatório", e);
     }
-    relatorio.setNameReport(fileName);
-    this.save(relatorio);
   }
 
   public void deleteFileCurrent(Relatorio relatorio) {
@@ -82,37 +97,44 @@ public class RelatorioServiceImpl extends CrudServiceImpl<Relatorio, Long>
   public JasperPrint generateReport(Long idRelatorio, List<RelatorioParamsValue> paramsRel)
       throws SQLException, JRException {
     Relatorio relatorio = this.findOne(idRelatorio);
-    Connection conn = jdbcTemplate.getDataSource().getConnection();
-    String path =
-        new File(
-                FileUtil.getAbsolutePathRaiz()
-                    + File.separator
-                    + "report"
-                    + File.separator
-                    + relatorio.getNameReport())
-            .getPath();
-    JasperDesign design = JRXmlLoader.load(path);
-    JasperReport jasperReport = JasperCompileManager.compileReport(design);
-    Map<String, Object> parameters = new HashMap<>();
-
-    if (paramsRel != null && paramsRel.size() > 0) {
-      paramsRel.forEach(param -> parameters.put(param.getNameParam(), param.getValueParam()));
+    if (relatorio.getNameReport() == null) {
+      throw new ArquivoException("Nenhum arquivo de report foi especificado");
     }
 
-    JasperPrint print = JasperFillManager.fillReport(jasperReport, parameters, conn);
-    conn.close();
-    return print;
+    Path reportPath = FileUtil.getSecureReportPath(relatorio.getNameReport());
+    if (!Files.isRegularFile(reportPath)) {
+      throw new ArquivoException("Arquivo de report não encontrado");
+    }
+
+    try (Connection conn = jdbcTemplate.getDataSource().getConnection()) {
+      JasperDesign design = JRXmlLoader.load(reportPath.toString());
+      JasperReport jasperReport = JasperCompileManager.compileReport(design);
+
+      Map<String, Object> parameters = new HashMap<>();
+
+      if (paramsRel != null && !paramsRel.isEmpty()) {
+        paramsRel.forEach(param -> parameters.put(param.getNameParam(), param.getValueParam()));
+      }
+
+      return JasperFillManager.fillReport(jasperReport, parameters, conn);
+    } catch (ArquivoException e) {
+      log.error("Erro de segurança ao gerar relatório: {}", e.getMessage());
+      throw new JRException("Erro de segurança no acesso ao arquivo de relatório", e);
+    } catch (Exception e) {
+      log.error("Erro de I/O ao acessar arquivo de relatório: {}", e.getMessage());
+      throw new JRException("Erro ao acessar arquivo de relatório", e);
+    }
   }
 
   @Override
   public void deleteFileReport(String nameRelatorio) {
-    File dir =
-        new File(
-            FileUtil.getAbsolutePathRaiz()
-                + File.separator
-                + "report"
-                + File.separator
-                + nameRelatorio);
-    dir.delete();
+    if (!StringUtils.hasText(nameRelatorio)) return;
+
+    try {
+      Path reportPath = FileUtil.getSecureReportPath(nameRelatorio);
+      Files.deleteIfExists(reportPath);
+    } catch (IOException e) {
+      log.warn("Erro ao deletar arquivo de relatório: {}", e.getMessage());
+    }
   }
 }

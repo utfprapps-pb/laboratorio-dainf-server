@@ -12,12 +12,15 @@ import br.com.utfpr.gerenciamento.server.repository.ItemRepository;
 import br.com.utfpr.gerenciamento.server.service.EmailService;
 import br.com.utfpr.gerenciamento.server.service.ItemService;
 import br.com.utfpr.gerenciamento.server.service.RelatorioService;
+import br.com.utfpr.gerenciamento.server.util.FileUtil;
 import jakarta.servlet.http.HttpServletRequest;
 import java.io.*;
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
+import lombok.extern.slf4j.Slf4j;
 import net.sf.jasperreports.engine.JasperExportManager;
+import org.jfree.util.Log;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -25,6 +28,7 @@ import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.multipart.MultipartHttpServletRequest;
 
 @Service
+@Slf4j
 public class ItemServiceImpl extends CrudServiceImpl<Item, Long> implements ItemService {
   private final ItemRepository itemRepository;
   private final EmailService emailService;
@@ -141,13 +145,13 @@ public class ItemServiceImpl extends CrudServiceImpl<Item, Long> implements Item
   @Override
   @Transactional
   public void deleteImage(ItemImage image, Long idItem) {
-    File file = new File(image.getContentType() + File.separator + image.getNameImage());
-    if (file.exists()) {
-      file.delete();
-    }
-    // Only remove the file if the image is associated to one item.
     if (itemImageRepository.findItemImageByNameImage(image.getNameImage()).size() == 1) {
-      minioService.removeObject(minioConfig.getBucketName(), image.getNameImage());
+      try {
+        minioService.removeObject(
+            minioConfig.getBucketName(), FileUtil.sanitizeFileName(image.getNameImage()));
+      } catch (Exception ex) {
+        log.error("Erro ao remover imagem do MinIO: {}", ex.getMessage());
+      }
     }
     Item i = this.findOne(idItem);
     i.getImageItem().removeIf(itemImage -> itemImage.getId().equals(image.getId()));

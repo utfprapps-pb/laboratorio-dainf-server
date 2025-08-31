@@ -1,4 +1,4 @@
-package br.com.utfpr.gerenciamento.server.error;
+package br.com.utfpr.gerenciamento.server.exception;
 
 public class RecoverCodeInvalidException extends RuntimeException {
 
