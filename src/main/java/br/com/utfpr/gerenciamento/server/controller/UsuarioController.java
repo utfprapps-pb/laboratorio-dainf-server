@@ -40,8 +40,8 @@ public class UsuarioController {
   }
 
   @GetMapping
-  public List<Usuario> findAll() {
-    return usuarioService.findAll();
+  public List<UsuarioResponseDto> findAll() {
+    return usuarioService.findAll().stream().map(usuarioService::convertToDto).toList();
   }
 
   @GetMapping("{id}")
@@ -50,7 +50,7 @@ public class UsuarioController {
   }
 
   @GetMapping("page")
-  public Page<Usuario> findAllPaged(
+  public Page<UsuarioResponseDto> findAllPaged(
       @RequestParam("page") int page,
       @RequestParam("size") int size,
       @RequestParam(required = false) String filter,
@@ -61,10 +61,14 @@ public class UsuarioController {
       pageRequest =
           PageRequest.of(page, size, asc ? Sort.Direction.ASC : Sort.Direction.DESC, order);
     }
+    Page<Usuario> result;
     if (filter != null && !filter.isEmpty()) {
       Specification<Usuario> spec = usuarioService.filterByAllFields(filter);
-      return usuarioService.findAllSpecification(spec, pageRequest);
-    } else return usuarioService.findAll(pageRequest);
+      result = usuarioService.findAllSpecification(spec, pageRequest);
+      } else {
+      result = usuarioService.findAll(pageRequest);
+      }
+    return result.map(usuarioService::convertToDto);
   }
 
   @PostMapping

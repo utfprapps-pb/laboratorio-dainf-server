@@ -2,6 +2,7 @@ package br.com.utfpr.gerenciamento.server.model;
 
 import br.com.utfpr.gerenciamento.server.config.CustomAuthorityDeserializer;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import jakarta.persistence.*;
 import java.io.Serializable;
@@ -40,6 +41,7 @@ public class Usuario implements Serializable, UserDetails {
   private String documento;
 
   @Column(name = "password", length = 255, nullable = false)
+  @JsonProperty(access = JsonProperty.Access.WRITE_ONLY)
   private String password;
 
   @Column(name = "email", length = 100, nullable = false)
