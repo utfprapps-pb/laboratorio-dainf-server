@@ -10,18 +10,10 @@ import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
 import java.time.LocalDate;
 import java.util.List;
 
-public interface EmprestimoRepository extends JpaRepository<Emprestimo, Long> {
-=======
 public interface EmprestimoRepository extends JpaRepository<Emprestimo, Long>, JpaSpecificationExecutor<Emprestimo> {
->>>>>>> Stashed changes
-=======
-public interface EmprestimoRepository extends JpaRepository<Emprestimo, Long>, JpaSpecificationExecutor<Emprestimo> {
->>>>>>> Stashed changes
 
     @Query("SELECT new br.com.utfpr.gerenciamento.server.model.dashboards.DashboardEmprestimoDia(COUNT(e), e.dataEmprestimo) " +
             "FROM Emprestimo e\n" +

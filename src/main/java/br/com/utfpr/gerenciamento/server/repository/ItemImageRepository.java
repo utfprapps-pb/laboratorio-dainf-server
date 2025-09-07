@@ -1,22 +1,10 @@
 package br.com.utfpr.gerenciamento.server.repository;
 
-import br.com.utfpr.gerenciamento.server.model.Item;
 import br.com.utfpr.gerenciamento.server.model.ItemImage;
+import java.util.List;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
-<<<<<<< Updated upstream
 
-<<<<<<< Updated upstream
-import java.util.List;
-
-public interface ItemImageRepository extends JpaRepository<ItemImage, Long> {
-    List<ItemImage> findItemImageByNameImage(String imageName);
-
-=======
-=======
-
->>>>>>> Stashed changes
 public interface ItemImageRepository extends JpaRepository<ItemImage, Long>, JpaSpecificationExecutor<ItemImage> {
   List<ItemImage> findItemImageByNameImage(String imageName);
->>>>>>> Stashed changes
 }

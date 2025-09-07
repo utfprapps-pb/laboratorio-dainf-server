@@ -9,12 +9,10 @@ import org.springframework.data.repository.query.Param;
 
 import java.math.BigDecimal;
 import java.util.List;
-<<<<<<< Updated upstream
-=======
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.data.jpa.repository.Query;
->>>>>>> Stashed changes
+
 
 public interface ItemRepository extends JpaRepository<Item, Long> , JpaSpecificationExecutor<Item>{
 

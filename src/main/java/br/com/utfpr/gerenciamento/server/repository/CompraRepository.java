@@ -8,18 +8,10 @@ import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
 import java.time.LocalDate;
 import java.util.List;
-=======
-public interface CompraRepository extends JpaRepository<Compra, Long>, JpaSpecificationExecutor<Compra> {
->>>>>>> Stashed changes
 
-public interface CompraRepository extends JpaRepository<Compra, Long> {
-=======
 public interface CompraRepository extends JpaRepository<Compra, Long>, JpaSpecificationExecutor<Compra> {
->>>>>>> Stashed changes
 
     @Query("SELECT new br.com.utfpr.gerenciamento.server.model.dashboards.DashboardItensAdquiridos(SUM(ci.qtde), i.nome) " +
             "FROM CompraItem ci " +
