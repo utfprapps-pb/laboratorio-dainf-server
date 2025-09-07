@@ -6,6 +6,7 @@ import java.util.List;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.web.bind.annotation.*;
 
 public abstract class CrudController<T, ID extends Serializable> {
@@ -57,6 +58,7 @@ public abstract class CrudController<T, ID extends Serializable> {
   public Page<T> findAllPaged(
       @RequestParam("page") int page,
       @RequestParam("size") int size,
+      @RequestParam(required = false) String filter,
       @RequestParam(required = false) String order,
       @RequestParam(required = false) Boolean asc) {
     PageRequest pageRequest = PageRequest.of(page, size);
@@ -64,6 +66,11 @@ public abstract class CrudController<T, ID extends Serializable> {
       pageRequest =
           PageRequest.of(page, size, asc ? Sort.Direction.ASC : Sort.Direction.DESC, order);
     }
-    return getService().findAll(pageRequest);
+    if(filter != null && !filter.isEmpty()) {
+      Specification<T> spec = getService().filterByAllFields(filter);
+      return getService().findAllSpecification(spec, pageRequest);
+    }
+    else
+      return getService().findAll(pageRequest);
   }
 }

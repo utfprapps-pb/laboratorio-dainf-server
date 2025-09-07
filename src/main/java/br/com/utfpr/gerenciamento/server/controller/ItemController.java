@@ -69,9 +69,6 @@ public class ItemController extends CrudController<Item, Long> {
         itemService.deleteImage(itemImage, idItem);
     }
 
-    @Override
-    public Page<Item> findAllPaged(int page, int size, String order, Boolean asc) {
-        return super.findAllPaged(page, size, order, asc);
-    }
+
 
 }
