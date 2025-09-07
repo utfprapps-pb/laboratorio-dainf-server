@@ -4,6 +4,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
+<<<<<<< Updated upstream
 
 <<<<<<< Updated upstream
 import java.io.Serializable;
@@ -11,6 +12,10 @@ import java.util.List;
 
 public interface CrudService<T, ID extends Serializable> {
 =======
+public interface CrudService<T, ID extends Serializable>  {
+>>>>>>> Stashed changes
+=======
+
 public interface CrudService<T, ID extends Serializable>  {
 >>>>>>> Stashed changes
 
@@ -23,6 +28,8 @@ public interface CrudService<T, ID extends Serializable>  {
 <<<<<<< Updated upstream
     T save(T entity);
 =======
+  Page<T> findAllSpecification(Specification<T> specification,Pageable pageable);
+
   Page<T> findAllSpecification(Specification<T> specification,Pageable pageable);
 
   T save(T entity);
@@ -50,6 +57,8 @@ public interface CrudService<T, ID extends Serializable>  {
 
 <<<<<<< Updated upstream
 =======
+  Specification<T> filterByAllFields(String filter);
+
   Specification<T> filterByAllFields(String filter);
 
   void deleteAll();

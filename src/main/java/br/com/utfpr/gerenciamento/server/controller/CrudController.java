@@ -15,6 +15,7 @@ public abstract class CrudController<T, ID extends Serializable> {
     protected abstract CrudService<T, ID> getService();
 
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
     @GetMapping
     public List<T> findAll() {
         return getService().findAll(Sort.by("id"));
@@ -71,6 +72,8 @@ public abstract class CrudController<T, ID extends Serializable> {
         return getService().findAll(pageRequest);
     }
 =======
+=======
+>>>>>>> Stashed changes
   @GetMapping()
   public List<T> findAll() {
     return getService().findAll(Sort.by("id"));

@@ -9,8 +9,12 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
 import java.time.LocalDate;
 import java.util.List;
+=======
+public interface CompraRepository extends JpaRepository<Compra, Long>, JpaSpecificationExecutor<Compra> {
+>>>>>>> Stashed changes
 
 public interface CompraRepository extends JpaRepository<Compra, Long> {
 =======

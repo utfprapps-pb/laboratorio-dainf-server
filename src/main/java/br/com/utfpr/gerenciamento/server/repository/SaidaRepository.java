@@ -9,10 +9,14 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
 import java.time.LocalDate;
 import java.util.List;
 
 public interface SaidaRepository extends JpaRepository<Saida, Long> {
+=======
+public interface SaidaRepository extends JpaRepository<Saida, Long>, JpaSpecificationExecutor<Saida> {
+>>>>>>> Stashed changes
 =======
 public interface SaidaRepository extends JpaRepository<Saida, Long>, JpaSpecificationExecutor<Saida> {
 >>>>>>> Stashed changes

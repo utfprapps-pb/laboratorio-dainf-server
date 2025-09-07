@@ -8,9 +8,13 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
 import java.util.List;
 
 public interface UsuarioRepository extends JpaRepository<Usuario, Long> {
+=======
+public interface UsuarioRepository extends JpaRepository<Usuario, Long> , JpaSpecificationExecutor<Usuario> {
+>>>>>>> Stashed changes
 =======
 public interface UsuarioRepository extends JpaRepository<Usuario, Long> , JpaSpecificationExecutor<Usuario> {
 >>>>>>> Stashed changes

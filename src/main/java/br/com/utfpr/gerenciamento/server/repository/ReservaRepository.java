@@ -10,10 +10,14 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
 import java.time.LocalDate;
 import java.util.List;
 
 public interface ReservaRepository extends JpaRepository<Reserva, Long> {
+=======
+public interface ReservaRepository extends JpaRepository<Reserva, Long> , JpaSpecificationExecutor<Reserva> {
+>>>>>>> Stashed changes
 =======
 public interface ReservaRepository extends JpaRepository<Reserva, Long> , JpaSpecificationExecutor<Reserva> {
 >>>>>>> Stashed changes

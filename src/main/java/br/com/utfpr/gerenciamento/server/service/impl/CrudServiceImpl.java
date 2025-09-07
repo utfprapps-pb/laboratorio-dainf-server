@@ -12,6 +12,9 @@ import org.springframework.data.jpa.domain.Specification;
 import jakarta.persistence.criteria.Predicate;
 import java.lang.reflect.Field;
 
+<<<<<<< Updated upstream
+>>>>>>> Stashed changes
+=======
 >>>>>>> Stashed changes
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -156,5 +159,8 @@ public abstract class CrudServiceImpl<T, ID extends Serializable>
     return ((org.springframework.data.jpa.repository.JpaSpecificationExecutor<T>) getRepository())
             .findAll(specification, pageable);
   }
+<<<<<<< Updated upstream
+>>>>>>> Stashed changes
+=======
 >>>>>>> Stashed changes
 }
