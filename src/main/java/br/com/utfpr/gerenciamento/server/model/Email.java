@@ -1,14 +1,13 @@
 package br.com.utfpr.gerenciamento.server.model;
 
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
-
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 
 @Data
 @AllArgsConstructor
@@ -16,16 +15,15 @@ import java.util.Map;
 @Builder
 public class Email {
 
-    private String de;
-    private String para;
-    private String titulo;
-    private String conteudo;
-    private Map<String, byte[]> fileMap = new HashMap<>();
-    private List<String> paraList = new ArrayList<>();
+  private String de;
+  private String para;
+  private String titulo;
+  private String conteudo;
+  private Map<String, byte[]> fileMap = new HashMap<>();
+  private List<String> paraList = new ArrayList<>();
 
-    public Email addFile(String fileName, byte[] fileBytes) {
-        fileMap.put(fileName, fileBytes);
-        return this;
-    }
-
+  public Email addFile(String fileName, byte[] fileBytes) {
+    fileMap.put(fileName, fileBytes);
+    return this;
+  }
 }

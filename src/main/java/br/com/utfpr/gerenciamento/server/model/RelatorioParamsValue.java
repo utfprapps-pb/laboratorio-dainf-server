@@ -9,6 +9,6 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 public class RelatorioParamsValue {
 
-    private String nameParam;
-    private Object valueParam;
+  private String nameParam;
+  private Object valueParam;
 }

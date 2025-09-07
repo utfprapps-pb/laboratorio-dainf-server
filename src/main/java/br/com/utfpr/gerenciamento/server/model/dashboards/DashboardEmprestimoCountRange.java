@@ -9,8 +9,8 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 public class DashboardEmprestimoCountRange {
 
-    private Integer total;
-    private Integer emAndamento;
-    private Integer emAtraso;
-    private Integer finalizado;
+  private Integer total;
+  private Integer emAndamento;
+  private Integer emAtraso;
+  private Integer finalizado;
 }

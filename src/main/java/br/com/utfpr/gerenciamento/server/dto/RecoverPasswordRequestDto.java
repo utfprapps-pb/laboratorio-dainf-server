@@ -1,7 +1,6 @@
 package br.com.utfpr.gerenciamento.server.dto;
 
 import jakarta.validation.constraints.NotNull;
-import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
 import lombok.*;
 
@@ -13,16 +12,13 @@ import lombok.*;
 @Builder
 public class RecoverPasswordRequestDto {
 
-    private String code;
+  private String code;
 
-    @NotNull
-    @Size(min = 6, max = 20)
-    // @Pattern(regexp = "^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d).*$")
-    private String password;
+  @NotNull @Size(min = 6, max = 20)
+  // @Pattern(regexp = "^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d).*$")
+  private String password;
 
-    @NotNull
-    @Size(min = 6, max = 20)
-    // @Pattern(regexp = "^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d).*$")
-    private String repeatPassword;
-
+  @NotNull @Size(min = 6, max = 20)
+  // @Pattern(regexp = "^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d).*$")
+  private String repeatPassword;
 }

@@ -11,43 +11,48 @@ import org.springframework.web.bind.annotation.RestController;
 @RequestMapping("compra")
 public class CompraController extends CrudController<Compra, Long> {
 
-    private final CompraService compraService;
-    private final ItemService itemService;
-    private Compra compraOld;
+  private final CompraService compraService;
+  private final ItemService itemService;
+  private Compra compraOld;
 
-    public CompraController(CompraService compraService, ItemService itemService) {
-        this.compraService = compraService;
-        this.itemService = itemService;
-    }
+  public CompraController(CompraService compraService, ItemService itemService) {
+    this.compraService = compraService;
+    this.itemService = itemService;
+  }
 
-    @Override
-    protected CrudService<Compra, Long> getService() {
-        return compraService;
-    }
+  @Override
+  protected CrudService<Compra, Long> getService() {
+    return compraService;
+  }
 
-    @Override
-    public void preSave(Compra object) {
-        if (object.getId() != null) {
-            // remove o saldo antigo do item
-            compraOld = compraService.findOne(object.getId());
-            compraOld.getCompraItem().stream().forEach(compraItem ->
-                    itemService.diminuiSaldoItem(compraItem.getItem().getId(), compraItem.getQtde(), false)
-            );
-        }
+  @Override
+  public void preSave(Compra object) {
+    if (object.getId() != null) {
+      // remove o saldo antigo do item
+      compraOld = compraService.findOne(object.getId());
+      compraOld.getCompraItem().stream()
+          .forEach(
+              compraItem ->
+                  itemService.diminuiSaldoItem(
+                      compraItem.getItem().getId(), compraItem.getQtde(), false));
     }
+  }
 
-    @Override
-    public void postSave(Compra object) {
-        // aumenta o novo saldo do item
-        object.getCompraItem().stream().forEach(compraItem ->
-                itemService.aumentaSaldoItem(compraItem.getItem().getId(), compraItem.getQtde())
-        );
-    }
+  @Override
+  public void postSave(Compra object) {
+    // aumenta o novo saldo do item
+    object.getCompraItem().stream()
+        .forEach(
+            compraItem ->
+                itemService.aumentaSaldoItem(compraItem.getItem().getId(), compraItem.getQtde()));
+  }
 
-    @Override
-    public void postDelete(Compra object) {
-        object.getCompraItem().stream().forEach(compraItem ->
-                itemService.diminuiSaldoItem(compraItem.getItem().getId(), compraItem.getQtde(), true)
-        );
-    }
+  @Override
+  public void postDelete(Compra object) {
+    object.getCompraItem().stream()
+        .forEach(
+            compraItem ->
+                itemService.diminuiSaldoItem(
+                    compraItem.getItem().getId(), compraItem.getQtde(), true));
+  }
 }
