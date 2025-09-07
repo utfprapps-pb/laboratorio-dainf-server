@@ -48,25 +48,25 @@ public class UsuarioController {
   public Usuario findOne(@PathVariable("id") Long id) {
     return usuarioService.findOne(id);
   }
+
   @GetMapping("page")
   public Page<Usuario> findAllPaged(
-          @RequestParam("page") int page,
-          @RequestParam("size") int size,
-          @RequestParam(required = false) String filter,
-          @RequestParam(required = false) String order,
-          @RequestParam(required = false) Boolean asc) {
+      @RequestParam("page") int page,
+      @RequestParam("size") int size,
+      @RequestParam(required = false) String filter,
+      @RequestParam(required = false) String order,
+      @RequestParam(required = false) Boolean asc) {
     PageRequest pageRequest = PageRequest.of(page, size);
     if (order != null && asc != null) {
       pageRequest =
-              PageRequest.of(page, size, asc ? Sort.Direction.ASC : Sort.Direction.DESC, order);
+          PageRequest.of(page, size, asc ? Sort.Direction.ASC : Sort.Direction.DESC, order);
     }
-    if(filter != null && !filter.isEmpty()) {
+    if (filter != null && !filter.isEmpty()) {
       Specification<Usuario> spec = usuarioService.filterByAllFields(filter);
       return usuarioService.findAllSpecification(spec, pageRequest);
-    }
-    else
-      return usuarioService.findAll(pageRequest);
+    } else return usuarioService.findAll(pageRequest);
   }
+
   @PostMapping
   public Usuario save(@RequestBody Usuario usuario) {
     // TODO - remover as regras de negócio do controller e colocar no service.

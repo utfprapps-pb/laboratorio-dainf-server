@@ -1,9 +1,10 @@
 package br.com.utfpr.gerenciamento.server.util;
 
-import br.com.utfpr.gerenciamento.server.exception.ArquivoException;
-import org.junit.jupiter.api.Test;
-import java.nio.file.Path;
 import static org.junit.jupiter.api.Assertions.*;
+
+import br.com.utfpr.gerenciamento.server.exception.ArquivoException;
+import java.nio.file.Path;
+import org.junit.jupiter.api.Test;
 
 class FileUtilTest {
 

@@ -7,7 +7,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
 
-public interface CrudService<T, ID extends Serializable>  {
+public interface CrudService<T, ID extends Serializable> {
 
   List<T> findAll();
 

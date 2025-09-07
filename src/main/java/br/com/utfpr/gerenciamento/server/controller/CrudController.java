@@ -66,11 +66,9 @@ public abstract class CrudController<T, ID extends Serializable> {
       pageRequest =
           PageRequest.of(page, size, asc ? Sort.Direction.ASC : Sort.Direction.DESC, order);
     }
-    if(filter != null && !filter.isEmpty()) {
+    if (filter != null && !filter.isEmpty()) {
       Specification<T> spec = getService().filterByAllFields(filter);
       return getService().findAllSpecification(spec, pageRequest);
-    }
-    else
-      return getService().findAll(pageRequest);
+    } else return getService().findAll(pageRequest);
   }
 }

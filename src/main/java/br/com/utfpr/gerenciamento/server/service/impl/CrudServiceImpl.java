@@ -1,18 +1,13 @@
 package br.com.utfpr.gerenciamento.server.service.impl;
 
 import br.com.utfpr.gerenciamento.server.service.CrudService;
+import jakarta.persistence.criteria.Predicate;
 import java.io.Serializable;
 import java.util.List;
-
-
-import org.springframework.data.jpa.domain.Specification;
-
-import jakarta.persistence.criteria.Predicate;
-import java.lang.reflect.Field;
-
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -104,7 +99,6 @@ public abstract class CrudServiceImpl<T, ID extends Serializable> implements Cru
     getRepository().deleteAll();
   }
 
-
   @Override
   @Transactional
   public Specification<T> filterByAllFields(String filter) {
@@ -115,31 +109,31 @@ public abstract class CrudServiceImpl<T, ID extends Serializable> implements Cru
 
       String likeFilter = "%" + filter.toLowerCase() + "%";
 
-
-      Predicate[] predicates = root.getModel().getDeclaredSingularAttributes().stream()
-              .filter(attr -> {
-                Class<?> javaType = attr.getJavaType();
-                return javaType.equals(String.class) || Number.class.isAssignableFrom(javaType);
-              })
-              .map(attr -> {
-                if (attr.getJavaType().equals(String.class)) {
-                  return cb.like(cb.lower(root.get(attr.getName())), likeFilter);
-                } else {
-                  return cb.like(cb.toString(root.get(attr.getName())), likeFilter);
-                }
-              })
+      Predicate[] predicates =
+          root.getModel().getDeclaredSingularAttributes().stream()
+              .filter(
+                  attr -> {
+                    Class<?> javaType = attr.getJavaType();
+                    return javaType.equals(String.class) || Number.class.isAssignableFrom(javaType);
+                  })
+              .map(
+                  attr -> {
+                    if (attr.getJavaType().equals(String.class)) {
+                      return cb.like(cb.lower(root.get(attr.getName())), likeFilter);
+                    } else {
+                      return cb.like(cb.toString(root.get(attr.getName())), likeFilter);
+                    }
+                  })
               .toArray(Predicate[]::new);
 
       return cb.or(predicates);
     };
   }
 
-
-
   @Override
   @Transactional
   public Page<T> findAllSpecification(Specification<T> specification, Pageable pageable) {
     return ((org.springframework.data.jpa.repository.JpaSpecificationExecutor<T>) getRepository())
-            .findAll(specification, pageable);
+        .findAll(specification, pageable);
   }
 }

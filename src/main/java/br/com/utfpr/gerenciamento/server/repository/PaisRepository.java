@@ -5,7 +5,7 @@ import java.util.List;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 
-public interface PaisRepository extends JpaRepository<Pais, Long> , JpaSpecificationExecutor<Pais>{
+public interface PaisRepository extends JpaRepository<Pais, Long>, JpaSpecificationExecutor<Pais> {
 
   List<Pais> findByNomeLikeIgnoreCase(String query);
 }
