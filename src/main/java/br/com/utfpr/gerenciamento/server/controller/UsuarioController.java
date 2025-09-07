@@ -18,6 +18,17 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.UUID;
+<<<<<<< Updated upstream
+=======
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.jpa.domain.Specification;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.web.bind.annotation.*;
+>>>>>>> Stashed changes
 
 @RestController
 @RequestMapping("usuario")
@@ -29,10 +40,53 @@ public class UsuarioController {
 
     private final EmailService emailService;
 
+<<<<<<< Updated upstream
     public UsuarioController(UsuarioService usuarioService, PermissaoService permissaoService, EmailService emailService) {
         this.usuarioService = usuarioService;
         this.permissaoService = permissaoService;
         this.emailService = emailService;
+=======
+  public UsuarioController(
+      UsuarioService usuarioService, PermissaoService permissaoService, EmailService emailService) {
+    this.usuarioService = usuarioService;
+    this.permissaoService = permissaoService;
+    this.emailService = emailService;
+  }
+
+  @GetMapping
+  public List<Usuario> findAll() {
+    return usuarioService.findAll();
+  }
+
+  @GetMapping("{id}")
+  public Usuario findOne(@PathVariable("id") Long id) {
+    return usuarioService.findOne(id);
+  }
+  @GetMapping("page")
+  public Page<Usuario> findAllPaged(
+          @RequestParam("page") int page,
+          @RequestParam("size") int size,
+          @RequestParam(required = false) String filter,
+          @RequestParam(required = false) String order,
+          @RequestParam(required = false) Boolean asc) {
+    PageRequest pageRequest = PageRequest.of(page, size);
+    if (order != null && asc != null) {
+      pageRequest =
+              PageRequest.of(page, size, asc ? Sort.Direction.ASC : Sort.Direction.DESC, order);
+    }
+    if(filter != null && !filter.isEmpty()) {
+      Specification<Usuario> spec = usuarioService.filterByAllFields(filter);
+      return usuarioService.findAllSpecification(spec, pageRequest);
+    }
+    else
+      return usuarioService.findAll(pageRequest);
+  }
+  @PostMapping
+  public Usuario save(@RequestBody Usuario usuario) {
+    // TODO - remover as regras de negócio do controller e colocar no service.
+    if (!Util.isPasswordEncoded(usuario.getPassword())) {
+      usuario.setPassword(new BCryptPasswordEncoder().encode(usuario.getPassword()));
+>>>>>>> Stashed changes
     }
 
     @GetMapping

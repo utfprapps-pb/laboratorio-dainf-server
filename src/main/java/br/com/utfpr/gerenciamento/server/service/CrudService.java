@@ -3,11 +3,16 @@ package br.com.utfpr.gerenciamento.server.service;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
+import org.springframework.data.jpa.domain.Specification;
 
+<<<<<<< Updated upstream
 import java.io.Serializable;
 import java.util.List;
 
 public interface CrudService<T, ID extends Serializable> {
+=======
+public interface CrudService<T, ID extends Serializable>  {
+>>>>>>> Stashed changes
 
     List<T> findAll();
 
@@ -15,7 +20,13 @@ public interface CrudService<T, ID extends Serializable> {
 
     Page<T> findAll(Pageable pageable);
 
+<<<<<<< Updated upstream
     T save(T entity);
+=======
+  Page<T> findAllSpecification(Specification<T> specification,Pageable pageable);
+
+  T save(T entity);
+>>>>>>> Stashed changes
 
     T saveAndFlush(T entity);
 
@@ -37,4 +48,10 @@ public interface CrudService<T, ID extends Serializable> {
 
     void deleteAll();
 
+<<<<<<< Updated upstream
+=======
+  Specification<T> filterByAllFields(String filter);
+
+  void deleteAll();
+>>>>>>> Stashed changes
 }

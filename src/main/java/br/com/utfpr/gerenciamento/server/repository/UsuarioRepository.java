@@ -1,13 +1,19 @@
 package br.com.utfpr.gerenciamento.server.repository;
 
+import br.com.utfpr.gerenciamento.server.model.Item;
 import br.com.utfpr.gerenciamento.server.model.Usuario;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
+<<<<<<< Updated upstream
 import java.util.List;
 
 public interface UsuarioRepository extends JpaRepository<Usuario, Long> {
+=======
+public interface UsuarioRepository extends JpaRepository<Usuario, Long> , JpaSpecificationExecutor<Usuario> {
+>>>>>>> Stashed changes
 
     Usuario findByCodigoVerificacao(String codigoVerificacao);
 

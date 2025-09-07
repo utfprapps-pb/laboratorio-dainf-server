@@ -1,16 +1,22 @@
 package br.com.utfpr.gerenciamento.server.repository;
 
+import br.com.utfpr.gerenciamento.server.model.Item;
 import br.com.utfpr.gerenciamento.server.model.Reserva;
 import br.com.utfpr.gerenciamento.server.model.Usuario;
 import br.com.utfpr.gerenciamento.server.model.dashboards.DashboardItensEmprestados;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
+<<<<<<< Updated upstream
 import java.time.LocalDate;
 import java.util.List;
 
 public interface ReservaRepository extends JpaRepository<Reserva, Long> {
+=======
+public interface ReservaRepository extends JpaRepository<Reserva, Long> , JpaSpecificationExecutor<Reserva> {
+>>>>>>> Stashed changes
 
     List<Reserva> findAllByUsuario(Usuario usuario);
 

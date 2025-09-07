@@ -49,6 +49,7 @@ public class ItemController extends CrudController<Item, Long> {
         return itemService.itemComplete(query, hasEstoque);
     }
 
+<<<<<<< Updated upstream
     @PostMapping("upload-images")
     public void upload(@RequestParam("idItem") Long idItem,
                        MultipartHttpServletRequest images,
@@ -73,4 +74,10 @@ public class ItemController extends CrudController<Item, Long> {
     public Page<Item> findAllPaged(int page, int size, String order, Boolean asc) {
         return super.findAllPaged(page, size, order, asc);
     }
+=======
+  @Override
+  public Page<Item> findAllPaged(int page, int size,String filter, String order, Boolean asc) {
+    return super.findAllPaged(page, size,filter, order, asc);
+  }
+>>>>>>> Stashed changes
 }

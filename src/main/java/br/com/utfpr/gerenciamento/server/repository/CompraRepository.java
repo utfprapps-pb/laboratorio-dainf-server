@@ -1,15 +1,21 @@
 package br.com.utfpr.gerenciamento.server.repository;
 
 import br.com.utfpr.gerenciamento.server.model.Compra;
+import br.com.utfpr.gerenciamento.server.model.Item;
 import br.com.utfpr.gerenciamento.server.model.dashboards.DashboardItensAdquiridos;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
+<<<<<<< Updated upstream
 import java.time.LocalDate;
 import java.util.List;
 
 public interface CompraRepository extends JpaRepository<Compra, Long> {
+=======
+public interface CompraRepository extends JpaRepository<Compra, Long>, JpaSpecificationExecutor<Compra> {
+>>>>>>> Stashed changes
 
     @Query("SELECT new br.com.utfpr.gerenciamento.server.model.dashboards.DashboardItensAdquiridos(SUM(ci.qtde), i.nome) " +
             "FROM CompraItem ci " +
