@@ -32,7 +32,7 @@ public class CidadeServiceImpl extends CrudServiceImpl<Cidade, Long> implements 
   @Override
   @Transactional(readOnly = true)
   public List<CidadeResponseDto> cidadeComplete(String query) {
-    if ("".equalsIgnoreCase(query)) {
+    if (query == null || query.isBlank()) {
       return this.cidadeRepository.findAll()
               .stream()
               .map(this::convertToDto)
@@ -48,7 +48,9 @@ public class CidadeServiceImpl extends CrudServiceImpl<Cidade, Long> implements 
   @Override
   @Transactional(readOnly = true)
   public List<CidadeResponseDto> completeByEstado(String query, Estado estado) {
-    if ("".equalsIgnoreCase(query)) {
+    if (estado == null) return List.of();
+
+    if (query == null || query.isBlank()) {
       return this.cidadeRepository.findAllByEstado(estado)
               .stream()
               .map(this::convertToDto)

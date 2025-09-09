@@ -31,7 +31,7 @@ public class EstadoServiceImpl extends CrudServiceImpl<Estado, Long> implements 
   @Override
   @Transactional(readOnly = true)
   public List<EstadoResponseDto> estadoComplete(String query) {
-    if ("".equalsIgnoreCase(query)) {
+    if (query == null || query.isBlank()) {
       return estadoRepository.findAll()
               .stream()
               .map(this::convertToDto)

@@ -1,6 +1,9 @@
 package br.com.utfpr.gerenciamento.server.dto;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
+import lombok.ToString;
 
 import java.math.BigDecimal;
 
@@ -11,6 +14,4 @@ public class ReservaItemResponseDto {
     private BigDecimal qtde;
 
     private ItemResponseDto item;
-
-    private ReservaResponseDto reserva;
 }

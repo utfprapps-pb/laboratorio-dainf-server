@@ -31,13 +31,14 @@ public class GrupoServiceImpl extends CrudServiceImpl<Grupo, Long> implements Gr
   @Override
   @Transactional(readOnly = true)
   public List<GrupoResponseDto> completeGrupo(String query) {
-    if ("".equalsIgnoreCase(query)) {
+    if (query == null || query.isBlank()) {
       return grupoRepository.findAll()
               .stream()
               .map(this::convertToDto)
               .toList();
     } else {
-      return grupoRepository.findByDescricaoLikeIgnoreCase("%" + query + "%")
+      final String newQuery = query.trim();
+      return grupoRepository.findByDescricaoLikeIgnoreCase("%" + newQuery + "%")
               .stream()
               .map(this::convertToDto)
               .toList();

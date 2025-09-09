@@ -11,6 +11,4 @@ public class EmprestimoItemResponseDto {
     private BigDecimal qtde;
 
     private ItemResponseDto item;
-
-    private EmprestimoResponseDto emprestimo;
 }

@@ -16,7 +16,10 @@ import java.util.*;
 
 import br.com.utfpr.gerenciamento.server.util.Util;
 import org.modelmapper.ModelMapper;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.logging.LogLevel;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -45,6 +48,8 @@ public class UsuarioServiceImpl extends CrudServiceImpl<Usuario, Long>
   private final EmailService emailService;
 
   private final PermissaoService permissaoService;
+
+  private static final Logger LOGGER = LoggerFactory.getLogger(UsuarioServiceImpl.class.getName());
 
   public UsuarioServiceImpl(
       UsuarioRepository usuarioRepository,
@@ -105,7 +110,7 @@ public class UsuarioServiceImpl extends CrudServiceImpl<Usuario, Long>
   @Override
   @Transactional(readOnly = true)
   public List<UsuarioResponseDto> usuarioCompleteByUserAndDocAndNome(String query) {
-    if ("".equalsIgnoreCase(query)) {
+    if (query == null || query.isBlank()) {
       return usuarioRepository.findAllCustom()
               .stream()
               .map(this::convertToDto)
@@ -120,7 +125,7 @@ public class UsuarioServiceImpl extends CrudServiceImpl<Usuario, Long>
   @Override
   @Transactional(readOnly = true)
   public List<UsuarioResponseDto> usuarioCompleteLab(String query) {
-    if ("".equalsIgnoreCase(query)) {
+    if (query == null || query.isBlank()) {
       return usuarioRepository.findAllCustomLab()
               .stream()
               .map(this::convertToDto)
@@ -150,9 +155,9 @@ public class UsuarioServiceImpl extends CrudServiceImpl<Usuario, Long>
   @Override
   @Transactional
   public Usuario save(Usuario usuario) {
-    if (!Util.isPasswordEncoded(usuario.getPassword())) {
-      usuario.setPassword(new BCryptPasswordEncoder().encode(usuario.getPassword()));
-    }
+    if (usuario.getPassword() != null && !Util.isPasswordEncoded(usuario.getPassword()))
+      usuario.setPassword(passwordEncoder.encode(usuario.getPassword()));
+
     Set<Permissao> permissoes = new HashSet<>();
     usuario
             .getPermissoes()
@@ -265,12 +270,17 @@ public class UsuarioServiceImpl extends CrudServiceImpl<Usuario, Long>
   @Transactional
   public Usuario updatePassword(Usuario usuario, String senhaAtual) {
     Usuario userTemp = this.findOne(usuario.getId());
-    BCryptPasswordEncoder bCrypt = new BCryptPasswordEncoder();
     usuario.setEmailVerificado(userTemp.getEmailVerificado());
-    if (bCrypt.matches(senhaAtual, userTemp.getPassword())) {
-      usuario.setPassword(bCrypt.encode(usuario.getPassword()));
-      return usuarioRepository.save(usuario);
+    if (passwordEncoder.matches(senhaAtual, userTemp.getPassword())) {
+      userTemp.setPassword(passwordEncoder.encode(usuario.getPassword()));
+      return usuarioRepository.save(userTemp);
     }
+//    BCryptPasswordEncoder bCrypt = new BCryptPasswordEncoder();
+//    usuario.setEmailVerificado(userTemp.getEmailVerificado());
+//    if (bCrypt.matches(senhaAtual, userTemp.getPassword())) {
+//      usuario.setPassword(bCrypt.encode(usuario.getPassword()));
+//      return usuarioRepository.save(usuario);
+//    }
     throw new RuntimeException("Senha incorreta");
   }
 
@@ -304,8 +314,8 @@ public class UsuarioServiceImpl extends CrudServiceImpl<Usuario, Long>
 
       return usuario;
     } catch (Exception ex) {
-      ex.printStackTrace();
-      return null;
+      LOGGER.error("Erro ao salvar novo usuário: ", ex);
+      throw new RuntimeException("Erro ao salvar novo usuário.");
     }
   }
 
