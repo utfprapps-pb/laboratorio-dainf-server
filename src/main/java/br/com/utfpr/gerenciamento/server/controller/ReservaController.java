@@ -1,5 +1,6 @@
 package br.com.utfpr.gerenciamento.server.controller;
 
+import br.com.utfpr.gerenciamento.server.dto.ReservaResponseDto;
 import br.com.utfpr.gerenciamento.server.model.Reserva;
 import br.com.utfpr.gerenciamento.server.service.CrudService;
 import br.com.utfpr.gerenciamento.server.service.ReservaService;
@@ -25,12 +26,12 @@ public class ReservaController extends CrudController<Reserva, Long> {
   }
 
   @GetMapping("find-all-by-username/{username}")
-  public List<Reserva> findAllByUsername(@PathVariable("username") String username) {
+  public List<ReservaResponseDto> findAllByUsername(@PathVariable("username") String username) {
     return reservaService.findAllByUsername(username);
   }
 
   @GetMapping("find-all-by-item/{idItem}")
-  public List<Reserva> findAllByIdItem(@PathVariable("idItem") Long idItem) {
+  public List<ReservaResponseDto> findAllByIdItem(@PathVariable("idItem") Long idItem) {
     return reservaService.findAllByIdItem(idItem);
   }
 

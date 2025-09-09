@@ -1,5 +1,6 @@
 package br.com.utfpr.gerenciamento.server.controller;
 
+import br.com.utfpr.gerenciamento.server.dto.SolicitacaoResponseDto;
 import br.com.utfpr.gerenciamento.server.model.Solicitacao;
 import br.com.utfpr.gerenciamento.server.service.CrudService;
 import br.com.utfpr.gerenciamento.server.service.SolicitacaoService;
@@ -25,7 +26,7 @@ public class SolicitacaoController extends CrudController<Solicitacao, Long> {
   }
 
   @GetMapping("find-all-by-username/{username}")
-  public List<Solicitacao> findAllByUsername(@PathVariable("username") String username) {
+  public List<SolicitacaoResponseDto> findAllByUsername(@PathVariable("username") String username) {
     return solicitacaoService.findAllByUsername(username);
   }
 }

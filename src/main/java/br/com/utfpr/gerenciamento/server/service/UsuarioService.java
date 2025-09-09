@@ -9,13 +9,13 @@ import java.util.List;
 
 public interface UsuarioService extends CrudService<Usuario, Long> {
 
-  List<Usuario> usuarioComplete(String query);
+  List<UsuarioResponseDto> usuarioComplete(String query);
 
   Usuario findByUsername(String username);
 
-  List<Usuario> usuarioCompleteByUserAndDocAndNome(String query);
+  List<UsuarioResponseDto> usuarioCompleteByUserAndDocAndNome(String query);
 
-  List<Usuario> usuarioCompleteLab(String query);
+  List<UsuarioResponseDto> usuarioCompleteLab(String query);
 
   Usuario updateUsuario(Usuario usuario);
 
@@ -30,4 +30,8 @@ public interface UsuarioService extends CrudService<Usuario, Long> {
   GenericResponse confirmEmail(ConfirmEmailRequestDto confirmEmailRequestDto);
 
   GenericResponse resetPassword(RecoverPasswordRequestDto recoverPasswordRequestDto);
+
+  Usuario updatePassword(Usuario entity, String password);
+
+  Usuario saveNewUser(Usuario entity);
 }

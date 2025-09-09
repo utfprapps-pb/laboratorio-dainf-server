@@ -1,5 +1,6 @@
 package br.com.utfpr.gerenciamento.server.service;
 
+import br.com.utfpr.gerenciamento.server.dto.EmprestimoResponseDto;
 import br.com.utfpr.gerenciamento.server.model.Emprestimo;
 import br.com.utfpr.gerenciamento.server.model.EmprestimoDevolucaoItem;
 import br.com.utfpr.gerenciamento.server.model.EmprestimoItem;
@@ -32,4 +33,6 @@ public interface EmprestimoService extends CrudService<Emprestimo, Long> {
   void sendEmailConfirmacaoDevolucao(Emprestimo emprestimo);
 
   void sendEmailPrazoDevolucaoProximo();
+
+  EmprestimoResponseDto convertToDto(Emprestimo entity);
 }

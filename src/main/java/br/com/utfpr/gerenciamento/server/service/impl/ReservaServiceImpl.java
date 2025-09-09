@@ -1,5 +1,6 @@
 package br.com.utfpr.gerenciamento.server.service.impl;
 
+import br.com.utfpr.gerenciamento.server.dto.ReservaResponseDto;
 import br.com.utfpr.gerenciamento.server.model.Reserva;
 import br.com.utfpr.gerenciamento.server.model.modelTemplateEmail.ReservaTemplate;
 import br.com.utfpr.gerenciamento.server.repository.ReservaRepository;
@@ -8,6 +9,8 @@ import br.com.utfpr.gerenciamento.server.service.ReservaService;
 import br.com.utfpr.gerenciamento.server.service.UsuarioService;
 import br.com.utfpr.gerenciamento.server.util.DateUtil;
 import java.util.List;
+
+import org.modelmapper.ModelMapper;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
@@ -20,13 +23,17 @@ public class ReservaServiceImpl extends CrudServiceImpl<Reserva, Long> implement
   private final UsuarioService usuarioService;
   private final EmailService emailService;
 
+  private final ModelMapper modelMapper;
+
   public ReservaServiceImpl(
-      ReservaRepository reservaRepository,
-      UsuarioService usuarioService,
-      EmailService emailService) {
+          ReservaRepository reservaRepository,
+          UsuarioService usuarioService,
+          EmailService emailService,
+          ModelMapper modelMapper) {
     this.reservaRepository = reservaRepository;
     this.usuarioService = usuarioService;
     this.emailService = emailService;
+    this.modelMapper = modelMapper;
   }
 
   @Override
@@ -45,17 +52,23 @@ public class ReservaServiceImpl extends CrudServiceImpl<Reserva, Long> implement
 
   @Override
   @Transactional(readOnly = true)
-  public List<Reserva> findAllByUsername(String username) {
+  public List<ReservaResponseDto> findAllByUsername(String username) {
     var usuario =
         usuarioService.findByUsername(
             (String) SecurityContextHolder.getContext().getAuthentication().getPrincipal());
-    return reservaRepository.findAllByUsuario(usuario);
+    return reservaRepository.findAllByUsuario(usuario)
+            .stream()
+            .map(this::convertToDto)
+            .toList();
   }
 
   @Override
   @Transactional(readOnly = true)
-  public List<Reserva> findAllByIdItem(Long idItem) {
-    return reservaRepository.findReservaByIdItem(idItem);
+  public List<ReservaResponseDto> findAllByIdItem(Long idItem) {
+    return reservaRepository.findReservaByIdItem(idItem)
+            .stream()
+            .map(this::convertToDto)
+            .toList();
   }
 
   @Override
@@ -77,6 +90,11 @@ public class ReservaServiceImpl extends CrudServiceImpl<Reserva, Long> implement
         reserva.getUsuario().getEmail(),
         "Confirmação de Reserva de Materiais",
         "templateConfirmacaoReserva");
+  }
+
+  @Override
+  public ReservaResponseDto convertToDto(Reserva entity) {
+    return modelMapper.map(entity, ReservaResponseDto.class);
   }
 
   public ReservaTemplate converterObjectToTemplateEmail(Reserva reserva) {

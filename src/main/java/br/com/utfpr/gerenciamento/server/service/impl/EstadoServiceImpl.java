@@ -1,9 +1,12 @@
 package br.com.utfpr.gerenciamento.server.service.impl;
 
+import br.com.utfpr.gerenciamento.server.dto.EstadoResponseDto;
 import br.com.utfpr.gerenciamento.server.model.Estado;
 import br.com.utfpr.gerenciamento.server.repository.EstadoRepository;
 import br.com.utfpr.gerenciamento.server.service.EstadoService;
 import java.util.List;
+
+import org.modelmapper.ModelMapper;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -13,8 +16,11 @@ public class EstadoServiceImpl extends CrudServiceImpl<Estado, Long> implements 
 
   private final EstadoRepository estadoRepository;
 
-  public EstadoServiceImpl(EstadoRepository estadoRepository) {
+  private final ModelMapper modelMapper;
+
+  public EstadoServiceImpl(EstadoRepository estadoRepository, ModelMapper modelMapper) {
     this.estadoRepository = estadoRepository;
+    this.modelMapper = modelMapper;
   }
 
   @Override
@@ -24,11 +30,22 @@ public class EstadoServiceImpl extends CrudServiceImpl<Estado, Long> implements 
 
   @Override
   @Transactional(readOnly = true)
-  public List<Estado> estadoComplete(String query) {
+  public List<EstadoResponseDto> estadoComplete(String query) {
     if ("".equalsIgnoreCase(query)) {
-      return estadoRepository.findAll();
+      return estadoRepository.findAll()
+              .stream()
+              .map(this::convertToDto)
+              .toList();
     } else {
-      return estadoRepository.findByNomeLikeIgnoreCase("%" + query + "%");
+      return estadoRepository.findByNomeLikeIgnoreCase("%" + query + "%")
+              .stream()
+              .map(this::convertToDto)
+              .toList();
     }
+  }
+
+  @Override
+  public EstadoResponseDto convertToDto(Estado entity) {
+    return modelMapper.map(entity, EstadoResponseDto.class);
   }
 }

@@ -3,14 +3,18 @@ package br.com.utfpr.gerenciamento.server.service.impl;
 import br.com.utfpr.gerenciamento.server.dto.*;
 import br.com.utfpr.gerenciamento.server.exception.EntityNotFoundException;
 import br.com.utfpr.gerenciamento.server.exception.RecoverCodeInvalidException;
+import br.com.utfpr.gerenciamento.server.model.Permissao;
 import br.com.utfpr.gerenciamento.server.model.RecoverPassword;
 import br.com.utfpr.gerenciamento.server.model.Usuario;
 import br.com.utfpr.gerenciamento.server.repository.RecoverPasswordRepository;
 import br.com.utfpr.gerenciamento.server.repository.UsuarioRepository;
 import br.com.utfpr.gerenciamento.server.service.EmailService;
+import br.com.utfpr.gerenciamento.server.service.PermissaoService;
 import br.com.utfpr.gerenciamento.server.service.UsuarioService;
 import java.time.LocalDateTime;
 import java.util.*;
+
+import br.com.utfpr.gerenciamento.server.util.Util;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -18,6 +22,7 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -39,17 +44,21 @@ public class UsuarioServiceImpl extends CrudServiceImpl<Usuario, Long>
 
   private final EmailService emailService;
 
+  private final PermissaoService permissaoService;
+
   public UsuarioServiceImpl(
       UsuarioRepository usuarioRepository,
       ModelMapper modelMapper,
       RecoverPasswordRepository recoverPasswordRepository,
       PasswordEncoder passwordEncoder,
-      EmailService emailService) {
+      EmailService emailService,
+      PermissaoService permissaoService) {
     this.usuarioRepository = usuarioRepository;
     this.modelMapper = modelMapper;
     this.recoverPasswordRepository = recoverPasswordRepository;
     this.passwordEncoder = passwordEncoder;
     this.emailService = emailService;
+    this.permissaoService = permissaoService;
   }
 
   @Override
@@ -69,11 +78,17 @@ public class UsuarioServiceImpl extends CrudServiceImpl<Usuario, Long>
 
   @Override
   @Transactional(readOnly = true)
-  public List<Usuario> usuarioComplete(String query) {
+  public List<UsuarioResponseDto> usuarioComplete(String query) {
     if ("".equalsIgnoreCase(query)) {
-      return usuarioRepository.findAll();
+      return usuarioRepository.findAll()
+              .stream()
+              .map(this::convertToDto)
+              .toList();
     }
-    return usuarioRepository.findByNomeLikeIgnoreCase("%" + query + "%");
+    return usuarioRepository.findByNomeLikeIgnoreCase("%" + query + "%")
+            .stream()
+            .map(this::convertToDto)
+            .toList();
   }
 
   @Override
@@ -89,20 +104,32 @@ public class UsuarioServiceImpl extends CrudServiceImpl<Usuario, Long>
 
   @Override
   @Transactional(readOnly = true)
-  public List<Usuario> usuarioCompleteByUserAndDocAndNome(String query) {
+  public List<UsuarioResponseDto> usuarioCompleteByUserAndDocAndNome(String query) {
     if ("".equalsIgnoreCase(query)) {
-      return usuarioRepository.findAllCustom();
+      return usuarioRepository.findAllCustom()
+              .stream()
+              .map(this::convertToDto)
+              .toList();
     }
-    return usuarioRepository.findUsuarioCompleteCustom("%" + query.toUpperCase() + "%");
+    return usuarioRepository.findUsuarioCompleteCustom("%" + query.toUpperCase() + "%")
+            .stream()
+            .map(this::convertToDto)
+            .toList();
   }
 
   @Override
   @Transactional(readOnly = true)
-  public List<Usuario> usuarioCompleteLab(String query) {
+  public List<UsuarioResponseDto> usuarioCompleteLab(String query) {
     if ("".equalsIgnoreCase(query)) {
-      return usuarioRepository.findAllCustomLab();
+      return usuarioRepository.findAllCustomLab()
+              .stream()
+              .map(this::convertToDto)
+              .toList();
     }
-    return usuarioRepository.findUsuarioCompleteCustomLab("%" + query.toUpperCase() + "%");
+    return usuarioRepository.findUsuarioCompleteCustomLab("%" + query.toUpperCase() + "%")
+            .stream()
+            .map(this::convertToDto)
+            .toList();
   }
 
   @Override
@@ -123,6 +150,15 @@ public class UsuarioServiceImpl extends CrudServiceImpl<Usuario, Long>
   @Override
   @Transactional
   public Usuario save(Usuario usuario) {
+    if (!Util.isPasswordEncoded(usuario.getPassword())) {
+      usuario.setPassword(new BCryptPasswordEncoder().encode(usuario.getPassword()));
+    }
+    Set<Permissao> permissoes = new HashSet<>();
+    usuario
+            .getPermissoes()
+            .forEach(permissao -> permissoes.add(permissaoService.findOne(permissao.getId())));
+    usuario.setPermissoes(permissoes);
+
     if (usuario.getId() != null) {
       Usuario usuarioTmp = usuarioRepository.findByUsername(usuario.getUsername());
       usuario.setEmailVerificado(usuarioTmp.getEmailVerificado());
@@ -225,6 +261,54 @@ public class UsuarioServiceImpl extends CrudServiceImpl<Usuario, Long>
     }
   }
 
+  @Override
+  @Transactional
+  public Usuario updatePassword(Usuario usuario, String senhaAtual) {
+    Usuario userTemp = this.findOne(usuario.getId());
+    BCryptPasswordEncoder bCrypt = new BCryptPasswordEncoder();
+    usuario.setEmailVerificado(userTemp.getEmailVerificado());
+    if (bCrypt.matches(senhaAtual, userTemp.getPassword())) {
+      usuario.setPassword(bCrypt.encode(usuario.getPassword()));
+      return usuarioRepository.save(usuario);
+    }
+    throw new RuntimeException("Senha incorreta");
+  }
+
+  @Override
+  public Usuario saveNewUser(Usuario usuario) {
+    if (!Util.isPasswordEncoded(usuario.getPassword())) {
+      usuario.setPassword(new BCryptPasswordEncoder().encode(usuario.getPassword()));
+    }
+    try {
+      usuario.setPermissoes(new HashSet<>());
+      usuario.setUsername(usuario.getEmail());
+      if (usuario.getEmail().contains("@utfpr.edu.br")) {
+        usuario.getPermissoes().add(permissaoService.findByNome("ROLE_PROFESSOR"));
+      } else {
+        usuario.getPermissoes().add(permissaoService.findByNome("ROLE_ALUNO"));
+      }
+      usuario.setCodigoVerificacao(UUID.randomUUID().toString());
+      usuario.setEmailVerificado(false);
+      usuarioRepository.save(usuario);
+
+      EmailDto emailDto = new EmailDto();
+      emailDto.setEmailTo(usuario.getEmail());
+      emailDto.setUsuario(usuario.getNome());
+      emailDto.setUrl(frontBaseUrl + "/confirmar-email/" + usuario.getCodigoVerificacao());
+      // TODO - adicionar constante com o nome do laboratório.
+      emailDto.setSubject("Confirmação de email - Laboratório DAINF-PB (UTFPR)");
+      emailDto.setSubjectBody("Confirmação de email - Laboratório DAINF-PB (UTFPR)");
+
+      emailService.sendEmailWithTemplate(
+              emailDto, emailDto.getEmailTo(), emailDto.getSubject(), "templateConfirmacaoCadastro");
+
+      return usuario;
+    } catch (Exception ex) {
+      ex.printStackTrace();
+      return null;
+    }
+  }
+
   private void sendEmailNewUser(Usuario usuario) {
     EmailDto emailDto = new EmailDto();
     emailDto.setEmailTo(usuario.getEmail());
@@ -239,4 +323,5 @@ public class UsuarioServiceImpl extends CrudServiceImpl<Usuario, Long>
     emailService.sendEmailWithTemplate(
         emailDto, emailDto.getEmailTo(), emailDto.getSubject(), "templateConfirmacaoCadastro");
   }
+
 }
