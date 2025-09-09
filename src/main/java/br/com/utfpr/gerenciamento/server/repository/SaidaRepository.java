@@ -5,10 +5,12 @@ import br.com.utfpr.gerenciamento.server.model.dashboards.DashboardItensSaidas;
 import java.time.LocalDate;
 import java.util.List;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
-public interface SaidaRepository extends JpaRepository<Saida, Long> {
+public interface SaidaRepository
+    extends JpaRepository<Saida, Long>, JpaSpecificationExecutor<Saida> {
 
   @Query(
       "SELECT new br.com.utfpr.gerenciamento.server.model.dashboards.DashboardItensSaidas(SUM(si.qtde), i.nome) \n"

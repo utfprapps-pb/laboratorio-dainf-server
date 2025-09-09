@@ -9,6 +9,10 @@ import jakarta.validation.Valid;
 import java.security.Principal;
 import java.util.List;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -30,14 +34,34 @@ public class UsuarioController {
   @GetMapping
   public List<UsuarioResponseDto> findAll() {
     return usuarioService.findAll()
-            .stream()
-            .map(usuarioService::convertToDto)
-            .toList();
+            .stream().map(usuarioService::convertToDto).toList();
   }
 
   @GetMapping("{id}")
   public UsuarioResponseDto findOne(@PathVariable("id") Long id) {
     return usuarioService.convertToDto(usuarioService.findOne(id));
+  }
+
+  @GetMapping("page")
+  public Page<UsuarioResponseDto> findAllPaged(
+      @RequestParam("page") int page,
+      @RequestParam("size") int size,
+      @RequestParam(required = false) String filter,
+      @RequestParam(required = false) String order,
+      @RequestParam(required = false) Boolean asc) {
+    PageRequest pageRequest = PageRequest.of(page, size);
+    if (order != null && asc != null) {
+      pageRequest =
+          PageRequest.of(page, size, asc ? Sort.Direction.ASC : Sort.Direction.DESC, order);
+    }
+    Page<Usuario> result;
+    if (filter != null && !filter.isEmpty()) {
+      Specification<Usuario> spec = usuarioService.filterByAllFields(filter);
+      result = usuarioService.findAllSpecification(spec, pageRequest);
+      } else {
+      result = usuarioService.findAll(pageRequest);
+      }
+    return result.map(usuarioService::convertToDto);
   }
 
   @PostMapping

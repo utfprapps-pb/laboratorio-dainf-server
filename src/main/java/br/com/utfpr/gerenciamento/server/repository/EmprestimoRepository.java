@@ -8,10 +8,12 @@ import br.com.utfpr.gerenciamento.server.model.dashboards.DashboardItensEmpresta
 import java.time.LocalDate;
 import java.util.List;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
-public interface EmprestimoRepository extends JpaRepository<Emprestimo, Long> {
+public interface EmprestimoRepository
+    extends JpaRepository<Emprestimo, Long>, JpaSpecificationExecutor<Emprestimo> {
 
   @Query(
       "SELECT new br.com.utfpr.gerenciamento.server.model.dashboards.DashboardEmprestimoDia(COUNT(e), e.dataEmprestimo) "

@@ -5,10 +5,12 @@ import br.com.utfpr.gerenciamento.server.model.dashboards.DashboardItensAdquirid
 import java.time.LocalDate;
 import java.util.List;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
-public interface CompraRepository extends JpaRepository<Compra, Long> {
+public interface CompraRepository
+    extends JpaRepository<Compra, Long>, JpaSpecificationExecutor<Compra> {
 
   @Query(
       "SELECT new br.com.utfpr.gerenciamento.server.model.dashboards.DashboardItensAdquiridos(SUM(ci.qtde), i.nome) "

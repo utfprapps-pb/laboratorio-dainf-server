@@ -1,13 +1,13 @@
 package br.com.utfpr.gerenciamento.server.util;
 
+import br.com.utfpr.gerenciamento.server.exception.ArquivoException;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.regex.Pattern;
-import org.springframework.util.StringUtils;
-import br.com.utfpr.gerenciamento.server.exception.ArquivoException;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.util.StringUtils;
 
 @Slf4j
 public class FileUtil {

@@ -10,6 +10,6 @@ class ServerApplicationTests {
 
   @Test
   void contextLoads() {
-      // se este teste falhar, a aplicação tem dependência não preenchida
+    // se este teste falhar, a aplicação tem dependência não preenchida
   }
 }
