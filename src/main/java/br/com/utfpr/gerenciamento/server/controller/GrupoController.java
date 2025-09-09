@@ -1,11 +1,13 @@
 package br.com.utfpr.gerenciamento.server.controller;
 
+import br.com.utfpr.gerenciamento.server.dto.GrupoResponseDto;
+import br.com.utfpr.gerenciamento.server.dto.ItemResponseDto;
 import br.com.utfpr.gerenciamento.server.model.Grupo;
-import br.com.utfpr.gerenciamento.server.model.Item;
 import br.com.utfpr.gerenciamento.server.service.CrudService;
 import br.com.utfpr.gerenciamento.server.service.GrupoService;
 import br.com.utfpr.gerenciamento.server.service.ItemService;
 import java.util.List;
+
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -26,12 +28,12 @@ public class GrupoController extends CrudController<Grupo, Long> {
   }
 
   @GetMapping("/complete")
-  public List<Grupo> complete(@RequestParam("query") String query) {
+  public List<GrupoResponseDto> complete(@RequestParam("query") String query) {
     return grupoService.completeGrupo(query);
   }
 
   @GetMapping("/itens-vinculados/{idGrupo}")
-  public List<Item> findItensVinculado(@PathVariable("idGrupo") Long idGrupo) {
+  public List<ItemResponseDto> findItensVinculado(@PathVariable("idGrupo") Long idGrupo) {
     return itemService.findByGrupo(idGrupo);
   }
 }

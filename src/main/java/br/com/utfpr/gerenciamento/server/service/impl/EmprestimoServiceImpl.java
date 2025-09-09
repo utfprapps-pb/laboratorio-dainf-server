@@ -1,5 +1,6 @@
 package br.com.utfpr.gerenciamento.server.service.impl;
 
+import br.com.utfpr.gerenciamento.server.dto.EmprestimoResponseDto;
 import br.com.utfpr.gerenciamento.server.ennumeation.StatusDevolucao;
 import br.com.utfpr.gerenciamento.server.ennumeation.TipoItem;
 import br.com.utfpr.gerenciamento.server.model.Emprestimo;
@@ -21,6 +22,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+
+import org.modelmapper.ModelMapper;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
@@ -36,17 +39,21 @@ public class EmprestimoServiceImpl extends CrudServiceImpl<Emprestimo, Long>
   private final EmailService emailService;
   private final UsuarioRepository usuarioRepository;
 
+  private final ModelMapper modelMapper;
+
   public EmprestimoServiceImpl(
-      EmprestimoRepository emprestimoRepository,
-      EmprestimoFilterRepository emprestimoFilterRepository,
-      UsuarioService usuarioService,
-      EmailService emailService,
-      UsuarioRepository usuarioRepository) {
+          EmprestimoRepository emprestimoRepository,
+          EmprestimoFilterRepository emprestimoFilterRepository,
+          UsuarioService usuarioService,
+          EmailService emailService,
+          UsuarioRepository usuarioRepository,
+          ModelMapper modelMapper) {
     this.emprestimoRepository = emprestimoRepository;
     this.emprestimoFilterRepository = emprestimoFilterRepository;
     this.usuarioService = usuarioService;
     this.emailService = emailService;
     this.usuarioRepository = usuarioRepository;
+    this.modelMapper = modelMapper;
   }
 
   private static final Logger LOGGER = Logger.getLogger(EmprestimoServiceImpl.class.getName());
@@ -144,7 +151,7 @@ public class EmprestimoServiceImpl extends CrudServiceImpl<Emprestimo, Long>
   @Override
   public void sendEmailConfirmacaoEmprestimo(Emprestimo emprestimo) {
     String template;
-    if (emprestimo.getEmprestimoDevolucaoItem().size() > 0) {
+    if (!emprestimo.getEmprestimoDevolucaoItem().isEmpty()) {
       template = "templateConfirmacaoEmprestimo";
     } else {
       template = "templateConfirmacaoFinalizacaoEmprestimo";
@@ -171,7 +178,7 @@ public class EmprestimoServiceImpl extends CrudServiceImpl<Emprestimo, Long>
     List<Emprestimo> emprestimos =
         emprestimoRepository.findByDataDevolucaoIsNullAndPrazoDevolucaoEquals(
             LocalDate.now().plusDays(3));
-    if (emprestimos.size() > 0) {
+    if (!emprestimos.isEmpty()) {
       emprestimos.forEach(
           emprestimo -> {
             emailService.sendEmailWithTemplate(
@@ -187,6 +194,11 @@ public class EmprestimoServiceImpl extends CrudServiceImpl<Emprestimo, Long>
     } else {
       LOGGER.log(Level.INFO, "Nenhum empréstimo vencerá daqui 3 dias.");
     }
+  }
+
+  @Override
+  public EmprestimoResponseDto convertToDto(Emprestimo entity) {
+    return modelMapper.map(entity, EmprestimoResponseDto.class);
   }
 
   private EmprestimoTemplate converterEmprestimoToObjectTemplate(Emprestimo e) {

@@ -1,5 +1,6 @@
 package br.com.utfpr.gerenciamento.server.controller;
 
+import br.com.utfpr.gerenciamento.server.dto.EmprestimoResponseDto;
 import br.com.utfpr.gerenciamento.server.ennumeation.StatusDevolucao;
 import br.com.utfpr.gerenciamento.server.model.Emprestimo;
 import br.com.utfpr.gerenciamento.server.model.EmprestimoDevolucaoItem;
@@ -42,18 +43,18 @@ public class EmprestimoController extends CrudController<Emprestimo, Long> {
   }
 
   @PostMapping("save-emprestimo")
-  public Emprestimo save(
+  public EmprestimoResponseDto save(
       @RequestBody Emprestimo emprestimo, @RequestParam("idReserva") Long idReserva) {
     preSave(emprestimo);
     Emprestimo toReturn = getService().save(emprestimo);
     postSave(emprestimo);
     if (idReserva != 0) reservaService.finalizarReserva(idReserva);
 
-    return toReturn;
+    return emprestimoService.convertToDto(toReturn);
   }
 
   @PostMapping("save-devolucao")
-  public Emprestimo saveDevolucao(@RequestBody Emprestimo emprestimo) {
+  public EmprestimoResponseDto saveDevolucao(@RequestBody Emprestimo emprestimo) {
 
     boolean isPendente =
         emprestimo.getEmprestimoDevolucaoItem().stream()
@@ -73,11 +74,11 @@ public class EmprestimoController extends CrudController<Emprestimo, Long> {
             .filter(empDevItem -> empDevItem.getStatusDevolucao().equals(StatusDevolucao.S))
             .collect(Collectors.toList());
 
-    if (listItensToSaida.size() > 0) {
+    if (!listItensToSaida.isEmpty()) {
       saidaService.createSaidaByDevolucaoEmprestimo(listItensToSaida);
     }
     emprestimoService.sendEmailConfirmacaoDevolucao(emprestimo);
-    return toReturn;
+    return emprestimoService.convertToDto(toReturn);
   }
 
   @Override
@@ -105,9 +106,9 @@ public class EmprestimoController extends CrudController<Emprestimo, Long> {
 
     // caso tiver apenas materiais permanentes no empréstimo, será setado a data de devolução, para
     // finalizar o empréstimo
-    if (object.getEmprestimoDevolucaoItem().size() <= 0) {
+    // if (object.getEmprestimoDevolucaoItem().size() <= 0) {
       // object.setDataDevolucao(LocalDate.now());
-    }
+    // }
   }
 
   @Override
@@ -130,13 +131,19 @@ public class EmprestimoController extends CrudController<Emprestimo, Long> {
   }
 
   @PostMapping("filter")
-  public List<Emprestimo> filter(@RequestBody EmprestimoFilter emprestimoFilter) {
-    return emprestimoService.filter(emprestimoFilter);
+  public List<EmprestimoResponseDto> filter(@RequestBody EmprestimoFilter emprestimoFilter) {
+    return emprestimoService.filter(emprestimoFilter)
+            .stream()
+            .map(emprestimoService::convertToDto)
+            .toList();
   }
 
   @GetMapping("find-all-by-username/{username}")
-  public List<Emprestimo> findAllByUsuarioEmprestimo(@PathVariable("username") String username) {
-    return emprestimoService.findAllUsuarioEmprestimo(username);
+  public List<EmprestimoResponseDto> findAllByUsuarioEmprestimo(@PathVariable("username") String username) {
+    return emprestimoService.findAllUsuarioEmprestimo(username)
+            .stream()
+            .map(emprestimoService::convertToDto)
+            .toList();
   }
 
   @GetMapping("change-prazo-devolucao")

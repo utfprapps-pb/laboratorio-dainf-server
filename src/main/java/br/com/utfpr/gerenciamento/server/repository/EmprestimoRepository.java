@@ -1,5 +1,6 @@
 package br.com.utfpr.gerenciamento.server.repository;
 
+import br.com.utfpr.gerenciamento.server.dto.EmprestimoResponseDto;
 import br.com.utfpr.gerenciamento.server.model.Emprestimo;
 import br.com.utfpr.gerenciamento.server.model.Usuario;
 import br.com.utfpr.gerenciamento.server.model.dashboards.DashboardEmprestimoDia;

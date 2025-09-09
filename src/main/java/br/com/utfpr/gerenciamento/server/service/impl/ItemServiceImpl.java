@@ -1,5 +1,6 @@
 package br.com.utfpr.gerenciamento.server.service.impl;
 
+import br.com.utfpr.gerenciamento.server.dto.ItemResponseDto;
 import br.com.utfpr.gerenciamento.server.minio.config.MinioConfig;
 import br.com.utfpr.gerenciamento.server.minio.payload.FileResponse;
 import br.com.utfpr.gerenciamento.server.minio.service.MinioService;
@@ -14,12 +15,12 @@ import br.com.utfpr.gerenciamento.server.service.ItemService;
 import br.com.utfpr.gerenciamento.server.service.RelatorioService;
 import br.com.utfpr.gerenciamento.server.util.FileUtil;
 import jakarta.servlet.http.HttpServletRequest;
-import java.io.*;
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
 import lombok.extern.slf4j.Slf4j;
 import net.sf.jasperreports.engine.JasperExportManager;
+import org.modelmapper.ModelMapper;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -36,19 +37,23 @@ public class ItemServiceImpl extends CrudServiceImpl<Item, Long> implements Item
   private final MinioConfig minioConfig;
   private final ItemImageRepository itemImageRepository;
 
+  private final ModelMapper modelMapper;
+
   public ItemServiceImpl(
-      ItemRepository itemRepository,
-      EmailService emailService,
-      RelatorioService relatorioService,
-      MinioService minioService,
-      MinioConfig minioConfig,
-      ItemImageRepository itemImageRepository) {
+          ItemRepository itemRepository,
+          EmailService emailService,
+          RelatorioService relatorioService,
+          MinioService minioService,
+          MinioConfig minioConfig,
+          ItemImageRepository itemImageRepository,
+          ModelMapper modelMapper) {
     this.itemRepository = itemRepository;
     this.emailService = emailService;
     this.relatorioService = relatorioService;
     this.minioService = minioService;
     this.minioConfig = minioConfig;
     this.itemImageRepository = itemImageRepository;
+    this.modelMapper = modelMapper;
   }
 
   @Override
@@ -58,25 +63,39 @@ public class ItemServiceImpl extends CrudServiceImpl<Item, Long> implements Item
 
   @Override
   @Transactional
-  public List<Item> itemComplete(String query, Boolean hasEstoque) {
+  public List<ItemResponseDto> itemComplete(String query, Boolean hasEstoque) {
     BigDecimal zero = new BigDecimal(0);
     if ("".equalsIgnoreCase(query)) {
-      if (hasEstoque) return itemRepository.findAllBySaldoIsGreaterThanOrderByNome(zero);
-      else return itemRepository.findAllByOrderByNome();
+      if (hasEstoque) return itemRepository.findAllBySaldoIsGreaterThanOrderByNome(zero)
+              .stream()
+              .map(this::convertToDto)
+              .toList();
+
+      else return itemRepository.findAllByOrderByNome()
+              .stream()
+              .map(this::convertToDto)
+              .toList();
     } else {
-      if (hasEstoque) {
-        return itemRepository.findByNomeLikeIgnoreCaseAndSaldoIsGreaterThanOrderByNome(
-            "%" + query + "%", zero);
-      } else return itemRepository.findByNomeLikeIgnoreCaseOrderByNome("%" + query + "%");
+      if (hasEstoque) return itemRepository.findByNomeLikeIgnoreCaseAndSaldoIsGreaterThanOrderByNome(
+            "%" + query + "%", zero)
+                .stream()
+                .map(this::convertToDto)
+                .toList();
+
+      else return itemRepository.findByNomeLikeIgnoreCaseOrderByNome("%" + query + "%")
+                .stream()
+                .map(this::convertToDto)
+                .toList();
     }
   }
-
   @Override
   @Transactional(readOnly = true)
-  public List<Item> findByGrupo(Long id) {
-    return itemRepository.findByGrupoIdOrderByNome(id);
+  public List<ItemResponseDto> findByGrupo(Long id) {
+    return itemRepository.findByGrupoIdOrderByNome(id)
+            .stream()
+            .map(this::convertToDto)
+            .toList();
   }
-
   @Override
   @Transactional
   public void diminuiSaldoItem(Long idItem, BigDecimal qtde, boolean needValidationSaldo) {
@@ -202,5 +221,10 @@ public class ItemServiceImpl extends CrudServiceImpl<Item, Long> implements Item
             });
     item.setImageItem(toReturn);
     this.save(item);
+  }
+
+  @Override
+  public ItemResponseDto convertToDto(Item entity) {
+    return modelMapper.map(entity, ItemResponseDto.class);
   }
 }

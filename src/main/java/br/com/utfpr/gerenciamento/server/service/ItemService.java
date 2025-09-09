@@ -1,5 +1,6 @@
 package br.com.utfpr.gerenciamento.server.service;
 
+import br.com.utfpr.gerenciamento.server.dto.ItemResponseDto;
 import br.com.utfpr.gerenciamento.server.model.Item;
 import br.com.utfpr.gerenciamento.server.model.ItemImage;
 import jakarta.servlet.http.HttpServletRequest;
@@ -9,9 +10,9 @@ import org.springframework.web.multipart.MultipartHttpServletRequest;
 
 public interface ItemService extends CrudService<Item, Long> {
 
-  List<Item> itemComplete(String query, Boolean hasEstoque);
+  List<ItemResponseDto> itemComplete(String query, Boolean hasEstoque);
 
-  List<Item> findByGrupo(Long id);
+  List<ItemResponseDto> findByGrupo(Long id);
 
   void diminuiSaldoItem(Long idItem, BigDecimal qtde, boolean needValidationSaldo);
 
@@ -30,4 +31,6 @@ public interface ItemService extends CrudService<Item, Long> {
   void sendNotificationItensAtingiramQtdeMin();
 
   void copyImagesItem(List<ItemImage> itemImages, Long id);
+
+  ItemResponseDto convertToDto(Item entity);
 }

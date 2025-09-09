@@ -1,5 +1,6 @@
 package br.com.utfpr.gerenciamento.server.controller;
 
+import br.com.utfpr.gerenciamento.server.dto.EstadoResponseDto;
 import br.com.utfpr.gerenciamento.server.model.Estado;
 import br.com.utfpr.gerenciamento.server.service.CrudService;
 import br.com.utfpr.gerenciamento.server.service.EstadoService;
@@ -22,7 +23,7 @@ public class EstadoController extends CrudController<Estado, Long> {
   }
 
   @GetMapping("complete")
-  public List<Estado> complete(@RequestParam("query") String query) {
+  public List<EstadoResponseDto> complete(@RequestParam("query") String query) {
     return estadoService.estadoComplete(query);
   }
 }
