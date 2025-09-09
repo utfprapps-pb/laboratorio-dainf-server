@@ -1,5 +1,6 @@
 package br.com.utfpr.gerenciamento.server.controller;
 
+import br.com.utfpr.gerenciamento.server.dto.FornecedorResponseDto;
 import br.com.utfpr.gerenciamento.server.model.Fornecedor;
 import br.com.utfpr.gerenciamento.server.service.CrudService;
 import br.com.utfpr.gerenciamento.server.service.FornecedorService;
@@ -22,7 +23,10 @@ public class FornecedorController extends CrudController<Fornecedor, Long> {
   }
 
   @GetMapping("/complete")
-  public List<Fornecedor> complete(@RequestParam("query") String query) {
-    return fornecedorService.completeFornecedor(query);
+  public List<FornecedorResponseDto> complete(@RequestParam("query") String query) {
+    return fornecedorService.completeFornecedor(query)
+            .stream()
+            .map(fornecedorService::convertToDto)
+            .toList();
   }
 }

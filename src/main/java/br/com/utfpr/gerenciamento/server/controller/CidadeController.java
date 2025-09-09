@@ -1,5 +1,6 @@
 package br.com.utfpr.gerenciamento.server.controller;
 
+import br.com.utfpr.gerenciamento.server.dto.CidadeResponseDto;
 import br.com.utfpr.gerenciamento.server.model.Cidade;
 import br.com.utfpr.gerenciamento.server.model.Estado;
 import br.com.utfpr.gerenciamento.server.service.CidadeService;
@@ -23,12 +24,12 @@ public class CidadeController extends CrudController<Cidade, Long> {
   }
 
   @GetMapping("/complete")
-  public List<Cidade> complete(@RequestParam("query") String query) {
+  public List<CidadeResponseDto> complete(@RequestParam("query") String query) {
     return cidadeService.cidadeComplete(query);
   }
 
   @PostMapping("/complete-by-estado")
-  public List<Cidade> complete(@RequestParam("query") String query, @RequestBody Estado estado) {
+  public List<CidadeResponseDto> complete(@RequestParam("query") String query, @RequestBody Estado estado) {
     return cidadeService.completeByEstado(query, estado);
   }
 }

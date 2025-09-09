@@ -1,9 +1,12 @@
 package br.com.utfpr.gerenciamento.server.service.impl;
 
+import br.com.utfpr.gerenciamento.server.dto.FornecedorResponseDto;
 import br.com.utfpr.gerenciamento.server.model.Fornecedor;
 import br.com.utfpr.gerenciamento.server.repository.FornecedorRepository;
 import br.com.utfpr.gerenciamento.server.service.FornecedorService;
 import java.util.List;
+
+import org.modelmapper.ModelMapper;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -14,8 +17,11 @@ public class FornecedorServiceImpl extends CrudServiceImpl<Fornecedor, Long>
 
   private final FornecedorRepository fornecedorRepository;
 
-  public FornecedorServiceImpl(FornecedorRepository fornecedorRepository) {
+  private final ModelMapper modelMapper;
+
+  public FornecedorServiceImpl(FornecedorRepository fornecedorRepository, ModelMapper modelMapper) {
     this.fornecedorRepository = fornecedorRepository;
+    this.modelMapper = modelMapper;
   }
 
   @Override
@@ -31,5 +37,10 @@ public class FornecedorServiceImpl extends CrudServiceImpl<Fornecedor, Long>
     } else {
       return fornecedorRepository.findByNomeFantasiaLikeIgnoreCase("%" + query + "%");
     }
+  }
+
+  @Override
+  public FornecedorResponseDto convertToDto(Fornecedor entity) {
+    return modelMapper.map(entity, FornecedorResponseDto.class);
   }
 }

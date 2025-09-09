@@ -1,9 +1,12 @@
 package br.com.utfpr.gerenciamento.server.service.impl;
 
+import br.com.utfpr.gerenciamento.server.dto.PaisResponseDto;
 import br.com.utfpr.gerenciamento.server.model.Pais;
 import br.com.utfpr.gerenciamento.server.repository.PaisRepository;
 import br.com.utfpr.gerenciamento.server.service.PaisService;
 import java.util.List;
+
+import org.modelmapper.ModelMapper;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -13,8 +16,11 @@ public class PaisServiceImpl extends CrudServiceImpl<Pais, Long> implements Pais
 
   private final PaisRepository paisRepository;
 
-  public PaisServiceImpl(PaisRepository paisRepository) {
+  private final ModelMapper modelMapper;
+
+  public PaisServiceImpl(PaisRepository paisRepository, ModelMapper modelMapper) {
     this.paisRepository = paisRepository;
+    this.modelMapper = modelMapper;
   }
 
   @Override
@@ -24,11 +30,22 @@ public class PaisServiceImpl extends CrudServiceImpl<Pais, Long> implements Pais
 
   @Override
   @Transactional(readOnly = true)
-  public List<Pais> paisComplete(String query) {
+  public List<PaisResponseDto> paisComplete(String query) {
     if ("".equalsIgnoreCase(query)) {
-      return this.paisRepository.findAll();
+      return this.paisRepository.findAll()
+              .stream()
+              .map(this::convertToDto)
+              .toList();
     } else {
-      return this.paisRepository.findByNomeLikeIgnoreCase("%" + query + "%");
+      return this.paisRepository.findByNomeLikeIgnoreCase("%" + query + "%")
+              .stream()
+              .map(this::convertToDto)
+              .toList();
     }
+  }
+
+  @Override
+  public PaisResponseDto convertToDto(Pais entity) {
+    return modelMapper.map(entity, PaisResponseDto.class);
   }
 }

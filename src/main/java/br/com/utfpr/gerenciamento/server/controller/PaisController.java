@@ -1,5 +1,6 @@
 package br.com.utfpr.gerenciamento.server.controller;
 
+import br.com.utfpr.gerenciamento.server.dto.PaisResponseDto;
 import br.com.utfpr.gerenciamento.server.model.Pais;
 import br.com.utfpr.gerenciamento.server.service.CrudService;
 import br.com.utfpr.gerenciamento.server.service.PaisService;
@@ -22,7 +23,7 @@ public class PaisController extends CrudController<Pais, Long> {
   }
 
   @GetMapping("/complete")
-  public List<Pais> complete(@RequestParam("query") String query) {
+  public List<PaisResponseDto> complete(@RequestParam("query") String query) {
     return paisService.paisComplete(query);
   }
 }

@@ -1,5 +1,6 @@
 package br.com.utfpr.gerenciamento.server.controller;
 
+import br.com.utfpr.gerenciamento.server.dto.ItemResponseDto;
 import br.com.utfpr.gerenciamento.server.model.Item;
 import br.com.utfpr.gerenciamento.server.model.ItemImage;
 import br.com.utfpr.gerenciamento.server.service.CrudService;
@@ -45,7 +46,7 @@ public class ItemController extends CrudController<Item, Long> {
   }
 
   @GetMapping("/complete")
-  public List<Item> complete(
+  public List<ItemResponseDto> complete(
       @RequestParam("query") String query, @RequestParam("hasEstoque") Boolean hasEstoque) {
     return itemService.itemComplete(query, hasEstoque);
   }
