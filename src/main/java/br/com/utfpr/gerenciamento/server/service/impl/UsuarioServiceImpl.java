@@ -72,7 +72,9 @@ public class UsuarioServiceImpl extends CrudServiceImpl<Usuario, Long>
   @Override
   @Transactional(readOnly = true)
   public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
-    Usuario usuario = usuarioRepository.findByUsernameOrEmail(username, username);
+    // IMPORTANTE: Usa @EntityGraph para carregar permissoes junto
+    // porque UserDetails.getAuthorities() precisa delas no fluxo de autenticação
+    Usuario usuario = usuarioRepository.findWithPermissoesByUsernameOrEmail(username, username);
     if (usuario == null) {
       throw new UsernameNotFoundException("Usuário não encontrado");
     }
@@ -98,7 +100,20 @@ public class UsuarioServiceImpl extends CrudServiceImpl<Usuario, Long>
     } else if (username.contains("@administrativo.utfpr.edu.br")) {
       username = username.replace("administrativo.", "");
     }
+    // Usa versão SEM permissoes (LAZY) - mais performática para uso geral
     return usuarioRepository.findByUsernameOrEmail(username, username);
+  }
+
+  @Override
+  @Transactional(readOnly = true)
+  public Usuario findByUsernameForAuthentication(String username) {
+    if (username.contains("@professores.utfpr.edu.br")) {
+      username = username.replace("professores.", "");
+    } else if (username.contains("@administrativo.utfpr.edu.br")) {
+      username = username.replace("administrativo.", "");
+    }
+    // Usa versão COM permissoes (@EntityGraph) - necessário para autenticação
+    return usuarioRepository.findWithPermissoesByUsernameOrEmail(username, username);
   }
 
   @Override

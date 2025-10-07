@@ -52,7 +52,7 @@ public class Usuario implements Serializable, UserDetails {
 
   @ManyToMany(
       cascade = {CascadeType.MERGE, CascadeType.PERSIST},
-      fetch = FetchType.EAGER)
+      fetch = FetchType.LAZY) // LAZY é o padrão correto - use @EntityGraph quando precisar carregar
   private Set<Permissao> permissoes;
 
   @Column(name = "foto_url", length = 2048)

@@ -44,7 +44,8 @@ public class JWTAuthenticationFilter extends UsernamePasswordAuthenticationFilte
       } else if (credentials.getUsername().contains("@administrativo.utfpr.edu.br")) {
         credentials.setUsername(credentials.getUsername().replace("administrativo.", ""));
       }
-      Usuario user = usuarioService.findByUsername(credentials.getUsername());
+      // IMPORTANTE: Usa método COM @EntityGraph porque getAuthorities() precisa das permissoes
+      Usuario user = usuarioService.findByUsernameForAuthentication(credentials.getUsername());
 
       return authenticationManager.authenticate(
           new UsernamePasswordAuthenticationToken(

@@ -2,6 +2,7 @@ package br.com.utfpr.gerenciamento.server.repository;
 
 import br.com.utfpr.gerenciamento.server.model.Usuario;
 import java.util.List;
+import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.data.jpa.repository.Query;
@@ -12,9 +13,31 @@ public interface UsuarioRepository
 
   Usuario findByCodigoVerificacao(String codigoVerificacao);
 
+  /**
+   * Busca usuario por username SEM carregar permissoes (LAZY). Use para operações que não precisam
+   * de permissões.
+   */
   Usuario findByUsername(String username);
 
+  /**
+   * Busca usuario por username COM permissoes carregadas (para autenticação). Use nos fluxos de
+   * autenticação/autorização onde UserDetails precisa das permissões.
+   */
+  @EntityGraph(attributePaths = {"permissoes"})
+  Usuario findWithPermissoesByUsername(String username);
+
+  /**
+   * Busca usuario por username ou email SEM carregar permissoes (LAZY). Use para operações que não
+   * precisam de permissões.
+   */
   Usuario findByUsernameOrEmail(String username, String email);
+
+  /**
+   * Busca usuario por username ou email COM permissoes carregadas (para autenticação). Use no fluxo
+   * de autenticação onde UserDetails.getAuthorities() precisa das permissões.
+   */
+  @EntityGraph(attributePaths = {"permissoes"})
+  Usuario findWithPermissoesByUsernameOrEmail(String username, String email);
 
   Usuario findByEmail(String email);
 
