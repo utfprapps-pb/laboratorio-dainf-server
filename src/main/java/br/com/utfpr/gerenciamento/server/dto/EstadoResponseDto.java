@@ -5,11 +5,11 @@ import lombok.Data;
 @Data
 public class EstadoResponseDto {
 
-    private Long id;
+  private Long id;
 
-    private String nome;
+  private String nome;
 
-    private String uf;
+  private String uf;
 
-    private PaisResponseDto pais;
+  private PaisResponseDto pais;
 }

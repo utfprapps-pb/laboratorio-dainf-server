@@ -5,11 +5,11 @@ import lombok.Data;
 @Data
 public class FornecedorResponseDto {
 
-    Long id;
+  Long id;
 
-    private String razaoSocial;
+  private String razaoSocial;
 
-    private String nomeFantasia;
+  private String nomeFantasia;
 
-    private String cnpj;
+  private String cnpj;
 }

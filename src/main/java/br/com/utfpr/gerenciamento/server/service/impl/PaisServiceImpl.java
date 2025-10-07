@@ -5,7 +5,6 @@ import br.com.utfpr.gerenciamento.server.model.Pais;
 import br.com.utfpr.gerenciamento.server.repository.PaisRepository;
 import br.com.utfpr.gerenciamento.server.service.PaisService;
 import java.util.List;
-
 import org.modelmapper.ModelMapper;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Service;
@@ -32,15 +31,11 @@ public class PaisServiceImpl extends CrudServiceImpl<Pais, Long> implements Pais
   @Transactional(readOnly = true)
   public List<PaisResponseDto> paisComplete(String query) {
     if ("".equalsIgnoreCase(query)) {
-      return this.paisRepository.findAll()
-              .stream()
-              .map(this::convertToDto)
-              .toList();
+      return this.paisRepository.findAll().stream().map(this::convertToDto).toList();
     } else {
-      return this.paisRepository.findByNomeLikeIgnoreCase("%" + query + "%")
-              .stream()
-              .map(this::convertToDto)
-              .toList();
+      return this.paisRepository.findByNomeLikeIgnoreCase("%" + query + "%").stream()
+          .map(this::convertToDto)
+          .toList();
     }
   }
 

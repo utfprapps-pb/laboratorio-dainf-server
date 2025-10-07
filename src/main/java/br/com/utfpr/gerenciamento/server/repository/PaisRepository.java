@@ -1,6 +1,5 @@
 package br.com.utfpr.gerenciamento.server.repository;
 
-import br.com.utfpr.gerenciamento.server.dto.PaisResponseDto;
 import br.com.utfpr.gerenciamento.server.model.Pais;
 import java.util.List;
 import org.springframework.data.jpa.repository.JpaRepository;

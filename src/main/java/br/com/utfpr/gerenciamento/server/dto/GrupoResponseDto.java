@@ -5,7 +5,7 @@ import lombok.Data;
 @Data
 public class GrupoResponseDto {
 
-    private Long id;
+  private Long id;
 
-    private String descricao;
+  private String descricao;
 }

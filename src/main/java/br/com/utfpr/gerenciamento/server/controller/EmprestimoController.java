@@ -107,7 +107,7 @@ public class EmprestimoController extends CrudController<Emprestimo, Long> {
     // caso tiver apenas materiais permanentes no empréstimo, será setado a data de devolução, para
     // finalizar o empréstimo
     // if (object.getEmprestimoDevolucaoItem().size() <= 0) {
-      // object.setDataDevolucao(LocalDate.now());
+    // object.setDataDevolucao(LocalDate.now());
     // }
   }
 
@@ -132,18 +132,17 @@ public class EmprestimoController extends CrudController<Emprestimo, Long> {
 
   @PostMapping("filter")
   public List<EmprestimoResponseDto> filter(@RequestBody EmprestimoFilter emprestimoFilter) {
-    return emprestimoService.filter(emprestimoFilter)
-            .stream()
-            .map(emprestimoService::convertToDto)
-            .toList();
+    return emprestimoService.filter(emprestimoFilter).stream()
+        .map(emprestimoService::convertToDto)
+        .toList();
   }
 
   @GetMapping("find-all-by-username/{username}")
-  public List<EmprestimoResponseDto> findAllByUsuarioEmprestimo(@PathVariable("username") String username) {
-    return emprestimoService.findAllUsuarioEmprestimo(username)
-            .stream()
-            .map(emprestimoService::convertToDto)
-            .toList();
+  public List<EmprestimoResponseDto> findAllByUsuarioEmprestimo(
+      @PathVariable("username") String username) {
+    return emprestimoService.findAllUsuarioEmprestimo(username).stream()
+        .map(emprestimoService::convertToDto)
+        .toList();
   }
 
   @GetMapping("change-prazo-devolucao")

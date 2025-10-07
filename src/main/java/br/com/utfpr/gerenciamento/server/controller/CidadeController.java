@@ -29,7 +29,8 @@ public class CidadeController extends CrudController<Cidade, Long> {
   }
 
   @PostMapping("/complete-by-estado")
-  public List<CidadeResponseDto> complete(@RequestParam("query") String query, @RequestBody Estado estado) {
+  public List<CidadeResponseDto> complete(
+      @RequestParam("query") String query, @RequestBody Estado estado) {
     return cidadeService.completeByEstado(query, estado);
   }
 }

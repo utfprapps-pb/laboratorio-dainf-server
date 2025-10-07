@@ -9,7 +9,6 @@ import br.com.utfpr.gerenciamento.server.service.ReservaService;
 import br.com.utfpr.gerenciamento.server.service.UsuarioService;
 import br.com.utfpr.gerenciamento.server.util.DateUtil;
 import java.util.List;
-
 import org.modelmapper.ModelMapper;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -26,10 +25,10 @@ public class ReservaServiceImpl extends CrudServiceImpl<Reserva, Long> implement
   private final ModelMapper modelMapper;
 
   public ReservaServiceImpl(
-          ReservaRepository reservaRepository,
-          UsuarioService usuarioService,
-          EmailService emailService,
-          ModelMapper modelMapper) {
+      ReservaRepository reservaRepository,
+      UsuarioService usuarioService,
+      EmailService emailService,
+      ModelMapper modelMapper) {
     this.reservaRepository = reservaRepository;
     this.usuarioService = usuarioService;
     this.emailService = emailService;
@@ -56,19 +55,13 @@ public class ReservaServiceImpl extends CrudServiceImpl<Reserva, Long> implement
     var usuario =
         usuarioService.findByUsername(
             (String) SecurityContextHolder.getContext().getAuthentication().getPrincipal());
-    return reservaRepository.findAllByUsuario(usuario)
-            .stream()
-            .map(this::convertToDto)
-            .toList();
+    return reservaRepository.findAllByUsuario(usuario).stream().map(this::convertToDto).toList();
   }
 
   @Override
   @Transactional(readOnly = true)
   public List<ReservaResponseDto> findAllByIdItem(Long idItem) {
-    return reservaRepository.findReservaByIdItem(idItem)
-            .stream()
-            .map(this::convertToDto)
-            .toList();
+    return reservaRepository.findReservaByIdItem(idItem).stream().map(this::convertToDto).toList();
   }
 
   @Override

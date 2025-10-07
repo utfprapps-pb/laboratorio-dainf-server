@@ -9,7 +9,6 @@ import br.com.utfpr.gerenciamento.server.service.EmprestimoService;
 import br.com.utfpr.gerenciamento.server.service.SaidaService;
 import java.time.LocalDate;
 import java.util.List;
-
 import org.modelmapper.ModelMapper;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -24,10 +23,10 @@ public class DashboardServiceImpl implements DashboardService {
   private final ModelMapper modelMapper;
 
   public DashboardServiceImpl(
-          EmprestimoService emprestimoService,
-          CompraService compraService,
-          SaidaService saidaService,
-          ModelMapper modelMapper) {
+      EmprestimoService emprestimoService,
+      CompraService compraService,
+      SaidaService saidaService,
+      ModelMapper modelMapper) {
     this.emprestimoService = emprestimoService;
     this.compraService = compraService;
     this.saidaService = saidaService;
@@ -70,39 +69,38 @@ public class DashboardServiceImpl implements DashboardService {
 
   @Override
   @Transactional(readOnly = true)
-  public List<DashboardEmprestimoDiaResponseDto> findTotalEmprestimoByDia(LocalDate dtIni, LocalDate dtFim) {
-    return emprestimoService.countByDataEmprestimo(dtIni, dtFim)
-            .stream()
-            .map(entity -> convertToDto(entity, DashboardEmprestimoDiaResponseDto.class))
-            .toList();
+  public List<DashboardEmprestimoDiaResponseDto> findTotalEmprestimoByDia(
+      LocalDate dtIni, LocalDate dtFim) {
+    return emprestimoService.countByDataEmprestimo(dtIni, dtFim).stream()
+        .map(entity -> convertToDto(entity, DashboardEmprestimoDiaResponseDto.class))
+        .toList();
   }
 
   @Override
   @Transactional(readOnly = true)
   public List<DashboardItensEmprestadosResponseDto> findItensMaisEmprestados(
       LocalDate dtIni, LocalDate dtFim) {
-    return emprestimoService.findItensMaisEmprestados(dtIni, dtFim)
-            .stream()
-            .map(entity -> convertToDto(entity, DashboardItensEmprestadosResponseDto.class))
-            .toList();
+    return emprestimoService.findItensMaisEmprestados(dtIni, dtFim).stream()
+        .map(entity -> convertToDto(entity, DashboardItensEmprestadosResponseDto.class))
+        .toList();
   }
 
   @Override
   @Transactional(readOnly = true)
-  public List<DashboardItensAdquiridosResponseDto> findItensMaisAdquiridos(LocalDate dtIni, LocalDate dtFim) {
-    return compraService.findItensMaisAdquiridos(dtIni, dtFim)
-            .stream()
-            .map(entity -> convertToDto(entity, DashboardItensAdquiridosResponseDto.class))
-            .toList();
+  public List<DashboardItensAdquiridosResponseDto> findItensMaisAdquiridos(
+      LocalDate dtIni, LocalDate dtFim) {
+    return compraService.findItensMaisAdquiridos(dtIni, dtFim).stream()
+        .map(entity -> convertToDto(entity, DashboardItensAdquiridosResponseDto.class))
+        .toList();
   }
 
   @Override
   @Transactional(readOnly = true)
-  public List<DashboardItensSaidasResponseDto> findItensComMaisSaidas(LocalDate dtIni, LocalDate dtFim) {
-    return saidaService.findItensMaisSaidas(dtIni, dtFim)
-            .stream()
-            .map(entity -> convertToDto(entity, DashboardItensSaidasResponseDto.class))
-            .toList();
+  public List<DashboardItensSaidasResponseDto> findItensComMaisSaidas(
+      LocalDate dtIni, LocalDate dtFim) {
+    return saidaService.findItensMaisSaidas(dtIni, dtFim).stream()
+        .map(entity -> convertToDto(entity, DashboardItensSaidasResponseDto.class))
+        .toList();
   }
 
   @Override

@@ -5,7 +5,6 @@ import br.com.utfpr.gerenciamento.server.model.Estado;
 import br.com.utfpr.gerenciamento.server.repository.EstadoRepository;
 import br.com.utfpr.gerenciamento.server.service.EstadoService;
 import java.util.List;
-
 import org.modelmapper.ModelMapper;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Service;
@@ -32,15 +31,11 @@ public class EstadoServiceImpl extends CrudServiceImpl<Estado, Long> implements 
   @Transactional(readOnly = true)
   public List<EstadoResponseDto> estadoComplete(String query) {
     if (query == null || query.isBlank()) {
-      return estadoRepository.findAll()
-              .stream()
-              .map(this::convertToDto)
-              .toList();
+      return estadoRepository.findAll().stream().map(this::convertToDto).toList();
     } else {
-      return estadoRepository.findByNomeLikeIgnoreCase("%" + query + "%")
-              .stream()
-              .map(this::convertToDto)
-              .toList();
+      return estadoRepository.findByNomeLikeIgnoreCase("%" + query + "%").stream()
+          .map(this::convertToDto)
+          .toList();
     }
   }
 
