@@ -19,8 +19,8 @@ public class Email {
   private String para;
   private String titulo;
   private String conteudo;
-  private Map<String, byte[]> fileMap = new HashMap<>();
-  private List<String> paraList = new ArrayList<>();
+  @Builder.Default private Map<String, byte[]> fileMap = new HashMap<>();
+  @Builder.Default private List<String> paraList = new ArrayList<>();
 
   public Email addFile(String fileName, byte[] fileBytes) {
     fileMap.put(fileName, fileBytes);
