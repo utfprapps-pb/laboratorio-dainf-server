@@ -11,7 +11,17 @@ public interface UsuarioService extends CrudService<Usuario, Long> {
 
   List<UsuarioResponseDto> usuarioComplete(String query);
 
+  /**
+   * Busca usuario por username SEM carregar permissoes (LAZY). Use para operações normais que não
+   * precisam de permissões.
+   */
   Usuario findByUsername(String username);
+
+  /**
+   * Busca usuario por username COM permissoes carregadas (para autenticação). Use SOMENTE nos
+   * fluxos de autenticação onde UserDetails.getAuthorities() será chamado.
+   */
+  Usuario findByUsernameForAuthentication(String username);
 
   List<UsuarioResponseDto> usuarioCompleteByUserAndDocAndNome(String query);
 
