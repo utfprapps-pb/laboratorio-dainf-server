@@ -61,8 +61,8 @@ public class Usuario implements Serializable, UserDetails {
   @Column(name = "codigo_verificacao", length = 512)
   private String codigoVerificacao;
 
-  @Column(name = "email_verificado")
-  private boolean emailVerificado;
+  @Column(name = "email_verificado", nullable = false)
+  private boolean emailVerificado = false;
 
   public boolean getEmailVerificado() {
     return emailVerificado;

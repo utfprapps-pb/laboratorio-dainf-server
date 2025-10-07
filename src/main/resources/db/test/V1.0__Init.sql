@@ -300,7 +300,9 @@ CREATE TABLE usuario (
                                 nome character varying(255) NOT NULL,
                                 password character varying(255) NOT NULL,
                                 telefone character varying(15) NOT NULL,
-                                username character varying(100) NOT NULL
+                                username character varying(100) NOT NULL,
+                                codigo_verificacao character varying(512),
+                                email_verificado boolean NOT NULL DEFAULT FALSE
 );
 CREATE SEQUENCE usuario_id_seq
     START WITH 1

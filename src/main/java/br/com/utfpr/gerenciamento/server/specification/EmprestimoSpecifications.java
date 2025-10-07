@@ -11,7 +11,7 @@ import org.springframework.data.jpa.domain.Specification;
  * Specifications para consultas de Emprestimo usando Criteria API.
  *
  * <p>Esta classe substitui a implementação manual JDBC (EmprestimoFilterRepositoryImpl) eliminando
- * o problema N+1 através de JOIN FETCH adequados.
+ * o problema N+1 por JOIN FETCH adequados.
  *
  * <p>Benefícios da migração: - Elimina ~200 queries → 1 query (melhoria de 90-95%) - Type-safe com
  * Criteria API - Aproveita cache de primeiro nível do Hibernate - Manutenibilidade melhorada
@@ -23,6 +23,10 @@ public class EmprestimoSpecifications {
 
   static final String DATA_DEVOLUCAO = "dataDevolucao";
   static final String PRAZO_DEVOLUCAO = "prazoDevolucao";
+  static final String DATA_EMPRESTIMO = "dataEmprestimo";
+  static final String USERNAME = "username";
+  static final String USUARIO_RESPONSAVEL = "usuarioResponsavel";
+  static final String USUARIO_EMPRESTIMO = "usuarioEmprestimo";
 
   private EmprestimoSpecifications() {}
 
@@ -41,7 +45,7 @@ public class EmprestimoSpecifications {
       if (query.getResultType() != Long.class && query.getResultType() != long.class) {
         // JOIN FETCH para usuarioEmprestimo (elimina N+1)
         Fetch<Emprestimo, Usuario> usuarioEmprestimoFetch =
-            root.fetch("usuarioEmprestimo", JoinType.LEFT);
+            root.fetch(USUARIO_EMPRESTIMO, JoinType.LEFT);
 
         // JOIN FETCH para permissoes do usuario (elimina segundo N+1)
         // Nota: Permissoes agora é LAZY, mas precisamos carregar aqui para evitar
@@ -49,7 +53,7 @@ public class EmprestimoSpecifications {
         usuarioEmprestimoFetch.fetch("permissoes", JoinType.LEFT);
 
         // JOIN FETCH para usuarioResponsavel (se necessário)
-        root.fetch("usuarioResponsavel", JoinType.LEFT);
+        root.fetch(USUARIO_RESPONSAVEL, JoinType.LEFT);
       }
 
       return construirPredicado(filter, root, query, cb);
@@ -77,7 +81,7 @@ public class EmprestimoSpecifications {
     // Filtro por usuarioEmprestimo (por ID ou username)
     if (filter.getUsuarioEmprestimo() != null) {
       Join<Emprestimo, Usuario> usuarioEmprestimoJoin =
-          root.join("usuarioEmprestimo", JoinType.LEFT);
+          root.join(USUARIO_EMPRESTIMO, JoinType.LEFT);
 
       if (filter.getUsuarioEmprestimo().getId() != null) {
         predicado =
@@ -89,36 +93,47 @@ public class EmprestimoSpecifications {
             cb.and(
                 predicado,
                 cb.equal(
-                    usuarioEmprestimoJoin.get("username"),
+                    usuarioEmprestimoJoin.get(USERNAME),
                     filter.getUsuarioEmprestimo().getUsername()));
       }
     }
 
-    // Filtro por usuarioResponsavel
+    // Filtro por usuarioResponsavel (por ID ou username)
     // Nota: "usuarioResponsalvel" é um typo no EmprestimoFilter mantido para compatibilidade
     if (filter.getUsuarioResponsalvel() != null) {
       Join<Emprestimo, Usuario> usuarioResponsavelJoin =
-          root.join("usuarioResponsavel", JoinType.LEFT);
-      predicado =
-          cb.and(
-              predicado,
-              cb.equal(usuarioResponsavelJoin.get("id"), filter.getUsuarioResponsalvel().getId()));
+          root.join(USUARIO_RESPONSAVEL, JoinType.LEFT);
+
+      if (filter.getUsuarioResponsalvel().getId() != null) {
+        predicado =
+            cb.and(
+                predicado,
+                cb.equal(
+                    usuarioResponsavelJoin.get("id"), filter.getUsuarioResponsalvel().getId()));
+      } else if (filter.getUsuarioResponsalvel().getUsername() != null) {
+        predicado =
+            cb.and(
+                predicado,
+                cb.equal(
+                    usuarioResponsavelJoin.get(USERNAME),
+                    filter.getUsuarioResponsalvel().getUsername()));
+      }
     }
 
     // Filtro por data de empréstimo inicial (>=)
     if (filter.getDtIniEmp() != null) {
       LocalDate dtIni = LocalDate.parse(filter.getDtIniEmp());
-      predicado = cb.and(predicado, cb.greaterThanOrEqualTo(root.get("dataEmprestimo"), dtIni));
+      predicado = cb.and(predicado, cb.greaterThanOrEqualTo(root.get(DATA_EMPRESTIMO), dtIni));
     }
 
     // Filtro por data de empréstimo final (<=)
     if (filter.getDtFimEmp() != null) {
       LocalDate dtFim = LocalDate.parse(filter.getDtFimEmp());
-      predicado = cb.and(predicado, cb.lessThanOrEqualTo(root.get("dataEmprestimo"), dtFim));
+      predicado = cb.and(predicado, cb.lessThanOrEqualTo(root.get(DATA_EMPRESTIMO), dtFim));
     }
 
     // Filtro por posição do empréstimo
-    // A = atrasado, P = em andamento, F = finalizado, T = todos
+    // A = atrasado, P = em andamento, F = finalizado, T = tudo
     if (filter.getStatus() != null && !filter.getStatus().equals("T")) {
       Predicate statusPredicado = construirPredicadoStatus(filter.getStatus(), root, cb);
       predicado = cb.and(predicado, statusPredicado);

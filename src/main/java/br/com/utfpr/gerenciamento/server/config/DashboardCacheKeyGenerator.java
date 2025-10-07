@@ -27,7 +27,7 @@ public class DashboardCacheKeyGenerator implements KeyGenerator {
     StringBuilder key = new StringBuilder();
     key.append(method.getName());
 
-    // Adiciona parametros à chave
+    // Adiciona parâmetros à chave
     for (Object param : params) {
       key.append("_");
       if (param == null) {
