@@ -21,10 +21,10 @@ import org.springframework.data.jpa.domain.Specification;
  */
 public class EmprestimoSpecifications {
 
-    static final String DATA_DEVOLUCAO = "dataDevolucao";
-    static final String PRAZO_DEVOLUCAO = "prazoDevolucao";
+  static final String DATA_DEVOLUCAO = "dataDevolucao";
+  static final String PRAZO_DEVOLUCAO = "prazoDevolucao";
 
-    private EmprestimoSpecifications() {}
+  private EmprestimoSpecifications() {}
 
   /**
    * Cria Specification completa a partir de EmprestimoFilter.
@@ -146,8 +146,7 @@ public class EmprestimoSpecifications {
 
     return switch (status) {
       case "A" -> // Atrasado: sem devolução e prazo vencido
-          cb.and(
-              cb.isNull(root.get(DATA_DEVOLUCAO)), cb.lessThan(root.get(PRAZO_DEVOLUCAO), hoje));
+          cb.and(cb.isNull(root.get(DATA_DEVOLUCAO)), cb.lessThan(root.get(PRAZO_DEVOLUCAO), hoje));
 
       case "P" -> // em andamento: sem devolução e prazo não vencido
           cb.and(
