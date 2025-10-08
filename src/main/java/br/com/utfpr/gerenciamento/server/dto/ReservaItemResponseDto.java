@@ -1,17 +1,13 @@
 package br.com.utfpr.gerenciamento.server.dto;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
-import lombok.Data;
-import lombok.EqualsAndHashCode;
-import lombok.ToString;
-
 import java.math.BigDecimal;
+import lombok.Data;
 
 @Data
 public class ReservaItemResponseDto {
-    private Long id;
+  private Long id;
 
-    private BigDecimal qtde;
+  private BigDecimal qtde;
 
-    private ItemResponseDto item;
+  private ItemResponseDto item;
 }

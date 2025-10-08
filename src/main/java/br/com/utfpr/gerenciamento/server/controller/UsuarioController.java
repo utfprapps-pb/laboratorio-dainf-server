@@ -11,6 +11,7 @@ import java.util.List;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.http.ResponseEntity;
@@ -24,17 +25,14 @@ public class UsuarioController {
 
   private final PermissaoService permissaoService;
 
-  public UsuarioController(
-      UsuarioService usuarioService,
-      PermissaoService permissaoService) {
+  public UsuarioController(UsuarioService usuarioService, PermissaoService permissaoService) {
     this.usuarioService = usuarioService;
     this.permissaoService = permissaoService;
   }
 
   @GetMapping
   public List<UsuarioResponseDto> findAll() {
-    return usuarioService.findAll()
-            .stream().map(usuarioService::convertToDto).toList();
+    return usuarioService.findAll().stream().map(usuarioService::convertToDto).toList();
   }
 
   @GetMapping("{id}")
@@ -58,9 +56,9 @@ public class UsuarioController {
     if (filter != null && !filter.isEmpty()) {
       Specification<Usuario> spec = usuarioService.filterByAllFields(filter);
       result = usuarioService.findAllSpecification(spec, pageRequest);
-      } else {
+    } else {
       result = usuarioService.findAll(pageRequest);
-      }
+    }
     return result.map(usuarioService::convertToDto);
   }
 
@@ -76,8 +74,7 @@ public class UsuarioController {
 
   @PostMapping("change-senha")
   public UsuarioResponseDto redefinirSenha(
-      @RequestBody Usuario usuario,
-      @RequestParam("senhaAtual") String senhaAtual) {
+      @RequestBody Usuario usuario, @RequestParam("senhaAtual") String senhaAtual) {
     return usuarioService.convertToDto(usuarioService.updatePassword(usuario, senhaAtual));
   }
 
@@ -87,18 +84,30 @@ public class UsuarioController {
   }
 
   @GetMapping("/complete")
-  public List<UsuarioResponseDto> complete(@RequestParam("query") String query) {
-    return usuarioService.usuarioComplete(query);
+  public Page<UsuarioResponseDto> complete(
+      @RequestParam("query") String query,
+      @RequestParam(defaultValue = "0") int page,
+      @RequestParam(defaultValue = "10") int size) {
+    Pageable pageable = PageRequest.of(page, size);
+    return usuarioService.usuarioComplete(query, pageable);
   }
 
   @GetMapping("/complete-custom")
-  public List<UsuarioResponseDto> completeByUserOrDocOrNome(@RequestParam("query") String query) {
-    return usuarioService.usuarioCompleteByUserAndDocAndNome(query);
+  public Page<UsuarioResponseDto> completeByUserOrDocOrNome(
+      @RequestParam("query") String query,
+      @RequestParam(defaultValue = "0") int page,
+      @RequestParam(defaultValue = "10") int size) {
+    Pageable pageable = PageRequest.of(page, size);
+    return usuarioService.usuarioCompleteByUserAndDocAndNome(query, pageable);
   }
 
   @GetMapping("/complete-users-lab")
-  public List<UsuarioResponseDto> completeUserLabs(@RequestParam("query") String query) {
-    return usuarioService.usuarioCompleteLab(query);
+  public Page<UsuarioResponseDto> completeUserLabs(
+      @RequestParam("query") String query,
+      @RequestParam(defaultValue = "0") int page,
+      @RequestParam(defaultValue = "10") int size) {
+    Pageable pageable = PageRequest.of(page, size);
+    return usuarioService.usuarioCompleteLab(query, pageable);
   }
 
   @GetMapping("/find-by-username")

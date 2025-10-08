@@ -5,7 +5,6 @@ import br.com.utfpr.gerenciamento.server.model.Grupo;
 import br.com.utfpr.gerenciamento.server.repository.GrupoRepository;
 import br.com.utfpr.gerenciamento.server.service.GrupoService;
 import java.util.List;
-
 import org.modelmapper.ModelMapper;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Service;
@@ -32,16 +31,12 @@ public class GrupoServiceImpl extends CrudServiceImpl<Grupo, Long> implements Gr
   @Transactional(readOnly = true)
   public List<GrupoResponseDto> completeGrupo(String query) {
     if (query == null || query.isBlank()) {
-      return grupoRepository.findAll()
-              .stream()
-              .map(this::convertToDto)
-              .toList();
+      return grupoRepository.findAll().stream().map(this::convertToDto).toList();
     } else {
       final String newQuery = query.trim();
-      return grupoRepository.findByDescricaoLikeIgnoreCase("%" + newQuery + "%")
-              .stream()
-              .map(this::convertToDto)
-              .toList();
+      return grupoRepository.findByDescricaoLikeIgnoreCase("%" + newQuery + "%").stream()
+          .map(this::convertToDto)
+          .toList();
     }
   }
 

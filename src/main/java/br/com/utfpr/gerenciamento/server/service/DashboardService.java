@@ -7,13 +7,17 @@ import java.util.List;
 
 public interface DashboardService {
 
-  DashboardEmprestimoCountRangeResponseDto findDadosEmprestimoCountRange(LocalDate dtIni, LocalDate dtFim);
+  DashboardEmprestimoCountRangeResponseDto findDadosEmprestimoCountRange(
+      LocalDate dtIni, LocalDate dtFim);
 
-  List<DashboardEmprestimoDiaResponseDto> findTotalEmprestimoByDia(LocalDate dtIni, LocalDate dtFim);
+  List<DashboardEmprestimoDiaResponseDto> findTotalEmprestimoByDia(
+      LocalDate dtIni, LocalDate dtFim);
 
-  List<DashboardItensEmprestadosResponseDto> findItensMaisEmprestados(LocalDate dtIni, LocalDate dtFim);
+  List<DashboardItensEmprestadosResponseDto> findItensMaisEmprestados(
+      LocalDate dtIni, LocalDate dtFim);
 
-  List<DashboardItensAdquiridosResponseDto> findItensMaisAdquiridos(LocalDate dtIni, LocalDate dtFim);
+  List<DashboardItensAdquiridosResponseDto> findItensMaisAdquiridos(
+      LocalDate dtIni, LocalDate dtFim);
 
   List<DashboardItensSaidasResponseDto> findItensComMaisSaidas(LocalDate dtIni, LocalDate dtFim);
 

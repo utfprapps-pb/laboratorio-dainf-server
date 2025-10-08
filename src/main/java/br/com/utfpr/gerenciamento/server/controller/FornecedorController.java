@@ -24,9 +24,8 @@ public class FornecedorController extends CrudController<Fornecedor, Long> {
 
   @GetMapping("/complete")
   public List<FornecedorResponseDto> complete(@RequestParam("query") String query) {
-    return fornecedorService.completeFornecedor(query)
-            .stream()
-            .map(fornecedorService::convertToDto)
-            .toList();
+    return fornecedorService.completeFornecedor(query).stream()
+        .map(fornecedorService::convertToDto)
+        .toList();
   }
 }

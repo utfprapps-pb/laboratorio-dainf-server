@@ -1,13 +1,12 @@
 package br.com.utfpr.gerenciamento.server.dto.dashboards;
 
-import lombok.Data;
-
 import java.time.LocalDate;
+import lombok.Data;
 
 @Data
 public class DashboardEmprestimoDiaResponseDto {
 
-    private Long qtde;
+  private Long qtde;
 
-    private LocalDate dtEmprestimo;
+  private LocalDate dtEmprestimo;
 }

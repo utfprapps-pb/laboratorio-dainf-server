@@ -5,17 +5,28 @@ import br.com.utfpr.gerenciamento.server.dto.GenericResponse;
 import br.com.utfpr.gerenciamento.server.dto.RecoverPasswordRequestDto;
 import br.com.utfpr.gerenciamento.server.dto.UsuarioResponseDto;
 import br.com.utfpr.gerenciamento.server.model.Usuario;
-import java.util.List;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 
 public interface UsuarioService extends CrudService<Usuario, Long> {
 
-  List<UsuarioResponseDto> usuarioComplete(String query);
+  Page<UsuarioResponseDto> usuarioComplete(String query, Pageable pageable);
 
+  /**
+   * Busca usuario por username SEM carregar permissoes (LAZY). Use para operações normais que não
+   * precisam de permissões.
+   */
   Usuario findByUsername(String username);
 
-  List<UsuarioResponseDto> usuarioCompleteByUserAndDocAndNome(String query);
+  /**
+   * Busca usuario por username COM permissoes carregadas (para autenticação). Use SOMENTE nos
+   * fluxos de autenticação onde UserDetails.getAuthorities() será chamado.
+   */
+  Usuario findByUsernameForAuthentication(String username);
 
-  List<UsuarioResponseDto> usuarioCompleteLab(String query);
+  Page<UsuarioResponseDto> usuarioCompleteByUserAndDocAndNome(String query, Pageable pageable);
+
+  Page<UsuarioResponseDto> usuarioCompleteLab(String query, Pageable pageable);
 
   Usuario updateUsuario(Usuario usuario);
 

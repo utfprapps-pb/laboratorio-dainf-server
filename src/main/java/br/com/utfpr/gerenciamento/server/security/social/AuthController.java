@@ -1,7 +1,6 @@
 package br.com.utfpr.gerenciamento.server.security.social;
 
 import br.com.utfpr.gerenciamento.server.model.Usuario;
-import br.com.utfpr.gerenciamento.server.repository.UsuarioRepository;
 import br.com.utfpr.gerenciamento.server.security.SecurityConstants;
 import br.com.utfpr.gerenciamento.server.security.dto.AuthenticationResponseDTO;
 import br.com.utfpr.gerenciamento.server.service.PermissaoService;
@@ -24,12 +23,12 @@ import org.springframework.web.bind.annotation.RestController;
 @RequestMapping("auth")
 public class AuthController {
 
+  private static final String PICTURE = "picture";
   private final GoogleTokenVerifier googleTokenVerifier;
 
   private final UsuarioService usuarioService;
 
   private final PermissaoService permissaoService;
-  private final UsuarioRepository usuarioRepository;
 
   @Value("${utfpr.token.secret}")
   private String tokenSecret;
@@ -37,11 +36,9 @@ public class AuthController {
   public AuthController(
       GoogleTokenVerifier googleTokenVerifier,
       UsuarioService usuarioService,
-      UsuarioRepository usuarioRepository,
       PermissaoService permissaoService) {
     this.googleTokenVerifier = googleTokenVerifier;
     this.usuarioService = usuarioService;
-    this.usuarioRepository = usuarioRepository;
     this.permissaoService = permissaoService;
   }
 
@@ -70,7 +67,7 @@ public class AuthController {
           }
 
           String username = payload.getEmail();
-          Usuario user = usuarioRepository.findByUsername(username);
+          Usuario user = usuarioService.findByUsernameForAuthentication(username);
           if (user == null) {
             user = new Usuario();
             user.setUsername(payload.getEmail());
@@ -78,8 +75,8 @@ public class AuthController {
             user.setNome((String) payload.get("name"));
             user.setPassword("P4ssword");
             user.setTelefone("");
-            if (payload.get("picture") != null) {
-              user.setFotoUrl((String) payload.get("picture"));
+            if (payload.get(PICTURE) != null) {
+              user.setFotoUrl((String) payload.get(PICTURE));
             }
 
             user.setPermissoes(new HashSet<>());
@@ -90,10 +87,9 @@ public class AuthController {
             }
             usuarioService.save(user);
           } else {
-            if (payload.get("picture") != null
-                && (user.getFotoUrl() == null
-                    || !user.getFotoUrl().equals((String) payload.get("picture")))) {
-              user.setFotoUrl((String) payload.get("picture"));
+            if (payload.get(PICTURE) != null
+                && (user.getFotoUrl() == null || !user.getFotoUrl().equals(payload.get(PICTURE)))) {
+              user.setFotoUrl((String) payload.get(PICTURE));
               usuarioService.save(user);
             }
           }
