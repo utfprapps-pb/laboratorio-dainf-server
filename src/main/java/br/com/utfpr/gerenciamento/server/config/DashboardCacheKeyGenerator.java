@@ -12,12 +12,12 @@ import org.springframework.stereotype.Component;
  * Queries com data "até hoje": adiciona sufixo "_CURRENT" → TTL curto (5 min) - Queries com datas
  * passadas: adiciona sufixo "_HISTORICAL" → TTL longo (6 horas)
  *
+ * <p>Se o segundo parâmetro não for LocalDate, nenhum sufixo TTL é adicionado.
+ *
  * <p>Exemplo: - findDadosEmprestimoCountRange(2025-01-01, 2025-10-07) → chave com "_CURRENT" → TTL
  * 5 min - findDadosEmprestimoCountRange(2024-01-01, 2024-12-31) → chave com "_HISTORICAL" → TTL 6h
  *
  * <p>O sufixo é lido por {@link DashboardCacheExpiry} que aplica o TTL correspondente.
- *
- * <p>Formato de data brasileiro: dd/MM/yyyy (padrão pt-BR)
  *
  * @author Rodrigo Izidoro
  * @since 2025-10-07

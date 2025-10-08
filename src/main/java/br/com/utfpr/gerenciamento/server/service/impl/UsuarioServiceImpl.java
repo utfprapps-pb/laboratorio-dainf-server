@@ -23,7 +23,6 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
-import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -32,8 +31,9 @@ import org.springframework.transaction.annotation.Transactional;
 public class UsuarioServiceImpl extends CrudServiceImpl<Usuario, Long>
     implements UsuarioService, UserDetailsService {
 
-    public static final String CONFIRMAÇÃO_DE_EMAIL_LABORATÓRIO_DAINF_PB_UTFPR = "Confirmação de email - Laboratório DAINF-PB (UTFPR)";
-    private final PasswordEncoder passwordEncoder;
+  public static final String CONFIRMAÇÃO_DE_EMAIL_LABORATÓRIO_DAINF_PB_UTFPR =
+      "Confirmação de email - Laboratório DAINF-PB (UTFPR)";
+  private final PasswordEncoder passwordEncoder;
 
   @Value("${utfpr.front.url}")
   private String frontBaseUrl;
