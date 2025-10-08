@@ -27,6 +27,8 @@ public interface CrudService<T, ID extends Serializable> {
 
   T findOne(ID id);
 
+  List<T> findAllById(Iterable<ID> ids);
+
   boolean exists(ID id);
 
   long count();

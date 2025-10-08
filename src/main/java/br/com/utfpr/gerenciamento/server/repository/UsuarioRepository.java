@@ -1,7 +1,8 @@
 package br.com.utfpr.gerenciamento.server.repository;
 
 import br.com.utfpr.gerenciamento.server.model.Usuario;
-import java.util.List;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
@@ -41,7 +42,7 @@ public interface UsuarioRepository
 
   Usuario findByEmail(String email);
 
-  List<Usuario> findByNomeLikeIgnoreCase(String query);
+  Page<Usuario> findByNomeLikeIgnoreCase(String query, Pageable pageable);
 
   @Query(
       value =
@@ -55,8 +56,19 @@ public interface UsuarioRepository
               + " OR (UPPER(U.NOME) LIKE :QUERY) "
               + " OR (UPPER(U.USERNAME) LIKE :QUERY)) "
               + " AND P.ID IN (3, 4) ",
+      countQuery =
+          "SELECT COUNT(DISTINCT U.ID) "
+              + "FROM USUARIO U  "
+              + "LEFT JOIN USUARIO_PERMISSOES UE "
+              + " ON UE.USUARIO_ID = U.ID "
+              + "LEFT JOIN PERMISSAO P "
+              + " ON P.ID = UE.PERMISSOES_ID "
+              + "WHERE ((UPPER(U.DOCUMENTO) LIKE :QUERY) "
+              + " OR (UPPER(U.NOME) LIKE :QUERY) "
+              + " OR (UPPER(U.USERNAME) LIKE :QUERY)) "
+              + " AND P.ID IN (3, 4) ",
       nativeQuery = true)
-  List<Usuario> findUsuarioCompleteCustom(@Param("QUERY") String query);
+  Page<Usuario> findUsuarioCompleteCustom(@Param("QUERY") String query, Pageable pageable);
 
   @Query(
       value =
@@ -67,8 +79,16 @@ public interface UsuarioRepository
               + "LEFT JOIN PERMISSAO P "
               + " ON P.ID = UE.PERMISSOES_ID "
               + "WHERE P.ID IN (3, 4) ",
+      countQuery =
+          "SELECT COUNT(DISTINCT U.ID) "
+              + "FROM USUARIO U  "
+              + "LEFT JOIN USUARIO_PERMISSOES UE "
+              + " ON UE.USUARIO_ID = U.ID "
+              + "LEFT JOIN PERMISSAO P "
+              + " ON P.ID = UE.PERMISSOES_ID "
+              + "WHERE P.ID IN (3, 4) ",
       nativeQuery = true)
-  List<Usuario> findAllCustom();
+  Page<Usuario> findAllCustom(Pageable pageable);
 
   @Query(
       value =
@@ -79,8 +99,16 @@ public interface UsuarioRepository
               + "LEFT JOIN PERMISSAO P "
               + " ON P.ID = UE.PERMISSOES_ID "
               + "WHERE P.ID IN (1, 2) ",
+      countQuery =
+          "SELECT COUNT(DISTINCT U.ID) "
+              + "FROM USUARIO U  "
+              + "LEFT JOIN USUARIO_PERMISSOES UE "
+              + " ON UE.USUARIO_ID = U.ID "
+              + "LEFT JOIN PERMISSAO P "
+              + " ON P.ID = UE.PERMISSOES_ID "
+              + "WHERE P.ID IN (1, 2) ",
       nativeQuery = true)
-  List<Usuario> findAllCustomLab();
+  Page<Usuario> findAllCustomLab(Pageable pageable);
 
   @Query(
       value =
@@ -94,6 +122,17 @@ public interface UsuarioRepository
               + " OR (UPPER(U.NOME) LIKE :QUERY) "
               + " OR (UPPER(U.USERNAME) LIKE :QUERY)) "
               + " AND P.ID IN (1, 2) ",
+      countQuery =
+          "SELECT COUNT(DISTINCT U.ID) "
+              + "FROM USUARIO U  "
+              + "LEFT JOIN USUARIO_PERMISSOES UE "
+              + " ON UE.USUARIO_ID = U.ID "
+              + "LEFT JOIN PERMISSAO P "
+              + " ON P.ID = UE.PERMISSOES_ID "
+              + "WHERE ((UPPER(U.DOCUMENTO) LIKE :QUERY) "
+              + " OR (UPPER(U.NOME) LIKE :QUERY) "
+              + " OR (UPPER(U.USERNAME) LIKE :QUERY)) "
+              + " AND P.ID IN (1, 2) ",
       nativeQuery = true)
-  List<Usuario> findUsuarioCompleteCustomLab(@Param("QUERY") String query);
+  Page<Usuario> findUsuarioCompleteCustomLab(@Param("QUERY") String query, Pageable pageable);
 }

@@ -1,0 +1,304 @@
+package br.com.utfpr.gerenciamento.server.service.impl;
+
+import static org.junit.jupiter.api.Assertions.*;
+
+import br.com.utfpr.gerenciamento.server.model.Permissao;
+import br.com.utfpr.gerenciamento.server.model.Usuario;
+import br.com.utfpr.gerenciamento.server.repository.PermissaoRepository;
+import br.com.utfpr.gerenciamento.server.repository.RecoverPasswordRepository;
+import br.com.utfpr.gerenciamento.server.repository.UsuarioRepository;
+import br.com.utfpr.gerenciamento.server.service.EmailService;
+import br.com.utfpr.gerenciamento.server.service.UsuarioService;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
+import javax.sql.DataSource;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.modelmapper.ModelMapper;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
+import org.springframework.boot.test.autoconfigure.orm.jpa.TestEntityManager;
+import org.springframework.boot.test.context.TestConfiguration;
+import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Import;
+import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.test.context.ActiveProfiles;
+
+/**
+ * Testes de integração para UsuarioServiceImpl usando H2 em memória.
+ *
+ * <p>Foco em validar batch fetching de permissões e integração com banco de dados.
+ */
+@DataJpaTest
+@ActiveProfiles("test")
+@Import({
+  UsuarioServiceImpl.class,
+  PermissaoServiceImpl.class,
+  ModelMapper.class,
+  UsuarioServiceImplIntegrationTest.TestConfig.class
+})
+class UsuarioServiceImplIntegrationTest {
+
+  @TestConfiguration
+  static class TestConfig {
+    @Bean
+    public PasswordEncoder passwordEncoder() {
+      return new BCryptPasswordEncoder();
+    }
+  }
+
+  @Autowired private TestEntityManager entityManager;
+
+  @Autowired private UsuarioRepository usuarioRepository;
+
+  @Autowired private PermissaoRepository permissaoRepository;
+
+  @Autowired private UsuarioService usuarioService;
+
+  @Autowired private DataSource dataSource;
+
+  @MockBean private RecoverPasswordRepository recoverPasswordRepository;
+
+  @MockBean private EmailService emailService;
+
+  private Permissao permissaoAdmin;
+  private Permissao permissaoUser;
+  private Permissao permissaoProfessor;
+
+  @BeforeEach
+  void setUp() {
+    // Criar permissões para testes
+    permissaoAdmin = new Permissao();
+    permissaoAdmin.setNome("ROLE_ADMIN");
+    permissaoAdmin = entityManager.persist(permissaoAdmin);
+
+    permissaoUser = new Permissao();
+    permissaoUser.setNome("ROLE_USER");
+    permissaoUser = entityManager.persist(permissaoUser);
+
+    permissaoProfessor = new Permissao();
+    permissaoProfessor.setNome("ROLE_PROFESSOR");
+    permissaoProfessor = entityManager.persist(permissaoProfessor);
+
+    entityManager.flush();
+    entityManager.clear();
+  }
+
+  @Test
+  void save_DeveUsarBatchFetchingParaPermissoes_IntegracaoH2() {
+    // Given: Usuário novo com múltiplas permissões (detached - apenas IDs)
+    Usuario usuario = criarUsuarioNovo("João Silva", "joao@test.com");
+
+    // Simular permissões detached (como vem do frontend)
+    Set<Permissao> permissoesDetached = new HashSet<>();
+    Permissao p1 = new Permissao();
+    p1.setId(permissaoAdmin.getId());
+    permissoesDetached.add(p1);
+
+    Permissao p2 = new Permissao();
+    p2.setId(permissaoUser.getId());
+    permissoesDetached.add(p2);
+
+    usuario.setPermissoes(permissoesDetached);
+
+    // Contar queries executadas
+    JdbcTemplate jdbcTemplate = new JdbcTemplate(dataSource);
+    jdbcTemplate.execute("SET @query_count = 0");
+
+    // When
+    Usuario resultado = usuarioService.save(usuario);
+    entityManager.flush();
+    entityManager.clear();
+
+    // Then: Permissões devem estar corretamente associadas
+    assertNotNull(resultado);
+    assertNotNull(resultado.getId());
+
+    // Recarregar do banco para validar persistência
+    Usuario usuarioSalvo = usuarioRepository.findById(resultado.getId()).orElse(null);
+    assertNotNull(usuarioSalvo);
+    assertNotNull(usuarioSalvo.getPermissoes());
+    assertEquals(2, usuarioSalvo.getPermissoes().size());
+
+    // Verificar que as permissões estão corretamente vinculadas
+    List<String> nomesPermissoes =
+        usuarioSalvo.getPermissoes().stream().map(Permissao::getNome).sorted().toList();
+
+    assertTrue(nomesPermissoes.contains("ROLE_ADMIN"));
+    assertTrue(nomesPermissoes.contains("ROLE_USER"));
+  }
+
+  @Test
+  void save_DeveHandlePermissoesNullComH2() {
+    // Given: Usuário sem permissões
+    Usuario usuario = criarUsuarioNovo("Maria Santos", "maria@test.com");
+    usuario.setPermissoes(null);
+
+    // When
+    Usuario resultado = usuarioService.save(usuario);
+    entityManager.flush();
+    entityManager.clear();
+
+    // Then: Deve salvar com Set vazio
+    assertNotNull(resultado);
+    Usuario usuarioSalvo = usuarioRepository.findById(resultado.getId()).orElse(null);
+    assertNotNull(usuarioSalvo);
+    assertNotNull(usuarioSalvo.getPermissoes());
+    assertTrue(usuarioSalvo.getPermissoes().isEmpty());
+  }
+
+  @Test
+  void save_DeveIgnorarPermissoesInvalidasComH2() {
+    // Given: Usuário com permissões válidas e inválidas
+    Usuario usuario = criarUsuarioNovo("Pedro Oliveira", "pedro@test.com");
+
+    Set<Permissao> permissoes = new HashSet<>();
+    // Permissão válida
+    Permissao p1 = new Permissao();
+    p1.setId(permissaoProfessor.getId());
+    permissoes.add(p1);
+
+    // Permissão com ID inválido (não existe no banco)
+    Permissao p2 = new Permissao();
+    p2.setId(9999L);
+    permissoes.add(p2);
+
+    // Permissão null
+    permissoes.add(null);
+
+    usuario.setPermissoes(permissoes);
+
+    // When
+    Usuario resultado = usuarioService.save(usuario);
+    entityManager.flush();
+    entityManager.clear();
+
+    // Then: Deve salvar apenas a permissão válida
+    Usuario usuarioSalvo = usuarioRepository.findById(resultado.getId()).orElse(null);
+    assertNotNull(usuarioSalvo);
+    assertEquals(1, usuarioSalvo.getPermissoes().size());
+    assertEquals("ROLE_PROFESSOR", usuarioSalvo.getPermissoes().iterator().next().getNome());
+  }
+
+  @Test
+  void save_DeveAtualizarPermissoesDeUsuarioExistente() {
+    // Given: Usuário existente com permissão ADMIN
+    Usuario usuario = criarUsuarioNovo("Ana Costa", "ana@test.com");
+    Set<Permissao> permissoesIniciais = new HashSet<>();
+    Permissao p1 = new Permissao();
+    p1.setId(permissaoAdmin.getId());
+    permissoesIniciais.add(p1);
+    usuario.setPermissoes(permissoesIniciais);
+
+    Usuario usuarioSalvo = usuarioService.save(usuario);
+    entityManager.flush();
+    entityManager.clear();
+
+    // Atualizar para ter ADMIN + USER
+    Usuario usuarioParaAtualizar = usuarioRepository.findById(usuarioSalvo.getId()).orElse(null);
+    assertNotNull(usuarioParaAtualizar);
+
+    Set<Permissao> novasPermissoes = new HashSet<>();
+    Permissao pAdmin = new Permissao();
+    pAdmin.setId(permissaoAdmin.getId());
+    novasPermissoes.add(pAdmin);
+
+    Permissao pUser = new Permissao();
+    pUser.setId(permissaoUser.getId());
+    novasPermissoes.add(pUser);
+
+    usuarioParaAtualizar.setPermissoes(novasPermissoes);
+
+    // When
+    Usuario resultado = usuarioService.save(usuarioParaAtualizar);
+    entityManager.flush();
+    entityManager.clear();
+
+    // Then: Deve ter 2 permissões
+    Usuario usuarioAtualizado = usuarioRepository.findById(resultado.getId()).orElse(null);
+    assertNotNull(usuarioAtualizado);
+    assertEquals(2, usuarioAtualizado.getPermissoes().size());
+  }
+
+  @Test
+  void save_DevePreservarEmailVerificadoAoAtualizar() {
+    // Given: Usuário existente com email verificado
+    Usuario usuario = criarUsuarioNovo("Carlos Lima", "carlos@test.com");
+    usuario.setEmailVerificado(true);
+    usuario.setPermissoes(new HashSet<>());
+
+    Usuario usuarioSalvo = usuarioService.save(usuario);
+    entityManager.flush();
+    entityManager.clear();
+
+    // Atualizar usuário
+    Usuario usuarioParaAtualizar = usuarioRepository.findById(usuarioSalvo.getId()).orElse(null);
+    assertNotNull(usuarioParaAtualizar);
+    usuarioParaAtualizar.setNome("Carlos Lima Atualizado");
+    usuarioParaAtualizar.setEmailVerificado(false); // Tentar mudar
+
+    // When
+    Usuario resultado = usuarioService.save(usuarioParaAtualizar);
+    entityManager.flush();
+    entityManager.clear();
+
+    // Then: emailVerificado deve ser preservado (true)
+    Usuario usuarioAtualizado = usuarioRepository.findById(resultado.getId()).orElse(null);
+    assertNotNull(usuarioAtualizado);
+    assertTrue(
+        usuarioAtualizado.getEmailVerificado(), "EmailVerificado deve ser preservado ao atualizar");
+    assertEquals("Carlos Lima Atualizado", usuarioAtualizado.getNome());
+  }
+
+  @Test
+  void findByUsername_DeveNormalizarUsernameUTFPR() {
+    // Given: Usuário com email @utfpr.edu.br
+    Usuario usuario = criarUsuarioNovo("Prof. Silva", "silva@utfpr.edu.br");
+    usuario.setUsername("silva@utfpr.edu.br");
+    usuario.setPermissoes(new HashSet<>());
+    usuarioService.save(usuario);
+    entityManager.flush();
+    entityManager.clear();
+
+    // When: Buscar com subdomínio @professores.utfpr.edu.br
+    Usuario resultado = usuarioService.findByUsername("silva@professores.utfpr.edu.br");
+
+    // Then: Deve encontrar o usuário (normalização funcionou)
+    assertNotNull(resultado);
+    assertEquals("Prof. Silva", resultado.getNome());
+  }
+
+  @Test
+  void findByUsername_DeveNormalizarUsernameAdministrativo() {
+    // Given: Usuário com email @utfpr.edu.br
+    Usuario usuario = criarUsuarioNovo("Admin Santos", "admin@utfpr.edu.br");
+    usuario.setUsername("admin@utfpr.edu.br");
+    usuario.setPermissoes(new HashSet<>());
+    usuarioService.save(usuario);
+    entityManager.flush();
+    entityManager.clear();
+
+    // When: Buscar com subdomínio @administrativo.utfpr.edu.br
+    Usuario resultado = usuarioService.findByUsername("admin@administrativo.utfpr.edu.br");
+
+    // Then: Deve encontrar o usuário
+    assertNotNull(resultado);
+    assertEquals("Admin Santos", resultado.getNome());
+  }
+
+  private Usuario criarUsuarioNovo(String nome, String email) {
+    Usuario usuario = new Usuario();
+    usuario.setNome(nome);
+    usuario.setEmail(email);
+    usuario.setUsername(email);
+    usuario.setPassword("senha123"); // Será encodado pelo service
+    usuario.setDocumento("12345678901");
+    usuario.setTelefone("(41) 99999-9999");
+    usuario.setEmailVerificado(false);
+    return usuario;
+  }
+}

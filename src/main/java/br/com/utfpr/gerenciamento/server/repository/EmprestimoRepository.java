@@ -18,7 +18,8 @@ public interface EmprestimoRepository
       "SELECT new br.com.utfpr.gerenciamento.server.model.dashboards.DashboardEmprestimoDia(COUNT(e), e.dataEmprestimo) "
           + "FROM Emprestimo e\n"
           + "WHERE e.dataEmprestimo between :dtIni and :dtFim\n"
-          + "GROUP BY e.dataEmprestimo")
+          + "GROUP BY e.dataEmprestimo\n"
+          + "ORDER BY e.dataEmprestimo ASC")
   List<DashboardEmprestimoDia> countByDataEmprestimo(
       @Param("dtIni") LocalDate dtIni, @Param("dtFim") LocalDate dtFim);
 
