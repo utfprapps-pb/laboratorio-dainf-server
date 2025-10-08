@@ -4,6 +4,8 @@ import static org.junit.jupiter.api.Assertions.*;
 
 import br.com.utfpr.gerenciamento.server.model.Permissao;
 import br.com.utfpr.gerenciamento.server.model.Usuario;
+import java.util.HashSet;
+import java.util.Set;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -35,6 +37,40 @@ class UsuarioRepositoryTest {
     permissaoProfessor = new Permissao();
     permissaoProfessor.setNome("ROLE_PROFESSOR");
     permissaoProfessor = entityManager.persist(permissaoProfessor);
+
+    // Criar usuários de teste
+    Usuario joao = new Usuario();
+    joao.setNome("João Silva");
+    joao.setUsername("joao");
+    joao.setEmail("joao@test.com");
+    joao.setPassword("senha123");
+    joao.setTelefone("41999999001");
+    Set<Permissao> permissoesJoao = new HashSet<>();
+    permissoesJoao.add(permissaoAluno);
+    joao.setPermissoes(permissoesJoao);
+    entityManager.persist(joao);
+
+    Usuario maria = new Usuario();
+    maria.setNome("Maria Santos");
+    maria.setUsername("maria");
+    maria.setEmail("maria@test.com");
+    maria.setPassword("senha123");
+    maria.setTelefone("41999999002");
+    Set<Permissao> permissoesMaria = new HashSet<>();
+    permissoesMaria.add(permissaoProfessor);
+    maria.setPermissoes(permissoesMaria);
+    entityManager.persist(maria);
+
+    Usuario pedro = new Usuario();
+    pedro.setNome("Pedro Oliveira");
+    pedro.setUsername("pedro");
+    pedro.setEmail("pedro@test.com");
+    pedro.setPassword("senha123");
+    pedro.setTelefone("41999999003");
+    Set<Permissao> permissoesPedro = new HashSet<>();
+    permissoesPedro.add(permissaoAluno);
+    pedro.setPermissoes(permissoesPedro);
+    entityManager.persist(pedro);
 
     entityManager.flush();
     entityManager.clear();

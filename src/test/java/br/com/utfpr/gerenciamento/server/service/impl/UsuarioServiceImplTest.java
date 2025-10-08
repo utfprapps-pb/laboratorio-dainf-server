@@ -249,7 +249,11 @@ class UsuarioServiceImplTest {
     when(passwordEncoder.encode(anyString())).thenReturn("$2a$10$encodedPassword");
     when(usuarioRepository.save(any(Usuario.class))).thenReturn(usuario);
 
+    // When
+    Usuario resultado = usuarioService.save(usuario);
+
     // Then: Senha deve ser encodada
+    assertNotNull(resultado);
     verify(passwordEncoder).encode("senha123");
     verify(usuarioRepository).save(argThat(u -> u.getPassword().equals("$2a$10$encodedPassword")));
   }
@@ -264,7 +268,11 @@ class UsuarioServiceImplTest {
     when(permissaoService.findAllById(any())).thenReturn(Collections.emptyList());
     when(usuarioRepository.save(any(Usuario.class))).thenReturn(usuario);
 
+    // When
+    Usuario resultado = usuarioService.save(usuario);
+
     // Then: Senha não deve ser re-encodada
+    assertNotNull(resultado);
     verify(passwordEncoder, never()).encode(anyString());
     verify(usuarioRepository).save(argThat(u -> u.getPassword().equals(senhaJaEncodada)));
   }
