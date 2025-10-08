@@ -47,16 +47,11 @@ public class DashboardServiceImpl implements DashboardService {
       LocalDate dtIni, LocalDate dtFim) {
     // OTIMIZAÇÃO: Query única com agregação no banco de dados
     // Antes: carregava todos emprestimos + 4 iterações stream
-    // Agora: 1 query com CASE/SUM - melhoria de 60-75%
-    Object[] counts = emprestimoRepository.countEmprestimosByStatusInRange(dtIni, dtFim);
+    // Agora: 1 query com CASE/SUM retornando objeto diretamente - melhoria de 60-75%
+    DashboardEmprestimoCountRange result =
+        emprestimoRepository.countEmprestimosByStatusInRange(dtIni, dtFim);
 
-    DashboardEmprestimoCountRange toReturn = new DashboardEmprestimoCountRange();
-    toReturn.setTotal(((Number) counts[0]).intValue());
-    toReturn.setEmAtraso(((Number) counts[1]).intValue());
-    toReturn.setEmAndamento(((Number) counts[2]).intValue());
-    toReturn.setFinalizado(((Number) counts[3]).intValue());
-
-    return convertToDto(toReturn, DashboardEmprestimoCountRangeResponseDto.class);
+    return convertToDto(result, DashboardEmprestimoCountRangeResponseDto.class);
   }
 
   @Override

@@ -2,6 +2,7 @@ package br.com.utfpr.gerenciamento.server.repository;
 
 import br.com.utfpr.gerenciamento.server.model.Emprestimo;
 import br.com.utfpr.gerenciamento.server.model.Usuario;
+import br.com.utfpr.gerenciamento.server.model.dashboards.DashboardEmprestimoCountRange;
 import br.com.utfpr.gerenciamento.server.model.dashboards.DashboardEmprestimoDia;
 import br.com.utfpr.gerenciamento.server.model.dashboards.DashboardItensEmprestados;
 import java.time.LocalDate;
@@ -35,17 +36,17 @@ public interface EmprestimoRepository
    *
    * @param dtIni Data inicial do range
    * @param dtFim Data final do range
-   * @return Array com [total, emAtraso, emAndamento, finalizado]
+   * @return Objeto com totalizadores (total, emAndamento, emAtraso, finalizado)
    */
   @Query(
-      "SELECT "
+      "SELECT new br.com.utfpr.gerenciamento.server.model.dashboards.DashboardEmprestimoCountRange("
           + "COUNT(e), "
-          + "COALESCE(SUM(CASE WHEN e.dataDevolucao IS NULL AND e.prazoDevolucao < CURRENT_DATE THEN 1 ELSE 0 END), 0), "
           + "COALESCE(SUM(CASE WHEN e.dataDevolucao IS NULL AND e.prazoDevolucao >= CURRENT_DATE THEN 1 ELSE 0 END), 0), "
-          + "COALESCE(SUM(CASE WHEN e.dataDevolucao IS NOT NULL THEN 1 ELSE 0 END), 0) "
+          + "COALESCE(SUM(CASE WHEN e.dataDevolucao IS NULL AND e.prazoDevolucao < CURRENT_DATE THEN 1 ELSE 0 END), 0), "
+          + "COALESCE(SUM(CASE WHEN e.dataDevolucao IS NOT NULL THEN 1 ELSE 0 END), 0)) "
           + "FROM Emprestimo e "
           + "WHERE e.dataEmprestimo BETWEEN :dtIni AND :dtFim")
-  Object[] countEmprestimosByStatusInRange(
+  DashboardEmprestimoCountRange countEmprestimosByStatusInRange(
       @Param("dtIni") LocalDate dtIni, @Param("dtFim") LocalDate dtFim);
 
   @Query(
