@@ -36,7 +36,7 @@ public interface EmprestimoRepository
    *
    * @param dtIni Data inicial do range
    * @param dtFim Data final do range
-   * @return Objeto com totalizadores (total, emAtraso, emAndamento, finalizado)
+   * @return Objeto com totalizadores (total, emAndamento, emAtraso, finalizado)
    */
   @Query(
       "SELECT new br.com.utfpr.gerenciamento.server.model.dashboards.DashboardEmprestimoCountRange("
