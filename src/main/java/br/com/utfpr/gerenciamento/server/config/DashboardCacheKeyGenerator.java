@@ -6,18 +6,23 @@ import org.springframework.cache.interceptor.KeyGenerator;
 import org.springframework.stereotype.Component;
 
 /**
- * Gerador de chave de cache inteligente para Dashboard.
+ * Gerador de chave de cache inteligente para Dashboard com TTL variável.
  *
- * <p>Estratégia baseada na data da query: - Queries com data "até hoje": TTL curto (5 min) - dados
- * podem mudar - Queries com datas passadas: TTL longo (6 horas) - dados históricos não mudam
+ * <p>Gera chaves de cache com sufixos que determinam o TTL via {@link DashboardCacheExpiry}: -
+ * Queries com data "até hoje": adiciona sufixo "_CURRENT" → TTL curto (5 min) - Queries com datas
+ * passadas: adiciona sufixo "_HISTORICAL" → TTL longo (6 horas)
  *
- * <p>Exemplo: - findDadosEmprestimoCountRange(2025-01-01, 2025-10-07) → TTL curto (hoje está no
- * range) - findDadosEmprestimoCountRange(2024-01-01, 2024-12-31) → TTL longo (dados históricos)
+ * <p>Exemplo: - findDadosEmprestimoCountRange(2025-01-01, 2025-10-07) → chave com "_CURRENT" → TTL
+ * 5 min - findDadosEmprestimoCountRange(2024-01-01, 2024-12-31) → chave com "_HISTORICAL" → TTL 6h
+ *
+ * <p>O sufixo é lido por {@link DashboardCacheExpiry} que aplica o TTL correspondente.
  *
  * <p>Formato de data brasileiro: dd/MM/yyyy (padrão pt-BR)
  *
  * @author Rodrigo Izidoro
  * @since 2025-10-07
+ * @see DashboardCacheExpiry
+ * @see CacheConfig#caffeineConfigDashboard()
  */
 @Component("dashboardCacheKeyGenerator")
 public class DashboardCacheKeyGenerator implements KeyGenerator {
@@ -37,15 +42,15 @@ public class DashboardCacheKeyGenerator implements KeyGenerator {
       }
     }
 
-    // Adiciona marcador de TTL baseado na data final
+    // Adiciona sufixo que determina o TTL (processado por DashboardCacheExpiry)
     if (params.length >= 2 && params[1] instanceof LocalDate dtFim) {
       LocalDate hoje = LocalDate.now();
 
       if (dtFim.isBefore(hoje)) {
-        // Dados históricos - pode usar TTL longo
+        // Dados históricos - sufixo dispara TTL longo (6h) no DashboardCacheExpiry
         key.append("_HISTORICAL");
       } else {
-        // Inclui data atual - usa TTL curto
+        // Inclui data atual - sufixo dispara TTL curto (5 min) no DashboardCacheExpiry
         key.append("_CURRENT");
       }
     }

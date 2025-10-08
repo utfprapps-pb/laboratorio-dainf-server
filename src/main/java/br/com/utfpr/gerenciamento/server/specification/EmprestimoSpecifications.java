@@ -43,6 +43,9 @@ public class EmprestimoSpecifications {
     return (root, query, cb) -> {
       // Previne duplicação de resultados em queries de count
       if (query.getResultType() != Long.class && query.getResultType() != long.class) {
+        // Define distinct antes de realizar fetches para evitar duplicação de resultados
+        query.distinct(true);
+
         // JOIN FETCH para usuarioEmprestimo (elimina N+1)
         Fetch<Emprestimo, Usuario> usuarioEmprestimoFetch =
             root.fetch(USUARIO_EMPRESTIMO, JoinType.LEFT);

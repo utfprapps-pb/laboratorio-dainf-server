@@ -48,6 +48,7 @@ public class PaisServiceImpl extends CrudServiceImpl<Pais, Long> implements Pais
   }
 
   @Override
+  @Transactional
   @CacheEvict(value = "paises", allEntries = true)
   public Pais save(Pais pais) {
     // Limpa cache ao salvar país
@@ -55,6 +56,7 @@ public class PaisServiceImpl extends CrudServiceImpl<Pais, Long> implements Pais
   }
 
   @Override
+  @Transactional
   @CacheEvict(value = "paises", allEntries = true)
   public void delete(Long id) {
     // Limpa cache ao deletar país
