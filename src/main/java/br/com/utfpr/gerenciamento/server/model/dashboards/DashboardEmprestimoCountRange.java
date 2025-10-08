@@ -13,4 +13,13 @@ public class DashboardEmprestimoCountRange {
   private Integer emAndamento;
   private Integer emAtraso;
   private Integer finalizado;
+
+  // Construtor adicional para aceitar Long (retorno de COUNT/SUM do JPA)
+  public DashboardEmprestimoCountRange(
+      Long total, Long emAndamento, Long emAtraso, Long finalizado) {
+    this.total = total != null ? total.intValue() : 0;
+    this.emAndamento = emAndamento != null ? emAndamento.intValue() : 0;
+    this.emAtraso = emAtraso != null ? emAtraso.intValue() : 0;
+    this.finalizado = finalizado != null ? finalizado.intValue() : 0;
+  }
 }
