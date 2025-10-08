@@ -23,8 +23,8 @@ import org.springframework.web.bind.annotation.RestController;
 @RequestMapping("auth")
 public class AuthController {
 
-    public static final String PICTURE = "picture";
-    private final GoogleTokenVerifier googleTokenVerifier;
+  private static final String PICTURE = "picture";
+  private final GoogleTokenVerifier googleTokenVerifier;
 
   private final UsuarioService usuarioService;
 
@@ -88,8 +88,7 @@ public class AuthController {
             usuarioService.save(user);
           } else {
             if (payload.get(PICTURE) != null
-                && (user.getFotoUrl() == null
-                    || !user.getFotoUrl().equals(payload.get(PICTURE)))) {
+                && (user.getFotoUrl() == null || !user.getFotoUrl().equals(payload.get(PICTURE)))) {
               user.setFotoUrl((String) payload.get(PICTURE));
               usuarioService.save(user);
             }

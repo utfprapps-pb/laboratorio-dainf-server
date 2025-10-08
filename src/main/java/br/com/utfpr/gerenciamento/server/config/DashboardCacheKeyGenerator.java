@@ -50,7 +50,7 @@ public class DashboardCacheKeyGenerator implements KeyGenerator {
         // Dados históricos - sufixo dispara TTL longo (6h) no DashboardCacheExpiry
         key.append("_HISTORICAL");
       } else {
-        // Inclui data atual - sufixo dispara TTL curto (5 min) no DashboardCacheExpiry
+        // Inclui data atual ou futura - sufixo dispara TTL curto (5 min) no DashboardCacheExpiry
         key.append("_CURRENT");
       }
     }

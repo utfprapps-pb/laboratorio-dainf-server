@@ -73,10 +73,6 @@ public class UsuarioServiceImpl extends CrudServiceImpl<Usuario, Long>
   @Override
   @Transactional(readOnly = true)
   public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
-    // Reutiliza lógica de normalização de username e carregamento de permissões
-    // Via findByUsernameForAuthentication que já aplica:
-    // - Normalização de domínios (@professores.utfpr.edu.br, @administrativo.utfpr.edu.br)
-    // - @EntityGraph para carregar permissões (necessário para UserDetails.getAuthorities())
     Usuario usuario = findByUsernameForAuthentication(username);
     if (usuario == null) {
       throw new UsernameNotFoundException("Usuário não encontrado");
@@ -295,7 +291,7 @@ public class UsuarioServiceImpl extends CrudServiceImpl<Usuario, Long>
   @Override
   public Usuario saveNewUser(Usuario usuario) {
     if (!Util.isPasswordEncoded(usuario.getPassword())) {
-      usuario.setPassword(new BCryptPasswordEncoder().encode(usuario.getPassword()));
+      usuario.setPassword(passwordEncoder.encode(usuario.getPassword()));
     }
     try {
       usuario.setPermissoes(new HashSet<>());
