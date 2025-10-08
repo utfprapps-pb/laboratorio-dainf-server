@@ -279,9 +279,14 @@ class DashboardCacheKeyGeneratorTest {
           .start();
     }
 
-    latch.await(5, TimeUnit.SECONDS);
+    boolean completedInTime = latch.await(5, TimeUnit.SECONDS);
 
-    // Then - Todas as threads devem gerar a mesma chave
+    // Then - Todas as threads devem completar no tempo esperado
+    assertTrue(
+        completedInTime,
+        "Threads de teste não completaram em 5 segundos - possível deadlock ou lentidão");
+
+    // E todas as threads devem gerar a mesma chave
     assertEquals(1, chaves.size());
   }
 

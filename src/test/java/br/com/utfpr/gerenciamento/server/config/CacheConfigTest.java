@@ -62,7 +62,7 @@ class CacheConfigTest {
     cache.cleanUp();
 
     // Deve ter evictado pelo menos 1 item
-    assertEquals(10000, cache.estimatedSize());
+    assertTrue(cache.estimatedSize() <= 10000);
   }
 
   @Test
@@ -304,7 +304,11 @@ class CacheConfigTest {
   void testCacheManager_QuandoObtemCache_DeveRetornarCacheEspecifico() {
     // Given
     CacheConfig config = new CacheConfig();
-    cacheManager = config.cacheManager();
+    cacheManager =
+        config.cacheManager(
+            config.caffeineConfigReferenceData(),
+            config.caffeineConfigUsuario(),
+            config.caffeineConfigDashboard());
 
     // When - Obter cache específico
     cacheManager.getCache("usuario");

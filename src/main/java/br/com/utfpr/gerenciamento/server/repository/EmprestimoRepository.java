@@ -39,9 +39,9 @@ public interface EmprestimoRepository
   @Query(
       "SELECT "
           + "COUNT(e), "
-          + "SUM(CASE WHEN e.dataDevolucao IS NULL AND e.prazoDevolucao < CURRENT_DATE THEN 1 ELSE 0 END), "
-          + "SUM(CASE WHEN e.dataDevolucao IS NULL AND e.prazoDevolucao >= CURRENT_DATE THEN 1 ELSE 0 END), "
-          + "SUM(CASE WHEN e.dataDevolucao IS NOT NULL THEN 1 ELSE 0 END) "
+          + "COALESCE(SUM(CASE WHEN e.dataDevolucao IS NULL AND e.prazoDevolucao < CURRENT_DATE THEN 1 ELSE 0 END), 0), "
+          + "COALESCE(SUM(CASE WHEN e.dataDevolucao IS NULL AND e.prazoDevolucao >= CURRENT_DATE THEN 1 ELSE 0 END), 0), "
+          + "COALESCE(SUM(CASE WHEN e.dataDevolucao IS NOT NULL THEN 1 ELSE 0 END), 0) "
           + "FROM Emprestimo e "
           + "WHERE e.dataEmprestimo BETWEEN :dtIni AND :dtFim")
   Object[] countEmprestimosByStatusInRange(

@@ -29,15 +29,30 @@ public class CacheConfig {
    * LRU automático
    */
   @Bean
-  public CacheManager cacheManager() {
+  public CacheManager cacheManager(
+      Caffeine<Object, Object> caffeineConfigReferenceData,
+      Caffeine<Object, Object> caffeineConfigUsuario,
+      Caffeine<Object, Object> caffeineConfigDashboard) {
     CaffeineCacheManager cacheManager = new CaffeineCacheManager();
 
-    // Configuração padrão para todos os caches
+    // Configuração padrão para caches não especificados
     cacheManager.setCaffeine(
         Caffeine.newBuilder()
             .maximumSize(1000)
             .expireAfterWrite(Duration.ofHours(1))
             .recordStats()); // Habilita métricas para monitoramento
+
+    // Registra caches nomeados com configurações específicas
+    // Dados de referência geográfica (TTL: 6 horas)
+    cacheManager.registerCustomCache("estados", caffeineConfigReferenceData.build());
+    cacheManager.registerCustomCache("paises", caffeineConfigReferenceData.build());
+    cacheManager.registerCustomCache("cidades", caffeineConfigReferenceData.build());
+
+    // Dashboard (TTL dinâmico: 5 min para current, 6h para historical)
+    cacheManager.registerCustomCache("dashboard-emprestimo-range", caffeineConfigDashboard.build());
+
+    // Usuários (TTL: 15 minutos) - preparado para uso futuro
+    cacheManager.registerCustomCache("usuarios", caffeineConfigUsuario.build());
 
     return cacheManager;
   }
@@ -72,18 +87,19 @@ public class CacheConfig {
   }
 
   /**
-   * Cache para dashboard com TTL curto.
+   * Cache para dashboard com TTL dinâmico baseado no tipo de dados.
    *
-   * <p>TTL curto porque: - Data atual: Dados podem mudar ao longo do dia (novos empréstimos) -
-   * Datas passadas: Dados históricos não mudam (ver DashboardCacheKeyGenerator)
+   * <p>Usa {@link DashboardCacheExpiry} para aplicar TTL variável: - Dados históricos
+   * (_HISTORICAL): 6 horas - dados não mudam - Dados atuais (_CURRENT): 5 minutos - dados podem
+   * mudar
    *
-   * <p>Nota: Para queries de datas passadas, o DashboardCacheKeyGenerator aplica TTL mais longo.
+   * <p>O sufixo é adicionado por {@link DashboardCacheKeyGenerator} baseado na data final da query.
    */
   @Bean
   public Caffeine<Object, Object> caffeineConfigDashboard() {
     return Caffeine.newBuilder()
         .maximumSize(200) // Combinações de filtros de data
-        .expireAfterWrite(Duration.ofMinutes(5)) // TTL base curto para dados recentes
+        .expireAfter(new DashboardCacheExpiry()) // TTL variável baseado na chave
         .recordStats();
   }
 }

@@ -179,7 +179,8 @@ CREATE INDEX IF NOT EXISTS idx_estado_pais_id ON estado(pais_id);
 CREATE INDEX IF NOT EXISTS idx_estado_uf ON estado(uf);
 
 -- Índices para tabela FORNECEDOR
-CREATE INDEX IF NOT EXISTS idx_fornecedor_nome ON fornecedor(nome);
+CREATE INDEX IF NOT EXISTS idx_fornecedor_razao_social ON fornecedor(razao_social);
+CREATE INDEX IF NOT EXISTS idx_fornecedor_nome_fantasia ON fornecedor(nome_fantasia);
 
 -- Índices para tabela COMPRA (dashboard queries)
 CREATE INDEX IF NOT EXISTS idx_compra_data_compra ON compra(data_compra);
