@@ -48,7 +48,6 @@ class UsuarioControllerTest {
     String query = "João";
     int page = 0;
     int size = 10;
-    
 
     when(usuarioService.usuarioComplete(eq(query), any(Pageable.class))).thenReturn(usuarioPage);
 
