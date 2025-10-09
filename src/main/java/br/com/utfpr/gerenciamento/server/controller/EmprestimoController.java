@@ -9,7 +9,6 @@ import br.com.utfpr.gerenciamento.server.service.*;
 import br.com.utfpr.gerenciamento.server.util.DateUtil;
 import java.time.LocalDate;
 import java.util.List;
-import java.util.stream.Collectors;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -89,7 +88,8 @@ public class EmprestimoController extends CrudController<Emprestimo, Long> {
       Emprestimo old = emprestimoService.findOne(object.getId());
       old.getEmprestimoItem().stream()
           .forEach(
-              empItem -> itemService.aumentaSaldoItem(empItem.getItem().getId(), empItem.getQtde()));
+              empItem ->
+                  itemService.aumentaSaldoItem(empItem.getItem().getId(), empItem.getQtde()));
     }
     object.getEmprestimoItem().stream()
         .forEach(
