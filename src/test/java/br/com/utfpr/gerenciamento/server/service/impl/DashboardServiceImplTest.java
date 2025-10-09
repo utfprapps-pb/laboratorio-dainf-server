@@ -1,7 +1,6 @@
 package br.com.utfpr.gerenciamento.server.service.impl;
 
 import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 
 import br.com.utfpr.gerenciamento.server.dto.dashboards.DashboardEmprestimoCountRangeResponseDto;
@@ -49,14 +48,15 @@ class DashboardServiceImplTest {
   @Test
   void testFindDadosEmprestimoCountRange_deveRetornarDadosCorretamente() {
     // Arrange
-    DashboardEmprestimoCountRange mockResult = new DashboardEmprestimoCountRange(100, 75, 10, 15);
+    DashboardEmprestimoCountRange mockResult =
+        new DashboardEmprestimoCountRange(100L, 75L, 10L, 15L);
 
     DashboardEmprestimoCountRangeResponseDto expectedDto =
         new DashboardEmprestimoCountRangeResponseDto();
-    expectedDto.setTotal(100);
-    expectedDto.setEmAndamento(75);
-    expectedDto.setEmAtraso(10);
-    expectedDto.setFinalizado(15);
+    expectedDto.setTotal(100L);
+    expectedDto.setEmAndamento(75L);
+    expectedDto.setEmAtraso(10L);
+    expectedDto.setFinalizado(15L);
 
     when(emprestimoRepository.countEmprestimosByStatusInRange(dtIni, dtFim)).thenReturn(mockResult);
     when(modelMapper.map(mockResult, DashboardEmprestimoCountRangeResponseDto.class))
@@ -80,14 +80,14 @@ class DashboardServiceImplTest {
   @Test
   void testFindDadosEmprestimoCountRange_comZeroEmprestimos() {
     // Arrange
-    DashboardEmprestimoCountRange mockResult = new DashboardEmprestimoCountRange(0, 0, 0, 0);
+    DashboardEmprestimoCountRange mockResult = new DashboardEmprestimoCountRange(0L, 0L, 0L, 0L);
 
     DashboardEmprestimoCountRangeResponseDto expectedDto =
         new DashboardEmprestimoCountRangeResponseDto();
-    expectedDto.setTotal(0);
-    expectedDto.setEmAndamento(0);
-    expectedDto.setEmAtraso(0);
-    expectedDto.setFinalizado(0);
+    expectedDto.setTotal(0L);
+    expectedDto.setEmAndamento(0L);
+    expectedDto.setEmAtraso(0L);
+    expectedDto.setFinalizado(0L);
 
     when(emprestimoRepository.countEmprestimosByStatusInRange(dtIni, dtFim)).thenReturn(mockResult);
     when(modelMapper.map(mockResult, DashboardEmprestimoCountRangeResponseDto.class))
