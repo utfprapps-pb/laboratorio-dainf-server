@@ -15,7 +15,6 @@ import org.springframework.http.HttpMethod;
 import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
-import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -44,7 +43,7 @@ public class WebSecurity {
         .passwordEncoder(passwordEncoder());
     var authenticationManager = authenticationManagerBuilder.build();
 
-    return http.csrf(AbstractHttpConfigurer::disable)
+    return http.csrf(csrf -> csrf.ignoringRequestMatchers("/**"))
         .cors(cors -> cors.configurationSource(corsConfigurationSource()))
         .authorizeHttpRequests(
             authorize ->
@@ -123,10 +122,7 @@ public class WebSecurity {
     var frontendUrl = env.getProperty("utfpr.front.url", "http://localhost:4200");
 
     var configuration = new CorsConfiguration();
-    // Usa allowedOriginPatterns para permitir wildcards com credentials
-    // Spring Security 6.x requer patterns ao invés de origins para segurança
     configuration.setAllowedOriginPatterns(List.of(frontendUrl));
-    configuration.setAllowCredentials(true);
 
     configuration.setAllowedMethods(
         List.of("GET", "POST", "PUT", "DELETE", "OPTIONS", "HEAD", "TRACE", "CONNECT"));
