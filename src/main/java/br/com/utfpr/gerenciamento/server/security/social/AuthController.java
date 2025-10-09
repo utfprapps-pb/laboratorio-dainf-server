@@ -1,5 +1,6 @@
 package br.com.utfpr.gerenciamento.server.security.social;
 
+import br.com.utfpr.gerenciamento.server.ennumeation.UserRole;
 import br.com.utfpr.gerenciamento.server.model.Usuario;
 import br.com.utfpr.gerenciamento.server.security.SecurityConstants;
 import br.com.utfpr.gerenciamento.server.security.dto.AuthenticationResponseDTO;
@@ -81,9 +82,10 @@ public class AuthController {
 
             user.setPermissoes(new HashSet<>());
             if (isProfessor) {
-              user.getPermissoes().add(permissaoService.findByNome("ROLE_PROFESSOR"));
+              user.getPermissoes()
+                  .add(permissaoService.findByNome(UserRole.PROFESSOR.getAuthority()));
             } else {
-              user.getPermissoes().add(permissaoService.findByNome("ROLE_ALUNO"));
+              user.getPermissoes().add(permissaoService.findByNome(UserRole.ALUNO.getAuthority()));
             }
             usuarioService.save(user);
           } else {

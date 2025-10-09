@@ -3,6 +3,7 @@ package br.com.utfpr.gerenciamento.server.controller;
 import static com.auth0.jwt.algorithms.Algorithm.HMAC512;
 
 import br.com.utfpr.gerenciamento.server.dto.TokenDto;
+import br.com.utfpr.gerenciamento.server.ennumeation.UserRole;
 import br.com.utfpr.gerenciamento.server.model.Permissao;
 import br.com.utfpr.gerenciamento.server.model.Usuario;
 import br.com.utfpr.gerenciamento.server.security.SecurityConstants;
@@ -32,7 +33,8 @@ import org.springframework.web.bind.annotation.*;
 @RequestMapping("/oauth")
 public class OauthController {
 
-  @Value("${google.clientId}")
+    public static final String TEST_PASSWORD = "123456";
+    @Value("${google.clientId}")
   String googleClientId;
 
   final PasswordEncoder passwordEncoder;
@@ -73,7 +75,7 @@ public class OauthController {
   private TokenDto login(Usuario usuario) {
     Authentication authentication =
         authenticationManager.authenticate(
-            new UsernamePasswordAuthenticationToken(usuario.getEmail(), "123456"));
+            new UsernamePasswordAuthenticationToken(usuario.getEmail(), TEST_PASSWORD));
     SecurityContextHolder.getContext().setAuthentication(authentication);
     String jwt =
         JWT.create()
@@ -88,13 +90,21 @@ public class OauthController {
   private Usuario saveUsuario(String email) {
     Usuario usuario = new Usuario();
     usuario.setEmail(email);
-    usuario.setPassword(passwordEncoder.encode("123456"));
-    Permissao permissao = new Permissao();
+    usuario.setPassword(passwordEncoder.encode(TEST_PASSWORD));
+    Permissao permissao;
     if (email.contains("@alunos.utfpr.edu.br") || email.contains("@administrativo.utfpr.edu.br")) {
-      permissao = permissaoService.findByNome("ROLE_ALUNO");
+      permissao = permissaoService.findByNome(UserRole.ALUNO.getAuthority());
     } else if (email.contains("@utfpr.edu.br") || email.contains("@professores.utfpr.edu.br")) {
-      permissao = permissaoService.findByNome("ROLE_PROFESSOR");
+      permissao = permissaoService.findByNome(UserRole.PROFESSOR.getAuthority());
+    } else {
+      throw new IllegalArgumentException("Email domain não reconhecido: " + email);
     }
+
+    if (permissao == null) {
+      throw new IllegalStateException(
+          "Permissão não encontrada no banco de dados. Verifique as migrations.");
+    }
+
     usuario.setPermissoes(new HashSet<>());
     usuario.getPermissoes().add(permissao);
     return usuarioService.save(usuario);
