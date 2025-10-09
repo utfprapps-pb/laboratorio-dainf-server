@@ -119,13 +119,14 @@ public class WebSecurity {
 
   @Bean
   CorsConfigurationSource corsConfigurationSource() {
-    var frontendUrl = env.getProperty("utfpr.front.url", "http://localhost:4200");
+    var frontendUrls = env.getProperty("utfpr.front.url", "http://localhost:4200");
+    var origins = java.util.Arrays.stream(frontendUrls.split(",")).map(String::trim).toList();
 
     var configuration = new CorsConfiguration();
-    configuration.setAllowedOriginPatterns(List.of(frontendUrl));
+    configuration.setAllowedOriginPatterns(origins);
 
     configuration.setAllowedMethods(
-        List.of("GET", "POST", "PUT", "DELETE", "OPTIONS", "HEAD", "TRACE", "CONNECT"));
+        List.of("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS", "HEAD"));
 
     configuration.setAllowedHeaders(
         List.of(
