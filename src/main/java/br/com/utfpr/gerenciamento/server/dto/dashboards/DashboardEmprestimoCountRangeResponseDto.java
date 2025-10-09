@@ -2,13 +2,19 @@ package br.com.utfpr.gerenciamento.server.dto.dashboards;
 
 import lombok.Data;
 
+/**
+ * DTO de resposta para contadores de empréstimos agregados por status.
+ *
+ * <p>Usa Long para prevenir overflow e manter compatibilidade com o modelo de domínio. ModelMapper
+ * faz conversão direta Long → Long sem downcast.
+ */
 @Data
 public class DashboardEmprestimoCountRangeResponseDto {
-  private Integer total;
+  private Long total;
 
-  private Integer emAndamento;
+  private Long emAndamento;
 
-  private Integer emAtraso;
+  private Long emAtraso;
 
-  private Integer finalizado;
+  private Long finalizado;
 }

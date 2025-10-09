@@ -40,8 +40,6 @@ services:
       - "traefik.http.routers.daele-labs-api.tls.certresolver=letsencrypt"
       - "traefik.http.routers.daele-labs-api.entrypoints=websecure"
 
-    volumes:
-      - ./appdata/daele-labs/upload:/opt/uploads
     restart: unless-stopped
     networks:
       - web

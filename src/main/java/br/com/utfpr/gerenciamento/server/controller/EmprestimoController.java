@@ -1,7 +1,7 @@
 package br.com.utfpr.gerenciamento.server.controller;
 
 import br.com.utfpr.gerenciamento.server.dto.EmprestimoResponseDto;
-import br.com.utfpr.gerenciamento.server.ennumeation.StatusDevolucao;
+import br.com.utfpr.gerenciamento.server.enumeration.StatusDevolucao;
 import br.com.utfpr.gerenciamento.server.model.Emprestimo;
 import br.com.utfpr.gerenciamento.server.model.EmprestimoDevolucaoItem;
 import br.com.utfpr.gerenciamento.server.model.filter.EmprestimoFilter;
@@ -9,7 +9,6 @@ import br.com.utfpr.gerenciamento.server.service.*;
 import br.com.utfpr.gerenciamento.server.util.DateUtil;
 import java.time.LocalDate;
 import java.util.List;
-import java.util.stream.Collectors;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -72,7 +71,7 @@ public class EmprestimoController extends CrudController<Emprestimo, Long> {
     List<EmprestimoDevolucaoItem> listItensToSaida =
         emprestimo.getEmprestimoDevolucaoItem().stream()
             .filter(empDevItem -> empDevItem.getStatusDevolucao().equals(StatusDevolucao.S))
-            .collect(Collectors.toList());
+            .toList();
 
     if (!listItensToSaida.isEmpty()) {
       saidaService.createSaidaByDevolucaoEmprestimo(listItensToSaida);
@@ -89,9 +88,8 @@ public class EmprestimoController extends CrudController<Emprestimo, Long> {
       Emprestimo old = emprestimoService.findOne(object.getId());
       old.getEmprestimoItem().stream()
           .forEach(
-              empItem -> {
-                itemService.aumentaSaldoItem(empItem.getItem().getId(), empItem.getQtde());
-              });
+              empItem ->
+                  itemService.aumentaSaldoItem(empItem.getItem().getId(), empItem.getQtde()));
     }
     object.getEmprestimoItem().stream()
         .forEach(

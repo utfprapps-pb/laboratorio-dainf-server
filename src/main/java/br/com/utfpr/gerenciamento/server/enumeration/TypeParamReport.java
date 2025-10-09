@@ -1,4 +1,4 @@
-package br.com.utfpr.gerenciamento.server.ennumeation;
+package br.com.utfpr.gerenciamento.server.enumeration;
 
 public enum TypeParamReport {
   D("Data"),

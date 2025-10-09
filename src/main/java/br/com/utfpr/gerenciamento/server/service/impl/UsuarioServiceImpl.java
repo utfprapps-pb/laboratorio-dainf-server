@@ -1,6 +1,7 @@
 package br.com.utfpr.gerenciamento.server.service.impl;
 
 import br.com.utfpr.gerenciamento.server.dto.*;
+import br.com.utfpr.gerenciamento.server.enumeration.UserRole;
 import br.com.utfpr.gerenciamento.server.exception.EntityNotFoundException;
 import br.com.utfpr.gerenciamento.server.exception.RecoverCodeInvalidException;
 import br.com.utfpr.gerenciamento.server.model.Permissao;
@@ -312,9 +313,9 @@ public class UsuarioServiceImpl extends CrudServiceImpl<Usuario, Long>
       usuario.setPermissoes(new HashSet<>());
       usuario.setUsername(usuario.getEmail());
       if (usuario.getEmail().contains("@utfpr.edu.br")) {
-        usuario.getPermissoes().add(permissaoService.findByNome("ROLE_PROFESSOR"));
+        usuario.getPermissoes().add(permissaoService.findByNome(UserRole.PROFESSOR.getAuthority()));
       } else {
-        usuario.getPermissoes().add(permissaoService.findByNome("ROLE_ALUNO"));
+        usuario.getPermissoes().add(permissaoService.findByNome(UserRole.ALUNO.getAuthority()));
       }
       usuario.setCodigoVerificacao(UUID.randomUUID().toString());
       usuario.setEmailVerificado(false);

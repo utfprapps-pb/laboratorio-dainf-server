@@ -13,14 +13,14 @@ public interface SaidaRepository
     extends JpaRepository<Saida, Long>, JpaSpecificationExecutor<Saida> {
 
   @Query(
-      "SELECT new br.com.utfpr.gerenciamento.server.model.dashboards.DashboardItensSaidas(SUM(si.qtde), i.nome) \n"
-          + "FROM SaidaItem si "
-          + "LEFT JOIN Saida s "
-          + "ON s.id = si.saida.id "
-          + "LEFT JOIN Item i "
-          + "ON i.id = si.item.id "
-          + "WHERE s.dataSaida between :dtIni and :dtFim "
-          + "GROUP BY i.nome")
+      """
+      SELECT new br.com.utfpr.gerenciamento.server.model.dashboards.DashboardItensSaidas(SUM(si.qtde), i.nome)
+      FROM SaidaItem si
+      LEFT JOIN Saida s ON s.id = si.saida.id
+      LEFT JOIN Item i ON i.id = si.item.id
+      WHERE s.dataSaida BETWEEN :dtIni AND :dtFim
+      GROUP BY i.nome
+      """)
   List<DashboardItensSaidas> findItensMaisSaidas(
       @Param("dtIni") LocalDate dtIni, @Param("dtFim") LocalDate dtFim);
 

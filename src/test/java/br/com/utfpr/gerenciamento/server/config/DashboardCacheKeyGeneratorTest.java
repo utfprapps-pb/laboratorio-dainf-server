@@ -140,8 +140,8 @@ class DashboardCacheKeyGeneratorTest {
 
     // Then
     String chaveStr = chave.toString();
-    assertTrue(chaveStr.contains("_null_"));
-    assertTrue(chaveStr.contains("_valor"));
+    assertTrue(chaveStr.contains("::NULL"));
+    assertTrue(chaveStr.contains("::String:valor"));
   }
 
   @Test
@@ -170,7 +170,7 @@ class DashboardCacheKeyGeneratorTest {
     String chaveStr = chave.toString();
     assertFalse(chaveStr.endsWith("_HISTORICAL"));
     assertFalse(chaveStr.endsWith("_CURRENT"));
-    assertEquals("findByName_teste", chaveStr);
+    assertEquals("findByName::String:teste", chaveStr);
   }
 
   @Test

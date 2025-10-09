@@ -1,8 +1,12 @@
 package br.com.utfpr.gerenciamento.server.service.impl;
 
+import static br.com.utfpr.gerenciamento.server.enumeration.UserRole.ROLE_ADMINISTRADOR_NAME;
+import static br.com.utfpr.gerenciamento.server.enumeration.UserRole.ROLE_LABORATORISTA_NAME;
+
+import br.com.utfpr.gerenciamento.server.annotation.InvalidateDashboardCache;
 import br.com.utfpr.gerenciamento.server.dto.EmprestimoResponseDto;
-import br.com.utfpr.gerenciamento.server.ennumeation.StatusDevolucao;
-import br.com.utfpr.gerenciamento.server.ennumeation.TipoItem;
+import br.com.utfpr.gerenciamento.server.enumeration.StatusDevolucao;
+import br.com.utfpr.gerenciamento.server.enumeration.TipoItem;
 import br.com.utfpr.gerenciamento.server.model.Emprestimo;
 import br.com.utfpr.gerenciamento.server.model.EmprestimoDevolucaoItem;
 import br.com.utfpr.gerenciamento.server.model.EmprestimoItem;
@@ -26,6 +30,7 @@ import org.modelmapper.ModelMapper;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -61,8 +66,19 @@ public class EmprestimoServiceImpl extends CrudServiceImpl<Emprestimo, Long>
     return emprestimoRepository;
   }
 
+  /**
+   * Salva ou atualiza um empréstimo e invalida o cache de dashboard.
+   *
+   * <p>O cache de dashboard é invalidado para garantir que os dados exibidos estejam sempre
+   * atualizados após criar/modificar empréstimos.
+   *
+   * <p>SECURITY: Requer role LABORATORISTA ou ADMINISTRADOR para prevenir invalidação não
+   * autorizada do cache.
+   */
   @Override
   @Transactional
+  @PreAuthorize("hasAnyRole('" + ROLE_LABORATORISTA_NAME + "', '" + ROLE_ADMINISTRADOR_NAME + "')")
+  @InvalidateDashboardCache
   public Emprestimo save(Emprestimo entity) {
     entity.setUsuarioEmprestimo(
         usuarioRepository.getReferenceById(entity.getUsuarioEmprestimo().getId()));
@@ -74,6 +90,40 @@ public class EmprestimoServiceImpl extends CrudServiceImpl<Emprestimo, Long>
                 .getId()));
 
     return super.save(entity);
+  }
+
+  /**
+   * Deleta um empréstimo por ID e invalida o cache de dashboard.
+   *
+   * <p>O cache de dashboard é invalidado para garantir que os dados exibidos estejam sempre
+   * atualizados após deletar empréstimos.
+   *
+   * <p>SECURITY: Requer role LABORATORISTA ou ADMINISTRADOR para prevenir invalidação não
+   * autorizada do cache.
+   */
+  @Override
+  @Transactional
+  @PreAuthorize("hasAnyRole('" + ROLE_LABORATORISTA_NAME + "', '" + ROLE_ADMINISTRADOR_NAME + "')")
+  @InvalidateDashboardCache
+  public void delete(Long id) {
+    super.delete(id);
+  }
+
+  /**
+   * Deleta um empréstimo e invalida o cache de dashboard.
+   *
+   * <p>O cache de dashboard é invalidado para garantir que os dados exibidos estejam sempre
+   * atualizados após deletar empréstimos.
+   *
+   * <p>SECURITY: Requer role LABORATORISTA ou ADMINISTRADOR para prevenir invalidação não
+   * autorizada do cache.
+   */
+  @Override
+  @Transactional
+  @PreAuthorize("hasAnyRole('" + ROLE_LABORATORISTA_NAME + "', '" + ROLE_ADMINISTRADOR_NAME + "')")
+  @InvalidateDashboardCache
+  public void delete(Emprestimo entity) {
+    super.delete(entity);
   }
 
   @Override

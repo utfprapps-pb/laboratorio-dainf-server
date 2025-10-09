@@ -11,7 +11,7 @@ import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
-import java.util.Date;
+import java.time.Instant;
 import org.springframework.core.env.Environment;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -44,7 +44,7 @@ public class JWTAuthenticationFilter extends UsernamePasswordAuthenticationFilte
       } else if (credentials.getUsername().contains("@administrativo.utfpr.edu.br")) {
         credentials.setUsername(credentials.getUsername().replace("administrativo.", ""));
       }
-      // IMPORTANTE: Usa método COM @EntityGraph porque getAuthorities() precisa das permissoes
+      // IMPORTANTE: Usa metodo COM @EntityGraph porque getAuthorities() precisa das permissoes
       Usuario user = usuarioService.findByUsernameForAuthentication(credentials.getUsername());
 
       return authenticationManager.authenticate(
@@ -59,10 +59,10 @@ public class JWTAuthenticationFilter extends UsernamePasswordAuthenticationFilte
   protected void successfulAuthentication(
       HttpServletRequest req, HttpServletResponse res, FilterChain chain, Authentication auth)
       throws IOException, ServletException {
-    String token =
+    var token =
         JWT.create()
             .withSubject(auth.getName())
-            .withExpiresAt(new Date(System.currentTimeMillis() + SecurityConstants.EXPIRATION_TIME))
+            .withExpiresAt(Instant.now().plusMillis(SecurityConstants.EXPIRATION_TIME))
             .sign(HMAC512(tokenSecret));
     res.getWriter().write(token);
   }

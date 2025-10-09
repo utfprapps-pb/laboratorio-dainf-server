@@ -46,93 +46,109 @@ public interface UsuarioRepository
 
   @Query(
       value =
-          "SELECT DISTINCT U.* "
-              + "FROM USUARIO U  "
-              + "LEFT JOIN USUARIO_PERMISSOES UE "
-              + " ON UE.USUARIO_ID = U.ID "
-              + "LEFT JOIN PERMISSAO P "
-              + " ON P.ID = UE.PERMISSOES_ID "
-              + "WHERE ((UPPER(U.DOCUMENTO) LIKE :QUERY) "
-              + " OR (UPPER(U.NOME) LIKE :QUERY) "
-              + " OR (UPPER(U.USERNAME) LIKE :QUERY)) "
-              + " AND P.ID IN (3, 4) ",
+          """
+          SELECT DISTINCT U.*
+          FROM USUARIO U
+          LEFT JOIN USUARIO_PERMISSOES UE
+              ON UE.USUARIO_ID = U.ID
+          LEFT JOIN PERMISSAO P
+              ON P.ID = UE.PERMISSOES_ID
+          WHERE ((UPPER(U.DOCUMENTO) LIKE :QUERY)
+              OR (UPPER(U.NOME) LIKE :QUERY)
+              OR (UPPER(U.USERNAME) LIKE :QUERY))
+              AND P.ID IN (3, 4)
+          """,
       countQuery =
-          "SELECT COUNT(DISTINCT U.ID) "
-              + "FROM USUARIO U  "
-              + "LEFT JOIN USUARIO_PERMISSOES UE "
-              + " ON UE.USUARIO_ID = U.ID "
-              + "LEFT JOIN PERMISSAO P "
-              + " ON P.ID = UE.PERMISSOES_ID "
-              + "WHERE ((UPPER(U.DOCUMENTO) LIKE :QUERY) "
-              + " OR (UPPER(U.NOME) LIKE :QUERY) "
-              + " OR (UPPER(U.USERNAME) LIKE :QUERY)) "
-              + " AND P.ID IN (3, 4) ",
+          """
+          SELECT COUNT(DISTINCT U.ID)
+          FROM USUARIO U
+          LEFT JOIN USUARIO_PERMISSOES UE
+              ON UE.USUARIO_ID = U.ID
+          LEFT JOIN PERMISSAO P
+              ON P.ID = UE.PERMISSOES_ID
+          WHERE ((UPPER(U.DOCUMENTO) LIKE :QUERY)
+              OR (UPPER(U.NOME) LIKE :QUERY)
+              OR (UPPER(U.USERNAME) LIKE :QUERY))
+              AND P.ID IN (3, 4)
+          """,
       nativeQuery = true)
   Page<Usuario> findUsuarioCompleteCustom(@Param("QUERY") String query, Pageable pageable);
 
   @Query(
       value =
-          "SELECT DISTINCT U.* "
-              + "FROM USUARIO U  "
-              + "LEFT JOIN USUARIO_PERMISSOES UE "
-              + " ON UE.USUARIO_ID = U.ID "
-              + "LEFT JOIN PERMISSAO P "
-              + " ON P.ID = UE.PERMISSOES_ID "
-              + "WHERE P.ID IN (3, 4) ",
+          """
+          SELECT DISTINCT U.*
+          FROM USUARIO U
+          LEFT JOIN USUARIO_PERMISSOES UE
+              ON UE.USUARIO_ID = U.ID
+          LEFT JOIN PERMISSAO P
+              ON P.ID = UE.PERMISSOES_ID
+          WHERE P.ID IN (3, 4)
+          """,
       countQuery =
-          "SELECT COUNT(DISTINCT U.ID) "
-              + "FROM USUARIO U  "
-              + "LEFT JOIN USUARIO_PERMISSOES UE "
-              + " ON UE.USUARIO_ID = U.ID "
-              + "LEFT JOIN PERMISSAO P "
-              + " ON P.ID = UE.PERMISSOES_ID "
-              + "WHERE P.ID IN (3, 4) ",
+          """
+          SELECT COUNT(DISTINCT U.ID)
+          FROM USUARIO U
+          LEFT JOIN USUARIO_PERMISSOES UE
+              ON UE.USUARIO_ID = U.ID
+          LEFT JOIN PERMISSAO P
+              ON P.ID = UE.PERMISSOES_ID
+          WHERE P.ID IN (3, 4)
+          """,
       nativeQuery = true)
   Page<Usuario> findAllCustom(Pageable pageable);
 
   @Query(
       value =
-          "SELECT DISTINCT U.* "
-              + "FROM USUARIO U  "
-              + "LEFT JOIN USUARIO_PERMISSOES UE "
-              + " ON UE.USUARIO_ID = U.ID "
-              + "LEFT JOIN PERMISSAO P "
-              + " ON P.ID = UE.PERMISSOES_ID "
-              + "WHERE P.ID IN (1, 2) ",
+          """
+          SELECT DISTINCT U.*
+          FROM USUARIO U
+          LEFT JOIN USUARIO_PERMISSOES UE
+              ON UE.USUARIO_ID = U.ID
+          LEFT JOIN PERMISSAO P
+              ON P.ID = UE.PERMISSOES_ID
+          WHERE P.ID IN (1, 2)
+          """,
       countQuery =
-          "SELECT COUNT(DISTINCT U.ID) "
-              + "FROM USUARIO U  "
-              + "LEFT JOIN USUARIO_PERMISSOES UE "
-              + " ON UE.USUARIO_ID = U.ID "
-              + "LEFT JOIN PERMISSAO P "
-              + " ON P.ID = UE.PERMISSOES_ID "
-              + "WHERE P.ID IN (1, 2) ",
+          """
+          SELECT COUNT(DISTINCT U.ID)
+          FROM USUARIO U
+          LEFT JOIN USUARIO_PERMISSOES UE
+              ON UE.USUARIO_ID = U.ID
+          LEFT JOIN PERMISSAO P
+              ON P.ID = UE.PERMISSOES_ID
+          WHERE P.ID IN (1, 2)
+          """,
       nativeQuery = true)
   Page<Usuario> findAllCustomLab(Pageable pageable);
 
   @Query(
       value =
-          "SELECT DISTINCT U.* "
-              + "FROM USUARIO U  "
-              + "LEFT JOIN USUARIO_PERMISSOES UE "
-              + " ON UE.USUARIO_ID = U.ID "
-              + "LEFT JOIN PERMISSAO P "
-              + " ON P.ID = UE.PERMISSOES_ID "
-              + "WHERE ((UPPER(U.DOCUMENTO) LIKE :QUERY) "
-              + " OR (UPPER(U.NOME) LIKE :QUERY) "
-              + " OR (UPPER(U.USERNAME) LIKE :QUERY)) "
-              + " AND P.ID IN (1, 2) ",
+          """
+          SELECT DISTINCT U.*
+          FROM USUARIO U
+          LEFT JOIN USUARIO_PERMISSOES UE
+              ON UE.USUARIO_ID = U.ID
+          LEFT JOIN PERMISSAO P
+              ON P.ID = UE.PERMISSOES_ID
+          WHERE ((UPPER(U.DOCUMENTO) LIKE :QUERY)
+              OR (UPPER(U.NOME) LIKE :QUERY)
+              OR (UPPER(U.USERNAME) LIKE :QUERY))
+              AND P.ID IN (1, 2)
+          """,
       countQuery =
-          "SELECT COUNT(DISTINCT U.ID) "
-              + "FROM USUARIO U  "
-              + "LEFT JOIN USUARIO_PERMISSOES UE "
-              + " ON UE.USUARIO_ID = U.ID "
-              + "LEFT JOIN PERMISSAO P "
-              + " ON P.ID = UE.PERMISSOES_ID "
-              + "WHERE ((UPPER(U.DOCUMENTO) LIKE :QUERY) "
-              + " OR (UPPER(U.NOME) LIKE :QUERY) "
-              + " OR (UPPER(U.USERNAME) LIKE :QUERY)) "
-              + " AND P.ID IN (1, 2) ",
+          """
+          SELECT COUNT(DISTINCT U.ID)
+          FROM USUARIO U
+          LEFT JOIN USUARIO_PERMISSOES UE
+              ON UE.USUARIO_ID = U.ID
+          LEFT JOIN PERMISSAO P
+              ON P.ID = UE.PERMISSOES_ID
+          WHERE ((UPPER(U.DOCUMENTO) LIKE :QUERY)
+              OR (UPPER(U.NOME) LIKE :QUERY)
+              OR (UPPER(U.USERNAME) LIKE :QUERY))
+              AND P.ID IN (1, 2)
+          """,
       nativeQuery = true)
   Page<Usuario> findUsuarioCompleteCustomLab(@Param("QUERY") String query, Pageable pageable);
 }

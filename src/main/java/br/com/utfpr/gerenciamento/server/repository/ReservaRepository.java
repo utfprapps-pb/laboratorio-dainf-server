@@ -15,11 +15,13 @@ public interface ReservaRepository
 
   @Query(
       value =
-          "SELECT *\n"
-              + "FROM RESERVA R\n"
-              + " LEFT JOIN RESERVA_ITEM RI\n"
-              + " ON RI.RESERVA_ID = R.ID\n"
-              + "WHERE RI.ITEM_ID = :IDITEM \n",
+          """
+          SELECT *
+          FROM RESERVA R
+          LEFT JOIN RESERVA_ITEM RI
+              ON RI.RESERVA_ID = R.ID
+          WHERE RI.ITEM_ID = :IDITEM
+          """,
       nativeQuery = true)
   List<Reserva> findReservaByIdItem(@Param("IDITEM") Long id);
 }
