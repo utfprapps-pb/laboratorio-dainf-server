@@ -1,7 +1,7 @@
 package br.com.utfpr.gerenciamento.server.security;
 
-import static br.com.utfpr.gerenciamento.server.ennumeation.UserRole.ROLE_ADMINISTRADOR_NAME;
-import static br.com.utfpr.gerenciamento.server.ennumeation.UserRole.ROLE_LABORATORISTA_NAME;
+import static br.com.utfpr.gerenciamento.server.enumeration.UserRole.ROLE_ADMINISTRADOR_NAME;
+import static br.com.utfpr.gerenciamento.server.enumeration.UserRole.ROLE_LABORATORISTA_NAME;
 import static br.com.utfpr.gerenciamento.server.security.ApiRoutes.*;
 
 import br.com.utfpr.gerenciamento.server.service.impl.UsuarioServiceImpl;

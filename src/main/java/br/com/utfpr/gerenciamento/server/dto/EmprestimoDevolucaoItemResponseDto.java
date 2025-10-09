@@ -1,6 +1,6 @@
 package br.com.utfpr.gerenciamento.server.dto;
 
-import br.com.utfpr.gerenciamento.server.ennumeation.StatusDevolucao;
+import br.com.utfpr.gerenciamento.server.enumeration.StatusDevolucao;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import java.math.BigDecimal;
 import lombok.Data;

@@ -1,7 +1,7 @@
 package br.com.utfpr.gerenciamento.server.service.impl;
 
 import br.com.utfpr.gerenciamento.server.dto.*;
-import br.com.utfpr.gerenciamento.server.ennumeation.UserRole;
+import br.com.utfpr.gerenciamento.server.enumeration.UserRole;
 import br.com.utfpr.gerenciamento.server.exception.EntityNotFoundException;
 import br.com.utfpr.gerenciamento.server.exception.RecoverCodeInvalidException;
 import br.com.utfpr.gerenciamento.server.model.Permissao;

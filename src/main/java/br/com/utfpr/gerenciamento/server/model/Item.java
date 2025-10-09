@@ -1,6 +1,6 @@
 package br.com.utfpr.gerenciamento.server.model;
 
-import br.com.utfpr.gerenciamento.server.ennumeation.TipoItem;
+import br.com.utfpr.gerenciamento.server.enumeration.TipoItem;
 import com.fasterxml.jackson.annotation.JsonManagedReference;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotEmpty;

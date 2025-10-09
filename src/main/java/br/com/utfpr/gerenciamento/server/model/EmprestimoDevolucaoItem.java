@@ -1,6 +1,6 @@
 package br.com.utfpr.gerenciamento.server.model;
 
-import br.com.utfpr.gerenciamento.server.ennumeation.StatusDevolucao;
+import br.com.utfpr.gerenciamento.server.enumeration.StatusDevolucao;
 import com.fasterxml.jackson.annotation.JsonBackReference;
 import jakarta.persistence.*;
 import java.math.BigDecimal;

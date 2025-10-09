@@ -1,12 +1,12 @@
 package br.com.utfpr.gerenciamento.server.service.impl;
 
-import static br.com.utfpr.gerenciamento.server.ennumeation.UserRole.ROLE_ADMINISTRADOR_NAME;
-import static br.com.utfpr.gerenciamento.server.ennumeation.UserRole.ROLE_LABORATORISTA_NAME;
+import static br.com.utfpr.gerenciamento.server.enumeration.UserRole.ROLE_ADMINISTRADOR_NAME;
+import static br.com.utfpr.gerenciamento.server.enumeration.UserRole.ROLE_LABORATORISTA_NAME;
 
 import br.com.utfpr.gerenciamento.server.annotation.InvalidateDashboardCache;
 import br.com.utfpr.gerenciamento.server.dto.EmprestimoResponseDto;
-import br.com.utfpr.gerenciamento.server.ennumeation.StatusDevolucao;
-import br.com.utfpr.gerenciamento.server.ennumeation.TipoItem;
+import br.com.utfpr.gerenciamento.server.enumeration.StatusDevolucao;
+import br.com.utfpr.gerenciamento.server.enumeration.TipoItem;
 import br.com.utfpr.gerenciamento.server.model.Emprestimo;
 import br.com.utfpr.gerenciamento.server.model.EmprestimoDevolucaoItem;
 import br.com.utfpr.gerenciamento.server.model.EmprestimoItem;

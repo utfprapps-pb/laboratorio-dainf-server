@@ -1,4 +1,4 @@
-package br.com.utfpr.gerenciamento.server.ennumeation;
+package br.com.utfpr.gerenciamento.server.enumeration;
 
 /**
  * Enum representando as roles (permissões) de usuário no sistema.
