@@ -18,4 +18,7 @@ public class SystemConfig implements Serializable {
 
   @Column(name = "nada_consta_email", nullable = false)
   private String nadaConstaEmail;
+
+  @Column(name = "is_active", nullable = false)
+  private Boolean isActive = true;
 }
