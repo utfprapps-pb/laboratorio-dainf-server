@@ -98,6 +98,10 @@ public class WebSecurity {
                 .permitAll()
                 .requestMatchers(HttpMethod.GET, "/test")
                 .permitAll()
+                .requestMatchers(HttpMethod.GET, "/config")
+                .hasRole("ADMINISTRADOR")
+                .requestMatchers(HttpMethod.POST, "/config")
+                .hasRole("ADMINISTRADOR")
                 .anyRequest()
                 .authenticated());
 

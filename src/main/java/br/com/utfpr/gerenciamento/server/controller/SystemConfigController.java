@@ -20,15 +20,19 @@ public class SystemConfigController {
   }
 
   @GetMapping
-  @PreAuthorize("hasAuthority('ADMINISTRADOR')")
+  @PreAuthorize("hasAuthority('ROLE_ADMINISTRADOR')")
   public ResponseEntity<SystemConfig> getConfig() {
     Optional<SystemConfig> configOpt = service.getConfig();
     return configOpt.map(ResponseEntity::ok).orElseGet(() -> ResponseEntity.notFound().build());
   }
 
   @PostMapping
-  @PreAuthorize("hasAuthority('ADMINISTRADOR')")
+  @PreAuthorize("hasAuthority('ROLE_ADMINISTRADOR')")
   public ResponseEntity<SystemConfig> saveConfig(@Valid @RequestBody SystemConfig config) {
+    String email = config.getNadaConstaEmail();
+    if (email == null || !email.endsWith("@utfpr.edu.br")) {
+      return ResponseEntity.badRequest().build();
+    }
     SystemConfig savedConfig = service.saveConfig(config);
     return ResponseEntity.ok(savedConfig);
   }
