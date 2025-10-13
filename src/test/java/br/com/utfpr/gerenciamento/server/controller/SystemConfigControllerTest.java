@@ -58,6 +58,7 @@ class SystemConfigControllerTest {
   void shouldAllowAdminToGetConfig() throws Exception {
     authenticateAsAdmin();
     SystemConfig config = new SystemConfig();
+    config.setId(1L);
     config.setNadaConstaEmail("admin@utfpr.edu.br");
     Mockito.when(service.getConfig()).thenReturn(Optional.of(config));
     mockMvc
@@ -70,6 +71,7 @@ class SystemConfigControllerTest {
   void shouldAllowAdminToSaveValidEmail() throws Exception {
     authenticateAsAdmin();
     SystemConfig config = new SystemConfig();
+    config.setId(1L);
     config.setNadaConstaEmail("admin@utfpr.edu.br");
     Mockito.doReturn(config).when(service).saveConfig(Mockito.any());
     mockMvc

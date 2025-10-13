@@ -1,10 +1,13 @@
 CREATE TABLE IF NOT EXISTS system_config (
-    id BIGINT PRIMARY KEY,
-    nada_consta_email VARCHAR(255) NOT NULL,
-    CONSTRAINT single_config_row CHECK (id = 1)
-);
+                                             id BIGINT PRIMARY KEY,
+                                             nada_consta_email VARCHAR(255) NOT NULL,
+    is_active BOOLEAN NOT NULL DEFAULT FALSE
+    );
 
--- Insere uma linha padrão, se necessário
-INSERT INTO system_config (id, nada_consta_email)
-SELECT 1, 'default@utfpr.edu.br'
-WHERE NOT EXISTS (SELECT 1 FROM system_config WHERE id = 1);
+-- Garante que só pode haver uma configuração ativa
+CREATE UNIQUE INDEX IF NOT EXISTS unique_active_config ON system_config (is_active) WHERE is_active = TRUE;
+
+-- Insere uma linha padrão ativa, se necessário
+INSERT INTO system_config (id, nada_consta_email, is_active)
+SELECT 1, 'default@utfpr.edu.br', TRUE
+    WHERE NOT EXISTS (SELECT 1 FROM system_config WHERE is_active = TRUE);
