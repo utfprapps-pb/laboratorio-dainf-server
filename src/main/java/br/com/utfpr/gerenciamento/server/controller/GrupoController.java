@@ -7,7 +7,6 @@ import br.com.utfpr.gerenciamento.server.service.CrudService;
 import br.com.utfpr.gerenciamento.server.service.GrupoService;
 import br.com.utfpr.gerenciamento.server.service.ItemService;
 import java.util.List;
-
 import org.springframework.web.bind.annotation.*;
 
 @RestController

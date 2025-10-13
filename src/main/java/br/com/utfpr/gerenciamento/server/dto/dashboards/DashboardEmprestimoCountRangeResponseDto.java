@@ -4,11 +4,11 @@ import lombok.Data;
 
 @Data
 public class DashboardEmprestimoCountRangeResponseDto {
-    private Integer total;
+  private Integer total;
 
-    private Integer emAndamento;
+  private Integer emAndamento;
 
-    private Integer emAtraso;
+  private Integer emAtraso;
 
-    private Integer finalizado;
+  private Integer finalizado;
 }

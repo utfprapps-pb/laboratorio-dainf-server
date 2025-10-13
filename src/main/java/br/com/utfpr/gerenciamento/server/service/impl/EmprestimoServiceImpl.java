@@ -22,7 +22,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-
 import org.modelmapper.ModelMapper;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -42,12 +41,12 @@ public class EmprestimoServiceImpl extends CrudServiceImpl<Emprestimo, Long>
   private final ModelMapper modelMapper;
 
   public EmprestimoServiceImpl(
-          EmprestimoRepository emprestimoRepository,
-          EmprestimoFilterRepository emprestimoFilterRepository,
-          UsuarioService usuarioService,
-          EmailService emailService,
-          UsuarioRepository usuarioRepository,
-          ModelMapper modelMapper) {
+      EmprestimoRepository emprestimoRepository,
+      EmprestimoFilterRepository emprestimoFilterRepository,
+      UsuarioService usuarioService,
+      EmailService emailService,
+      UsuarioRepository usuarioRepository,
+      ModelMapper modelMapper) {
     this.emprestimoRepository = emprestimoRepository;
     this.emprestimoFilterRepository = emprestimoFilterRepository;
     this.usuarioService = usuarioService;

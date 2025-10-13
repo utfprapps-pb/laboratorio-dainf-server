@@ -5,9 +5,9 @@ import lombok.Data;
 @Data
 public class CidadeResponseDto {
 
-    private Long id;
+  private Long id;
 
-    private String nome;
+  private String nome;
 
-    private EstadoResponseDto estado;
+  private EstadoResponseDto estado;
 }

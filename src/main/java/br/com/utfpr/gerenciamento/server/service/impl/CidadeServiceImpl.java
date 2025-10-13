@@ -6,7 +6,6 @@ import br.com.utfpr.gerenciamento.server.model.Estado;
 import br.com.utfpr.gerenciamento.server.repository.CidadeRepository;
 import br.com.utfpr.gerenciamento.server.service.CidadeService;
 import java.util.List;
-
 import org.modelmapper.ModelMapper;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Service;
@@ -33,15 +32,11 @@ public class CidadeServiceImpl extends CrudServiceImpl<Cidade, Long> implements 
   @Transactional(readOnly = true)
   public List<CidadeResponseDto> cidadeComplete(String query) {
     if (query == null || query.isBlank()) {
-      return this.cidadeRepository.findAll()
-              .stream()
-              .map(this::convertToDto)
-              .toList();
+      return this.cidadeRepository.findAll().stream().map(this::convertToDto).toList();
     } else {
-      return this.cidadeRepository.findByNomeLikeIgnoreCase("%" + query + "%")
-              .stream()
-              .map(this::convertToDto)
-              .toList();
+      return this.cidadeRepository.findByNomeLikeIgnoreCase("%" + query + "%").stream()
+          .map(this::convertToDto)
+          .toList();
     }
   }
 
@@ -51,15 +46,15 @@ public class CidadeServiceImpl extends CrudServiceImpl<Cidade, Long> implements 
     if (estado == null) return List.of();
 
     if (query == null || query.isBlank()) {
-      return this.cidadeRepository.findAllByEstado(estado)
-              .stream()
-              .map(this::convertToDto)
-              .toList();
+      return this.cidadeRepository.findAllByEstado(estado).stream()
+          .map(this::convertToDto)
+          .toList();
     } else {
-      return this.cidadeRepository.findByNomeLikeIgnoreCaseAndEstado("%" + query + "%", estado)
-              .stream()
-              .map(this::convertToDto)
-              .toList();
+      return this.cidadeRepository
+          .findByNomeLikeIgnoreCaseAndEstado("%" + query + "%", estado)
+          .stream()
+          .map(this::convertToDto)
+          .toList();
     }
   }
 

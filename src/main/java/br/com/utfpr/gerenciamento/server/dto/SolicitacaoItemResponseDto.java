@@ -1,14 +1,13 @@
 package br.com.utfpr.gerenciamento.server.dto;
 
-import lombok.Data;
-
 import java.math.BigDecimal;
+import lombok.Data;
 
 @Data
 public class SolicitacaoItemResponseDto {
-    private Long id;
+  private Long id;
 
-    private BigDecimal qtde;
+  private BigDecimal qtde;
 
-    private ItemResponseDto item;
+  private ItemResponseDto item;
 }

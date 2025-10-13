@@ -24,17 +24,14 @@ public class UsuarioController {
 
   private final PermissaoService permissaoService;
 
-  public UsuarioController(
-      UsuarioService usuarioService,
-      PermissaoService permissaoService) {
+  public UsuarioController(UsuarioService usuarioService, PermissaoService permissaoService) {
     this.usuarioService = usuarioService;
     this.permissaoService = permissaoService;
   }
 
   @GetMapping
   public List<UsuarioResponseDto> findAll() {
-    return usuarioService.findAll()
-            .stream().map(usuarioService::convertToDto).toList();
+    return usuarioService.findAll().stream().map(usuarioService::convertToDto).toList();
   }
 
   @GetMapping("{id}")
@@ -58,9 +55,9 @@ public class UsuarioController {
     if (filter != null && !filter.isEmpty()) {
       Specification<Usuario> spec = usuarioService.filterByAllFields(filter);
       result = usuarioService.findAllSpecification(spec, pageRequest);
-      } else {
+    } else {
       result = usuarioService.findAll(pageRequest);
-      }
+    }
     return result.map(usuarioService::convertToDto);
   }
 
@@ -76,8 +73,7 @@ public class UsuarioController {
 
   @PostMapping("change-senha")
   public UsuarioResponseDto redefinirSenha(
-      @RequestBody Usuario usuario,
-      @RequestParam("senhaAtual") String senhaAtual) {
+      @RequestBody Usuario usuario, @RequestParam("senhaAtual") String senhaAtual) {
     return usuarioService.convertToDto(usuarioService.updatePassword(usuario, senhaAtual));
   }
 

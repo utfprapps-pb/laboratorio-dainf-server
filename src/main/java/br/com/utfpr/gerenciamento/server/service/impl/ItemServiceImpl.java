@@ -40,13 +40,13 @@ public class ItemServiceImpl extends CrudServiceImpl<Item, Long> implements Item
   private final ModelMapper modelMapper;
 
   public ItemServiceImpl(
-          ItemRepository itemRepository,
-          EmailService emailService,
-          RelatorioService relatorioService,
-          MinioService minioService,
-          MinioConfig minioConfig,
-          ItemImageRepository itemImageRepository,
-          ModelMapper modelMapper) {
+      ItemRepository itemRepository,
+      EmailService emailService,
+      RelatorioService relatorioService,
+      MinioService minioService,
+      MinioConfig minioConfig,
+      ItemImageRepository itemImageRepository,
+      ModelMapper modelMapper) {
     this.itemRepository = itemRepository;
     this.emailService = emailService;
     this.relatorioService = relatorioService;
@@ -66,36 +66,31 @@ public class ItemServiceImpl extends CrudServiceImpl<Item, Long> implements Item
   public List<ItemResponseDto> itemComplete(String query, Boolean hasEstoque) {
     BigDecimal zero = new BigDecimal(0);
     if ("".equalsIgnoreCase(query)) {
-      if (hasEstoque) return itemRepository.findAllBySaldoIsGreaterThanOrderByNome(zero)
-              .stream()
-              .map(this::convertToDto)
-              .toList();
-
-      else return itemRepository.findAllByOrderByNome()
-              .stream()
-              .map(this::convertToDto)
-              .toList();
+      if (hasEstoque)
+        return itemRepository.findAllBySaldoIsGreaterThanOrderByNome(zero).stream()
+            .map(this::convertToDto)
+            .toList();
+      else return itemRepository.findAllByOrderByNome().stream().map(this::convertToDto).toList();
     } else {
-      if (hasEstoque) return itemRepository.findByNomeLikeIgnoreCaseAndSaldoIsGreaterThanOrderByNome(
-            "%" + query + "%", zero)
-                .stream()
-                .map(this::convertToDto)
-                .toList();
-
-      else return itemRepository.findByNomeLikeIgnoreCaseOrderByNome("%" + query + "%")
-                .stream()
-                .map(this::convertToDto)
-                .toList();
-    }
-  }
-  @Override
-  @Transactional(readOnly = true)
-  public List<ItemResponseDto> findByGrupo(Long id) {
-    return itemRepository.findByGrupoIdOrderByNome(id)
+      if (hasEstoque)
+        return itemRepository
+            .findByNomeLikeIgnoreCaseAndSaldoIsGreaterThanOrderByNome("%" + query + "%", zero)
             .stream()
             .map(this::convertToDto)
             .toList();
+      else
+        return itemRepository.findByNomeLikeIgnoreCaseOrderByNome("%" + query + "%").stream()
+            .map(this::convertToDto)
+            .toList();
+    }
   }
+
+  @Override
+  @Transactional(readOnly = true)
+  public List<ItemResponseDto> findByGrupo(Long id) {
+    return itemRepository.findByGrupoIdOrderByNome(id).stream().map(this::convertToDto).toList();
+  }
+
   @Override
   @Transactional
   public void diminuiSaldoItem(Long idItem, BigDecimal qtde, boolean needValidationSaldo) {

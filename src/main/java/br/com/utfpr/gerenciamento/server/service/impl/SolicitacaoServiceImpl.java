@@ -6,7 +6,6 @@ import br.com.utfpr.gerenciamento.server.repository.SolicitacaoRepository;
 import br.com.utfpr.gerenciamento.server.service.SolicitacaoService;
 import br.com.utfpr.gerenciamento.server.service.UsuarioService;
 import java.util.List;
-
 import org.modelmapper.ModelMapper;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Service;
@@ -21,7 +20,9 @@ public class SolicitacaoServiceImpl extends CrudServiceImpl<Solicitacao, Long>
   private final ModelMapper modelMapper;
 
   public SolicitacaoServiceImpl(
-          SolicitacaoRepository solicitacaoRepository, UsuarioService usuarioService, ModelMapper modelMapper) {
+      SolicitacaoRepository solicitacaoRepository,
+      UsuarioService usuarioService,
+      ModelMapper modelMapper) {
     this.solicitacaoRepository = solicitacaoRepository;
     this.usuarioService = usuarioService;
     this.modelMapper = modelMapper;
@@ -36,10 +37,9 @@ public class SolicitacaoServiceImpl extends CrudServiceImpl<Solicitacao, Long>
   @Transactional(readOnly = true)
   public List<SolicitacaoResponseDto> findAllByUsername(String username) {
     var usuario = usuarioService.findByUsername(username);
-    return solicitacaoRepository.findAllByUsuario(usuario)
-            .stream()
-            .map(this::convertToDto)
-            .toList();
+    return solicitacaoRepository.findAllByUsuario(usuario).stream()
+        .map(this::convertToDto)
+        .toList();
   }
 
   @Override

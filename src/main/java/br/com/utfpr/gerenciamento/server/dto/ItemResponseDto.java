@@ -2,32 +2,31 @@ package br.com.utfpr.gerenciamento.server.dto;
 
 import br.com.utfpr.gerenciamento.server.ennumeation.TipoItem;
 import br.com.utfpr.gerenciamento.server.model.ItemImage;
-import lombok.Data;
-
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.util.List;
+import lombok.Data;
 
 @Data
 public class ItemResponseDto {
 
-    private Long id;
+  private Long id;
 
-    private String nome;
+  private String nome;
 
-    private BigInteger patrimonio;
+  private BigInteger patrimonio;
 
-    private BigDecimal qtdeMinima;
+  private BigDecimal qtdeMinima;
 
-    private String localizacao;
+  private String localizacao;
 
-    private TipoItem tipoItem;
+  private TipoItem tipoItem;
 
-    private BigDecimal saldo;
+  private BigDecimal saldo;
 
-    private GrupoResponseDto grupo;
+  private GrupoResponseDto grupo;
 
-    private String descricao;
+  private String descricao;
 
-    private List<ItemImage> imageItem;
+  private List<ItemImage> imageItem;
 }
