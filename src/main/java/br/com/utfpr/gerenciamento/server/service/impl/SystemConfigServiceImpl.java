@@ -23,11 +23,14 @@ public class SystemConfigServiceImpl implements SystemConfigService {
   @Override
   @Transactional
   public SystemConfig saveConfig(SystemConfig config) {
-    SystemConfig existingConfig = getConfig().orElseGet(() -> {
-      SystemConfig sc = new SystemConfig();
-      sc.setId(1L);
-      return sc;
-    });
+    SystemConfig existingConfig =
+        getConfig()
+            .orElseGet(
+                () -> {
+                  SystemConfig sc = new SystemConfig();
+                  sc.setId(1L);
+                  return sc;
+                });
     existingConfig.setNadaConstaEmail(config.getNadaConstaEmail());
     return repository.save(existingConfig);
   }
