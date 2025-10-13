@@ -27,4 +27,11 @@ public class SystemConfigServiceImpl implements SystemConfigService {
     existingConfig.setNadaConstaEmail(config.getNadaConstaEmail());
     return repository.save(existingConfig);
   }
+
+  @Override
+  @Transactional
+  public void deleteConfig() {
+    Optional<SystemConfig> configOpt = getConfig();
+    configOpt.ifPresent(repository::delete);
+  }
 }

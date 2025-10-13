@@ -7,4 +7,6 @@ public interface SystemConfigService {
   Optional<SystemConfig> getConfig();
 
   SystemConfig saveConfig(SystemConfig config);
+
+  void deleteConfig();
 }
