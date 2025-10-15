@@ -5,7 +5,6 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 import br.com.utfpr.gerenciamento.server.model.SystemConfig;
 import br.com.utfpr.gerenciamento.server.service.SystemConfigService;
-import java.util.Collections;
 import java.util.Optional;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -25,8 +24,7 @@ import org.springframework.web.context.WebApplicationContext;
 class SystemConfigControllerTest {
   @Autowired private WebApplicationContext context;
 
-  @MockitoBean
-  private SystemConfigService service;
+  @MockitoBean private SystemConfigService service;
 
   private MockMvc mockMvc;
 
@@ -45,9 +43,11 @@ class SystemConfigControllerTest {
     config.setNadaConstaEmail("admin@utfpr.edu.br");
     Mockito.when(service.getConfig()).thenReturn(Optional.of(config));
     mockMvc
-        .perform(get("/config")
-            .with(SecurityMockMvcRequestPostProcessors.user("admin")
-                .authorities(new SimpleGrantedAuthority("ROLE_ADMINISTRADOR"))))
+        .perform(
+            get("/config")
+                .with(
+                    SecurityMockMvcRequestPostProcessors.user("admin")
+                        .authorities(new SimpleGrantedAuthority("ROLE_ADMINISTRADOR"))))
         .andExpect(status().isOk())
         .andExpect(jsonPath("$.nadaConstaEmail").value("admin@utfpr.edu.br"));
   }
@@ -61,8 +61,9 @@ class SystemConfigControllerTest {
     mockMvc
         .perform(
             post("/config")
-                .with(SecurityMockMvcRequestPostProcessors.user("admin")
-                    .authorities(new SimpleGrantedAuthority("ROLE_ADMINISTRADOR")))
+                .with(
+                    SecurityMockMvcRequestPostProcessors.user("admin")
+                        .authorities(new SimpleGrantedAuthority("ROLE_ADMINISTRADOR")))
                 .contentType(MediaType.APPLICATION_JSON)
                 .content("{\"nadaConstaEmail\":\"admin@utfpr.edu.br\"}"))
         .andExpect(status().isOk())
@@ -74,8 +75,9 @@ class SystemConfigControllerTest {
     mockMvc
         .perform(
             post("/config")
-                .with(SecurityMockMvcRequestPostProcessors.user("admin")
-                    .authorities(new SimpleGrantedAuthority("ROLE_ADMINISTRADOR")))
+                .with(
+                    SecurityMockMvcRequestPostProcessors.user("admin")
+                        .authorities(new SimpleGrantedAuthority("ROLE_ADMINISTRADOR")))
                 .contentType(MediaType.APPLICATION_JSON)
                 .content("{\"nadaConstaEmail\":\"admin@gmail.com\"}"))
         .andExpect(status().isBadRequest());
@@ -83,15 +85,19 @@ class SystemConfigControllerTest {
 
   @Test
   void shouldRejectNonAdminAccess() throws Exception {
-    mockMvc.perform(get("/config")
-        .with(SecurityMockMvcRequestPostProcessors.user("user")
-            .authorities(new SimpleGrantedAuthority("ROLE_ALUNO"))))
+    mockMvc
+        .perform(
+            get("/config")
+                .with(
+                    SecurityMockMvcRequestPostProcessors.user("user")
+                        .authorities(new SimpleGrantedAuthority("ROLE_ALUNO"))))
         .andExpect(status().isForbidden());
     mockMvc
         .perform(
             post("/config")
-                .with(SecurityMockMvcRequestPostProcessors.user("user")
-                    .authorities(new SimpleGrantedAuthority("ROLE_ALUNO")))
+                .with(
+                    SecurityMockMvcRequestPostProcessors.user("user")
+                        .authorities(new SimpleGrantedAuthority("ROLE_ALUNO")))
                 .contentType(MediaType.APPLICATION_JSON)
                 .content("{\"nadaConstaEmail\":\"admin@utfpr.edu.br\"}"))
         .andExpect(status().isForbidden());
