@@ -110,10 +110,10 @@ public class WebSecurity {
                     .requestMatchers(ACTUATOR)
                     .hasRole(ROLE_ADMINISTRADOR_NAME)
 
-                    // Endpoints adicionais
-                    .requestMatchers(HttpMethod.GET, "/config")
+                    // Config endpoints - restricted to administrators
+                    .requestMatchers(HttpMethod.GET, CONFIG)
                     .hasRole(ROLE_ADMINISTRADOR_NAME)
-                    .requestMatchers(HttpMethod.POST, "/config")
+                    .requestMatchers(HttpMethod.POST, CONFIG)
                     .hasRole(ROLE_ADMINISTRADOR_NAME)
 
                     // Demais endpoints requerem autenticação
