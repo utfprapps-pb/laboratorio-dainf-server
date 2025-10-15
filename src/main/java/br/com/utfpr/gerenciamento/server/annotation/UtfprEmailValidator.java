@@ -1,12 +1,12 @@
 package br.com.utfpr.gerenciamento.server.annotation;
 
+import jakarta.mail.internet.AddressException;
+import jakarta.mail.internet.InternetAddress;
 import jakarta.validation.Constraint;
 import jakarta.validation.ConstraintValidator;
 import jakarta.validation.ConstraintValidatorContext;
 import jakarta.validation.Payload;
 import java.lang.annotation.*;
-import javax.mail.internet.AddressException;
-import javax.mail.internet.InternetAddress;
 
 @Documented
 @Constraint(validatedBy = UtfprEmailValidator.UtfprEmailValidatorImpl.class)
