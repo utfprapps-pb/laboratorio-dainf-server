@@ -7,6 +7,7 @@ import br.com.utfpr.gerenciamento.server.repository.SystemConfigRepository;
 import java.util.Optional;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.mockito.ArgumentCaptor;
 import org.mockito.Mockito;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.ActiveProfiles;
@@ -48,16 +49,17 @@ class SystemConfigServiceImplTest {
     SystemConfig newConfig = new SystemConfig();
     newConfig.setNadaConstaEmail("new@utfpr.edu.br");
     Mockito.when(repository.findFirstByIsActiveTrue()).thenReturn(Optional.empty());
-    Mockito.when(repository.save(Mockito.any()))
-        .thenAnswer(
-            inv -> {
-              SystemConfig arg = inv.getArgument(0);
-              if (arg.getId() == null) arg.setId(1L);
-              return arg;
-            });
+    ArgumentCaptor<SystemConfig> configCaptor = ArgumentCaptor.forClass(SystemConfig.class);
+    Mockito.when(repository.save(Mockito.any())).thenAnswer(inv -> inv.getArgument(0));
+
     SystemConfig saved = service.saveConfig(newConfig);
+    Mockito.verify(repository).save(configCaptor.capture());
+    SystemConfig captured = configCaptor.getValue();
+    assertNull(captured.getId(), "Id should be null before persistence");
+    assertTrue(captured.getIsActive(), "Config should be active");
+    assertEquals("new@utfpr.edu.br", captured.getNadaConstaEmail());
     assertEquals("new@utfpr.edu.br", saved.getNadaConstaEmail());
-    assertEquals(1L, saved.getId());
+    // The id may still be null in the returned object, as persistence is mocked
   }
 
   @Test
