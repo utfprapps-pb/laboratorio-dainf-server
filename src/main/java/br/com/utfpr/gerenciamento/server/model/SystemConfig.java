@@ -1,5 +1,6 @@
 package br.com.utfpr.gerenciamento.server.model;
 
+import br.com.utfpr.gerenciamento.server.annotation.UtfprEmailValidator;
 import jakarta.persistence.*;
 import java.io.Serializable;
 import lombok.Getter;
@@ -16,6 +17,7 @@ public class SystemConfig implements Serializable {
   @GeneratedValue(strategy = GenerationType.IDENTITY)
   private Long id;
 
+  @UtfprEmailValidator
   @Column(name = "nada_consta_email", nullable = false)
   private String nadaConstaEmail;
 

@@ -48,10 +48,6 @@ public class SystemConfigController {
   @PostMapping
   @PreAuthorize("hasAuthority('ROLE_ADMINISTRADOR')")
   public ResponseEntity<SystemConfig> saveConfig(@Valid @RequestBody SystemConfig config) {
-    String email = config.getNadaConstaEmail();
-    if (email == null || !email.endsWith("@utfpr.edu.br")) {
-      return ResponseEntity.badRequest().build();
-    }
     SystemConfig savedConfig = service.saveConfig(config);
     return ResponseEntity.ok(savedConfig);
   }

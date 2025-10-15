@@ -2,6 +2,7 @@ package br.com.utfpr.gerenciamento.server.util;
 
 import static org.junit.jupiter.api.Assertions.*;
 
+import br.com.utfpr.gerenciamento.server.annotation.UtfprEmailValidator;
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.ActiveProfiles;

@@ -1,4 +1,4 @@
-package br.com.utfpr.gerenciamento.server.util;
+package br.com.utfpr.gerenciamento.server.annotation;
 
 import jakarta.validation.Constraint;
 import jakarta.validation.ConstraintValidator;
@@ -20,6 +20,8 @@ public @interface UtfprEmailValidator {
   Class<? extends Payload>[] payload() default {};
 
   class UtfprEmailValidatorImpl implements ConstraintValidator<UtfprEmailValidator, String> {
+    private static final String UTFPR_DOMAIN = "utfpr.edu.br";
+
     /**
      * Valida se uma string representa um endereço de email válido do domínio "utfpr.edu.br".
      *
@@ -35,8 +37,8 @@ public @interface UtfprEmailValidator {
     @Override
     public boolean isValid(String value, ConstraintValidatorContext context) {
       if (value == null) return false;
-      String trimmed = value.trim();
-      if (trimmed.isEmpty()) return false;
+      String trimmed = value.trim().toLowerCase();
+      if (trimmed.isEmpty() || trimmed.contains("\n") || trimmed.contains("\r")) return false;
       try {
         InternetAddress emailAddr = new InternetAddress(trimmed);
         emailAddr.validate();
@@ -45,8 +47,8 @@ public @interface UtfprEmailValidator {
       }
       int atIdx = trimmed.lastIndexOf('@');
       if (atIdx < 0 || atIdx == trimmed.length() - 1) return false;
-      String domain = trimmed.substring(atIdx + 1).toLowerCase();
-      return domain.equals("utfpr.edu.br");
+      String domain = trimmed.substring(atIdx + 1);
+      return domain.equals(UTFPR_DOMAIN);
     }
   }
 }

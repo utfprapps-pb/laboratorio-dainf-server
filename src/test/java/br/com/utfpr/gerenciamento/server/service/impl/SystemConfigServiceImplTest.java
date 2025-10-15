@@ -31,7 +31,13 @@ class SystemConfigServiceImplTest {
     SystemConfig newConfig = new SystemConfig();
     newConfig.setNadaConstaEmail("new@utfpr.edu.br");
     Mockito.when(repository.findFirstByIsActiveTrue()).thenReturn(Optional.of(existing));
-    Mockito.when(repository.save(Mockito.any())).thenAnswer(inv -> inv.getArgument(0));
+    Mockito.when(repository.save(Mockito.any()))
+        .thenAnswer(
+            inv -> {
+              SystemConfig arg = inv.getArgument(0);
+              if (arg.getId() == null) arg.setId(1L);
+              return arg;
+            });
     SystemConfig saved = service.saveConfig(newConfig);
     assertEquals("new@utfpr.edu.br", saved.getNadaConstaEmail());
     assertEquals(1L, saved.getId());
@@ -42,7 +48,13 @@ class SystemConfigServiceImplTest {
     SystemConfig newConfig = new SystemConfig();
     newConfig.setNadaConstaEmail("new@utfpr.edu.br");
     Mockito.when(repository.findFirstByIsActiveTrue()).thenReturn(Optional.empty());
-    Mockito.when(repository.save(Mockito.any())).thenAnswer(inv -> inv.getArgument(0));
+    Mockito.when(repository.save(Mockito.any()))
+        .thenAnswer(
+            inv -> {
+              SystemConfig arg = inv.getArgument(0);
+              if (arg.getId() == null) arg.setId(1L);
+              return arg;
+            });
     SystemConfig saved = service.saveConfig(newConfig);
     assertEquals("new@utfpr.edu.br", saved.getNadaConstaEmail());
     assertEquals(1L, saved.getId());
