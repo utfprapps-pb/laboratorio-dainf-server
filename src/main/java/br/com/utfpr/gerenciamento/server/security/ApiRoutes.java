@@ -93,4 +93,7 @@ public final class ApiRoutes {
   // ============ Actuator (Monitoramento) ============
   /** Endpoints de monitoramento Spring Actuator */
   public static final String ACTUATOR = "/actuator/**";
+
+  /** Config endpoints */
+  public static final String CONFIG = "/config";
 }
