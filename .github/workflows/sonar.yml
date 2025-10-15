@@ -39,4 +39,4 @@ jobs:
       - name: Build and analyze
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-        run: mvn -B verify org.sonarsource.scanner.maven:sonar-maven-plugin:sonar -Pcoverage -Dsonar.projectKey=utfprpb-oficina202502_laboratorio-dainf-server
+        run: mvn -B verify org.sonarsource.scanner.maven:sonar-maven-plugin:sonar -Pcoverage -Dspring.profiles.active=test -Dsonar.projectKey=utfprpb-oficina202502_laboratorio-dainf-server
