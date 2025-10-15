@@ -36,16 +36,18 @@ public class SaidaItem {
   private Saida saida;
 
   @Override
+  @SuppressWarnings(
+      "java:S2097") // False positive - type check via HibernateProxy pattern (SONARJAVA-5765)
   public final boolean equals(Object o) {
     if (this == o) return true;
     if (o == null) return false;
     Class<?> oEffectiveClass =
-        o instanceof HibernateProxy
-            ? ((HibernateProxy) o).getHibernateLazyInitializer().getPersistentClass()
+        o instanceof HibernateProxy hibernateProxy
+            ? hibernateProxy.getHibernateLazyInitializer().getPersistentClass()
             : o.getClass();
     Class<?> thisEffectiveClass =
-        this instanceof HibernateProxy
-            ? ((HibernateProxy) this).getHibernateLazyInitializer().getPersistentClass()
+        this instanceof HibernateProxy hibernateProxy
+            ? hibernateProxy.getHibernateLazyInitializer().getPersistentClass()
             : this.getClass();
     if (thisEffectiveClass != oEffectiveClass) return false;
     SaidaItem saidaItem = (SaidaItem) o;
@@ -54,8 +56,8 @@ public class SaidaItem {
 
   @Override
   public final int hashCode() {
-    return this instanceof HibernateProxy
-        ? ((HibernateProxy) this).getHibernateLazyInitializer().getPersistentClass().hashCode()
+    return this instanceof HibernateProxy hibernateProxy
+        ? hibernateProxy.getHibernateLazyInitializer().getPersistentClass().hashCode()
         : getClass().hashCode();
   }
 }

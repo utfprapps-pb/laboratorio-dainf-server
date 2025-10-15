@@ -52,7 +52,7 @@ public class Usuario implements Serializable, UserDetails {
 
   @ManyToMany(
       cascade = {CascadeType.MERGE, CascadeType.PERSIST},
-      fetch = FetchType.EAGER)
+      fetch = FetchType.LAZY) // LAZY é o padrão correto - use @EntityGraph quando precisar carregar
   private Set<Permissao> permissoes;
 
   @Column(name = "foto_url", length = 2048)
@@ -61,8 +61,9 @@ public class Usuario implements Serializable, UserDetails {
   @Column(name = "codigo_verificacao", length = 512)
   private String codigoVerificacao;
 
-  @Column(name = "email_verificado")
-  private boolean emailVerificado;
+  @Builder.Default
+  @Column(name = "email_verificado", nullable = false)
+  private boolean emailVerificado = false;
 
   public boolean getEmailVerificado() {
     return emailVerificado;

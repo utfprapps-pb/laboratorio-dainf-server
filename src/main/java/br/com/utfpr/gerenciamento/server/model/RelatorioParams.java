@@ -1,6 +1,6 @@
 package br.com.utfpr.gerenciamento.server.model;
 
-import br.com.utfpr.gerenciamento.server.ennumeation.TypeParamReport;
+import br.com.utfpr.gerenciamento.server.enumeration.TypeParamReport;
 import com.fasterxml.jackson.annotation.JsonBackReference;
 import jakarta.persistence.*;
 import lombok.*;

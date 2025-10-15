@@ -6,6 +6,8 @@ import br.com.utfpr.gerenciamento.server.repository.EstadoRepository;
 import br.com.utfpr.gerenciamento.server.service.EstadoService;
 import java.util.List;
 import org.modelmapper.ModelMapper;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -29,7 +31,13 @@ public class EstadoServiceImpl extends CrudServiceImpl<Estado, Long> implements 
 
   @Override
   @Transactional(readOnly = true)
+  @Cacheable(
+      value = "estados",
+      key = "#query == null ? 'all' : #query",
+      unless = "#result.isEmpty()")
   public List<EstadoResponseDto> estadoComplete(String query) {
+    // Cache agressivo: Estados brasileiros (27) raramente mudam
+    // TTL: 6 horas (configurado em CacheConfig)
     if (query == null || query.isBlank()) {
       return estadoRepository.findAll().stream().map(this::convertToDto).toList();
     } else {
@@ -37,6 +45,20 @@ public class EstadoServiceImpl extends CrudServiceImpl<Estado, Long> implements 
           .map(this::convertToDto)
           .toList();
     }
+  }
+
+  @Override
+  @CacheEvict(value = "estados", allEntries = true)
+  public Estado save(Estado estado) {
+    // Limpa cache ao salvar estado
+    return super.save(estado);
+  }
+
+  @Override
+  @CacheEvict(value = "estados", allEntries = true)
+  public void delete(Long id) {
+    // Limpa cache ao deletar estado
+    super.delete(id);
   }
 
   @Override

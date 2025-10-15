@@ -1,6 +1,7 @@
 package br.com.utfpr.gerenciamento.server.service.impl;
 
 import br.com.utfpr.gerenciamento.server.dto.*;
+import br.com.utfpr.gerenciamento.server.enumeration.UserRole;
 import br.com.utfpr.gerenciamento.server.exception.EntityNotFoundException;
 import br.com.utfpr.gerenciamento.server.exception.RecoverCodeInvalidException;
 import br.com.utfpr.gerenciamento.server.model.Permissao;
@@ -14,16 +15,18 @@ import br.com.utfpr.gerenciamento.server.service.UsuarioService;
 import br.com.utfpr.gerenciamento.server.util.Util;
 import java.time.LocalDateTime;
 import java.util.*;
+import java.util.stream.Collectors;
 import org.modelmapper.ModelMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
-import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -32,6 +35,8 @@ import org.springframework.transaction.annotation.Transactional;
 public class UsuarioServiceImpl extends CrudServiceImpl<Usuario, Long>
     implements UsuarioService, UserDetailsService {
 
+  public static final String EMAIL_SUBJECT_CONFIRMACAO =
+      "Confirmação de email - Laboratório DAINF-PB (UTFPR)";
   private final PasswordEncoder passwordEncoder;
 
   @Value("${utfpr.front.url}")
@@ -72,7 +77,7 @@ public class UsuarioServiceImpl extends CrudServiceImpl<Usuario, Long>
   @Override
   @Transactional(readOnly = true)
   public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
-    Usuario usuario = usuarioRepository.findByUsernameOrEmail(username, username);
+    Usuario usuario = findByUsernameForAuthentication(username);
     if (usuario == null) {
       throw new UsernameNotFoundException("Usuário não encontrado");
     }
@@ -81,46 +86,68 @@ public class UsuarioServiceImpl extends CrudServiceImpl<Usuario, Long>
 
   @Override
   @Transactional(readOnly = true)
-  public List<UsuarioResponseDto> usuarioComplete(String query) {
+  public Page<UsuarioResponseDto> usuarioComplete(String query, Pageable pageable) {
     if ("".equalsIgnoreCase(query)) {
-      return usuarioRepository.findAll().stream().map(this::convertToDto).toList();
+      return usuarioRepository.findAll(pageable).map(this::convertToDto);
     }
-    return usuarioRepository.findByNomeLikeIgnoreCase("%" + query + "%").stream()
-        .map(this::convertToDto)
-        .toList();
+    return usuarioRepository
+        .findByNomeLikeIgnoreCase("%" + query + "%", pageable)
+        .map(this::convertToDto);
   }
 
   @Override
   @Transactional(readOnly = true)
   public Usuario findByUsername(String username) {
-    if (username.contains("@professores.utfpr.edu.br")) {
-      username = username.replace("professores.", "");
-    } else if (username.contains("@administrativo.utfpr.edu.br")) {
-      username = username.replace("administrativo.", "");
-    }
+    username = normalizeUsername(username);
+    // Usa versão SEM permissoes (LAZY) - mais performática para uso geral
     return usuarioRepository.findByUsernameOrEmail(username, username);
   }
 
   @Override
   @Transactional(readOnly = true)
-  public List<UsuarioResponseDto> usuarioCompleteByUserAndDocAndNome(String query) {
-    if (query == null || query.isBlank()) {
-      return usuarioRepository.findAllCustom().stream().map(this::convertToDto).toList();
+  public Usuario findByUsernameForAuthentication(String username) {
+    username = normalizeUsername(username);
+    // Usa versão COM permissoes (@EntityGraph) - necessário para autenticação
+    return usuarioRepository.findWithPermissoesByUsernameOrEmail(username, username);
+  }
+
+  /**
+   * Normaliza username removendo subdomínios institucionais da UTFPR.
+   * Converte @professores.utfpr.edu.br e @administrativo.utfpr.edu.br para @utfpr.edu.br.
+   *
+   * @param username username original (pode conter subdomínios)
+   * @return username normalizado
+   */
+  private String normalizeUsername(String username) {
+    if (username.contains("@professores.utfpr.edu.br")) {
+      return username.replace("professores.", "");
+    } else if (username.contains("@administrativo.utfpr.edu.br")) {
+      return username.replace("administrativo.", "");
     }
-    return usuarioRepository.findUsuarioCompleteCustom("%" + query.toUpperCase() + "%").stream()
-        .map(this::convertToDto)
-        .toList();
+    return username;
   }
 
   @Override
   @Transactional(readOnly = true)
-  public List<UsuarioResponseDto> usuarioCompleteLab(String query) {
+  public Page<UsuarioResponseDto> usuarioCompleteByUserAndDocAndNome(
+      String query, Pageable pageable) {
     if (query == null || query.isBlank()) {
-      return usuarioRepository.findAllCustomLab().stream().map(this::convertToDto).toList();
+      return usuarioRepository.findAllCustom(pageable).map(this::convertToDto);
     }
-    return usuarioRepository.findUsuarioCompleteCustomLab("%" + query.toUpperCase() + "%").stream()
-        .map(this::convertToDto)
-        .toList();
+    return usuarioRepository
+        .findUsuarioCompleteCustom("%" + query.toUpperCase() + "%", pageable)
+        .map(this::convertToDto);
+  }
+
+  @Override
+  @Transactional(readOnly = true)
+  public Page<UsuarioResponseDto> usuarioCompleteLab(String query, Pageable pageable) {
+    if (query == null || query.isBlank()) {
+      return usuarioRepository.findAllCustomLab(pageable).map(this::convertToDto);
+    }
+    return usuarioRepository
+        .findUsuarioCompleteCustomLab("%" + query.toUpperCase() + "%", pageable)
+        .map(this::convertToDto);
   }
 
   @Override
@@ -144,11 +171,25 @@ public class UsuarioServiceImpl extends CrudServiceImpl<Usuario, Long>
     if (usuario.getPassword() != null && !Util.isPasswordEncoded(usuario.getPassword()))
       usuario.setPassword(passwordEncoder.encode(usuario.getPassword()));
 
-    Set<Permissao> permissoes = new HashSet<>();
-    usuario
-        .getPermissoes()
-        .forEach(permissao -> permissoes.add(permissaoService.findOne(permissao.getId())));
-    usuario.setPermissoes(permissoes);
+    // Normaliza permissões para evitar NPE e usa batch fetching (1 query em vez de N)
+    Set<Permissao> permissoesInput = usuario.getPermissoes();
+    if (permissoesInput != null && !permissoesInput.isEmpty()) {
+      Set<Long> permissaoIds =
+          permissoesInput.stream()
+              .filter(Objects::nonNull)
+              .map(Permissao::getId)
+              .filter(Objects::nonNull)
+              .collect(Collectors.toSet());
+
+      if (!permissaoIds.isEmpty()) {
+        Set<Permissao> permissoes = new HashSet<>(permissaoService.findAllById(permissaoIds));
+        usuario.setPermissoes(permissoes);
+      } else {
+        usuario.setPermissoes(new HashSet<>());
+      }
+    } else {
+      usuario.setPermissoes(new HashSet<>());
+    }
 
     if (usuario.getId() != null) {
       Usuario usuarioTmp = usuarioRepository.findByUsername(usuario.getUsername());
@@ -206,7 +247,6 @@ public class UsuarioServiceImpl extends CrudServiceImpl<Usuario, Long>
             .build();
 
     recoverPasswordRepository.save(recoverPassword);
-    // emailMessageService.sendEmail(emailDto, "templateRecoverPassword");
     emailService.sendEmailWithTemplate(
         emailDto, emailDto.getEmailTo(), emailDto.getSubject(), "templateRecoverPassword");
 
@@ -261,27 +301,21 @@ public class UsuarioServiceImpl extends CrudServiceImpl<Usuario, Long>
       userTemp.setPassword(passwordEncoder.encode(usuario.getPassword()));
       return usuarioRepository.save(userTemp);
     }
-    //    BCryptPasswordEncoder bCrypt = new BCryptPasswordEncoder();
-    //    usuario.setEmailVerificado(userTemp.getEmailVerificado());
-    //    if (bCrypt.matches(senhaAtual, userTemp.getPassword())) {
-    //      usuario.setPassword(bCrypt.encode(usuario.getPassword()));
-    //      return usuarioRepository.save(usuario);
-    //    }
     throw new RuntimeException("Senha incorreta");
   }
 
   @Override
   public Usuario saveNewUser(Usuario usuario) {
     if (!Util.isPasswordEncoded(usuario.getPassword())) {
-      usuario.setPassword(new BCryptPasswordEncoder().encode(usuario.getPassword()));
+      usuario.setPassword(passwordEncoder.encode(usuario.getPassword()));
     }
     try {
       usuario.setPermissoes(new HashSet<>());
       usuario.setUsername(usuario.getEmail());
       if (usuario.getEmail().contains("@utfpr.edu.br")) {
-        usuario.getPermissoes().add(permissaoService.findByNome("ROLE_PROFESSOR"));
+        usuario.getPermissoes().add(permissaoService.findByNome(UserRole.PROFESSOR.getAuthority()));
       } else {
-        usuario.getPermissoes().add(permissaoService.findByNome("ROLE_ALUNO"));
+        usuario.getPermissoes().add(permissaoService.findByNome(UserRole.ALUNO.getAuthority()));
       }
       usuario.setCodigoVerificacao(UUID.randomUUID().toString());
       usuario.setEmailVerificado(false);
@@ -291,9 +325,8 @@ public class UsuarioServiceImpl extends CrudServiceImpl<Usuario, Long>
       emailDto.setEmailTo(usuario.getEmail());
       emailDto.setUsuario(usuario.getNome());
       emailDto.setUrl(frontBaseUrl + "/confirmar-email/" + usuario.getCodigoVerificacao());
-      // TODO - adicionar constante com o nome do laboratório.
-      emailDto.setSubject("Confirmação de email - Laboratório DAINF-PB (UTFPR)");
-      emailDto.setSubjectBody("Confirmação de email - Laboratório DAINF-PB (UTFPR)");
+      emailDto.setSubject(EMAIL_SUBJECT_CONFIRMACAO);
+      emailDto.setSubjectBody(EMAIL_SUBJECT_CONFIRMACAO);
 
       emailService.sendEmailWithTemplate(
           emailDto, emailDto.getEmailTo(), emailDto.getSubject(), "templateConfirmacaoCadastro");
@@ -310,8 +343,8 @@ public class UsuarioServiceImpl extends CrudServiceImpl<Usuario, Long>
     emailDto.setEmailTo(usuario.getEmail());
     emailDto.setUsuario(usuario.getNome());
     emailDto.setUrl(frontBaseUrl + "/confirmar-email/" + usuario.getCodigoVerificacao());
-    emailDto.setSubject("Confirmação de email - Laboratório DAINF-PB (UTFPR)");
-    emailDto.setSubjectBody("Confirmação de email - Laboratório DAINF-PB (UTFPR)");
+    emailDto.setSubject(EMAIL_SUBJECT_CONFIRMACAO);
+    emailDto.setSubjectBody(EMAIL_SUBJECT_CONFIRMACAO);
     Map<String, Object> body = new HashMap<>();
     body.put("usuario", usuario.getNome());
     body.put("url", emailDto.getUrl());

@@ -1,6 +1,6 @@
 package br.com.utfpr.gerenciamento.server.dto;
 
-import br.com.utfpr.gerenciamento.server.ennumeation.TipoItem;
+import br.com.utfpr.gerenciamento.server.enumeration.TipoItem;
 import br.com.utfpr.gerenciamento.server.model.ItemImage;
 import java.math.BigDecimal;
 import java.math.BigInteger;

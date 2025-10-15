@@ -56,7 +56,8 @@ public class JWTAuthorizationFilter extends BasicAuthenticationFilter {
               .verify(token.replace(TOKEN_PREFIX, ""))
               .getSubject();
       if (user != null) {
-        Usuario u = usuarioService.findByUsername(user);
+        // IMPORTANTE: Usa método COM @EntityGraph porque getAuthorities() precisa das permissoes
+        Usuario u = usuarioService.findByUsernameForAuthentication(user);
         return new UsernamePasswordAuthenticationToken(user, null, u.getAuthorities());
       }
       return null;

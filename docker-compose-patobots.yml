@@ -40,8 +40,6 @@ services:
       - "traefik.http.routers.patobots-labs-api.tls.certresolver=letsencrypt"
       - "traefik.http.routers.patobots-labs-api.entrypoints=websecure"
 
-    volumes:
-      - ./appdata/patobots-labs/upload:/opt/uploads
     restart: unless-stopped
     networks:
       - web

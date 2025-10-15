@@ -19,7 +19,7 @@ import org.springframework.ui.freemarker.FreeMarkerTemplateUtils;
 @Slf4j
 public class EmailServiceImpl implements EmailService {
 
-  @Value("${utfpr.email.address}")
+  @Value("${spring.mail.username}")
   private String emailAddress;
 
   private final JavaMailSender javaMailSender;
