@@ -34,6 +34,15 @@ public class WebSecurity {
     this.env = env;
   }
 
+  /**
+   * Configura a cadeia de segurança HTTP aplicando autenticação JWT, autorização por papéis, CORS e políticas de sessão.
+   *
+   * Configura o AuthenticationManager com o serviço de usuários e codificador de senha, desabilita CSRF para todas
+   * as rotas, habilita CORS com a fonte definida em corsConfigurationSource(), registra filtros JWT de autenticação
+   * e autorização, define regras de acesso por papel para endpoints específicos e usa sessão no modo stateless.
+   *
+   * @return o SecurityFilterChain configurado para a aplicação
+   */
   @Bean
   @SneakyThrows
   public SecurityFilterChain filterChain(HttpSecurity http) {
@@ -123,6 +132,14 @@ public class WebSecurity {
     return new BCryptPasswordEncoder();
   }
 
+  /**
+   * Cria um CorsConfigurationSource configurado com origens, métodos e cabeçalhos permitidos para CORS.
+   *
+   * As origens são lidas da propriedade de ambiente "utfpr.front.url" (valores separados por vírgula); se ausente, usa "http://localhost:4200".
+   * Permite os métodos HTTP GET, POST, PUT, PATCH, DELETE, OPTIONS e HEAD, e cabeçalhos comuns de autenticação e conteúdo (por exemplo Authorization, Content-Type, Origin).
+   *
+   * @return uma UrlBasedCorsConfigurationSource com a configuração CORS registrada para todas as rotas (/**)
+   */
   @Bean
   CorsConfigurationSource corsConfigurationSource() {
     var frontendUrls = env.getProperty("utfpr.front.url", "http://localhost:4200");
