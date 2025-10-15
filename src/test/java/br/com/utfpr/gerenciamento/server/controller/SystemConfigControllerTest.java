@@ -13,9 +13,8 @@ import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.MediaType;
-import org.springframework.security.authentication.TestingAuthenticationToken;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
-import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors;
 import org.springframework.security.test.web.servlet.setup.SecurityMockMvcConfigurers;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
@@ -39,38 +38,22 @@ class SystemConfigControllerTest {
             .build();
   }
 
-  private void authenticateAsAdmin() {
-    SecurityContextHolder.getContext()
-        .setAuthentication(
-            new TestingAuthenticationToken(
-                "admin",
-                null,
-                Collections.singletonList(new SimpleGrantedAuthority("ROLE_ADMINISTRADOR"))));
-  }
-
-  private void authenticateAsUser() {
-    SecurityContextHolder.getContext()
-        .setAuthentication(
-            new TestingAuthenticationToken(
-                "user", null, Collections.singletonList(new SimpleGrantedAuthority("ROLE_ALUNO"))));
-  }
-
   @Test
   void shouldAllowAdminToGetConfig() throws Exception {
-    authenticateAsAdmin();
     SystemConfig config = new SystemConfig();
     config.setId(1L);
     config.setNadaConstaEmail("admin@utfpr.edu.br");
     Mockito.when(service.getConfig()).thenReturn(Optional.of(config));
     mockMvc
-        .perform(get("/config"))
+        .perform(get("/config")
+            .with(SecurityMockMvcRequestPostProcessors.user("admin")
+                .authorities(new SimpleGrantedAuthority("ROLE_ADMINISTRADOR"))))
         .andExpect(status().isOk())
         .andExpect(jsonPath("$.nadaConstaEmail").value("admin@utfpr.edu.br"));
   }
 
   @Test
   void shouldAllowAdminToSaveValidEmail() throws Exception {
-    authenticateAsAdmin();
     SystemConfig config = new SystemConfig();
     config.setId(1L);
     config.setNadaConstaEmail("admin@utfpr.edu.br");
@@ -78,6 +61,8 @@ class SystemConfigControllerTest {
     mockMvc
         .perform(
             post("/config")
+                .with(SecurityMockMvcRequestPostProcessors.user("admin")
+                    .authorities(new SimpleGrantedAuthority("ROLE_ADMINISTRADOR")))
                 .contentType(MediaType.APPLICATION_JSON)
                 .content("{\"nadaConstaEmail\":\"admin@utfpr.edu.br\"}"))
         .andExpect(status().isOk())
@@ -86,10 +71,11 @@ class SystemConfigControllerTest {
 
   @Test
   void shouldRejectInvalidEmailDomain() throws Exception {
-    authenticateAsAdmin();
     mockMvc
         .perform(
             post("/config")
+                .with(SecurityMockMvcRequestPostProcessors.user("admin")
+                    .authorities(new SimpleGrantedAuthority("ROLE_ADMINISTRADOR")))
                 .contentType(MediaType.APPLICATION_JSON)
                 .content("{\"nadaConstaEmail\":\"admin@gmail.com\"}"))
         .andExpect(status().isBadRequest());
@@ -97,11 +83,15 @@ class SystemConfigControllerTest {
 
   @Test
   void shouldRejectNonAdminAccess() throws Exception {
-    authenticateAsUser();
-    mockMvc.perform(get("/config")).andExpect(status().isForbidden());
+    mockMvc.perform(get("/config")
+        .with(SecurityMockMvcRequestPostProcessors.user("user")
+            .authorities(new SimpleGrantedAuthority("ROLE_ALUNO"))))
+        .andExpect(status().isForbidden());
     mockMvc
         .perform(
             post("/config")
+                .with(SecurityMockMvcRequestPostProcessors.user("user")
+                    .authorities(new SimpleGrantedAuthority("ROLE_ALUNO")))
                 .contentType(MediaType.APPLICATION_JSON)
                 .content("{\"nadaConstaEmail\":\"admin@utfpr.edu.br\"}"))
         .andExpect(status().isForbidden());
