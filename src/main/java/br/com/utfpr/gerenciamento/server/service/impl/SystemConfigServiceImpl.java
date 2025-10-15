@@ -11,15 +11,33 @@ import org.springframework.stereotype.Service;
 public class SystemConfigServiceImpl implements SystemConfigService {
   private final SystemConfigRepository repository;
 
+  /**
+   * Cria uma instância de SystemConfigServiceImpl usando o repositório fornecido.
+   *
+   * @param repository repositório para acesso e persistência de entidades SystemConfig
+   */
   public SystemConfigServiceImpl(SystemConfigRepository repository) {
     this.repository = repository;
   }
 
+  /**
+   * Obtém a configuração do sistema marcada como ativa.
+   *
+   * @return Optional contendo a SystemConfig ativa, vazio se nenhuma configuração ativa existir.
+   */
   @Override
   public Optional<SystemConfig> getConfig() {
     return repository.findFirstByIsActiveTrue();
   }
 
+  /**
+   * Persiste a configuração de sistema ativa, criando uma configuração base se nenhuma existir.
+   *
+   * Atualiza o campo `nadaConstaEmail` da configuração ativa com o valor fornecido e salva a entidade.
+   *
+   * @param config configuração com os valores a serem aplicados na configuração ativa (usa `nadaConstaEmail`)
+   * @return a entidade SystemConfig salva representando a configuração ativa após a atualização
+   */
   @Override
   @Transactional
   public SystemConfig saveConfig(SystemConfig config) {
@@ -35,6 +53,11 @@ public class SystemConfigServiceImpl implements SystemConfigService {
     return repository.save(existingConfig);
   }
 
+  /**
+   * Remove a configuração de sistema atualmente ativa, se existir.
+   *
+   * Se não houver configuração ativa, o método não realiza nenhuma ação.
+   */
   @Override
   @Transactional
   public void deleteConfig() {
