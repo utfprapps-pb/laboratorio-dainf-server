@@ -102,22 +102,10 @@ public class WebSecurity {
                     .hasRole(ROLE_ADMINISTRADOR_NAME)
 
                     // Endpoints adicionais
-                    .requestMatchers(HttpMethod.PUT, "/usuario/**")
-                    .hasRole("ADMINISTRADOR")
-                    .requestMatchers(HttpMethod.PATCH, "/usuario/**")
-                    .hasRole("ADMINISTRADOR")
-                    .requestMatchers(HttpMethod.POST, "/usuario/**")
-                    .hasRole("ADMINISTRADOR")
-                    .requestMatchers(HttpMethod.DELETE, "/usuario/**")
-                    .hasRole("ADMINISTRADOR")
-                    .requestMatchers(HttpMethod.POST, "/auth")
-                    .permitAll()
-                    .requestMatchers(HttpMethod.GET, "/test")
-                    .permitAll()
                     .requestMatchers(HttpMethod.GET, "/config")
-                    .hasRole("ADMINISTRADOR")
+                    .hasRole(ROLE_ADMINISTRADOR_NAME)
                     .requestMatchers(HttpMethod.POST, "/config")
-                    .hasRole("ADMINISTRADOR")
+                    .hasRole(ROLE_ADMINISTRADOR_NAME)
 
                     // Demais endpoints requerem autenticação
                     .anyRequest()
