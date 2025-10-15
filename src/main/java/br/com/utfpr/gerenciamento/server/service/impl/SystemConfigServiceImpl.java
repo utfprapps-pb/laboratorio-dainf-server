@@ -33,9 +33,11 @@ public class SystemConfigServiceImpl implements SystemConfigService {
   /**
    * Persiste a configuração de sistema ativa, criando uma configuração base se nenhuma existir.
    *
-   * Atualiza o campo `nadaConstaEmail` da configuração ativa com o valor fornecido e salva a entidade.
+   * <p>Atualiza o campo `nadaConstaEmail` da configuração ativa com o valor fornecido e salva a
+   * entidade.
    *
-   * @param config configuração com os valores a serem aplicados na configuração ativa (usa `nadaConstaEmail`)
+   * @param config configuração com os valores a serem aplicados na configuração ativa (usa
+   *     `nadaConstaEmail`)
    * @return a entidade SystemConfig salva representando a configuração ativa após a atualização
    */
   @Override
@@ -56,7 +58,7 @@ public class SystemConfigServiceImpl implements SystemConfigService {
   /**
    * Remove a configuração de sistema atualmente ativa, se existir.
    *
-   * Se não houver configuração ativa, o método não realiza nenhuma ação.
+   * <p>Se não houver configuração ativa, o método não realiza nenhuma ação.
    */
   @Override
   @Transactional

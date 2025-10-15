@@ -23,12 +23,14 @@ public @interface UtfprEmailValidator {
     /**
      * Valida se uma string representa um endereço de email válido do domínio "utfpr.edu.br".
      *
-     * Entradas nulas ou vazias são consideradas inválidas; a validação também verifica sintaxe de
-     * endereço de email e compara o domínio (parte após '@') com "utfpr.edu.br" de forma case-insensitive.
+     * <p>Entradas nulas ou vazias são consideradas inválidas; a validação também verifica sintaxe
+     * de endereço de email e compara o domínio (parte após '@') com "utfpr.edu.br" de forma
+     * case-insensitive.
      *
-     * @param value   o email a ser validado (pode conter espaços que serão removidos)
+     * @param value o email a ser validado (pode conter espaços que serão removidos)
      * @param context contexto do validador (fornecido pela infraestrutura de validação)
-     * @return `true` se o email for sintaticamente válido e pertencer ao domínio `utfpr.edu.br`, `false` caso contrário.
+     * @return `true` se o email for sintaticamente válido e pertencer ao domínio `utfpr.edu.br`,
+     *     `false` caso contrário.
      */
     @Override
     public boolean isValid(String value, ConstraintValidatorContext context) {

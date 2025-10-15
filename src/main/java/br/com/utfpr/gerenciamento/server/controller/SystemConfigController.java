@@ -27,7 +27,8 @@ public class SystemConfigController {
   /**
    * Obtém a configuração do sistema.
    *
-   * @return ResponseEntity contendo a configuração com status 200 quando presente, ou resposta 404 Not Found quando não houver configuração.
+   * @return ResponseEntity contendo a configuração com status 200 quando presente, ou resposta 404
+   *     Not Found quando não houver configuração.
    */
   @GetMapping
   @PreAuthorize("hasAuthority('ROLE_ADMINISTRADOR')")
@@ -39,8 +40,10 @@ public class SystemConfigController {
   /**
    * Salva a configuração do sistema após validar o e-mail de contato.
    *
-   * @param config objeto de configuração do sistema; o campo `nadaConstaEmail` deve ser não nulo e terminar com `@utfpr.edu.br`
-   * @return `ResponseEntity` com o `SystemConfig` salvo no corpo e status 200; se o e-mail for nulo ou não terminar com `@utfpr.edu.br`, retorna 400 (Bad Request) sem corpo
+   * @param config objeto de configuração do sistema; o campo `nadaConstaEmail` deve ser não nulo e
+   *     terminar com `@utfpr.edu.br`
+   * @return `ResponseEntity` com o `SystemConfig` salvo no corpo e status 200; se o e-mail for nulo
+   *     ou não terminar com `@utfpr.edu.br`, retorna 400 (Bad Request) sem corpo
    */
   @PostMapping
   @PreAuthorize("hasAuthority('ROLE_ADMINISTRADOR')")

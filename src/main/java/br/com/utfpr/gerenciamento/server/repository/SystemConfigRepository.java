@@ -8,9 +8,10 @@ import org.springframework.stereotype.Repository;
 @Repository
 public interface SystemConfigRepository extends JpaRepository<SystemConfig, Long> {
   /**
- * Busca a primeira configuração do sistema marcada como ativa.
- *
- * @return um {@link SystemConfig} opcional contendo a primeira configuração com `isActive = true`, vazio se nenhuma for encontrada
- */
-Optional<SystemConfig> findFirstByIsActiveTrue();
+   * Busca a primeira configuração do sistema marcada como ativa.
+   *
+   * @return um {@link SystemConfig} opcional contendo a primeira configuração com `isActive =
+   *     true`, vazio se nenhuma for encontrada
+   */
+  Optional<SystemConfig> findFirstByIsActiveTrue();
 }
