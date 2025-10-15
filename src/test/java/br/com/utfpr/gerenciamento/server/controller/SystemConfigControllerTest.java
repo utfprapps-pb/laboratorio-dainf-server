@@ -10,9 +10,10 @@ import java.util.Optional;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
+import org.mockito.MockitoAnnotations;
+import org.mockito.Spy;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.test.mock.mockito.SpyBean;
 import org.springframework.http.MediaType;
 import org.springframework.security.authentication.TestingAuthenticationToken;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
@@ -26,12 +27,13 @@ import org.springframework.web.context.WebApplicationContext;
 class SystemConfigControllerTest {
   @Autowired private WebApplicationContext context;
 
-  @SpyBean private SystemConfigService service;
+  @Spy private SystemConfigService service;
 
   private MockMvc mockMvc;
 
   @BeforeEach
   void setup() {
+    MockitoAnnotations.openMocks(this);
     mockMvc =
         MockMvcBuilders.webAppContextSetup(context)
             .apply(SecurityMockMvcConfigurers.springSecurity())
