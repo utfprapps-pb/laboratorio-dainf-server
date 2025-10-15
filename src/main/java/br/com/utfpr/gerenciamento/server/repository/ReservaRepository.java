@@ -16,7 +16,7 @@ public interface ReservaRepository
   @Query(
       value =
           """
-          SELECT *
+          SELECT R.*
           FROM RESERVA R
           LEFT JOIN RESERVA_ITEM RI
               ON RI.RESERVA_ID = R.ID

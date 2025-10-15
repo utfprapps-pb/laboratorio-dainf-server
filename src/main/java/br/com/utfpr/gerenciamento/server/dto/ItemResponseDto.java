@@ -24,6 +24,8 @@ public class ItemResponseDto {
 
   private BigDecimal saldo;
 
+  private BigDecimal valor;
+
   private GrupoResponseDto grupo;
 
   private String descricao;
