@@ -70,4 +70,6 @@ public interface EmprestimoRepository
   List<Emprestimo> findAllByDataDevolucaoIsNullOrderById();
 
   List<Emprestimo> findByDataDevolucaoIsNullAndPrazoDevolucaoEquals(LocalDate dt);
+
+  List<Emprestimo> findAllByUsuarioAndDataDevolucaoIsNull(Usuario usuario);
 }

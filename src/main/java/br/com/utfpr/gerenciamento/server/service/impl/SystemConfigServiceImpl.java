@@ -60,4 +60,16 @@ public class SystemConfigServiceImpl implements SystemConfigService {
     Optional<SystemConfig> configOpt = getConfig();
     configOpt.ifPresent(repository::delete);
   }
+
+  /**
+   * Obtém o email associado à chave 'nadaconsta.email' na configuração do sistema.
+   *
+   * @return o email 'nada consta' se existir, caso contrário, uma string vazia.
+   */
+  @Override
+  public String getEmailNadaConsta() {
+    return repository.findFirstByIsActiveTrue()
+        .map(SystemConfig::getNadaConstaEmail)
+        .orElse("");
+  }
 }

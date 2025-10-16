@@ -65,6 +65,10 @@ public class Usuario implements Serializable, UserDetails {
   @Column(name = "email_verificado", nullable = false)
   private boolean emailVerificado = false;
 
+  @Builder.Default
+  @Column(name = "ativo", nullable = false)
+  private boolean ativo = false;
+
   public boolean getEmailVerificado() {
     return emailVerificado;
   }
@@ -104,6 +108,6 @@ public class Usuario implements Serializable, UserDetails {
 
   @Override
   public boolean isEnabled() {
-    return this.emailVerificado;
+    return this.ativo;
   }
 }

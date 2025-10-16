@@ -4,6 +4,7 @@ import br.com.utfpr.gerenciamento.server.dto.EmprestimoResponseDto;
 import br.com.utfpr.gerenciamento.server.model.Emprestimo;
 import br.com.utfpr.gerenciamento.server.model.EmprestimoDevolucaoItem;
 import br.com.utfpr.gerenciamento.server.model.EmprestimoItem;
+import br.com.utfpr.gerenciamento.server.model.Usuario;
 import br.com.utfpr.gerenciamento.server.model.dashboards.DashboardEmprestimoDia;
 import br.com.utfpr.gerenciamento.server.model.dashboards.DashboardItensEmprestados;
 import br.com.utfpr.gerenciamento.server.model.filter.EmprestimoFilter;
@@ -25,6 +26,8 @@ public interface EmprestimoService extends CrudService<Emprestimo, Long> {
   List<Emprestimo> findAllUsuarioEmprestimo(String username);
 
   List<Emprestimo> findAllEmprestimosAbertos();
+
+  List<Emprestimo> findAllEmprestimosAbertosByUsuario(String username);
 
   void changePrazoDevolucao(Long idEmprestimo, LocalDate novaData);
 

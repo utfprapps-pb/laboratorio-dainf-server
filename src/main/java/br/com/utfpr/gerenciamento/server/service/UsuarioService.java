@@ -45,4 +45,6 @@ public interface UsuarioService extends CrudService<Usuario, Long> {
   Usuario updatePassword(Usuario entity, String password);
 
   Usuario saveNewUser(Usuario entity);
+
+  Usuario findByDocumento(String documento);
 }

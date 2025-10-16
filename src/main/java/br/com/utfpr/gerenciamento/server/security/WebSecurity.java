@@ -3,6 +3,7 @@ package br.com.utfpr.gerenciamento.server.security;
 import static br.com.utfpr.gerenciamento.server.enumeration.UserRole.ROLE_ADMINISTRADOR_NAME;
 import static br.com.utfpr.gerenciamento.server.enumeration.UserRole.ROLE_LABORATORISTA_NAME;
 import static br.com.utfpr.gerenciamento.server.security.ApiRoutes.*;
+import static br.com.utfpr.gerenciamento.server.security.ApiRoutes.NADACONSTA_SOLICITAR;
 
 import br.com.utfpr.gerenciamento.server.service.impl.UsuarioServiceImpl;
 import java.util.List;
@@ -100,6 +101,10 @@ public class WebSecurity {
                     .requestMatchers(HttpMethod.POST, EMPRESTIMO_SAVE, EMPRESTIMO_DEVOLUCAO)
                     .hasAnyRole(ROLE_LABORATORISTA_NAME, ROLE_ADMINISTRADOR_NAME)
                     .requestMatchers(HttpMethod.DELETE, EMPRESTIMO)
+                    .hasAnyRole(ROLE_LABORATORISTA_NAME, ROLE_ADMINISTRADOR_NAME)
+
+                    // Nada Consta - solicitar requer LABORATORISTA ou ADMINISTRADOR
+                    .requestMatchers(HttpMethod.POST, NADACONSTA_SOLICITAR)
                     .hasAnyRole(ROLE_LABORATORISTA_NAME, ROLE_ADMINISTRADOR_NAME)
 
                     // Endpoints públicos

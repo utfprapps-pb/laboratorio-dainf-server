@@ -42,6 +42,8 @@ public interface UsuarioRepository
 
   Usuario findByEmail(String email);
 
+  java.util.Optional<Usuario> findByDocumento(String documento);
+
   Page<Usuario> findByNomeLikeIgnoreCase(String query, Pageable pageable);
 
   @Query(

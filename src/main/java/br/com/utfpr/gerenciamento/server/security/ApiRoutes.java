@@ -96,4 +96,10 @@ public final class ApiRoutes {
 
   /** Config endpoints */
   public static final String CONFIG = "/config";
+
+  // ============ Nada Consta Endpoints ============
+  /** Base para todos os endpoints de nada consta */
+  public static final String NADACONSTA = "/nadaconsta/**";
+  /** Endpoint de solicitação de nada consta */
+  public static final String NADACONSTA_SOLICITAR = "/nadaconsta/solicitar";
 }

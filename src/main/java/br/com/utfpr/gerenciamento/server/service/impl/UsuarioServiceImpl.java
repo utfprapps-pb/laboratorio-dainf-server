@@ -261,6 +261,7 @@ public class UsuarioServiceImpl extends CrudServiceImpl<Usuario, Long>
     Usuario usuario = usuarioRepository.findByCodigoVerificacao(confirmEmailRequestDto.getCode());
     if (usuario != null) {
       usuario.setEmailVerificado(true);
+      usuario.setAtivo(true);
       usuarioRepository.save(usuario);
       return GenericResponse.builder().message("O email do usuário foi confirmado.").build();
     } else {
@@ -351,5 +352,10 @@ public class UsuarioServiceImpl extends CrudServiceImpl<Usuario, Long>
 
     emailService.sendEmailWithTemplate(
         emailDto, emailDto.getEmailTo(), emailDto.getSubject(), "templateConfirmacaoCadastro");
+  }
+
+  @Override
+  public Usuario findByDocumento(String documento) {
+    return usuarioRepository.findByDocumento(documento).orElse(null);
   }
 }
