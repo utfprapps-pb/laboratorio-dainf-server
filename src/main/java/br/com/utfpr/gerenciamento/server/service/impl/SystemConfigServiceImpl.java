@@ -68,8 +68,6 @@ public class SystemConfigServiceImpl implements SystemConfigService {
    */
   @Override
   public String getEmailNadaConsta() {
-    return repository.findFirstByIsActiveTrue()
-        .map(SystemConfig::getNadaConstaEmail)
-        .orElse("");
+    return repository.findFirstByIsActiveTrue().map(SystemConfig::getNadaConstaEmail).orElse("");
   }
 }

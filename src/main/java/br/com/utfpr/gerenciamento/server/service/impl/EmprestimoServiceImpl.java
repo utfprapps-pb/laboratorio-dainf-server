@@ -188,8 +188,8 @@ public class EmprestimoServiceImpl extends CrudServiceImpl<Emprestimo, Long>
 
   @Override
   public java.util.List<Emprestimo> findAllEmprestimosAbertosByUsuario(String username) {
-      var usuario = usuarioService.findByUsername(username);
-      return emprestimoRepository.findAllByUsuarioAndDataDevolucaoIsNull(usuario);
+    var usuario = usuarioService.findByUsername(username);
+    return emprestimoRepository.findAllByUsuarioAndDataDevolucaoIsNull(usuario);
   }
 
   @Override

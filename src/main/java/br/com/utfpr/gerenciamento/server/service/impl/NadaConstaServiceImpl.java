@@ -1,23 +1,22 @@
 package br.com.utfpr.gerenciamento.server.service.impl;
 
 import br.com.utfpr.gerenciamento.server.dto.NadaConstaResponseDto;
-import br.com.utfpr.gerenciamento.server.model.NadaConsta;
 import br.com.utfpr.gerenciamento.server.enumeration.NadaConstaStatus;
-import br.com.utfpr.gerenciamento.server.model.Usuario;
 import br.com.utfpr.gerenciamento.server.model.Emprestimo;
+import br.com.utfpr.gerenciamento.server.model.NadaConsta;
+import br.com.utfpr.gerenciamento.server.model.Usuario;
 import br.com.utfpr.gerenciamento.server.repository.NadaConstaRepository;
-import br.com.utfpr.gerenciamento.server.service.NadaConstaService;
-import br.com.utfpr.gerenciamento.server.service.UsuarioService;
 import br.com.utfpr.gerenciamento.server.service.EmailService;
-import br.com.utfpr.gerenciamento.server.service.SystemConfigService;
 import br.com.utfpr.gerenciamento.server.service.EmprestimoService;
+import br.com.utfpr.gerenciamento.server.service.NadaConstaService;
+import br.com.utfpr.gerenciamento.server.service.SystemConfigService;
+import br.com.utfpr.gerenciamento.server.service.UsuarioService;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-
 import org.modelmapper.ModelMapper;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Service;
@@ -58,9 +57,7 @@ public class NadaConstaServiceImpl extends CrudServiceImpl<NadaConsta, Long>
   @Transactional(readOnly = true)
   public List<NadaConstaResponseDto> findAllByUsername(String username) {
     var usuario = usuarioService.findByUsername(username);
-    return nadaConstaRepository.findAllByUsuario(usuario).stream()
-        .map(this::convertToDto)
-        .toList();
+    return nadaConstaRepository.findAllByUsuario(usuario).stream().map(this::convertToDto).toList();
   }
 
   @Override
@@ -77,11 +74,12 @@ public class NadaConstaServiceImpl extends CrudServiceImpl<NadaConsta, Long>
   public NadaConstaResponseDto solicitarNadaConsta(String documento) {
     Usuario usuario = usuarioService.findByDocumento(documento);
     if (usuario == null) {
-        throw new RuntimeException("Usuário não encontrado para o documento informado.");
+      throw new RuntimeException("Usuário não encontrado para o documento informado.");
     }
     List<Emprestimo> emprestimosAbertos =
-    emprestimoService.findAllEmprestimosAbertosByUsuario(usuario.getUsername());
-    NadaConsta nadaConsta = NadaConsta.builder()
+        emprestimoService.findAllEmprestimosAbertosByUsuario(usuario.getUsername());
+    NadaConsta nadaConsta =
+        NadaConsta.builder()
             .usuario(usuario)
             .status(NadaConstaStatus.PENDING)
             .createdAt(LocalDateTime.now())
@@ -89,51 +87,54 @@ public class NadaConstaServiceImpl extends CrudServiceImpl<NadaConsta, Long>
             .build();
     nadaConsta = nadaConstaRepository.save(nadaConsta);
     if (emprestimosAbertos.isEmpty()) {
-        // Buscar e-mail de destino via SystemConfigService
-        String destinatario = systemConfigService.getEmailNadaConsta();
-        // Monta dados para o template
-        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd 'de' MMMM 'de' yyyy").withLocale(java.util.Locale.forLanguageTag("pt-BR"));
-        Map<String, Object> templateData = new HashMap<>();
-        templateData.put("nomeAluno", usuario.getNome());
-        templateData.put("registroAcademico", usuario.getDocumento());
-        templateData.put("dataFormatada", LocalDateTime.now().format(formatter));
-        emailService.sendEmailWithTemplate(
-            templateData,
-            destinatario,
-            "Declaração Nada Consta",
-            "nada-consta-declaracao.html"
-        );
-        nadaConsta.setStatus(NadaConstaStatus.COMPLETED);
-        nadaConsta.setSendAt(LocalDateTime.now());
-        nadaConstaRepository.save(nadaConsta);
-        usuario.setAtivo(false);
-        usuarioService.save(usuario);
+      // Buscar e-mail de destino via SystemConfigService
+      String destinatario = systemConfigService.getEmailNadaConsta();
+      // Monta dados para o template
+      DateTimeFormatter formatter =
+          DateTimeFormatter.ofPattern("dd 'de' MMMM 'de' yyyy")
+              .withLocale(java.util.Locale.forLanguageTag("pt-BR"));
+      Map<String, Object> templateData = new HashMap<>();
+      templateData.put("nomeAluno", usuario.getNome());
+      templateData.put("registroAcademico", usuario.getDocumento());
+      templateData.put("dataFormatada", LocalDateTime.now().format(formatter));
+      emailService.sendEmailWithTemplate(
+          templateData, destinatario, "Declaração Nada Consta", "nada-consta-declaracao.html");
+      nadaConsta.setStatus(NadaConstaStatus.COMPLETED);
+      nadaConsta.setSendAt(LocalDateTime.now());
+      nadaConstaRepository.save(nadaConsta);
+      usuario.setAtivo(false);
+      usuarioService.save(usuario);
     } else {
-        // Monta lista de itens pendentes para o template
-        List<Map<String, Object>> itensPendentesTemplate = new ArrayList<>();
-        for (Emprestimo emp : emprestimosAbertos) {
-            if (emp.getEmprestimoItem() != null) {
-                for (var emprestimoItem : emp.getEmprestimoItem()) {
-                    Map<String, Object> itemMap = new HashMap<>();
-                    itemMap.put("itemNome", emprestimoItem.getItem().getNome());
-                    itemMap.put("dataEmprestimo", emp.getDataEmprestimo().format(DateTimeFormatter.ofPattern("dd/MM/yyyy")));
-                    itemMap.put("dataPrevistaDevolucao", emp.getPrazoDevolucao() != null ? emp.getPrazoDevolucao().format(DateTimeFormatter.ofPattern("dd/MM/yyyy")) : "-");
-                    itensPendentesTemplate.add(itemMap);
-                }
-            }
+      // Monta lista de itens pendentes para o template
+      List<Map<String, Object>> itensPendentesTemplate = new ArrayList<>();
+      for (Emprestimo emp : emprestimosAbertos) {
+        if (emp.getEmprestimoItem() != null) {
+          for (var emprestimoItem : emp.getEmprestimoItem()) {
+            Map<String, Object> itemMap = new HashMap<>();
+            itemMap.put("itemNome", emprestimoItem.getItem().getNome());
+            itemMap.put(
+                "dataEmprestimo",
+                emp.getDataEmprestimo().format(DateTimeFormatter.ofPattern("dd/MM/yyyy")));
+            itemMap.put(
+                "dataPrevistaDevolucao",
+                emp.getPrazoDevolucao() != null
+                    ? emp.getPrazoDevolucao().format(DateTimeFormatter.ofPattern("dd/MM/yyyy"))
+                    : "-");
+            itensPendentesTemplate.add(itemMap);
+          }
         }
-        Map<String, Object> templateData = new HashMap<>();
-        templateData.put("nomeAluno", usuario.getNome());
-        templateData.put("emprestimos", itensPendentesTemplate);
-        emailService.sendEmailWithTemplate(
-            templateData,
-            usuario.getEmail(),
-            "Pendências de Empréstimos",
-            "pendencias-emprestimos.html"
-        );
-        nadaConsta.setStatus(NadaConstaStatus.PENDING);
-        nadaConsta.setSendAt(LocalDateTime.now());
-        nadaConstaRepository.save(nadaConsta);
+      }
+      Map<String, Object> templateData = new HashMap<>();
+      templateData.put("nomeAluno", usuario.getNome());
+      templateData.put("emprestimos", itensPendentesTemplate);
+      emailService.sendEmailWithTemplate(
+          templateData,
+          usuario.getEmail(),
+          "Pendências de Empréstimos",
+          "pendencias-emprestimos.html");
+      nadaConsta.setStatus(NadaConstaStatus.PENDING);
+      nadaConsta.setSendAt(LocalDateTime.now());
+      nadaConstaRepository.save(nadaConsta);
     }
     return convertToDto(nadaConsta);
   }

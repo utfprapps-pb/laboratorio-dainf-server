@@ -12,20 +12,21 @@ import org.springframework.web.bind.annotation.*;
 @RequestMapping("/nadaconsta")
 public class NadaConstaController extends CrudController<NadaConsta, Long> {
 
-    private final NadaConstaService nadaConstaService;
+  private final NadaConstaService nadaConstaService;
 
-    public NadaConstaController(NadaConstaService nadaConstaService) {
-        this.nadaConstaService = nadaConstaService;
-    }
+  public NadaConstaController(NadaConstaService nadaConstaService) {
+    this.nadaConstaService = nadaConstaService;
+  }
 
-    @Override
-    protected CrudService<NadaConsta, Long> getService() {
-        return nadaConstaService;
-    }
+  @Override
+  protected CrudService<NadaConsta, Long> getService() {
+    return nadaConstaService;
+  }
 
-    @PostMapping("/solicitar")
-    public ResponseEntity<NadaConstaResponseDto> solicitarNadaConsta(@RequestBody NadaConstaRequestDto request) {
-        NadaConstaResponseDto response = nadaConstaService.solicitarNadaConsta(request.getDocumento());
-        return ResponseEntity.ok(response);
-    }
+  @PostMapping("/solicitar")
+  public ResponseEntity<NadaConstaResponseDto> solicitarNadaConsta(
+      @RequestBody NadaConstaRequestDto request) {
+    NadaConstaResponseDto response = nadaConstaService.solicitarNadaConsta(request.getDocumento());
+    return ResponseEntity.ok(response);
+  }
 }
