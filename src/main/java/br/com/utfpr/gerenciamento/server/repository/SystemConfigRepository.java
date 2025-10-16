@@ -14,13 +14,4 @@ public interface SystemConfigRepository extends JpaRepository<SystemConfig, Long
    *     true`, vazio se nenhuma for encontrada
    */
   Optional<SystemConfig> findFirstByIsActiveTrue();
-
-  /**
-   * Busca uma configuração do sistema pela sua chave.
-   *
-   * @param key a chave da configuração a ser buscada
-   * @return um {@link SystemConfig} opcional contendo a configuração correspondente à chave, vazio
-   *     se nenhuma for encontrada
-   */
-  Optional<SystemConfig> findByKey(String key);
 }

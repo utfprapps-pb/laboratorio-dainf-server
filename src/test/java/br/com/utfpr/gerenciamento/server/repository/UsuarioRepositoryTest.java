@@ -14,6 +14,7 @@ import org.springframework.boot.test.autoconfigure.orm.jpa.TestEntityManager;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.test.context.ActiveProfiles;
 
 @DataJpaTest
@@ -89,7 +90,7 @@ class UsuarioRepositoryTest {
     assertNotNull(resultado);
     assertEquals(1, resultado.getTotalElements());
     assertEquals(1, resultado.getContent().size());
-    assertEquals("João Silva", resultado.getContent().get(0).getNome());
+    assertEquals("João Silva", resultado.getContent().getFirst().getNome());
   }
 
   @Test
@@ -104,7 +105,7 @@ class UsuarioRepositoryTest {
     // Then
     assertNotNull(resultado);
     assertEquals(1, resultado.getTotalElements());
-    assertEquals("João Silva", resultado.getContent().get(0).getNome());
+    assertEquals("João Silva", resultado.getContent().getFirst().getNome());
   }
 
   @Test
@@ -259,5 +260,83 @@ class UsuarioRepositoryTest {
     // Then
     assertNotNull(resultado);
     assertEquals("João Silva", resultado.getNome());
+  }
+
+  @Test
+  void persistirUsuario_DeveSalvarCamposNovos() {
+    Permissao permissaoAlunoManaged = entityManager.find(Permissao.class, permissaoAluno.getId());
+    Usuario usuario =
+        Usuario.builder()
+            .nome("Teste Novo")
+            .username("novouser")
+            .email("novo@test.com")
+            .password("senha123")
+            .telefone("41999999004")
+            .documento("12345678900")
+            .fotoUrl("http://foto.com/novo.jpg")
+            .permissoes(Set.of(permissaoAlunoManaged))
+            .build();
+    Usuario salvo = usuarioRepository.save(usuario);
+    assertNotNull(salvo.getId());
+    assertEquals("12345678900", salvo.getDocumento());
+    assertEquals("http://foto.com/novo.jpg", salvo.getFotoUrl());
+  }
+
+  @Test
+  void findByCodigoVerificacao_DeveRetornarUsuarioCorreto() {
+    Permissao permissaoAlunoManaged = entityManager.find(Permissao.class, permissaoAluno.getId());
+    Usuario usuario =
+        Usuario.builder()
+            .nome("Verifica Teste")
+            .username("verificauser")
+            .email("verifica@test.com")
+            .password("senha123")
+            .telefone("41999999005")
+            .documento("98765432100")
+            .permissoes(new HashSet<>(Set.of(permissaoAlunoManaged)))
+            .build();
+    usuario = usuarioRepository.save(usuario);
+    usuario.setCodigoVerificacao("COD123");
+    usuario = usuarioRepository.save(usuario);
+    entityManager.flush();
+    Usuario resultado = usuarioRepository.findByCodigoVerificacao("COD123");
+    assertNotNull(resultado);
+    assertEquals("verificauser", resultado.getUsername());
+  }
+
+  @Test
+  void findWithPermissoesByUsername_DeveCarregarPermissoes() {
+    Usuario resultado = usuarioRepository.findWithPermissoesByUsername("joao");
+    assertNotNull(resultado);
+    assertNotNull(resultado.getPermissoes());
+    assertFalse(resultado.getPermissoes().isEmpty());
+    assertTrue(resultado.getPermissoes().stream().anyMatch(p -> p.getNome().equals("ROLE_ALUNO")));
+  }
+
+  @Test
+  void findWithPermissoesByUsernameOrEmail_DeveCarregarPermissoesPorEmail() {
+    Usuario resultado = usuarioRepository.findWithPermissoesByUsernameOrEmail("", "maria@test.com");
+    assertNotNull(resultado);
+    assertNotNull(resultado.getPermissoes());
+    assertTrue(
+        resultado.getPermissoes().stream().anyMatch(p -> p.getNome().equals("ROLE_PROFESSOR")));
+  }
+
+  @Test
+  void usuario_DeveImplementarUserDetailsECamposObrigatorios() {
+    Usuario usuario = usuarioRepository.findByUsername("joao");
+    assertNotNull(usuario);
+    assertInstanceOf(UserDetails.class, usuario);
+    assertEquals("joao", usuario.getUsername());
+    assertNotNull(usuario.getPassword());
+    assertNotNull(usuario.getEmail());
+    assertNotNull(usuario.getTelefone());
+  }
+
+  @Test
+  void permissao_DeveImplementarGrantedAuthority() {
+    Permissao permissao = permissaoAluno;
+    assertNotNull(permissao);
+    assertEquals("ROLE_ALUNO", permissao.getAuthority());
   }
 }
