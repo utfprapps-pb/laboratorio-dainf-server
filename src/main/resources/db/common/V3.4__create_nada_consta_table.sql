@@ -1,5 +1,5 @@
 CREATE TABLE nada_consta (
-                             id BIGINT PRIMARY KEY AUTO_INCREMENT,
+                             id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
                              usuario_id BIGINT NOT NULL,
                              status VARCHAR(32) NOT NULL,
                              send_at TIMESTAMP NULL,
