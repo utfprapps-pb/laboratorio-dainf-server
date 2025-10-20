@@ -28,4 +28,11 @@ public interface SystemConfigService {
    * @return Uma String contendo o e-mail para a situação "Nada Constou"
    */
   String getEmailNadaConsta();
+
+  /**
+   * Recupera a URL do logo para uso em templates e e-mails.
+   *
+   * @return a URL do logo, vinda de configuração ou do properties
+   */
+  String getLogoUrl();
 }

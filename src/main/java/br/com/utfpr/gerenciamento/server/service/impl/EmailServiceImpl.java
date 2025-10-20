@@ -2,6 +2,7 @@ package br.com.utfpr.gerenciamento.server.service.impl;
 
 import br.com.utfpr.gerenciamento.server.model.Email;
 import br.com.utfpr.gerenciamento.server.service.EmailService;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import freemarker.template.Configuration;
 import freemarker.template.Template;
 import jakarta.mail.internet.MimeMessage;
@@ -13,8 +14,8 @@ import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.stereotype.Service;
 import org.springframework.ui.freemarker.FreeMarkerTemplateUtils;
-import org.thymeleaf.TemplateEngine;
 import org.thymeleaf.context.Context;
+import org.thymeleaf.spring6.SpringTemplateEngine;
 
 @Service
 @Slf4j
@@ -25,12 +26,12 @@ public class EmailServiceImpl implements EmailService {
 
   private final JavaMailSender javaMailSender;
   private final Configuration freemarkerConfiguration;
-  private final TemplateEngine thymeleafTemplateEngine;
+  private final SpringTemplateEngine thymeleafTemplateEngine;
 
   public EmailServiceImpl(
       JavaMailSender javaMailSender,
       Configuration freemarkerConfiguration,
-      TemplateEngine thymeleafTemplateEngine) {
+      SpringTemplateEngine thymeleafTemplateEngine) {
     this.javaMailSender = javaMailSender;
     this.freemarkerConfiguration = freemarkerConfiguration;
     this.thymeleafTemplateEngine = thymeleafTemplateEngine;
@@ -95,8 +96,21 @@ public class EmailServiceImpl implements EmailService {
     if (nameTemplate.endsWith(".html")) {
       // Thymeleaf: remove a extensão para o processador
       String templateName = nameTemplate.substring(0, nameTemplate.length() - 5);
-      conteudo =
-          this.buildThymeleafTemplateEmail((Map<String, Object>) objectTemplate, templateName);
+      Map<String, Object> variables;
+      if (objectTemplate instanceof Map) {
+        variables = (Map<String, Object>) objectTemplate;
+      } else {
+        try {
+          ObjectMapper mapper = new ObjectMapper();
+          variables = mapper.convertValue(objectTemplate, Map.class);
+        } catch (IllegalArgumentException e) {
+          throw new IllegalArgumentException(
+              "objectTemplate cannot be converted to Map<String,Object> for Thymeleaf template: "
+                  + templateName,
+              e);
+        }
+      }
+      conteudo = this.buildThymeleafTemplateEmail(variables, templateName);
     } else if (nameTemplate.endsWith(".ftl")) {
       // Freemarker: remove a extensão para o processador
       String templateName = nameTemplate.substring(0, nameTemplate.length() - 4);

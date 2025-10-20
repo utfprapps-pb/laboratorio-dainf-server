@@ -5,6 +5,7 @@ import static org.junit.jupiter.api.Assertions.*;
 import br.com.utfpr.gerenciamento.server.model.SystemConfig;
 import br.com.utfpr.gerenciamento.server.repository.SystemConfigRepository;
 import java.util.Optional;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
@@ -24,6 +25,11 @@ class SystemConfigServiceImplTest {
   void setup() {
     repository = Mockito.mock(SystemConfigRepository.class);
     service = new SystemConfigServiceImpl(repository);
+  }
+
+  @AfterEach
+  void clearSecurityContext() {
+    SecurityContextHolder.clearContext();
   }
 
   @Test
@@ -78,8 +84,6 @@ class SystemConfigServiceImplTest {
     assertNotNull(captured.getUpdatedAt(), "updatedAt should be set");
     assertEquals("testuser", captured.getCreatedBy(), "createdBy should match authenticated user");
     assertEquals("testuser", captured.getUpdatedBy(), "updatedBy should match authenticated user");
-    // Limpa contexto
-    SecurityContextHolder.clearContext();
   }
 
   @Test

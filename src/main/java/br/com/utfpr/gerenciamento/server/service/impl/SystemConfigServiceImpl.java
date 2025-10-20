@@ -5,6 +5,7 @@ import br.com.utfpr.gerenciamento.server.repository.SystemConfigRepository;
 import br.com.utfpr.gerenciamento.server.service.SystemConfigService;
 import jakarta.transaction.Transactional;
 import java.util.Optional;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 @Service
@@ -77,5 +78,19 @@ public class SystemConfigServiceImpl implements SystemConfigService {
   @Override
   public String getEmailNadaConsta() {
     return repository.findFirstByIsActiveTrue().map(SystemConfig::getNadaConstaEmail).orElse("");
+  }
+
+  @Value("${application.logo-url:https://kirinus.tec.br:9000/utfpr-bucket/logo-utf-mais-prod.png}")
+  private String logoUrlProperty;
+
+  /**
+   * Obtém a URL do logo da aplicação.
+   *
+   * @return a URL do logo configurada nas propriedades da aplicação.
+   */
+  @Override
+  public String getLogoUrl() {
+    // In future, could be extended to fetch from DB config if needed
+    return logoUrlProperty;
   }
 }

@@ -48,8 +48,8 @@ public class JWTAuthenticationFilter extends UsernamePasswordAuthenticationFilte
       Usuario user = usuarioService.findByUsernameForAuthentication(credentials.getUsername());
       // Validação de solicitação de nada consta em aberto
       if (usuarioService.hasSolicitacaoNadaConstaEmAberto(credentials.getUsername())) {
-        throw new AuthenticationException(
-            "Foi realizado uma solicitação de nada consta para o usuário. Contate a administração.") {};
+        throw new PreconditionRequiredAuthenticationException(
+            "Foi realizado uma solicitação de nada consta para o usuário. Contate a administração.");
       }
       return authenticationManager.authenticate(
           new UsernamePasswordAuthenticationToken(
@@ -76,12 +76,14 @@ public class JWTAuthenticationFilter extends UsernamePasswordAuthenticationFilte
       HttpServletRequest request, HttpServletResponse response, AuthenticationException failed)
       throws IOException, ServletException {
     String message = failed.getMessage();
-    if (message != null && message.contains("nada consta")) {
+    ObjectMapper mapper = new ObjectMapper();
+    response.setContentType("application/json");
+    if (failed instanceof PreconditionRequiredAuthenticationException) {
       response.setStatus(428); // PRECONDITION REQUIRED
     } else {
       response.setStatus(HttpServletResponse.SC_UNAUTHORIZED); // 401
     }
-    response.setContentType("application/json");
-    response.getWriter().write("{\"error\": \"" + message + "\"}");
+    var errorObject = java.util.Map.of("error", message);
+    mapper.writeValue(response.getWriter(), errorObject);
   }
 }

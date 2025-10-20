@@ -2,6 +2,7 @@ package br.com.utfpr.gerenciamento.server.service.impl;
 
 import br.com.utfpr.gerenciamento.server.dto.NadaConstaResponseDto;
 import br.com.utfpr.gerenciamento.server.enumeration.NadaConstaStatus;
+import br.com.utfpr.gerenciamento.server.exception.NadaConstaException;
 import br.com.utfpr.gerenciamento.server.model.Emprestimo;
 import br.com.utfpr.gerenciamento.server.model.NadaConsta;
 import br.com.utfpr.gerenciamento.server.model.Usuario;
@@ -14,6 +15,7 @@ import br.com.utfpr.gerenciamento.server.service.UsuarioService;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -57,6 +59,9 @@ public class NadaConstaServiceImpl extends CrudServiceImpl<NadaConsta, Long>
   @Transactional(readOnly = true)
   public List<NadaConstaResponseDto> findAllByUsername(String username) {
     var usuario = usuarioService.findByUsername(username);
+    if (usuario == null) {
+      return Collections.emptyList();
+    }
     return nadaConstaRepository.findAllByUsuario(usuario).stream().map(this::convertToDto).toList();
   }
 
@@ -75,6 +80,13 @@ public class NadaConstaServiceImpl extends CrudServiceImpl<NadaConsta, Long>
     Usuario usuario = usuarioService.findByDocumento(documento);
     if (usuario == null) {
       throw new RuntimeException("Usuário não encontrado para o documento informado.");
+    }
+    // Pre-check for open Nada Consta solicitation
+    if (usuarioService
+            instanceof br.com.utfpr.gerenciamento.server.service.impl.UsuarioServiceImpl impl
+        && impl.hasSolicitacaoNadaConstaEmAberto(usuario.getUsername())) {
+      throw new NadaConstaException(
+          "Já existe uma solicitação de Nada Consta em aberto ou concluída para este usuário.");
     }
     List<Emprestimo> emprestimosAbertos =
         emprestimoService.findAllEmprestimosAbertosByUsuario(usuario.getUsername());
@@ -97,6 +109,7 @@ public class NadaConstaServiceImpl extends CrudServiceImpl<NadaConsta, Long>
       templateData.put("nomeAluno", usuario.getNome());
       templateData.put("registroAcademico", usuario.getDocumento());
       templateData.put("dataFormatada", LocalDateTime.now().format(formatter));
+      templateData.put("logoUrl", systemConfigService.getLogoUrl());
       emailService.sendEmailWithTemplate(
           templateData, destinatario, "Declaração Nada Consta", "nada-consta-declaracao.html");
       nadaConsta.setStatus(NadaConstaStatus.COMPLETED);
@@ -111,7 +124,8 @@ public class NadaConstaServiceImpl extends CrudServiceImpl<NadaConsta, Long>
         if (emp.getEmprestimoItem() != null) {
           for (var emprestimoItem : emp.getEmprestimoItem()) {
             Map<String, Object> itemMap = new HashMap<>();
-            itemMap.put("itemNome", emprestimoItem.getItem().getNome());
+            var item = emprestimoItem.getItem();
+            itemMap.put("itemNome", item != null ? item.getNome() : "-");
             itemMap.put(
                 "dataEmprestimo",
                 emp.getDataEmprestimo().format(DateTimeFormatter.ofPattern("dd/MM/yyyy")));

@@ -5,6 +5,7 @@ import br.com.utfpr.gerenciamento.server.dto.NadaConstaResponseDto;
 import br.com.utfpr.gerenciamento.server.model.NadaConsta;
 import br.com.utfpr.gerenciamento.server.service.CrudService;
 import br.com.utfpr.gerenciamento.server.service.NadaConstaService;
+import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -25,7 +26,7 @@ public class NadaConstaController extends CrudController<NadaConsta, Long> {
 
   @PostMapping("/solicitar")
   public ResponseEntity<NadaConstaResponseDto> solicitarNadaConsta(
-      @RequestBody NadaConstaRequestDto request) {
+      @Valid @RequestBody NadaConstaRequestDto request) {
     NadaConstaResponseDto response = nadaConstaService.solicitarNadaConsta(request.getDocumento());
     return ResponseEntity.ok(response);
   }
