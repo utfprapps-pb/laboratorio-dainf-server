@@ -30,7 +30,7 @@ class JpaAuditingConfigTest {
   @Test
   void auditorProviderReturnsSystemWhenNotAuthenticated() {
     SecurityContextHolder.getContext()
-        .setAuthentication(new UsernamePasswordAuthenticationToken(null, null, null));
+        .setAuthentication(new UsernamePasswordAuthenticationToken(null, null));
     Optional<String> auditor = config.auditorProvider().getCurrentAuditor();
     assertEquals("system", auditor.orElse(null));
   }
@@ -75,7 +75,9 @@ class JpaAuditingConfigTest {
           }
         };
     SecurityContextHolder.getContext()
-        .setAuthentication(new UsernamePasswordAuthenticationToken(userDetails, null, null));
+        .setAuthentication(
+            new UsernamePasswordAuthenticationToken(
+                userDetails, null, userDetails.getAuthorities()));
     Optional<String> auditor = config.auditorProvider().getCurrentAuditor();
     assertEquals("userDetailsName", auditor.orElse(null));
   }
@@ -83,7 +85,9 @@ class JpaAuditingConfigTest {
   @Test
   void auditorProviderReturnsPrincipalString() {
     SecurityContextHolder.getContext()
-        .setAuthentication(new UsernamePasswordAuthenticationToken("principalString", null, null));
+        .setAuthentication(
+            new UsernamePasswordAuthenticationToken(
+                "principalString", null, Collections.emptyList()));
     Optional<String> auditor = config.auditorProvider().getCurrentAuditor();
     assertEquals("principalString", auditor.orElse(null));
   }
@@ -91,7 +95,8 @@ class JpaAuditingConfigTest {
   @Test
   void auditorProviderReturnsSystemForOtherPrincipalTypes() {
     SecurityContextHolder.getContext()
-        .setAuthentication(new UsernamePasswordAuthenticationToken(12345, null, null));
+        .setAuthentication(
+            new UsernamePasswordAuthenticationToken(12345, null, Collections.emptyList()));
     Optional<String> auditor = config.auditorProvider().getCurrentAuditor();
     assertEquals("system", auditor.orElse(null));
   }

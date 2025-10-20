@@ -367,7 +367,7 @@ public class UsuarioServiceImpl extends CrudServiceImpl<Usuario, Long>
 
   /** Verifica se o usuário possui solicitação de nada consta em aberto ou concluída. */
   public boolean hasSolicitacaoNadaConstaEmAberto(String username) {
-    Usuario usuario = findByUsername(username);
+    Usuario usuario = usuarioRepository.findByUsername(username);
     if (usuario == null) return false;
     return nadaConstaRepository.findAllByUsuario(usuario).stream()
         .anyMatch(
