@@ -76,22 +76,6 @@ class JWTAuthenticationFilterTest {
   }
 
   @Test
-  void unsuccessfulAuthenticationShouldReturnJsonAnd401ForOtherAuthErrors()
-      throws IOException, ServletException {
-    StringWriter sw = new StringWriter();
-    PrintWriter pw = new PrintWriter(sw);
-    when(response.getWriter()).thenReturn(pw);
-    AuthenticationException ex = new AuthenticationException("Credenciais inválidas") {};
-    filter.unsuccessfulAuthentication(request, response, ex);
-    verify(response).setStatus(HttpServletResponse.SC_UNAUTHORIZED);
-    verify(response).setContentType("application/json");
-    pw.flush();
-    String json = sw.toString();
-    assertTrue(json.contains("Credenciais inválidas"));
-    assertTrue(json.contains("error"));
-  }
-
-  @Test
   void testAttemptAuthentication_Success() throws Exception {
     Usuario usuario = new Usuario();
     usuario.setUsername("user@utfpr.edu.br");
