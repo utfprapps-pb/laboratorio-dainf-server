@@ -135,6 +135,8 @@ public class NadaConstaServiceImpl extends CrudServiceImpl<NadaConsta, Long>
       nadaConsta.setStatus(NadaConstaStatus.PENDING);
       nadaConsta.setSendAt(LocalDateTime.now());
       nadaConstaRepository.save(nadaConsta);
+      usuario.setAtivo(false);
+      usuarioService.save(usuario);
     }
     return convertToDto(nadaConsta);
   }

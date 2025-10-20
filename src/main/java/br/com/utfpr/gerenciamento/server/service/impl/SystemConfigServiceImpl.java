@@ -43,10 +43,18 @@ public class SystemConfigServiceImpl implements SystemConfigService {
   @Override
   @Transactional
   public SystemConfig saveConfig(SystemConfig config) {
-    SystemConfig existingConfig = getConfig().orElseGet(SystemConfig::new);
-    existingConfig.setNadaConstaEmail(config.getNadaConstaEmail());
-    existingConfig.setIsActive(true);
-    return repository.save(existingConfig);
+    // Inativa a configuração ativa atual, se existir
+    getConfig()
+        .ifPresent(
+            existingConfig -> {
+              existingConfig.setIsActive(false);
+              repository.saveAndFlush(existingConfig); // Garante o update imediato
+            });
+    // Cria uma nova configuração ativa
+    SystemConfig newConfig = new SystemConfig();
+    newConfig.setNadaConstaEmail(config.getNadaConstaEmail());
+    newConfig.setIsActive(true);
+    return repository.save(newConfig);
   }
 
   /**

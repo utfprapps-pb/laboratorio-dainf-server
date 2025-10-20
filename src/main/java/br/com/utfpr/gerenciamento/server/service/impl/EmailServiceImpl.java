@@ -7,13 +7,14 @@ import freemarker.template.Template;
 import jakarta.mail.internet.MimeMessage;
 import java.util.Map;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.ByteArrayResource;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.stereotype.Service;
 import org.springframework.ui.freemarker.FreeMarkerTemplateUtils;
+import org.thymeleaf.TemplateEngine;
+import org.thymeleaf.context.Context;
 
 @Service
 @Slf4j
@@ -24,11 +25,15 @@ public class EmailServiceImpl implements EmailService {
 
   private final JavaMailSender javaMailSender;
   private final Configuration freemarkerConfiguration;
+  private final TemplateEngine thymeleafTemplateEngine;
 
-  @Autowired
-  public EmailServiceImpl(JavaMailSender javaMailSender, Configuration freemarkerConfiguration) {
+  public EmailServiceImpl(
+      JavaMailSender javaMailSender,
+      Configuration freemarkerConfiguration,
+      TemplateEngine thymeleafTemplateEngine) {
     this.javaMailSender = javaMailSender;
     this.freemarkerConfiguration = freemarkerConfiguration;
+    this.thymeleafTemplateEngine = thymeleafTemplateEngine;
   }
 
   @Override
@@ -52,7 +57,8 @@ public class EmailServiceImpl implements EmailService {
                 }
 
                 helper.setSubject(email.getTitulo());
-                helper.setText(email.getConteudo(), true);
+                String conteudo = email.getConteudo() != null ? email.getConteudo() : "";
+                helper.setText(conteudo, true);
 
                 if (email.getFileMap() != null && !email.getFileMap().isEmpty()) {
                   for (Map.Entry<String, byte[]> entry : email.getFileMap().entrySet()) {
@@ -85,17 +91,45 @@ public class EmailServiceImpl implements EmailService {
   @Override
   public void sendEmailWithTemplate(
       Object objectTemplate, String to, String titleEmail, String nameTemplate) {
+    String conteudo;
+    if (nameTemplate.endsWith(".html")) {
+      // Thymeleaf: remove a extensão para o processador
+      String templateName = nameTemplate.substring(0, nameTemplate.length() - 5);
+      conteudo =
+          this.buildThymeleafTemplateEmail((Map<String, Object>) objectTemplate, templateName);
+    } else if (nameTemplate.endsWith(".ftl")) {
+      // Freemarker: remove a extensão para o processador
+      String templateName = nameTemplate.substring(0, nameTemplate.length() - 4);
+      conteudo = this.buildTemplateEmail(objectTemplate, templateName);
+    } else {
+      // Padrão: tenta Freemarker
+      conteudo = this.buildTemplateEmail(objectTemplate, nameTemplate);
+    }
+    if (conteudo == null || conteudo.trim().isEmpty()) {
+      log.error(
+          "Erro ao gerar o conteúdo do e-mail a partir do template '{}'. E-mail não será enviado.",
+          nameTemplate);
+      return;
+    }
     Email email =
-        Email.builder()
-            .para(to)
-            .de(emailAddress)
-            .titulo(titleEmail)
-            .conteudo(this.buildTemplateEmail(objectTemplate, nameTemplate))
-            .build();
+        Email.builder().para(to).de(emailAddress).titulo(titleEmail).conteudo(conteudo).build();
     try {
       this.enviar(email);
     } catch (Exception ex) {
       log.error("Error sending email. ", ex);
+    }
+  }
+
+  public String buildThymeleafTemplateEmail(Map<String, Object> variables, String templateName) {
+    Context context = new Context();
+    if (variables != null) {
+      context.setVariables(variables);
+    }
+    try {
+      return thymeleafTemplateEngine.process(templateName, context);
+    } catch (Exception ex) {
+      log.error("Erro ao processar template Thymeleaf: {}", templateName, ex);
+      return null;
     }
   }
 }

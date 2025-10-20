@@ -71,5 +71,5 @@ public interface EmprestimoRepository
 
   List<Emprestimo> findByDataDevolucaoIsNullAndPrazoDevolucaoEquals(LocalDate dt);
 
-  List<Emprestimo> findAllByUsuarioResponsavelAndDataDevolucaoIsNull(Usuario usuario);
+  List<Emprestimo> findAllByUsuarioEmprestimoAndDataDevolucaoIsNull(Usuario usuarioEmprestimo);
 }

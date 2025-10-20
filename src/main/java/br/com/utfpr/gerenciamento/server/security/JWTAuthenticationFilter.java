@@ -46,7 +46,11 @@ public class JWTAuthenticationFilter extends UsernamePasswordAuthenticationFilte
       }
       // IMPORTANTE: Usa metodo COM @EntityGraph porque getAuthorities() precisa das permissoes
       Usuario user = usuarioService.findByUsernameForAuthentication(credentials.getUsername());
-
+      // Validação de solicitação de nada consta em aberto
+      if (usuarioService.hasSolicitacaoNadaConstaEmAberto(credentials.getUsername())) {
+        throw new AuthenticationException(
+            "Foi realizado uma solicitação de nada consta para o usuário. Contate a administração.") {};
+      }
       return authenticationManager.authenticate(
           new UsernamePasswordAuthenticationToken(
               credentials.getUsername(), credentials.getPassword(), user.getAuthorities()));
@@ -65,5 +69,19 @@ public class JWTAuthenticationFilter extends UsernamePasswordAuthenticationFilte
             .withExpiresAt(Instant.now().plusMillis(SecurityConstants.EXPIRATION_TIME))
             .sign(HMAC512(tokenSecret));
     res.getWriter().write(token);
+  }
+
+  @Override
+  protected void unsuccessfulAuthentication(
+      HttpServletRequest request, HttpServletResponse response, AuthenticationException failed)
+      throws IOException, ServletException {
+    String message = failed.getMessage();
+    if (message != null && message.contains("nada consta")) {
+      response.setStatus(428); // PRECONDITION REQUIRED
+    } else {
+      response.setStatus(HttpServletResponse.SC_UNAUTHORIZED); // 401
+    }
+    response.setContentType("application/json");
+    response.getWriter().write("{\"error\": \"" + message + "\"}");
   }
 }
