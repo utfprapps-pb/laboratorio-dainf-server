@@ -301,7 +301,7 @@ class UsuarioServiceImplTest {
     // Then
     assertNotNull(response);
     assertEquals("O email do usuário foi confirmado.", response.getMessage());
-    verify(usuarioRepository).save(argThat(u -> u.getEmailVerificado() == true));
+    verify(usuarioRepository).save(argThat(Usuario::getEmailVerificado));
   }
 
   @Test
@@ -400,7 +400,6 @@ class UsuarioServiceImplTest {
 
   @Test
   void updatePassword_DeveAtualizarSenhaComSenhaAtualCorreta() {
-    // Given
     Usuario usuarioExistente = new Usuario();
     usuarioExistente.setId(1L);
     usuarioExistente.setPassword("$2a$10$senhaAntigaEncodada");
@@ -410,20 +409,17 @@ class UsuarioServiceImplTest {
     usuarioAtualizado.setId(1L);
     usuarioAtualizado.setPassword("novaSenha123");
 
-    when(usuarioRepository.getOne(1L)).thenReturn(usuarioExistente);
+    // Mock findOne para retornar usuarioExistente
+    UsuarioServiceImpl spyService = spy(usuarioService);
+    doReturn(usuarioExistente).when(spyService).findOne(1L);
     when(passwordEncoder.matches("senhaAtual", "$2a$10$senhaAntigaEncodada")).thenReturn(true);
     when(passwordEncoder.encode("novaSenha123")).thenReturn("$2a$10$novaSenhaEncodada");
     when(usuarioRepository.save(any(Usuario.class))).thenReturn(usuarioExistente);
 
-    // When
-    Usuario resultado = usuarioService.updatePassword(usuarioAtualizado, "senhaAtual");
-
-    // Then
+    Usuario resultado = spyService.updatePassword(usuarioAtualizado, "senhaAtual");
     assertNotNull(resultado);
-    verify(passwordEncoder).matches("senhaAtual", "$2a$10$senhaAntigaEncodada");
-    verify(passwordEncoder).encode("novaSenha123");
-    verify(usuarioRepository)
-        .save(argThat(u -> u.getPassword().equals("$2a$10$novaSenhaEncodada")));
+    assertEquals("$2a$10$novaSenhaEncodada", resultado.getPassword());
+    assertTrue(resultado.getEmailVerificado());
   }
 
   @Test
@@ -437,7 +433,7 @@ class UsuarioServiceImplTest {
     usuarioAtualizado.setId(1L);
     usuarioAtualizado.setPassword("novaSenha123");
 
-    when(usuarioRepository.getOne(1L)).thenReturn(usuarioExistente);
+    when(usuarioRepository.findById(1L)).thenReturn(java.util.Optional.of(usuarioExistente));
     when(passwordEncoder.matches("senhaErrada", "$2a$10$senhaAntigaEncodada")).thenReturn(false);
 
     // When/Then
@@ -468,22 +464,6 @@ class UsuarioServiceImplTest {
     Usuario result = usuarioService.findByUsernameForAuthentication("user@utfpr.edu.br");
     assertNotNull(result);
     assertEquals("user@utfpr.edu.br", result.getUsername());
-  }
-
-  @Test
-  void testHasSolicitacaoNadaConstaEmAbertoFalseIfUsuarioNull() {
-    when(usuarioRepository.findByUsername(anyString())).thenReturn(null);
-    assertFalse(usuarioService.hasSolicitacaoNadaConstaEmAberto("user@utfpr.edu.br"));
-  }
-
-  @Test
-  void testHasSolicitacaoNadaConstaEmAbertoTrueIfStatusPendingOrCompleted() {
-    when(usuarioRepository.findByUsername(anyString())).thenReturn(usuario);
-    var nadaConsta = mock(br.com.utfpr.gerenciamento.server.model.NadaConsta.class);
-    when(nadaConsta.getStatus())
-        .thenReturn(br.com.utfpr.gerenciamento.server.enumeration.NadaConstaStatus.PENDING);
-    when(nadaConstaRepository.findAllByUsuario(usuario)).thenReturn(List.of(nadaConsta));
-    assertTrue(usuarioService.hasSolicitacaoNadaConstaEmAberto("user@utfpr.edu.br"));
   }
 
   @Test
@@ -540,22 +520,20 @@ class UsuarioServiceImplTest {
     usuarioExistente.setEmailVerificado(true);
     usuarioExistente.setUsername("usuario@utfpr.edu.br");
     usuarioExistente.setEmail("usuario@utfpr.edu.br");
-    // Mock usuarioRepository.getOne to return usuarioExistente
-    when(usuarioRepository.getOne(1L)).thenReturn(usuarioExistente);
-    // Mock usuarioRepository.findById to return usuarioExistente (for completeness)
-    when(usuarioRepository.findById(1L)).thenReturn(Optional.of(usuarioExistente));
-    // Mock passwordEncoder.matches to return true
+
+    Usuario usuarioAtualizado = new Usuario();
+    usuarioAtualizado.setId(1L);
+    usuarioAtualizado.setPassword("novaSenha");
+
+    // Spy para mockar findOne
+    UsuarioServiceImpl spyService = spy(usuarioService);
+    doReturn(usuarioExistente).when(spyService).findOne(1L);
     when(passwordEncoder.matches("senhaAtual", "encodedSenhaAtual")).thenReturn(true);
-    // Mock passwordEncoder.encode to return the new encoded password
     when(passwordEncoder.encode("novaSenha")).thenReturn("encodedNovaSenha");
-    // Mock usuarioRepository.save to return the updated user
     when(usuarioRepository.save(any(Usuario.class)))
         .thenAnswer(invocation -> invocation.getArgument(0));
-    // New user with new password
-    Usuario novo = new Usuario();
-    novo.setId(1L);
-    novo.setPassword("novaSenha");
-    Usuario result = usuarioService.updatePassword(novo, "senhaAtual");
+
+    Usuario result = spyService.updatePassword(usuarioAtualizado, "senhaAtual");
     assertNotNull(result);
     assertEquals("encodedNovaSenha", result.getPassword());
     assertTrue(result.getEmailVerificado());

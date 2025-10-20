@@ -47,7 +47,7 @@ public class JWTAuthenticationFilter extends UsernamePasswordAuthenticationFilte
       // IMPORTANTE: Usa metodo COM @EntityGraph porque getAuthorities() precisa das permissoes
       Usuario user = usuarioService.findByUsernameForAuthentication(credentials.getUsername());
       // Validação de solicitação de nada consta em aberto
-      if (usuarioService.hasSolicitacaoNadaConstaEmAberto(credentials.getUsername())) {
+      if (usuarioService.hasSolicitacaoNadaConstaPendingOrCompleted(credentials.getUsername())) {
         throw new PreconditionRequiredAuthenticationException(
             "Foi realizado uma solicitação de nada consta para o usuário. Contate a administração.");
       }

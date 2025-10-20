@@ -84,7 +84,7 @@ public class NadaConstaServiceImpl extends CrudServiceImpl<NadaConsta, Long>
     // Pre-check for open Nada Consta solicitation
     if (usuarioService
             instanceof br.com.utfpr.gerenciamento.server.service.impl.UsuarioServiceImpl impl
-        && impl.hasSolicitacaoNadaConstaEmAberto(usuario.getUsername())) {
+        && impl.hasSolicitacaoNadaConstaPendingOrCompleted(usuario.getUsername())) {
       throw new NadaConstaException(
           "Já existe uma solicitação de Nada Consta em aberto ou concluída para este usuário.");
     }

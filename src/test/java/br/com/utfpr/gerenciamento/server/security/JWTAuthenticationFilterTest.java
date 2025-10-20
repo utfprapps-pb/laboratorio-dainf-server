@@ -51,7 +51,7 @@ class JWTAuthenticationFilterTest {
         .thenReturn(
             new DelegatingServletInputStream(new ObjectMapper().writeValueAsBytes(usuario)));
     when(usuarioService.findByUsernameForAuthentication(anyString())).thenReturn(usuario);
-    when(usuarioService.hasSolicitacaoNadaConstaEmAberto(anyString())).thenReturn(true);
+    when(usuarioService.hasSolicitacaoNadaConstaPendingOrCompleted(anyString())).thenReturn(true);
     assertThrows(
         PreconditionRequiredAuthenticationException.class,
         () -> filter.attemptAuthentication(request, response));
@@ -101,7 +101,7 @@ class JWTAuthenticationFilterTest {
         .thenReturn(
             new DelegatingServletInputStream(new ObjectMapper().writeValueAsBytes(usuario)));
     when(usuarioService.findByUsernameForAuthentication(anyString())).thenReturn(usuario);
-    when(usuarioService.hasSolicitacaoNadaConstaEmAberto(anyString())).thenReturn(false);
+    when(usuarioService.hasSolicitacaoNadaConstaPendingOrCompleted(anyString())).thenReturn(false);
     when(authenticationManager.authenticate(any(Authentication.class)))
         .thenReturn(
             new UsernamePasswordAuthenticationToken(
@@ -121,7 +121,7 @@ class JWTAuthenticationFilterTest {
         .thenReturn(
             new DelegatingServletInputStream(new ObjectMapper().writeValueAsBytes(usuario)));
     when(usuarioService.findByUsernameForAuthentication(anyString())).thenReturn(usuario);
-    when(usuarioService.hasSolicitacaoNadaConstaEmAberto(anyString())).thenReturn(true);
+    when(usuarioService.hasSolicitacaoNadaConstaPendingOrCompleted(anyString())).thenReturn(true);
     Exception exception =
         assertThrows(
             PreconditionRequiredAuthenticationException.class,
@@ -139,7 +139,7 @@ class JWTAuthenticationFilterTest {
         .thenReturn(
             new DelegatingServletInputStream(new ObjectMapper().writeValueAsBytes(usuario)));
     when(usuarioService.findByUsernameForAuthentication(anyString())).thenReturn(usuario);
-    when(usuarioService.hasSolicitacaoNadaConstaEmAberto(anyString())).thenReturn(false);
+    when(usuarioService.hasSolicitacaoNadaConstaPendingOrCompleted(anyString())).thenReturn(false);
     when(authenticationManager.authenticate(any(Authentication.class)))
         .thenThrow(
             new org.springframework.security.core.AuthenticationException("Bad credentials") {});
@@ -203,7 +203,8 @@ class JWTAuthenticationFilterTest {
         .thenReturn(
             new DelegatingServletInputStream(new ObjectMapper().writeValueAsBytes(usuario)));
     when(usuarioService.findByUsernameForAuthentication("user@utfpr.edu.br")).thenReturn(usuario);
-    when(usuarioService.hasSolicitacaoNadaConstaEmAberto("user@utfpr.edu.br")).thenReturn(false);
+    when(usuarioService.hasSolicitacaoNadaConstaPendingOrCompleted("user@utfpr.edu.br"))
+        .thenReturn(false);
     when(authenticationManager.authenticate(any(Authentication.class)))
         .thenReturn(
             new UsernamePasswordAuthenticationToken(
@@ -223,7 +224,8 @@ class JWTAuthenticationFilterTest {
         .thenReturn(
             new DelegatingServletInputStream(new ObjectMapper().writeValueAsBytes(usuario)));
     when(usuarioService.findByUsernameForAuthentication("user@utfpr.edu.br")).thenReturn(usuario);
-    when(usuarioService.hasSolicitacaoNadaConstaEmAberto("user@utfpr.edu.br")).thenReturn(false);
+    when(usuarioService.hasSolicitacaoNadaConstaPendingOrCompleted("user@utfpr.edu.br"))
+        .thenReturn(false);
     when(authenticationManager.authenticate(any(Authentication.class)))
         .thenReturn(
             new UsernamePasswordAuthenticationToken(
