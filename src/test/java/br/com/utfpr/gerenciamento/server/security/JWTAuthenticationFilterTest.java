@@ -145,6 +145,12 @@ class JWTAuthenticationFilterTest {
     String token = stringWriter.toString();
     assertNotNull(token);
     assertFalse(token.isEmpty());
+    verify(mockResponse).setContentType("application/json");
+    verify(mockResponse)
+        .addHeader(
+            br.com.utfpr.gerenciamento.server.security.SecurityConstants.HEADER_STRING,
+            br.com.utfpr.gerenciamento.server.security.SecurityConstants.TOKEN_PREFIX
+                + token.trim());
   }
 
   @Test
