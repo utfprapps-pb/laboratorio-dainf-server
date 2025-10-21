@@ -113,9 +113,11 @@ public class EmprestimoController extends CrudController<Emprestimo, Long> {
   public void postSave(Emprestimo object) {
     object.getEmprestimoItem().stream()
         .forEach(
-            saidaItem ->
+            saidaItem ->{
+              if (saidaItem.getItem().getTipoItem().name().equals("C")) {
                 itemService.diminuiSaldoItem(
-                    saidaItem.getItem().getId(), saidaItem.getQtde(), true));
+                    saidaItem.getItem().getId(), saidaItem.getQtde(), true);
+              }});
     emprestimoService.sendEmailConfirmacaoEmprestimo(object);
   }
 
