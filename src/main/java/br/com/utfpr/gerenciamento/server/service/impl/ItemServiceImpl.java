@@ -42,21 +42,22 @@ public class ItemServiceImpl extends CrudServiceImpl<Item, Long> implements Item
   private final ModelMapper modelMapper;
 
   public ItemServiceImpl(
-          ItemRepository itemRepository,
-          EmailService emailService,
-          RelatorioService relatorioService,
-          MinioService minioService,
-          MinioConfig minioConfig,
-          ItemImageRepository itemImageRepository, EmprestimoItemRepository emprestimoItemRepository,
-          ModelMapper modelMapper) {
+      ItemRepository itemRepository,
+      EmailService emailService,
+      RelatorioService relatorioService,
+      MinioService minioService,
+      MinioConfig minioConfig,
+      ItemImageRepository itemImageRepository,
+      EmprestimoItemRepository emprestimoItemRepository,
+      ModelMapper modelMapper) {
     this.itemRepository = itemRepository;
     this.emailService = emailService;
     this.relatorioService = relatorioService;
     this.minioService = minioService;
     this.minioConfig = minioConfig;
     this.itemImageRepository = itemImageRepository;
-      this.emprestimoItemRepository = emprestimoItemRepository;
-      this.modelMapper = modelMapper;
+    this.emprestimoItemRepository = emprestimoItemRepository;
+    this.modelMapper = modelMapper;
   }
 
   @Override
@@ -194,9 +195,12 @@ public class ItemServiceImpl extends CrudServiceImpl<Item, Long> implements Item
       }
     }
   }
-  public BigDecimal disponivelParaEmprestimo(Long itemId){
-    return emprestimoItemRepository.findQtdeEmprestadaByItemIdAndEmprestimo_DataDevolucaoIsNull(itemId);
+
+  public BigDecimal disponivelParaEmprestimo(Long itemId) {
+    return emprestimoItemRepository.findQtdeEmprestadaByItemIdAndEmprestimo_DataDevolucaoIsNull(
+        itemId);
   }
+
   /**
    * This method is used when an item is duplicated, so the image array can also be transfered to
    * the new item

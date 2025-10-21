@@ -6,11 +6,8 @@ import br.com.utfpr.gerenciamento.server.model.ItemImage;
 import br.com.utfpr.gerenciamento.server.service.CrudService;
 import br.com.utfpr.gerenciamento.server.service.ItemService;
 import jakarta.servlet.http.HttpServletRequest;
-
 import java.math.BigDecimal;
 import java.util.List;
-
-import org.eclipse.angus.mail.imap.protocol.ID;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
@@ -66,7 +63,8 @@ public class ItemController extends CrudController<Item, Long> {
   @GetMapping
   public List<Item> findAll() {
     return getService().findAll(Sort.by("id")).stream()
-            .peek(item -> {
+        .peek(
+            item -> {
               if (item.getTipoItem() != null && "P".equals(item.getTipoItem().name())) {
                 BigDecimal disponivel = itemService.disponivelParaEmprestimo(item.getId());
                 BigDecimal saldo = item.getSaldo();
@@ -75,11 +73,11 @@ public class ItemController extends CrudController<Item, Long> {
                 if (disponivel == null) disponivel = BigDecimal.ZERO;
 
                 item.setDisponivelEmprestimoCalculado(saldo.subtract(disponivel));
-              }else{
+              } else {
                 item.setDisponivelEmprestimoCalculado(item.getSaldo());
               }
             })
-            .toList();
+        .toList();
   }
 
   @Override
@@ -121,7 +119,6 @@ public class ItemController extends CrudController<Item, Long> {
     });
     return pageResult;
   }
-
 
   @Override
   public void postSave(Item object) {
