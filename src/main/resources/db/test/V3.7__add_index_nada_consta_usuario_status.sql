@@ -1,2 +1,2 @@
-CREATE INDEX idx_nada_consta_usuario_status ON nada_consta(usuario_id, status);
+CREATE INDEX IF NOT EXISTS idx_nada_consta_usuario_status ON nada_consta(usuario_id, status);
 

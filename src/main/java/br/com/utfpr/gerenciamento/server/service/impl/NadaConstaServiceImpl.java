@@ -23,6 +23,7 @@ import org.modelmapper.ModelMapper;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.StringUtils;
 
 @Service
 public class NadaConstaServiceImpl extends CrudServiceImpl<NadaConsta, Long>
@@ -139,11 +140,12 @@ public class NadaConstaServiceImpl extends CrudServiceImpl<NadaConsta, Long>
       Map<String, Object> templateData = new HashMap<>();
       templateData.put("nomeAluno", usuario.getNome());
       templateData.put("emprestimos", itensPendentesTemplate);
+      String to = usuario.getEmail();
+      if (!StringUtils.hasText(to)) {
+        throw new IllegalStateException("E-mail do usuário ausente para envio de pendências.");
+      }
       emailService.sendEmailWithTemplate(
-          templateData,
-          usuario.getEmail(),
-          "Pendências de Empréstimos",
-          "pendencias-emprestimos.html");
+          templateData, to, "Pendências de Empréstimos", "pendencias-emprestimos.html");
       nadaConsta.setStatus(NadaConstaStatus.PENDING);
       nadaConsta.setSendAt(LocalDateTime.now());
       nadaConstaRepository.save(nadaConsta);
