@@ -1,12 +1,9 @@
 package br.com.utfpr.gerenciamento.server.model;
 
-import br.com.utfpr.gerenciamento.server.annotation.UtfprEmailValidator;
+import br.com.utfpr.gerenciamento.server.enumeration.NadaConstaStatus;
 import jakarta.persistence.*;
-import java.io.Serializable;
 import java.time.LocalDateTime;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
+import lombok.*;
 import org.springframework.data.annotation.CreatedBy;
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.LastModifiedBy;
@@ -14,25 +11,31 @@ import org.springframework.data.annotation.LastModifiedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
 @Entity
-@Table(name = "system_config")
-@EntityListeners(AuditingEntityListener.class)
+@Table(name = "nada_consta")
 @Getter
 @Setter
 @NoArgsConstructor
-public class SystemConfig implements Serializable {
+@AllArgsConstructor
+@Builder
+@EntityListeners(AuditingEntityListener.class)
+public class NadaConsta {
   @Id
   @GeneratedValue(strategy = GenerationType.IDENTITY)
   private Long id;
 
-  @UtfprEmailValidator
-  @Column(name = "nada_consta_email", nullable = false)
-  private String nadaConstaEmail;
+  @ManyToOne(fetch = FetchType.LAZY, optional = false)
+  @JoinColumn(name = "usuario_id", nullable = false)
+  private Usuario usuario;
 
-  @Column(name = "is_active", nullable = false)
-  private Boolean isActive = true;
+  @Enumerated(EnumType.STRING)
+  @Column(name = "status", nullable = false)
+  private NadaConstaStatus status = NadaConstaStatus.PENDING;
+
+  @Column(name = "send_at")
+  private LocalDateTime sendAt;
 
   @CreatedDate
-  @Column(name = "created_at", nullable = false, updatable = false)
+  @Column(name = "created_at", updatable = false)
   private LocalDateTime createdAt;
 
   @LastModifiedDate
@@ -40,7 +43,7 @@ public class SystemConfig implements Serializable {
   private LocalDateTime updatedAt;
 
   @CreatedBy
-  @Column(name = "created_by", nullable = false, updatable = false)
+  @Column(name = "created_by", updatable = false)
   private String createdBy;
 
   @LastModifiedBy

@@ -5,6 +5,7 @@ import br.com.utfpr.gerenciamento.server.repository.SystemConfigRepository;
 import br.com.utfpr.gerenciamento.server.service.SystemConfigService;
 import jakarta.transaction.Transactional;
 import java.util.Optional;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 @Service
@@ -43,10 +44,18 @@ public class SystemConfigServiceImpl implements SystemConfigService {
   @Override
   @Transactional
   public SystemConfig saveConfig(SystemConfig config) {
-    SystemConfig existingConfig = getConfig().orElseGet(SystemConfig::new);
-    existingConfig.setNadaConstaEmail(config.getNadaConstaEmail());
-    existingConfig.setIsActive(true);
-    return repository.save(existingConfig);
+    // Inativa a configuração ativa atual, se existir
+    getConfig()
+        .ifPresent(
+            existingConfig -> {
+              existingConfig.setIsActive(false);
+              repository.saveAndFlush(existingConfig); // Garante o update imediato
+            });
+    // Cria uma nova configuração ativa
+    SystemConfig newConfig = new SystemConfig();
+    newConfig.setNadaConstaEmail(config.getNadaConstaEmail());
+    newConfig.setIsActive(true);
+    return repository.save(newConfig);
   }
 
   /**
@@ -59,5 +68,29 @@ public class SystemConfigServiceImpl implements SystemConfigService {
   public void deleteConfig() {
     Optional<SystemConfig> configOpt = getConfig();
     configOpt.ifPresent(repository::delete);
+  }
+
+  /**
+   * Obtém o email associado à chave 'nadaconsta.email' na configuração do sistema.
+   *
+   * @return o email 'nada consta' se existir, caso contrário, uma string vazia.
+   */
+  @Override
+  public String getEmailNadaConsta() {
+    return repository.findFirstByIsActiveTrue().map(SystemConfig::getNadaConstaEmail).orElse("");
+  }
+
+  @Value("${application.logo-url:https://kirinus.tec.br:9000/utfpr-bucket/logo-utf-mais-prod.png}")
+  private String logoUrlProperty;
+
+  /**
+   * Obtém a URL do logo da aplicação.
+   *
+   * @return a URL do logo configurada nas propriedades da aplicação.
+   */
+  @Override
+  public String getLogoUrl() {
+    // In future, could be extended to fetch from DB config if needed
+    return logoUrlProperty;
   }
 }

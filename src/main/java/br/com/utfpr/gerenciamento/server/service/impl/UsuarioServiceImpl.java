@@ -1,12 +1,14 @@
 package br.com.utfpr.gerenciamento.server.service.impl;
 
 import br.com.utfpr.gerenciamento.server.dto.*;
+import br.com.utfpr.gerenciamento.server.enumeration.NadaConstaStatus;
 import br.com.utfpr.gerenciamento.server.enumeration.UserRole;
 import br.com.utfpr.gerenciamento.server.exception.EntityNotFoundException;
 import br.com.utfpr.gerenciamento.server.exception.RecoverCodeInvalidException;
 import br.com.utfpr.gerenciamento.server.model.Permissao;
 import br.com.utfpr.gerenciamento.server.model.RecoverPassword;
 import br.com.utfpr.gerenciamento.server.model.Usuario;
+import br.com.utfpr.gerenciamento.server.repository.NadaConstaRepository;
 import br.com.utfpr.gerenciamento.server.repository.RecoverPasswordRepository;
 import br.com.utfpr.gerenciamento.server.repository.UsuarioRepository;
 import br.com.utfpr.gerenciamento.server.service.EmailService;
@@ -52,6 +54,8 @@ public class UsuarioServiceImpl extends CrudServiceImpl<Usuario, Long>
 
   private final PermissaoService permissaoService;
 
+  private final NadaConstaRepository nadaConstaRepository;
+
   private static final Logger LOGGER = LoggerFactory.getLogger(UsuarioServiceImpl.class.getName());
 
   public UsuarioServiceImpl(
@@ -60,13 +64,15 @@ public class UsuarioServiceImpl extends CrudServiceImpl<Usuario, Long>
       RecoverPasswordRepository recoverPasswordRepository,
       PasswordEncoder passwordEncoder,
       EmailService emailService,
-      PermissaoService permissaoService) {
+      PermissaoService permissaoService,
+      NadaConstaRepository nadaConstaRepository) {
     this.usuarioRepository = usuarioRepository;
     this.modelMapper = modelMapper;
     this.recoverPasswordRepository = recoverPasswordRepository;
     this.passwordEncoder = passwordEncoder;
     this.emailService = emailService;
     this.permissaoService = permissaoService;
+    this.nadaConstaRepository = nadaConstaRepository;
   }
 
   @Override
@@ -261,6 +267,7 @@ public class UsuarioServiceImpl extends CrudServiceImpl<Usuario, Long>
     Usuario usuario = usuarioRepository.findByCodigoVerificacao(confirmEmailRequestDto.getCode());
     if (usuario != null) {
       usuario.setEmailVerificado(true);
+      usuario.setAtivo(true);
       usuarioRepository.save(usuario);
       return GenericResponse.builder().message("O email do usuário foi confirmado.").build();
     } else {
@@ -351,5 +358,20 @@ public class UsuarioServiceImpl extends CrudServiceImpl<Usuario, Long>
 
     emailService.sendEmailWithTemplate(
         emailDto, emailDto.getEmailTo(), emailDto.getSubject(), "templateConfirmacaoCadastro");
+  }
+
+  @Override
+  public Usuario findByDocumento(String documento) {
+    return usuarioRepository.findByDocumento(documento).orElse(null);
+  }
+
+  /** Verifica se o usuário possui solicitação de nada consta em aberto ou concluída. */
+  @Transactional
+  @Override
+  public boolean hasSolicitacaoNadaConstaPendingOrCompleted(String username) {
+    Usuario usuario = findByUsername(username);
+    if (usuario == null) return false;
+    return nadaConstaRepository.existsByUsuarioAndStatusIn(
+        usuario, Set.of(NadaConstaStatus.PENDING, NadaConstaStatus.COMPLETED));
   }
 }
