@@ -47,4 +47,6 @@ public interface UsuarioService extends CrudService<Usuario, Long> {
   Usuario saveNewUser(Usuario entity);
 
   Usuario findByDocumento(String documento);
+
+  boolean hasSolicitacaoNadaConstaPendingOrCompleted(String username);
 }

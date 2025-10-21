@@ -82,9 +82,7 @@ public class NadaConstaServiceImpl extends CrudServiceImpl<NadaConsta, Long>
       throw new RuntimeException("Usuário não encontrado para o documento informado.");
     }
     // Pre-check for open Nada Consta solicitation
-    if (usuarioService
-            instanceof br.com.utfpr.gerenciamento.server.service.impl.UsuarioServiceImpl impl
-        && impl.hasSolicitacaoNadaConstaPendingOrCompleted(usuario.getUsername())) {
+    if (usuarioService.hasSolicitacaoNadaConstaPendingOrCompleted(usuario.getUsername())) {
       throw new NadaConstaException(
           "Já existe uma solicitação de Nada Consta em aberto ou concluída para este usuário.");
     }

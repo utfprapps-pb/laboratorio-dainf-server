@@ -366,8 +366,10 @@ public class UsuarioServiceImpl extends CrudServiceImpl<Usuario, Long>
   }
 
   /** Verifica se o usuário possui solicitação de nada consta em aberto ou concluída. */
+  @Transactional
+  @Override
   public boolean hasSolicitacaoNadaConstaPendingOrCompleted(String username) {
-    Usuario usuario = usuarioRepository.findByUsername(username); // service-level normalization
+    Usuario usuario = findByUsername(username);
     if (usuario == null) return false;
     return nadaConstaRepository.existsByUsuarioAndStatusIn(
         usuario, Set.of(NadaConstaStatus.PENDING, NadaConstaStatus.COMPLETED));
