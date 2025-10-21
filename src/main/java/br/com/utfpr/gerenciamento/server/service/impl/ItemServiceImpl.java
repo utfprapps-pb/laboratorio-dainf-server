@@ -8,6 +8,7 @@ import br.com.utfpr.gerenciamento.server.minio.util.FileTypeUtils;
 import br.com.utfpr.gerenciamento.server.model.Email;
 import br.com.utfpr.gerenciamento.server.model.Item;
 import br.com.utfpr.gerenciamento.server.model.ItemImage;
+import br.com.utfpr.gerenciamento.server.repository.EmprestimoItemRepository;
 import br.com.utfpr.gerenciamento.server.repository.ItemImageRepository;
 import br.com.utfpr.gerenciamento.server.repository.ItemRepository;
 import br.com.utfpr.gerenciamento.server.service.EmailService;
@@ -36,24 +37,26 @@ public class ItemServiceImpl extends CrudServiceImpl<Item, Long> implements Item
   private final MinioService minioService;
   private final MinioConfig minioConfig;
   private final ItemImageRepository itemImageRepository;
+  private final EmprestimoItemRepository emprestimoItemRepository;
 
   private final ModelMapper modelMapper;
 
   public ItemServiceImpl(
-      ItemRepository itemRepository,
-      EmailService emailService,
-      RelatorioService relatorioService,
-      MinioService minioService,
-      MinioConfig minioConfig,
-      ItemImageRepository itemImageRepository,
-      ModelMapper modelMapper) {
+          ItemRepository itemRepository,
+          EmailService emailService,
+          RelatorioService relatorioService,
+          MinioService minioService,
+          MinioConfig minioConfig,
+          ItemImageRepository itemImageRepository, EmprestimoItemRepository emprestimoItemRepository,
+          ModelMapper modelMapper) {
     this.itemRepository = itemRepository;
     this.emailService = emailService;
     this.relatorioService = relatorioService;
     this.minioService = minioService;
     this.minioConfig = minioConfig;
     this.itemImageRepository = itemImageRepository;
-    this.modelMapper = modelMapper;
+      this.emprestimoItemRepository = emprestimoItemRepository;
+      this.modelMapper = modelMapper;
   }
 
   @Override
@@ -186,13 +189,14 @@ public class ItemServiceImpl extends CrudServiceImpl<Item, Long> implements Item
                 .build();
         email.addFile("itensAtingiramEstoqueMin.pdf", report);
         emailService.enviar(email);
-
       } catch (Exception ex) {
         ex.printStackTrace();
       }
     }
   }
-
+  public BigDecimal disponivelParaEmprestimo(Long itemId){
+    return emprestimoItemRepository.findQtdeEmprestadaByItemIdAndEmprestimo_DataDevolucaoIsNull(itemId);
+  }
   /**
    * This method is used when an item is duplicated, so the image array can also be transfered to
    * the new item

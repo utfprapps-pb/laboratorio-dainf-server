@@ -33,4 +33,5 @@ public interface ItemService extends CrudService<Item, Long> {
   void copyImagesItem(List<ItemImage> itemImages, Long id);
 
   ItemResponseDto convertToDto(Item entity);
+  BigDecimal disponivelParaEmprestimo(Long itemId);
 }

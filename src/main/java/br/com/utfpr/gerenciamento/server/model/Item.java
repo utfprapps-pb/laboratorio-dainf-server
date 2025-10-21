@@ -13,6 +13,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import org.hibernate.proxy.HibernateProxy;
+import org.springframework.transaction.annotation.Transactional;
 
 @Getter
 @Setter
@@ -65,6 +66,9 @@ public class Item {
       orphanRemoval = true)
   @JsonManagedReference
   private List<ItemImage> imageItem;
+
+  @Transient
+  private BigDecimal disponivelEmprestimoCalculado;
 
   @Override
   @SuppressWarnings(

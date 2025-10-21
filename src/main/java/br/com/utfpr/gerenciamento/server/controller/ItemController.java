@@ -6,7 +6,15 @@ import br.com.utfpr.gerenciamento.server.model.ItemImage;
 import br.com.utfpr.gerenciamento.server.service.CrudService;
 import br.com.utfpr.gerenciamento.server.service.ItemService;
 import jakarta.servlet.http.HttpServletRequest;
+
+import java.math.BigDecimal;
 import java.util.List;
+
+import org.eclipse.angus.mail.imap.protocol.ID;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartHttpServletRequest;
 
@@ -35,6 +43,85 @@ public class ItemController extends CrudController<Item, Long> {
       object.setImageItem(null);
     }
   }
+
+  @Override
+  @GetMapping("{id}")
+  public Item findone(@PathVariable("id") Long id) {
+    Item item = itemService.findOne(id);
+    if (item.getTipoItem().name().equals("P")) {
+      BigDecimal disponivel = itemService.disponivelParaEmprestimo(item.getId());
+      BigDecimal saldo = item.getSaldo();
+
+      // Evita NullPointerException
+      if (saldo == null) saldo = BigDecimal.ZERO;
+      if (disponivel == null) disponivel = BigDecimal.ZERO;
+      item.setDisponivelEmprestimoCalculado(saldo.subtract(disponivel));
+    }else{
+      item.setDisponivelEmprestimoCalculado(item.getSaldo());
+    }
+    return item;
+  }
+
+  @Override
+  @GetMapping
+  public List<Item> findAll() {
+    return getService().findAll(Sort.by("id")).stream()
+            .peek(item -> {
+              if (item.getTipoItem() != null && "P".equals(item.getTipoItem().name())) {
+                BigDecimal disponivel = itemService.disponivelParaEmprestimo(item.getId());
+                BigDecimal saldo = item.getSaldo();
+
+                if (saldo == null) saldo = BigDecimal.ZERO;
+                if (disponivel == null) disponivel = BigDecimal.ZERO;
+
+                item.setDisponivelEmprestimoCalculado(saldo.subtract(disponivel));
+              }else{
+                item.setDisponivelEmprestimoCalculado(item.getSaldo());
+              }
+            })
+            .toList();
+  }
+
+  @Override
+  @GetMapping("page")
+  public Page<Item> findAllPaged(
+          @RequestParam("page") int page,
+          @RequestParam("size") int size,
+          @RequestParam(required = false) String filter,
+          @RequestParam(required = false) String order,
+          @RequestParam(required = false) Boolean asc) {
+
+    PageRequest pageRequest = PageRequest.of(page, size);
+    if (order != null && asc != null) {
+      pageRequest = PageRequest.of(page, size, asc ? Sort.Direction.ASC : Sort.Direction.DESC, order);
+    }
+
+    Page<Item> pageResult;
+
+    if (filter != null && !filter.isEmpty()) {
+      Specification<Item> spec = getService().filterByAllFields(filter);
+      pageResult = getService().findAllSpecification(spec, pageRequest);
+    } else {
+      pageResult = getService().findAll(pageRequest);
+    }
+
+    // Aplica o cálculo nos itens do resultado
+    pageResult.forEach(item -> {
+      if (item.getTipoItem() != null && "P".equals(item.getTipoItem().name())) {
+        BigDecimal disponivel = itemService.disponivelParaEmprestimo(item.getId());
+        BigDecimal saldo = item.getSaldo();
+
+        if (saldo == null) saldo = BigDecimal.ZERO;
+        if (disponivel == null) disponivel = BigDecimal.ZERO;
+
+        item.setDisponivelEmprestimoCalculado(saldo.subtract(disponivel));
+      }else{
+        item.setDisponivelEmprestimoCalculado(item.getSaldo());
+      }
+    });
+    return pageResult;
+  }
+
 
   @Override
   public void postSave(Item object) {
