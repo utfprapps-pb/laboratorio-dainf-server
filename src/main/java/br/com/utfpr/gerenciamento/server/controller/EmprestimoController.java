@@ -1,14 +1,21 @@
 package br.com.utfpr.gerenciamento.server.controller;
 
+import static br.com.utfpr.gerenciamento.server.enumeration.UserRole.ROLE_ADMINISTRADOR_NAME;
+import static br.com.utfpr.gerenciamento.server.enumeration.UserRole.ROLE_LABORATORISTA_NAME;
+
 import br.com.utfpr.gerenciamento.server.dto.EmprestimoResponseDto;
-import br.com.utfpr.gerenciamento.server.enumeration.StatusDevolucao;
 import br.com.utfpr.gerenciamento.server.model.Emprestimo;
-import br.com.utfpr.gerenciamento.server.model.EmprestimoDevolucaoItem;
 import br.com.utfpr.gerenciamento.server.model.filter.EmprestimoFilter;
-import br.com.utfpr.gerenciamento.server.service.*;
+import br.com.utfpr.gerenciamento.server.service.CrudService;
+import br.com.utfpr.gerenciamento.server.service.EmprestimoService;
+import br.com.utfpr.gerenciamento.server.specification.EmprestimoSpecifications;
 import br.com.utfpr.gerenciamento.server.util.DateUtil;
-import java.time.LocalDate;
 import java.util.List;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.jpa.domain.Specification;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -16,19 +23,9 @@ import org.springframework.web.bind.annotation.*;
 public class EmprestimoController extends CrudController<Emprestimo, Long> {
 
   private final EmprestimoService emprestimoService;
-  private final ItemService itemService;
-  private final SaidaService saidaService;
-  private final ReservaService reservaService;
 
-  public EmprestimoController(
-      EmprestimoService emprestimoService,
-      ItemService itemService,
-      SaidaService saidaService,
-      ReservaService reservaService) {
+  public EmprestimoController(EmprestimoService emprestimoService) {
     this.emprestimoService = emprestimoService;
-    this.itemService = itemService;
-    this.saidaService = saidaService;
-    this.reservaService = reservaService;
   }
 
   @Override
@@ -44,88 +41,27 @@ public class EmprestimoController extends CrudController<Emprestimo, Long> {
   @PostMapping("save-emprestimo")
   public EmprestimoResponseDto save(
       @RequestBody Emprestimo emprestimo, @RequestParam("idReserva") Long idReserva) {
-    preSave(emprestimo);
-    Emprestimo toReturn = getService().save(emprestimo);
-    postSave(emprestimo);
-    if (idReserva != 0) reservaService.finalizarReserva(idReserva);
-
-    return emprestimoService.convertToDto(toReturn);
+    return emprestimoService.processEmprestimo(emprestimo, idReserva);
   }
 
   @PostMapping("save-devolucao")
   public EmprestimoResponseDto saveDevolucao(@RequestBody Emprestimo emprestimo) {
-
-    boolean isPendente =
-        emprestimo.getEmprestimoDevolucaoItem().stream()
-            .anyMatch(empDevItem -> empDevItem.getStatusDevolucao().equals(StatusDevolucao.P));
-    if (!isPendente) {
-      emprestimo.setDataDevolucao(LocalDate.now());
-    }
-
-    Emprestimo toReturn = emprestimoService.save(emprestimo);
-    emprestimo.getEmprestimoDevolucaoItem().stream()
-        .filter(empDevItem -> empDevItem.getStatusDevolucao().equals(StatusDevolucao.D))
-        .forEach(
-            devItem -> itemService.aumentaSaldoItem(devItem.getItem().getId(), devItem.getQtde()));
-
-    List<EmprestimoDevolucaoItem> listItensToSaida =
-        emprestimo.getEmprestimoDevolucaoItem().stream()
-            .filter(empDevItem -> empDevItem.getStatusDevolucao().equals(StatusDevolucao.S))
-            .toList();
-
-    if (!listItensToSaida.isEmpty()) {
-      saidaService.createSaidaByDevolucaoEmprestimo(listItensToSaida);
-    }
-    emprestimoService.sendEmailConfirmacaoDevolucao(emprestimo);
-    return emprestimoService.convertToDto(toReturn);
+    return emprestimoService.processDevolucao(emprestimo);
   }
 
   @Override
   public void preSave(Emprestimo object) {
-    // se está editando, ele retorna o saldo de todos os itens, para depois baixar novamente com os
-    // valores atualizados
-    if (object.getId() != null) {
-      Emprestimo old = emprestimoService.findOne(object.getId());
-      old.getEmprestimoItem().stream()
-          .forEach(
-              empItem ->
-                  itemService.aumentaSaldoItem(empItem.getItem().getId(), empItem.getQtde()));
-    }
-    object.getEmprestimoItem().stream()
-        .forEach(
-            saidaItem -> {
-              if (saidaItem.getItem() != null) {
-                itemService.saldoItemIsValid(
-                    itemService.getSaldoItem(saidaItem.getItem().getId()), saidaItem.getQtde());
-              }
-            });
-    object.setEmprestimoDevolucaoItem(
-        emprestimoService.createEmprestimoItemDevolucao(object.getEmprestimoItem()));
-
-    // caso tiver apenas materiais permanentes no empréstimo, será setado a data de devolução, para
-    // finalizar o empréstimo
-    // if (object.getEmprestimoDevolucaoItem().size() <= 0) {
-    // object.setDataDevolucao(LocalDate.now());
-    // }
+    emprestimoService.prepareEmprestimo(object);
   }
 
   @Override
   public void postSave(Emprestimo object) {
-    object.getEmprestimoItem().stream()
-        .forEach(
-            saidaItem ->
-                itemService.diminuiSaldoItem(
-                    saidaItem.getItem().getId(), saidaItem.getQtde(), true));
-    emprestimoService.sendEmailConfirmacaoEmprestimo(object);
+    emprestimoService.finalizeEmprestimo(object);
   }
 
   @Override
   public void postDelete(Emprestimo object) {
-    object.getEmprestimoItem().stream()
-        .forEach(
-            saidaItem ->
-                itemService.aumentaSaldoItem(saidaItem.getItem().getId(), saidaItem.getQtde()));
-    saidaService.deleteSaidaByEmprestimo(object.getId());
+    emprestimoService.cleanupAfterDelete(object);
   }
 
   @PostMapping("filter")
@@ -135,6 +71,12 @@ public class EmprestimoController extends CrudController<Emprestimo, Long> {
         .toList();
   }
 
+  @PreAuthorize(
+      "#username == authentication.name or hasAnyAuthority('"
+          + ROLE_LABORATORISTA_NAME
+          + "', '"
+          + ROLE_ADMINISTRADOR_NAME
+          + "')")
   @GetMapping("find-all-by-username/{username}")
   public List<EmprestimoResponseDto> findAllByUsuarioEmprestimo(
       @PathVariable("username") String username) {
@@ -147,5 +89,60 @@ public class EmprestimoController extends CrudController<Emprestimo, Long> {
   public void changePrazoDevolucao(
       @RequestParam("id") Long id, @RequestParam("novaData") String novaData) {
     emprestimoService.changePrazoDevolucao(id, DateUtil.parseStringToLocalDate(novaData));
+  }
+
+  /**
+   * Paginação otimizada de empréstimos com JOIN FETCH para associações críticas.
+   *
+   * <p><b>Associações fetched via {@link EmprestimoSpecifications#withFetchCollections()}:</b>
+   *
+   * <ul>
+   *   <li>{@code usuarioEmprestimo} - Usuário que fez o empréstimo (LEFT JOIN FETCH)
+   *   <li>{@code usuarioEmprestimo.permissoes} - Permissões do usuário empréstimo (LEFT JOIN FETCH)
+   *   <li>{@code usuarioResponsavel} - Usuário responsável pela liberação (LEFT JOIN FETCH)
+   *   <li>{@code usuarioResponsavel.permissoes} - Permissões do responsável (LEFT JOIN FETCH)
+   *   <li>{@code emprestimoItem} - Itens do empréstimo (LEFT JOIN FETCH)
+   * </ul>
+   *
+   * <p><b>NÃO fetched:</b> {@code emprestimoDevolucaoItem} (usa @BatchSize para evitar
+   * MultipleBagFetchException)
+   *
+   * <p>Esta estratégia previne N+1 queries mantendo performance ideal com DISTINCT e evitando
+   * cartesian product ao fetch apenas uma collection @OneToMany.
+   *
+   * <p>TODO: Padronizar demais findAllPaged depois
+   *
+   * @param page Número da página (0-indexed)
+   * @param size Tamanho da página
+   * @param filter Filtro opcional (busca textual em todos os campos via {@link
+   *     CrudService#filterByAllFields})
+   * @param order Campo de ordenação (padrão: "id")
+   * @param asc Direção da ordenação (true = ASC, false = DESC, padrão: ASC)
+   * @return Página de entidades {@link Emprestimo} otimizada com associações carregadas
+   */
+  @Override
+  public Page<Emprestimo> findAllPaged(
+      @RequestParam("page") int page,
+      @RequestParam("size") int size,
+      @RequestParam(required = false) String filter,
+      @RequestParam(required = false) String order,
+      @RequestParam(required = false) Boolean asc) {
+
+    // Configura ordenação
+    Sort sort = Sort.by("id");
+    if (order != null && asc != null) {
+      sort = Sort.by(asc ? Sort.Direction.ASC : Sort.Direction.DESC, order);
+    }
+    PageRequest pageRequest = PageRequest.of(page, size, sort);
+
+    Specification<Emprestimo> spec;
+    if (filter != null && !filter.isEmpty()) {
+      spec = emprestimoService.filterByAllFields(filter);
+      spec = spec.and(EmprestimoSpecifications.withFetchCollections());
+    } else {
+      // Sem filtro: usa Specification que aplica apenas fetch joins
+      spec = EmprestimoSpecifications.withFetchCollections();
+    }
+    return emprestimoService.findAllSpecification(spec, pageRequest);
   }
 }

@@ -7,6 +7,8 @@ import br.com.utfpr.gerenciamento.server.model.dashboards.DashboardEmprestimoDia
 import br.com.utfpr.gerenciamento.server.model.dashboards.DashboardItensEmprestados;
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Optional;
+import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.data.jpa.repository.Query;
@@ -34,22 +36,20 @@ public interface EmprestimoRepository
    * <p>Substitui o carregamento de todos emprestimos + 4 iterações stream por uma única query com
    * agregação.
    *
-   * <p>Melhoria esperada: 60-75% redução no tempo de execução.
-   *
    * @param dtIni Data inicial do range
    * @param dtFim Data final do range
    * @return Objeto com totalizadores (total, emAndamento, emAtraso, finalizado)
    */
   @Query(
       """
-      SELECT new br.com.utfpr.gerenciamento.server.model.dashboards.DashboardEmprestimoCountRange(
-          COUNT(e),
-          COALESCE(SUM(CASE WHEN e.dataDevolucao IS NULL AND e.prazoDevolucao >= CURRENT_DATE THEN 1 ELSE 0 END), 0),
-          COALESCE(SUM(CASE WHEN e.dataDevolucao IS NULL AND e.prazoDevolucao < CURRENT_DATE THEN 1 ELSE 0 END), 0),
-          COALESCE(SUM(CASE WHEN e.dataDevolucao IS NOT NULL THEN 1 ELSE 0 END), 0))
-      FROM Emprestimo e
-      WHERE e.dataEmprestimo BETWEEN :dtIni AND :dtFim
-      """)
+              SELECT new br.com.utfpr.gerenciamento.server.model.dashboards.DashboardEmprestimoCountRange(
+                  COUNT(e),
+                  COALESCE(SUM(CASE WHEN e.dataDevolucao IS NULL AND e.prazoDevolucao >= CURRENT_DATE THEN 1L ELSE 0L END), 0L),
+                  COALESCE(SUM(CASE WHEN e.dataDevolucao IS NULL AND e.prazoDevolucao < CURRENT_DATE THEN 1L ELSE 0L END), 0L),
+                  COALESCE(SUM(CASE WHEN e.dataDevolucao IS NOT NULL THEN 1L ELSE 0L END), 0L))
+              FROM Emprestimo e
+              WHERE e.dataEmprestimo BETWEEN :dtIni AND :dtFim
+              """)
   DashboardEmprestimoCountRange countEmprestimosByStatusInRange(
       @Param("dtIni") LocalDate dtIni, @Param("dtFim") LocalDate dtFim);
 
@@ -72,4 +72,26 @@ public interface EmprestimoRepository
   List<Emprestimo> findByDataDevolucaoIsNullAndPrazoDevolucaoEquals(LocalDate dt);
 
   List<Emprestimo> findAllByUsuarioEmprestimoAndDataDevolucaoIsNull(Usuario usuarioEmprestimo);
+
+  /**
+   * Busca Emprestimo por ID com eager loading de todas as relações necessárias para email.
+   *
+   * <p>Elimina N+1 queries ao carregar todas as associações em uma única query com JOIN FETCH.
+   *
+   * <p>Performance: 5 queries → 1 query (redução de 80%)
+   *
+   * @param id ID do empréstimo
+   * @return Optional com Emprestimo e todas as relações carregadas, ou empty se não encontrado
+   */
+  @EntityGraph(
+      attributePaths = {
+        "usuarioEmprestimo",
+        "usuarioResponsavel",
+        "emprestimoItem",
+        "emprestimoItem.item",
+        "emprestimoDevolucaoItem",
+        "emprestimoDevolucaoItem.item"
+      })
+  @Query("SELECT e FROM Emprestimo e WHERE e.id = :id")
+  Optional<Emprestimo> findEmprestimoByIdWithRelations(@Param("id") Long id);
 }

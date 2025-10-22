@@ -25,9 +25,9 @@ public class ReservaController extends CrudController<Reserva, Long> {
     return reservaService;
   }
 
-  @GetMapping("find-all-by-username/{username}")
-  public List<ReservaResponseDto> findAllByUsername(@PathVariable("username") String username) {
-    return reservaService.findAllByUsername(username);
+  @GetMapping("find-all-by-authenticated-user")
+  public List<ReservaResponseDto> findAllByAuthenticatedUser() {
+    return reservaService.findAllByAuthenticatedUser();
   }
 
   @GetMapping("find-all-by-item/{idItem}")

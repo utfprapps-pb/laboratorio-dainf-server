@@ -37,4 +37,42 @@ public interface EmprestimoService extends CrudService<Emprestimo, Long> {
   void sendEmailPrazoDevolucaoProximo();
 
   EmprestimoResponseDto convertToDto(Emprestimo entity);
+
+  /**
+   * Processa criação/edição de empréstimo com toda lógica de negócio.
+   *
+   * @param emprestimo Empréstimo a ser processado
+   * @param idReserva ID da reserva a finalizar (0 se não houver)
+   * @return DTO do empréstimo salvo
+   */
+  EmprestimoResponseDto processEmprestimo(Emprestimo emprestimo, Long idReserva);
+
+  /**
+   * Processa devolução de empréstimo com toda lógica de negócio.
+   *
+   * @param emprestimo Empréstimo com dados de devolução
+   * @return DTO do empréstimo atualizado
+   */
+  EmprestimoResponseDto processDevolucao(Emprestimo emprestimo);
+
+  /**
+   * Prepara empréstimo antes de salvar (restaura saldo, valida itens, cria itens de devolução).
+   *
+   * @param emprestimo Empréstimo a preparar
+   */
+  void prepareEmprestimo(Emprestimo emprestimo);
+
+  /**
+   * Finaliza empréstimo após salvar (baixa saldo, envia email).
+   *
+   * @param emprestimo Empréstimo salvo
+   */
+  void finalizeEmprestimo(Emprestimo emprestimo);
+
+  /**
+   * Limpa dados após deletar empréstimo (restaura saldo, deleta saídas).
+   *
+   * @param emprestimo Empréstimo deletado
+   */
+  void cleanupAfterDelete(Emprestimo emprestimo);
 }
