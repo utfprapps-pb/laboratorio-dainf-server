@@ -135,7 +135,7 @@ public class EmailEventListener {
     }
   }
 
-    /**
+  /**
    * Prepara dados do template baseado no tipo de evento.
    *
    * <p>Este método detecta o tipo específico do evento e carrega os dados necessários do banco em
