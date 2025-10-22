@@ -84,8 +84,7 @@ public class EmailEventListener {
    */
   @Retryable(
       retryFor = {MailException.class},
-      maxAttempts = 3,
-      backoff = @Backoff(delay = 2000, multiplier = 2))
+          backoff = @Backoff(delay = 2000, multiplier = 2))
   @Async("emailTaskExecutor")
   @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
   @Transactional(

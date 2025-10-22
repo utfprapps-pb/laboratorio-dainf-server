@@ -41,8 +41,7 @@ class EmprestimoSpecificationsTest {
 
   private final EmprestimoFixture fixture = new EmprestimoFixture();
 
-  private Permissao permissaoAluno;
-  private Usuario usuarioEmprestimo;
+    private Usuario usuarioEmprestimo;
   private Usuario usuarioResponsavel;
   private Item item;
   private Emprestimo emprestimoAtrasado;
@@ -52,7 +51,7 @@ class EmprestimoSpecificationsTest {
   @BeforeEach
   void setUp() {
     // Criar e persistir permissão para testes (usando factory method para consistência)
-    permissaoAluno = fixture.criarPermissao("ROLE_ALUNO");
+      Permissao permissaoAluno = fixture.criarPermissao("ROLE_ALUNO");
     entityManager.persist(permissaoAluno);
 
     // Criar usuários usando fixture
@@ -107,10 +106,7 @@ class EmprestimoSpecificationsTest {
   @DisplayName("Deve filtrar empréstimos corretamente por status")
   void testFromFilter_QuandoFiltraPorStatus_DeveRetornarEmprestimosCorretos(
       String status,
-      int quantidadeEsperada,
-      String tipoEmprestimo,
-      boolean deveEstarDevolvido,
-      boolean deveEstarAtrasado) {
+      int quantidadeEsperada) {
     // Given
     EmprestimoFilter filtro = new EmprestimoFilter();
     filtro.setStatusFromString(status); // Converte String do CSV para enum
@@ -127,25 +123,25 @@ class EmprestimoSpecificationsTest {
 
     // Validações específicas por tipo
     if ("A".equals(status)) {
-      assertEquals(emprestimoAtrasado.getId(), resultado.get(0).getId());
+      assertEquals(emprestimoAtrasado.getId(), resultado.getFirst().getId());
       assertNull(
-          resultado.get(0).getDataDevolucao(),
+          resultado.getFirst().getDataDevolucao(),
           "Empréstimo atrasado não deve ter data de devolução");
       assertTrue(
-          resultado.get(0).getPrazoDevolucao().isBefore(LocalDate.now()),
+          resultado.getFirst().getPrazoDevolucao().isBefore(LocalDate.now()),
           "Empréstimo atrasado deve ter prazo vencido");
     } else if ("P".equals(status)) {
-      assertEquals(emprestimoPendente.getId(), resultado.get(0).getId());
+      assertEquals(emprestimoPendente.getId(), resultado.getFirst().getId());
       assertNull(
-          resultado.get(0).getDataDevolucao(),
+          resultado.getFirst().getDataDevolucao(),
           "Empréstimo pendente não deve ter data de devolução");
       assertFalse(
-          resultado.get(0).getPrazoDevolucao().isBefore(LocalDate.now()),
+          resultado.getFirst().getPrazoDevolucao().isBefore(LocalDate.now()),
           "Empréstimo pendente não deve ter prazo vencido");
     } else if ("F".equals(status)) {
-      assertEquals(emprestimoFinalizado.getId(), resultado.get(0).getId());
+      assertEquals(emprestimoFinalizado.getId(), resultado.getFirst().getId());
       assertNotNull(
-          resultado.get(0).getDataDevolucao(), "Empréstimo finalizado deve ter data de devolução");
+          resultado.getFirst().getDataDevolucao(), "Empréstimo finalizado deve ter data de devolução");
     }
   }
 
@@ -203,7 +199,7 @@ class EmprestimoSpecificationsTest {
 
     // Then
     assertEquals(1, resultado.size()); // Apenas emprestimoPendente (2 dias atrás)
-    assertEquals(emprestimoPendente.getId(), resultado.get(0).getId());
+    assertEquals(emprestimoPendente.getId(), resultado.getFirst().getId());
   }
 
   @Test
@@ -240,7 +236,7 @@ class EmprestimoSpecificationsTest {
 
     // Then
     assertEquals(1, resultado.size()); // Apenas emprestimoFinalizado (7 dias atrás)
-    assertEquals(emprestimoFinalizado.getId(), resultado.get(0).getId());
+    assertEquals(emprestimoFinalizado.getId(), resultado.getFirst().getId());
   }
 
   @Test
@@ -306,7 +302,7 @@ class EmprestimoSpecificationsTest {
 
     // Then
     assertEquals(1, resultado.size());
-    assertEquals(emprestimoFinalizado.getId(), resultado.get(0).getId());
+    assertEquals(emprestimoFinalizado.getId(), resultado.getFirst().getId());
   }
 
   @Test

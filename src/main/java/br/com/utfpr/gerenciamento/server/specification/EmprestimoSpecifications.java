@@ -7,6 +7,7 @@ import br.com.utfpr.gerenciamento.server.model.filter.DateRange;
 import br.com.utfpr.gerenciamento.server.model.filter.EmprestimoFilter;
 import jakarta.persistence.criteria.*;
 import java.time.LocalDate;
+import java.util.Objects;
 import org.springframework.data.jpa.domain.Specification;
 
 /**
@@ -59,7 +60,7 @@ public class EmprestimoSpecifications {
       EmprestimoFilter filter, boolean fetchCollections) {
     return (root, query, cb) -> {
       // Previne duplicação de resultados em queries de count
-      if (query.getResultType() != Long.class && query.getResultType() != long.class) {
+      if (Objects.requireNonNull(query).getResultType() != Long.class && query.getResultType() != long.class) {
         // Define distinct antes de realizar fetches para evitar duplicação de resultados
         query.distinct(true);
 
@@ -265,8 +266,6 @@ public class EmprestimoSpecifications {
           cb.isNotNull(root.get(DATA_DEVOLUCAO));
 
       case TODOS -> cb.conjunction();
-
-      default -> cb.conjunction(); // Fallback: retorna sempre verdadeiro
     };
   }
 }

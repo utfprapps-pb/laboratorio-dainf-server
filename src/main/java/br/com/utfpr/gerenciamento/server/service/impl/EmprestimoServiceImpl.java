@@ -55,7 +55,6 @@ public class EmprestimoServiceImpl extends CrudServiceImpl<Emprestimo, Long>
   private final ModelMapper modelMapper;
   private final org.springframework.context.ApplicationEventPublisher eventPublisher;
 
-  // Self-injection para chamadas transacionais (evita proxy bypass)
   @Lazy private EmprestimoService self;
 
   public EmprestimoServiceImpl(
@@ -88,9 +87,9 @@ public class EmprestimoServiceImpl extends CrudServiceImpl<Emprestimo, Long>
   private boolean isValidEmail(String email) {
     if (email == null || email.trim().isEmpty()) {
       log.warn("Email inválido ou vazio - evento de email não será publicado");
-      return false;
+      return true;
     }
-    return true;
+    return false;
   }
 
   @Override
@@ -250,7 +249,7 @@ public class EmprestimoServiceImpl extends CrudServiceImpl<Emprestimo, Long>
 
     // Publica evento - email enviado APÓS commit
     String email = saved.getUsuarioEmprestimo().getEmail();
-    if (!isValidEmail(email)) {
+    if (isValidEmail(email)) {
       log.warn(
           "Email de alteração de prazo não enviado - usuário sem email válido: {}",
           saved.getUsuarioEmprestimo().getNome());
@@ -265,7 +264,7 @@ public class EmprestimoServiceImpl extends CrudServiceImpl<Emprestimo, Long>
     // REFATORADO: Usa eventos ao invés de chamada direta
     // Email será enviado APÓS commit pela EmailEventListener
     String email = emprestimo.getUsuarioEmprestimo().getEmail();
-    if (!isValidEmail(email)) {
+    if (isValidEmail(email)) {
       log.warn(
           "Email de confirmação não enviado - usuário sem email válido: {}",
           emprestimo.getUsuarioEmprestimo().getNome());
@@ -282,7 +281,7 @@ public class EmprestimoServiceImpl extends CrudServiceImpl<Emprestimo, Long>
   public void sendEmailConfirmacaoDevolucao(Emprestimo emprestimo) {
     // REFATORADO: Usa eventos ao invés de chamada direta
     String email = emprestimo.getUsuarioEmprestimo().getEmail();
-    if (!isValidEmail(email)) {
+    if (isValidEmail(email)) {
       log.warn(
           "Email de devolução não enviado - usuário sem email válido: {}",
           emprestimo.getUsuarioEmprestimo().getNome());
@@ -303,7 +302,7 @@ public class EmprestimoServiceImpl extends CrudServiceImpl<Emprestimo, Long>
       emprestimos.forEach(
           emprestimo -> {
             String email = emprestimo.getUsuarioEmprestimo().getEmail();
-            if (!isValidEmail(email)) {
+            if (isValidEmail(email)) {
               log.warn(
                   "Email de prazo próximo não enviado - usuário sem email válido: {}",
                   emprestimo.getUsuarioEmprestimo().getNome());

@@ -38,13 +38,12 @@ class EmprestimoServiceImplTest {
   @InjectMocks private EmprestimoServiceImpl service;
 
   private Emprestimo emp;
-  private Usuario usuarioEmprestimo;
-  private Usuario usuarioResponsavel;
+    private Usuario usuarioResponsavel;
 
   @BeforeEach
   void setUp() {
     MockitoAnnotations.openMocks(this);
-    usuarioEmprestimo = new Usuario();
+      Usuario usuarioEmprestimo = new Usuario();
     usuarioEmprestimo.setEmail("mail@test.com");
     usuarioResponsavel = new Usuario();
     usuarioResponsavel.setNome("Responsavel Teste");

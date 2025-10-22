@@ -1,5 +1,7 @@
 package br.com.utfpr.gerenciamento.server.enumeration;
 
+import lombok.Getter;
+
 /**
  * Status do empréstimo baseado em datas de devolução e prazo.
  *
@@ -10,6 +12,7 @@ package br.com.utfpr.gerenciamento.server.enumeration;
  * de devolução e prazo não vencido - FINALIZADO: Com data de devolução registrada - TODOS: Filtro
  * especial para buscar todos os status
  */
+@Getter
 public enum EmprestimoStatus {
   /** Empréstimo atrasado (sem devolução, prazo vencido) */
   ATRASADO("A", "Atrasado"),
@@ -31,15 +34,7 @@ public enum EmprestimoStatus {
     this.descricao = descricao;
   }
 
-  public String getCodigo() {
-    return codigo;
-  }
-
-  public String getDescricao() {
-    return descricao;
-  }
-
-  /**
+    /**
    * Converte código String para enum.
    *
    * @param codigo Código de uma letra ("A", "P", "F", "T")
