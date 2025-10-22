@@ -14,6 +14,9 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import org.hibernate.annotations.BatchSize;
+import org.hibernate.annotations.Fetch;
+import org.hibernate.annotations.FetchMode;
 import org.hibernate.proxy.HibernateProxy;
 
 @Getter
@@ -61,6 +64,8 @@ public class Emprestimo {
       cascade = {CascadeType.ALL},
       orphanRemoval = true)
   @JsonManagedReference
+  @BatchSize(size = 10)
+  @Fetch(FetchMode.SUBSELECT)
   private List<EmprestimoItem> emprestimoItem;
 
   @OneToMany(
@@ -69,6 +74,8 @@ public class Emprestimo {
       cascade = {CascadeType.ALL},
       orphanRemoval = true)
   @JsonManagedReference
+  @BatchSize(size = 10)
+  @Fetch(FetchMode.SUBSELECT)
   private List<EmprestimoDevolucaoItem> emprestimoDevolucaoItem;
 
   @Override

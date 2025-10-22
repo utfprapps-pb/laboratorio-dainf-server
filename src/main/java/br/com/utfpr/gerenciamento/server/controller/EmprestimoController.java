@@ -84,14 +84,19 @@ public class EmprestimoController extends CrudController<Emprestimo, Long> {
   /**
    * Paginação otimizada de empréstimos com JOIN FETCH completo.
    *
+   * <p>Retorna entidades {@link Emprestimo} com associações carregadas (usuarioEmprestimo,
+   * usuarioResponsavel, permissoes, emprestimoItem) para evitar N+1 queries. Usa {@link
+   * EmprestimoSpecifications#withFetchCollections()} para aplicar fetch joins de forma otimizada.
+   *
    * <p>TODO: Padronizar demais findAllPaged depois
    *
    * @param page Número da página (0-indexed)
    * @param size Tamanho da página
-   * @param filter Filtro opcional (busca textual)
-   * @param order Campo de ordenação
-   * @param asc Direção da ordenação (true = ASC, false = DESC)
-   * @return Página de DTOs otimizada
+   * @param filter Filtro opcional (busca textual em todos os campos via {@link
+   *     CrudService#filterByAllFields})
+   * @param order Campo de ordenação (padrão: "id")
+   * @param asc Direção da ordenação (true = ASC, false = DESC, padrão: ASC)
+   * @return Página de entidades {@link Emprestimo} otimizada com associações carregadas
    */
   @Override
   public Page<Emprestimo> findAllPaged(
@@ -111,10 +116,10 @@ public class EmprestimoController extends CrudController<Emprestimo, Long> {
     Specification<Emprestimo> spec;
     if (filter != null && !filter.isEmpty()) {
       spec = emprestimoService.filterByAllFields(filter);
-      spec = spec.and(EmprestimoSpecifications.fromFilter(null, true));
+      spec = spec.and(EmprestimoSpecifications.withFetchCollections());
     } else {
-      // Sem filtro: usa Specification vazia com fetchCollections=true
-      spec = EmprestimoSpecifications.fromFilter(null, true);
+      // Sem filtro: usa Specification que aplica apenas fetch joins
+      spec = EmprestimoSpecifications.withFetchCollections();
     }
     return emprestimoService.findAllSpecification(spec, pageRequest);
   }

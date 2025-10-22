@@ -1,7 +1,7 @@
 package br.com.utfpr.gerenciamento.server.service.impl;
 
+import br.com.utfpr.gerenciamento.server.exception.EntityNotFoundException;
 import br.com.utfpr.gerenciamento.server.service.CrudService;
-import jakarta.persistence.EntityNotFoundException;
 import jakarta.persistence.criteria.Predicate;
 import java.io.Serializable;
 import java.util.List;

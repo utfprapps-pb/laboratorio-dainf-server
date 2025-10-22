@@ -12,6 +12,8 @@ import br.com.utfpr.gerenciamento.server.service.EmprestimoService;
 import br.com.utfpr.gerenciamento.server.service.NadaConstaService;
 import br.com.utfpr.gerenciamento.server.service.SystemConfigService;
 import br.com.utfpr.gerenciamento.server.service.UsuarioService;
+import br.com.utfpr.gerenciamento.server.util.DateUtil;
+import br.com.utfpr.gerenciamento.server.util.EmailUtils;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
@@ -19,12 +21,13 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import lombok.extern.slf4j.Slf4j;
 import org.modelmapper.ModelMapper;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.util.StringUtils;
 
+@Slf4j
 @Service
 public class NadaConstaServiceImpl extends CrudServiceImpl<NadaConsta, Long>
     implements NadaConstaService {
@@ -102,8 +105,7 @@ public class NadaConstaServiceImpl extends CrudServiceImpl<NadaConsta, Long>
       String destinatario = systemConfigService.getEmailNadaConsta();
       // Monta dados para o template
       DateTimeFormatter formatter =
-          DateTimeFormatter.ofPattern("dd 'de' MMMM 'de' yyyy")
-              .withLocale(java.util.Locale.forLanguageTag("pt-BR"));
+          DateTimeFormatter.ofPattern("dd 'de' MMMM 'de' yyyy").withLocale(DateUtil.PT_BR);
       Map<String, Object> templateData = new HashMap<>();
       templateData.put("nomeAluno", usuario.getNome());
       templateData.put("registroAcademico", usuario.getDocumento());
@@ -126,12 +128,11 @@ public class NadaConstaServiceImpl extends CrudServiceImpl<NadaConsta, Long>
             var item = emprestimoItem.getItem();
             itemMap.put("itemNome", item != null ? item.getNome() : "-");
             itemMap.put(
-                "dataEmprestimo",
-                emp.getDataEmprestimo().format(DateTimeFormatter.ofPattern("dd/MM/yyyy")));
+                "dataEmprestimo", emp.getDataEmprestimo().format(DateUtil.BR_DATE_FORMATTER));
             itemMap.put(
                 "dataPrevistaDevolucao",
                 emp.getPrazoDevolucao() != null
-                    ? emp.getPrazoDevolucao().format(DateTimeFormatter.ofPattern("dd/MM/yyyy"))
+                    ? emp.getPrazoDevolucao().format(DateUtil.BR_DATE_FORMATTER)
                     : "-");
             itensPendentesTemplate.add(itemMap);
           }
@@ -141,7 +142,8 @@ public class NadaConstaServiceImpl extends CrudServiceImpl<NadaConsta, Long>
       templateData.put("nomeAluno", usuario.getNome());
       templateData.put("emprestimos", itensPendentesTemplate);
       String to = usuario.getEmail();
-      if (!StringUtils.hasText(to)) {
+      if (!EmailUtils.isValidEmail(to)) {
+        log.warn("Email inválido ou ausente para usuário {}", usuario.getUsername());
         throw new IllegalStateException("E-mail do usuário ausente para envio de pendências.");
       }
       emailService.sendEmailWithTemplate(

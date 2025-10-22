@@ -4,11 +4,12 @@ import br.com.utfpr.gerenciamento.server.event.emprestimo.EmprestimoDevolvidoEve
 import br.com.utfpr.gerenciamento.server.event.emprestimo.EmprestimoFinalizadoEvent;
 import br.com.utfpr.gerenciamento.server.event.emprestimo.EmprestimoPrazoAlteradoEvent;
 import br.com.utfpr.gerenciamento.server.event.emprestimo.EmprestimoPrazoProximoEvent;
+import br.com.utfpr.gerenciamento.server.exception.EntityNotFoundException;
 import br.com.utfpr.gerenciamento.server.mapper.EmprestimoTemplateMapper;
 import br.com.utfpr.gerenciamento.server.model.Emprestimo;
 import br.com.utfpr.gerenciamento.server.repository.EmprestimoRepository;
 import br.com.utfpr.gerenciamento.server.service.EmailService;
-import jakarta.persistence.EntityNotFoundException;
+import br.com.utfpr.gerenciamento.server.util.EmailUtils;
 import java.util.Map;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -61,6 +62,9 @@ import org.springframework.transaction.event.TransactionalEventListener;
 @RequiredArgsConstructor
 public class EmailEventListener {
 
+  /** Timeout em segundos para transação de processamento de email. */
+  private static final int EMAIL_TRANSACTION_TIMEOUT_SECONDS = 30;
+
   private final EmailService emailService;
   private final EmprestimoRepository emprestimoRepository;
   private final EmprestimoTemplateMapper templateMapper;
@@ -90,13 +94,13 @@ public class EmailEventListener {
   @Transactional(
       readOnly = true,
       propagation = org.springframework.transaction.annotation.Propagation.REQUIRES_NEW,
-      timeout = 30)
+      timeout = EMAIL_TRANSACTION_TIMEOUT_SECONDS)
   public void handleEmailEvent(EmailEvent event) {
     try {
       log.info(
           "Processando evento de email: {} para {}",
           event.getClass().getSimpleName(),
-          event.getRecipient());
+          EmailUtils.maskEmail(event.getRecipient()));
 
       // Prepara dados do template (carrega entidades em nova transação)
       Object templateData = prepareTemplateDataForEvent(event);
@@ -105,20 +109,56 @@ public class EmailEventListener {
       emailService.sendEmailWithTemplate(
           templateData, event.getRecipient(), event.getSubject(), event.getTemplateName());
 
-      log.info("Email enviado com sucesso: {} para {}", event.getSubject(), event.getRecipient());
-
-    } catch (Exception e) {
-      // Loga erro mas NÃO propaga exceção (não afeta transação original)
-      log.error(
-          "Erro ao enviar email {} para {}: {}",
+      log.info(
+          "Email enviado com sucesso: {} para {}",
           event.getSubject(),
-          event.getRecipient(),
+          EmailUtils.maskEmail(event.getRecipient()));
+
+    } catch (MailException e) {
+      // MailException é RETRYABLE - propaga para @Retryable funcionar
+      log.warn(
+          "Falha temporária ao enviar email {} para {} (tentará novamente): {}",
+          event.getSubject(),
+          EmailUtils.maskEmail(event.getRecipient()),
+          e.getMessage());
+      throw e; // CRITICAL: Rethrow para permitir retry automático
+
+    } catch (EntityNotFoundException | IllegalArgumentException e) {
+      // Exceções de negócio NÃO são retryable - loga e suprime
+      log.error(
+          "Erro não-retryável ao processar email {} para {}: {}",
+          event.getSubject(),
+          EmailUtils.maskEmail(event.getRecipient()),
           e.getMessage(),
           e);
-
-      // TODO: Considerar adicionar retry logic ou dead letter queue no futuro
-      // TODO: Considerar notificar administradores de falhas críticas
+      // NÃO propaga - evita afetar transação original
     }
+  }
+
+  /**
+   * Método de recuperação chamado após esgotamento de todas as tentativas de retry.
+   *
+   * <p>Este método é invocado automaticamente por Spring Retry quando todas as 3 tentativas
+   * falharam. Permite tratamento final de falha sem propagar exceção.
+   *
+   * <p><b>IMPORTANTE:</b> Este método NÃO lança exceção para evitar afetar a transação original.
+   *
+   * @param e MailException que causou a falha após todas as tentativas
+   * @param event Evento de email que falhou
+   */
+  @org.springframework.retry.annotation.Recover
+  public void recoverFromMailException(MailException e, EmailEvent event) {
+    log.error(
+        "FALHA PERMANENTE: Todas as tentativas de envio de email esgotadas. "
+            + "Assunto: {}, Destinatário: {}, Erro: {}",
+        event.getSubject(),
+        EmailUtils.maskEmail(event.getRecipient()),
+        e.getMessage(),
+        e);
+
+    // TODO: Considerar adicionar evento para dead letter queue
+    // TODO: Considerar notificação para administradores de falhas críticas
+    // TODO: Considerar persistir falha em tabela de auditoria
   }
 
   /**

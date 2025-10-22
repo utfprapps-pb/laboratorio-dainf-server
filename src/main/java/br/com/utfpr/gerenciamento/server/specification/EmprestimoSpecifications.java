@@ -2,6 +2,7 @@ package br.com.utfpr.gerenciamento.server.specification;
 
 import br.com.utfpr.gerenciamento.server.enumeration.EmprestimoStatus;
 import br.com.utfpr.gerenciamento.server.model.Emprestimo;
+import br.com.utfpr.gerenciamento.server.model.EmprestimoItem;
 import br.com.utfpr.gerenciamento.server.model.Usuario;
 import br.com.utfpr.gerenciamento.server.model.filter.DateRange;
 import br.com.utfpr.gerenciamento.server.model.filter.EmprestimoFilter;
@@ -47,14 +48,32 @@ public class EmprestimoSpecifications {
   }
 
   /**
-   * Cria Specification otimizada para paginação com JOIN FETCH completo.
+   * Cria Specification apenas para carregar associações via JOIN FETCH, sem filtros.
    *
-   * <p>Versão estendida que carrega também emprestimoItem e emprestimoDevolucaoItem para eliminar
-   * N+1 durante conversão para DTO em paginação.
+   * <p>Este método é útil para paginação genérica (como em {@code filterByAllFields}) onde não há
+   * filtros específicos de Emprestimo, mas é necessário carregar associações para evitar N+1
+   * queries.
+   *
+   * <p>Internamente delega para {@link #fromFilter(EmprestimoFilter, boolean)} com filter=null e
+   * fetchCollections=true, aplicando apenas JOIN FETCH sem predicados WHERE.
+   *
+   * @return Specification que aplica apenas fetch joins, sem filtros de negócio
+   */
+  public static Specification<Emprestimo> withFetchCollections() {
+    return fromFilter(null, true);
+  }
+
+  /**
+   * Cria Specification otimizada para paginação com JOIN FETCH.
+   *
+   * <p>Nota: emprestimoItem e emprestimoDevolucaoItem não são fetched aqui para evitar
+   * MultipleBagFetchException (cartesian product). Em vez disso, usamos @BatchSize
+   * e @Fetch(FetchMode.SUBSELECT) na entidade Emprestimo, que previne N+1 sem cartesian product.
    *
    * @param filter Filtro com critérios de busca (pode ser null)
-   * @param fetchCollections Se true, carrega collections (emprestimoItem, emprestimoDevolucaoItem)
-   * @return Specification configurada com fetches completos
+   * @param fetchCollections Se true, carrega apenas emprestimoItem (não ambas collections para
+   *     evitar MultipleBagFetchException)
+   * @return Specification configurada com fetches otimizados
    */
   public static Specification<Emprestimo> fromFilter(
       EmprestimoFilter filter, boolean fetchCollections) {
@@ -78,18 +97,6 @@ public class EmprestimoSpecifications {
         Fetch<Emprestimo, Usuario> usuarioResponsavelFetch =
             root.fetch(USUARIO_RESPONSAVEL, JoinType.LEFT);
         usuarioResponsavelFetch.fetch("permissoes", JoinType.LEFT);
-
-        // JOIN FETCH para collections (opcional, para paginação)
-        if (fetchCollections) {
-          // Fetch emprestimoItem e nested item
-          Fetch<Object, Object> emprestimoItemFetch = root.fetch("emprestimoItem", JoinType.LEFT);
-          emprestimoItemFetch.fetch("item", JoinType.LEFT);
-
-          // Fetch emprestimoDevolucaoItem e nested item
-          Fetch<Object, Object> devolucaoItemFetch =
-              root.fetch("emprestimoDevolucaoItem", JoinType.LEFT);
-          devolucaoItemFetch.fetch("item", JoinType.LEFT);
-        }
       }
 
       return construirPredicado(filter, root, query, cb);

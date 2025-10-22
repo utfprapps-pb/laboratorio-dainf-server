@@ -37,13 +37,16 @@ public enum EmprestimoStatus {
   /**
    * Converte código String para enum.
    *
+   * <p>Para tratamento gracioso de códigos inválidos ou nulos, use {@link
+   * #fromCodigoOrNull(String)}.
+   *
    * @param codigo Código de uma letra ("A", "P", "F", "T")
    * @return Enum correspondente
-   * @throws IllegalArgumentException se código inválido
+   * @throws IllegalArgumentException se código inválido ou null
    */
   public static EmprestimoStatus fromCodigo(String codigo) {
     if (codigo == null) {
-      return null;
+      throw new IllegalArgumentException("Código de status inválido: null");
     }
 
     for (EmprestimoStatus status : values()) {

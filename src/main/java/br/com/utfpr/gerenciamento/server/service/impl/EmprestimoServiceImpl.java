@@ -11,6 +11,7 @@ import br.com.utfpr.gerenciamento.server.event.emprestimo.EmprestimoDevolvidoEve
 import br.com.utfpr.gerenciamento.server.event.emprestimo.EmprestimoFinalizadoEvent;
 import br.com.utfpr.gerenciamento.server.event.emprestimo.EmprestimoPrazoAlteradoEvent;
 import br.com.utfpr.gerenciamento.server.event.emprestimo.EmprestimoPrazoProximoEvent;
+import br.com.utfpr.gerenciamento.server.exception.EntityNotFoundException;
 import br.com.utfpr.gerenciamento.server.model.Emprestimo;
 import br.com.utfpr.gerenciamento.server.model.EmprestimoDevolucaoItem;
 import br.com.utfpr.gerenciamento.server.model.EmprestimoItem;
@@ -26,7 +27,7 @@ import br.com.utfpr.gerenciamento.server.service.ReservaService;
 import br.com.utfpr.gerenciamento.server.service.SaidaService;
 import br.com.utfpr.gerenciamento.server.service.UsuarioService;
 import br.com.utfpr.gerenciamento.server.specification.EmprestimoSpecifications;
-import jakarta.persistence.EntityNotFoundException;
+import br.com.utfpr.gerenciamento.server.util.EmailUtils;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
@@ -76,20 +77,6 @@ public class EmprestimoServiceImpl extends CrudServiceImpl<Emprestimo, Long>
     this.modelMapper = modelMapper;
     this.eventPublisher = eventPublisher;
     this.self = self;
-  }
-
-  /**
-   * Valida se o email do usuário é válido antes de publicar evento de email.
-   *
-   * @param email Email do usuário
-   * @return true se email é válido (não null e não vazio), false caso contrário
-   */
-  private boolean isValidEmail(String email) {
-    if (email == null || email.trim().isEmpty()) {
-      log.warn("Email inválido ou vazio - evento de email não será publicado");
-      return true;
-    }
-    return false;
   }
 
   @Override
@@ -249,7 +236,7 @@ public class EmprestimoServiceImpl extends CrudServiceImpl<Emprestimo, Long>
 
     // Publica evento - email enviado APÓS commit
     String email = saved.getUsuarioEmprestimo().getEmail();
-    if (isValidEmail(email)) {
+    if (!EmailUtils.isValidEmail(email)) {
       log.warn(
           "Email de alteração de prazo não enviado - usuário sem email válido: {}",
           saved.getUsuarioEmprestimo().getNome());
@@ -261,10 +248,8 @@ public class EmprestimoServiceImpl extends CrudServiceImpl<Emprestimo, Long>
 
   @Override
   public void sendEmailConfirmacaoEmprestimo(Emprestimo emprestimo) {
-    // REFATORADO: Usa eventos ao invés de chamada direta
-    // Email será enviado APÓS commit pela EmailEventListener
     String email = emprestimo.getUsuarioEmprestimo().getEmail();
-    if (isValidEmail(email)) {
+    if (!EmailUtils.isValidEmail(email)) {
       log.warn(
           "Email de confirmação não enviado - usuário sem email válido: {}",
           emprestimo.getUsuarioEmprestimo().getNome());
@@ -281,7 +266,7 @@ public class EmprestimoServiceImpl extends CrudServiceImpl<Emprestimo, Long>
   public void sendEmailConfirmacaoDevolucao(Emprestimo emprestimo) {
     // REFATORADO: Usa eventos ao invés de chamada direta
     String email = emprestimo.getUsuarioEmprestimo().getEmail();
-    if (isValidEmail(email)) {
+    if (!EmailUtils.isValidEmail(email)) {
       log.warn(
           "Email de devolução não enviado - usuário sem email válido: {}",
           emprestimo.getUsuarioEmprestimo().getNome());
@@ -302,7 +287,7 @@ public class EmprestimoServiceImpl extends CrudServiceImpl<Emprestimo, Long>
       emprestimos.forEach(
           emprestimo -> {
             String email = emprestimo.getUsuarioEmprestimo().getEmail();
-            if (isValidEmail(email)) {
+            if (!EmailUtils.isValidEmail(email)) {
               log.warn(
                   "Email de prazo próximo não enviado - usuário sem email válido: {}",
                   emprestimo.getUsuarioEmprestimo().getNome());
@@ -312,7 +297,7 @@ public class EmprestimoServiceImpl extends CrudServiceImpl<Emprestimo, Long>
             // REFATORADO: Publica evento - email será enviado APÓS commit
             eventPublisher.publishEvent(
                 new EmprestimoPrazoProximoEvent(this, emprestimo.getId(), email));
-            log.info("Evento de email enfileirado para: {}", email);
+            log.info("Evento de email enfileirado para: {}", EmailUtils.maskEmail(email));
           });
     } else {
       log.info("Nenhum empréstimo vencerá daqui 3 dias.");
