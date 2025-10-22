@@ -8,7 +8,7 @@ import org.springframework.security.core.userdetails.UserDetails;
  * Utilitários para operações de segurança do Spring Security.
  *
  * <p>Fornece métodos auxiliares para extração segura de informações de autenticação, com suporte a
- * diferentes configurações do Spring Security (UserDetails, String principal).
+ * diferentes configurações do Spring Security (UserDetails, string principal).
  *
  * @author Rodrigo Izidoro
  * @since 2025-10-22
@@ -22,7 +22,7 @@ public final class SecurityUtils {
   /**
    * Extrai o username do usuário autenticado atual.
    *
-   * <p>Método de conveniência que obtém o Authentication do SecurityContext e extrai o username de
+   * <p>Metodo de conveniência que obtém o Authentication do SecurityContext e extrai o username de
    * forma segura.
    *
    * <p><b>Uso:</b>
