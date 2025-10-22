@@ -28,8 +28,10 @@ import br.com.utfpr.gerenciamento.server.service.SaidaService;
 import br.com.utfpr.gerenciamento.server.service.UsuarioService;
 import br.com.utfpr.gerenciamento.server.specification.EmprestimoSpecifications;
 import br.com.utfpr.gerenciamento.server.util.EmailUtils;
+import br.com.utfpr.gerenciamento.server.util.SecurityUtils;
 import java.time.LocalDate;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import lombok.extern.slf4j.Slf4j;
 import org.modelmapper.ModelMapper;
@@ -38,9 +40,6 @@ import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -124,8 +123,7 @@ public class EmprestimoServiceImpl extends CrudServiceImpl<Emprestimo, Long>
     entity.setUsuarioEmprestimo(usuarioEmprestimo);
 
     // Extrai username de forma segura do Authentication (evita ClassCastException)
-    Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-    String username = extractUsername(auth);
+    String username = SecurityUtils.getAuthenticatedUsername();
     Usuario usuarioResponsavel = usuarioService.findByUsername(username);
     Usuario usuarioResponsavelLoaded =
         usuarioRepository
@@ -196,7 +194,14 @@ public class EmprestimoServiceImpl extends CrudServiceImpl<Emprestimo, Long>
   public List<EmprestimoDevolucaoItem> createEmprestimoItemDevolucao(
       List<EmprestimoItem> emprestimoItem) {
     List<EmprestimoDevolucaoItem> toReturn = new ArrayList<>();
+
+    // Null-safe: retorna lista vazia se emprestimoItem for null
+    if (emprestimoItem == null) {
+      return toReturn;
+    }
+
     emprestimoItem.stream()
+        .filter(empItem -> empItem != null && empItem.getItem() != null)
         .filter(empItem -> empItem.getItem().getTipoItem().equals(TipoItem.C))
         .forEach(
             empItem1 -> {
@@ -268,7 +273,9 @@ public class EmprestimoServiceImpl extends CrudServiceImpl<Emprestimo, Long>
       return;
     }
 
-    boolean temItensDevolucao = !emprestimo.getEmprestimoDevolucaoItem().isEmpty();
+    boolean temItensDevolucao =
+        emprestimo.getEmprestimoDevolucaoItem() != null
+            && !emprestimo.getEmprestimoDevolucaoItem().isEmpty();
 
     eventPublisher.publishEvent(
         new EmprestimoFinalizadoEvent(this, emprestimo.getId(), email, temItensDevolucao));
@@ -338,9 +345,15 @@ public class EmprestimoServiceImpl extends CrudServiceImpl<Emprestimo, Long>
   @Override
   @Transactional
   public EmprestimoResponseDto processDevolucao(Emprestimo emprestimo) {
+    // Null-safe: obtém lista de itens de devolução ou lista vazia se null
+    List<EmprestimoDevolucaoItem> itensDevolucao =
+        emprestimo.getEmprestimoDevolucaoItem() == null
+            ? Collections.emptyList()
+            : emprestimo.getEmprestimoDevolucaoItem();
+
     // Verifica se ainda há itens pendentes
     boolean isPendente =
-        emprestimo.getEmprestimoDevolucaoItem().stream()
+        itensDevolucao.stream()
             .anyMatch(empDevItem -> empDevItem.getStatusDevolucao().equals(StatusDevolucao.P));
 
     // Se não há itens pendentes, finaliza empréstimo
@@ -350,15 +363,21 @@ public class EmprestimoServiceImpl extends CrudServiceImpl<Emprestimo, Long>
 
     Emprestimo saved = self.save(emprestimo);
 
+    // Null-safe: obtém lista de itens de devolução do saved ou lista vazia se null
+    List<EmprestimoDevolucaoItem> itensDevolucaoSaved =
+        saved.getEmprestimoDevolucaoItem() == null
+            ? Collections.emptyList()
+            : saved.getEmprestimoDevolucaoItem();
+
     // Aumenta saldo dos itens devolvidos
-    saved.getEmprestimoDevolucaoItem().stream()
+    itensDevolucaoSaved.stream()
         .filter(empDevItem -> empDevItem.getStatusDevolucao().equals(StatusDevolucao.D))
         .forEach(
             devItem -> itemService.aumentaSaldoItem(devItem.getItem().getId(), devItem.getQtde()));
 
     // Cria saídas para itens marcados como saída
     List<EmprestimoDevolucaoItem> listItensToSaida =
-        saved.getEmprestimoDevolucaoItem().stream()
+        itensDevolucaoSaved.stream()
             .filter(empDevItem -> empDevItem.getStatusDevolucao().equals(StatusDevolucao.S))
             .toList();
 
@@ -375,22 +394,26 @@ public class EmprestimoServiceImpl extends CrudServiceImpl<Emprestimo, Long>
     // Se está editando, restaura saldo dos itens antigos
     if (emprestimo.getId() != null) {
       Emprestimo old = self.findOne(emprestimo.getId());
-      old.getEmprestimoItem()
-          .forEach(
-              empItem ->
-                  itemService.aumentaSaldoItem(empItem.getItem().getId(), empItem.getQtde()));
+      // Null-safe: verifica se old e sua lista de itens não são null
+      if (old != null && old.getEmprestimoItem() != null) {
+        old.getEmprestimoItem().stream()
+            .filter(empItem -> empItem != null && empItem.getItem() != null)
+            .forEach(
+                empItem ->
+                    itemService.aumentaSaldoItem(empItem.getItem().getId(), empItem.getQtde()));
+      }
     }
 
     // Valida saldo disponível para os itens
-    emprestimo
-        .getEmprestimoItem()
-        .forEach(
-            empItem -> {
-              if (empItem.getItem() != null) {
-                itemService.saldoItemIsValid(
-                    itemService.getSaldoItem(empItem.getItem().getId()), empItem.getQtde());
-              }
-            });
+    // Null-safe: verifica se lista de itens não é null
+    if (emprestimo.getEmprestimoItem() != null) {
+      emprestimo.getEmprestimoItem().stream()
+          .filter(empItem -> empItem != null && empItem.getItem() != null)
+          .forEach(
+              empItem ->
+                  itemService.saldoItemIsValid(
+                      itemService.getSaldoItem(empItem.getItem().getId()), empItem.getQtde()));
+    }
 
     // Cria itens de devolução para materiais consumíveis
     emprestimo.setEmprestimoDevolucaoItem(
@@ -400,67 +423,39 @@ public class EmprestimoServiceImpl extends CrudServiceImpl<Emprestimo, Long>
   @Override
   public void finalizeEmprestimo(Emprestimo emprestimo) {
     // Baixa saldo dos itens emprestados
-    emprestimo
-        .getEmprestimoItem()
-        .forEach(
-            empItem ->
-                itemService.diminuiSaldoItem(empItem.getItem().getId(), empItem.getQtde(), true));
+    // Null-safe: verifica se lista de itens não é null antes de iterar
+    if (emprestimo.getEmprestimoItem() != null) {
+      emprestimo.getEmprestimoItem().stream()
+          .filter(empItem -> empItem != null && empItem.getItem() != null)
+          .forEach(
+              empItem ->
+                  itemService.diminuiSaldoItem(empItem.getItem().getId(), empItem.getQtde(), true));
+    }
 
     sendEmailConfirmacaoEmprestimo(emprestimo);
   }
 
   @Override
   public void cleanupAfterDelete(Emprestimo emprestimo) {
+    // Null-safe: verifica se emprestimo não é null
+    if (emprestimo == null) {
+      return;
+    }
+
     // Restaura saldo dos itens
-    emprestimo
-        .getEmprestimoItem()
-        .forEach(
-            empItem -> itemService.aumentaSaldoItem(empItem.getItem().getId(), empItem.getQtde()));
+    // Null-safe: verifica se lista de itens não é null antes de iterar
+    if (emprestimo.getEmprestimoItem() != null) {
+      emprestimo.getEmprestimoItem().stream()
+          .filter(empItem -> empItem != null && empItem.getItem() != null)
+          .forEach(
+              empItem ->
+                  itemService.aumentaSaldoItem(empItem.getItem().getId(), empItem.getQtde()));
+    }
 
     // Deleta saídas relacionadas
-    saidaService.deleteSaidaByEmprestimo(emprestimo.getId());
-  }
-
-  /**
-   * Extrai o username do Authentication de forma segura.
-   *
-   * <p>Suporta dois cenários comuns do Spring Security: 1. Principal é String (username direto) 2.
-   * Principal é UserDetails (precisa chamar getUsername())
-   *
-   * <p>Prioriza auth.getName() que funciona em ambos os casos, mas valida com fallback para
-   * compatibilidade com diferentes configurações de segurança.
-   *
-   * @param auth Authentication do SecurityContext (pode ser null)
-   * @return Username extraído do authentication
-   * @throws IllegalStateException se authentication for null ou username não puder ser extraído
-   */
-  private String extractUsername(Authentication auth) {
-    if (auth == null) {
-      throw new IllegalStateException("Authentication não pode ser null");
+    // Null-safe: verifica se id não é null antes de chamar serviço
+    if (emprestimo.getId() != null) {
+      saidaService.deleteSaidaByEmprestimo(emprestimo.getId());
     }
-
-    // Prioriza getName() - funciona para ambos String e UserDetails
-    String username = auth.getName();
-    if (username != null && !username.trim().isEmpty()) {
-      return username;
-    }
-
-    // Fallback: verifica se principal é UserDetails
-    Object principal = auth.getPrincipal();
-    if (principal instanceof UserDetails userDetails) {
-      username = userDetails.getUsername();
-      if (username != null && !username.trim().isEmpty()) {
-        return username;
-      }
-    }
-
-    // Fallback final: tenta cast para String (compatibilidade com configurações antigas)
-    if (principal instanceof String stringPrincipal && !stringPrincipal.trim().isEmpty()) {
-      return stringPrincipal;
-    }
-
-    throw new IllegalStateException(
-        "Não foi possível extrair username do Authentication. Principal type: "
-            + (principal != null ? principal.getClass().getName() : "null"));
   }
 }
