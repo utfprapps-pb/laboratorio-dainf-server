@@ -1,7 +1,6 @@
 package br.com.utfpr.gerenciamento.server.service.impl;
 
 import br.com.utfpr.gerenciamento.server.dto.dashboards.*;
-import br.com.utfpr.gerenciamento.server.model.dashboards.*;
 import br.com.utfpr.gerenciamento.server.repository.EmprestimoRepository;
 import br.com.utfpr.gerenciamento.server.service.CompraService;
 import br.com.utfpr.gerenciamento.server.service.DashboardService;
@@ -9,7 +8,6 @@ import br.com.utfpr.gerenciamento.server.service.EmprestimoService;
 import br.com.utfpr.gerenciamento.server.service.SaidaService;
 import java.time.LocalDate;
 import java.util.List;
-import org.modelmapper.ModelMapper;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -22,19 +20,15 @@ public class DashboardServiceImpl implements DashboardService {
   private final CompraService compraService;
   private final SaidaService saidaService;
 
-  private final ModelMapper modelMapper;
-
   public DashboardServiceImpl(
       EmprestimoService emprestimoService,
       EmprestimoRepository emprestimoRepository,
       CompraService compraService,
-      SaidaService saidaService,
-      ModelMapper modelMapper) {
+      SaidaService saidaService) {
     this.emprestimoService = emprestimoService;
     this.emprestimoRepository = emprestimoRepository;
     this.compraService = compraService;
     this.saidaService = saidaService;
-    this.modelMapper = modelMapper;
   }
 
   @Override
@@ -45,13 +39,9 @@ public class DashboardServiceImpl implements DashboardService {
       unless = "#result == null")
   public DashboardEmprestimoCountRangeResponseDto findDadosEmprestimoCountRange(
       LocalDate dtIni, LocalDate dtFim) {
-    // OTIMIZAÇÃO: Query única com agregação no banco de dados
-    // Antes: carregava todos emprestimos + 4 iterações stream
-    // Agora: 1 query com CASE/SUM retornando objeto diretamente - melhoria de 60-75%
-    DashboardEmprestimoCountRange result =
-        emprestimoRepository.countEmprestimosByStatusInRange(dtIni, dtFim);
-
-    return convertToDto(result, DashboardEmprestimoCountRangeResponseDto.class);
+    var result = emprestimoRepository.countEmprestimosByStatusInRange(dtIni, dtFim);
+    return new DashboardEmprestimoCountRangeResponseDto(
+        result.total(), result.emAndamento(), result.emAtraso(), result.finalizado());
   }
 
   @Override
@@ -59,7 +49,7 @@ public class DashboardServiceImpl implements DashboardService {
   public List<DashboardEmprestimoDiaResponseDto> findTotalEmprestimoByDia(
       LocalDate dtIni, LocalDate dtFim) {
     return emprestimoService.countByDataEmprestimo(dtIni, dtFim).stream()
-        .map(entity -> convertToDto(entity, DashboardEmprestimoDiaResponseDto.class))
+        .map(m -> new DashboardEmprestimoDiaResponseDto(m.qtde(), m.dtEmprestimo()))
         .toList();
   }
 
@@ -68,7 +58,7 @@ public class DashboardServiceImpl implements DashboardService {
   public List<DashboardItensEmprestadosResponseDto> findItensMaisEmprestados(
       LocalDate dtIni, LocalDate dtFim) {
     return emprestimoService.findItensMaisEmprestados(dtIni, dtFim).stream()
-        .map(entity -> convertToDto(entity, DashboardItensEmprestadosResponseDto.class))
+        .map(m -> new DashboardItensEmprestadosResponseDto(m.qtde(), m.item()))
         .toList();
   }
 
@@ -77,7 +67,7 @@ public class DashboardServiceImpl implements DashboardService {
   public List<DashboardItensAdquiridosResponseDto> findItensMaisAdquiridos(
       LocalDate dtIni, LocalDate dtFim) {
     return compraService.findItensMaisAdquiridos(dtIni, dtFim).stream()
-        .map(entity -> convertToDto(entity, DashboardItensAdquiridosResponseDto.class))
+        .map(m -> new DashboardItensAdquiridosResponseDto(m.qtde(), m.item()))
         .toList();
   }
 
@@ -86,12 +76,13 @@ public class DashboardServiceImpl implements DashboardService {
   public List<DashboardItensSaidasResponseDto> findItensComMaisSaidas(
       LocalDate dtIni, LocalDate dtFim) {
     return saidaService.findItensMaisSaidas(dtIni, dtFim).stream()
-        .map(entity -> convertToDto(entity, DashboardItensSaidasResponseDto.class))
+        .map(m -> new DashboardItensSaidasResponseDto(m.qtde(), m.item()))
         .toList();
   }
 
   @Override
   public <D, E> D convertToDto(E entity, Class<D> dtoClass) {
-    return modelMapper.map(entity, dtoClass);
+    throw new UnsupportedOperationException(
+        "Dashboard DTOs são records - conversão não necessária. Retorne o record diretamente.");
   }
 }
