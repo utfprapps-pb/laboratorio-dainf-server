@@ -29,6 +29,7 @@ public class NadaConsta {
 
   @Enumerated(EnumType.STRING)
   @Column(name = "status", nullable = false)
+  @Builder.Default
   private NadaConstaStatus status = NadaConstaStatus.PENDING;
 
   @Column(name = "send_at")
