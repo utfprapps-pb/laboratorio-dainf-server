@@ -75,8 +75,7 @@ public record DateRange(LocalDate inicio, LocalDate fim) {
     return afterStart && beforeEnd;
   }
 
-  @NotNull
-  @Override
+  @NotNull @Override
   public String toString() {
     if (inicio == null && fim == null) {
       return "DateRange[]";

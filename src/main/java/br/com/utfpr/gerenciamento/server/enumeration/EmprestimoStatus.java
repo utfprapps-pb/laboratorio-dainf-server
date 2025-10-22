@@ -34,7 +34,7 @@ public enum EmprestimoStatus {
     this.descricao = descricao;
   }
 
-    /**
+  /**
    * Converte código String para enum.
    *
    * @param codigo Código de uma letra ("A", "P", "F", "T")

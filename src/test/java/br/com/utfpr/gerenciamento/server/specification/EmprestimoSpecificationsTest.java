@@ -41,7 +41,7 @@ class EmprestimoSpecificationsTest {
 
   private final EmprestimoFixture fixture = new EmprestimoFixture();
 
-    private Usuario usuarioEmprestimo;
+  private Usuario usuarioEmprestimo;
   private Usuario usuarioResponsavel;
   private Item item;
   private Emprestimo emprestimoAtrasado;
@@ -51,7 +51,7 @@ class EmprestimoSpecificationsTest {
   @BeforeEach
   void setUp() {
     // Criar e persistir permissão para testes (usando factory method para consistência)
-      Permissao permissaoAluno = fixture.criarPermissao("ROLE_ALUNO");
+    Permissao permissaoAluno = fixture.criarPermissao("ROLE_ALUNO");
     entityManager.persist(permissaoAluno);
 
     // Criar usuários usando fixture
@@ -105,8 +105,7 @@ class EmprestimoSpecificationsTest {
   })
   @DisplayName("Deve filtrar empréstimos corretamente por status")
   void testFromFilter_QuandoFiltraPorStatus_DeveRetornarEmprestimosCorretos(
-      String status,
-      int quantidadeEsperada) {
+      String status, int quantidadeEsperada) {
     // Given
     EmprestimoFilter filtro = new EmprestimoFilter();
     filtro.setStatusFromString(status); // Converte String do CSV para enum
@@ -141,7 +140,8 @@ class EmprestimoSpecificationsTest {
     } else if ("F".equals(status)) {
       assertEquals(emprestimoFinalizado.getId(), resultado.getFirst().getId());
       assertNotNull(
-          resultado.getFirst().getDataDevolucao(), "Empréstimo finalizado deve ter data de devolução");
+          resultado.getFirst().getDataDevolucao(),
+          "Empréstimo finalizado deve ter data de devolução");
     }
   }
 
