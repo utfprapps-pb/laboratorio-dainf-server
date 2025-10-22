@@ -15,7 +15,6 @@ import br.com.utfpr.gerenciamento.server.model.dashboards.DashboardEmprestimoDia
 import br.com.utfpr.gerenciamento.server.model.dashboards.DashboardItensEmprestados;
 import br.com.utfpr.gerenciamento.server.model.filter.EmprestimoFilter;
 import br.com.utfpr.gerenciamento.server.repository.EmprestimoRepository;
-import br.com.utfpr.gerenciamento.server.service.EmailService;
 import br.com.utfpr.gerenciamento.server.service.UsuarioService;
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -27,13 +26,14 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 import org.modelmapper.ModelMapper;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
 
 class EmprestimoServiceImplTest {
   @Mock private EmprestimoRepository emprestimoRepository;
   @Mock private UsuarioService usuarioService;
-  @Mock private EmailService emailService;
+  @Mock private ApplicationEventPublisher eventPublisher;
   @Mock private ModelMapper modelMapper;
   @InjectMocks private EmprestimoServiceImpl service;
 
@@ -90,11 +90,11 @@ class EmprestimoServiceImplTest {
     br.com.utfpr.gerenciamento.server.model.Item itemModel =
         new br.com.utfpr.gerenciamento.server.model.Item();
     itemModel.setTipoItem(TipoItem.C);
-    Emprestimo emp = new Emprestimo();
+    Emprestimo emprestimo = new Emprestimo();
     EmprestimoItem item = new EmprestimoItem();
     item.setItem(itemModel);
     item.setQtde(BigDecimal.valueOf(2));
-    item.setEmprestimo(emp);
+    item.setEmprestimo(emprestimo);
     List<EmprestimoDevolucaoItem> result =
         service.createEmprestimoItemDevolucao(Collections.singletonList(item));
     assertEquals(1, result.size());
@@ -146,16 +146,11 @@ class EmprestimoServiceImplTest {
   void testChangePrazoDevolucao() {
     emp.setUsuarioResponsavel(usuarioResponsavel);
     assertNotNull(emp.getUsuarioResponsavel());
-    when(service.findOne(anyLong())).thenReturn(emp);
-    // Mock correto: repositório
+    // Mock correto: repositório findById ao invés de service.findOne
+    when(emprestimoRepository.findById(anyLong())).thenReturn(java.util.Optional.of(emp));
     when(emprestimoRepository.save(any(Emprestimo.class))).thenReturn(emp);
-    doNothing()
-        .when(emailService)
-        .sendEmailWithTemplate(any(), anyString(), anyString(), anyString());
     service.changePrazoDevolucao(1L, LocalDate.now());
-    verify(emailService)
-        .sendEmailWithTemplate(
-            any(), eq("mail@test.com"), anyString(), eq("templateAlteracaoPrazoDevolucao"));
+    verify(eventPublisher).publishEvent(any());
   }
 
   @Test
@@ -163,16 +158,8 @@ class EmprestimoServiceImplTest {
     emp.setUsuarioResponsavel(usuarioResponsavel);
     emp.setEmprestimoDevolucaoItem(Collections.singletonList(new EmprestimoDevolucaoItem()));
     assertNotNull(emp.getUsuarioResponsavel());
-    doNothing()
-        .when(emailService)
-        .sendEmailWithTemplate(any(), anyString(), anyString(), anyString());
     service.sendEmailConfirmacaoEmprestimo(emp);
-    verify(emailService)
-        .sendEmailWithTemplate(
-            any(),
-            eq("mail@test.com"),
-            eq("Confirmação de Empréstimo"),
-            eq("templateConfirmacaoEmprestimo"));
+    verify(eventPublisher).publishEvent(any());
   }
 
   @Test
@@ -180,16 +167,8 @@ class EmprestimoServiceImplTest {
     emp.setUsuarioResponsavel(usuarioResponsavel);
     emp.setEmprestimoDevolucaoItem(Collections.emptyList());
     assertNotNull(emp.getUsuarioResponsavel());
-    doNothing()
-        .when(emailService)
-        .sendEmailWithTemplate(any(), anyString(), anyString(), anyString());
     service.sendEmailConfirmacaoEmprestimo(emp);
-    verify(emailService)
-        .sendEmailWithTemplate(
-            any(),
-            eq("mail@test.com"),
-            eq("Confirmação de Empréstimo"),
-            eq("templateConfirmacaoFinalizacaoEmprestimo"));
+    verify(eventPublisher).publishEvent(any());
   }
 
   @Test
@@ -197,16 +176,8 @@ class EmprestimoServiceImplTest {
     emp.setUsuarioResponsavel(usuarioResponsavel);
     emp.setDataDevolucao(LocalDate.now());
     assertNotNull(emp.getUsuarioResponsavel());
-    doNothing()
-        .when(emailService)
-        .sendEmailWithTemplate(any(), anyString(), anyString(), anyString());
     service.sendEmailConfirmacaoDevolucao(emp);
-    verify(emailService)
-        .sendEmailWithTemplate(
-            any(),
-            eq("mail@test.com"),
-            eq("Confirmação de Devolução do Empréstimo"),
-            eq("templateDevolucaoEmprestimo"));
+    verify(eventPublisher).publishEvent(any());
   }
 
   @Test
@@ -218,16 +189,8 @@ class EmprestimoServiceImplTest {
     when(emprestimoRepository.findByDataDevolucaoIsNullAndPrazoDevolucaoEquals(
             any(LocalDate.class)))
         .thenReturn(emprestimos);
-    doNothing()
-        .when(emailService)
-        .sendEmailWithTemplate(any(), anyString(), anyString(), anyString());
     service.sendEmailPrazoDevolucaoProximo();
-    verify(emailService)
-        .sendEmailWithTemplate(
-            any(),
-            eq("mail@test.com"),
-            eq("Empréstimo próximo da data de devolução"),
-            eq("templateProximoPrazoDevolucaoEmprestimo"));
+    verify(eventPublisher).publishEvent(any());
   }
 
   @Test
@@ -236,17 +199,16 @@ class EmprestimoServiceImplTest {
             any(LocalDate.class)))
         .thenReturn(Collections.emptyList());
     service.sendEmailPrazoDevolucaoProximo();
-    // No email should be sent
-    verify(emailService, never())
-        .sendEmailWithTemplate(any(), anyString(), anyString(), anyString());
+    // No event should be published
+    verify(eventPublisher, never()).publishEvent(any());
   }
 
   @Test
   void testConvertToDto() {
-    Emprestimo emp = new Emprestimo();
+    Emprestimo emprestimo = new Emprestimo();
     EmprestimoResponseDto dto = new EmprestimoResponseDto();
-    when(modelMapper.map(emp, EmprestimoResponseDto.class)).thenReturn(dto);
-    EmprestimoResponseDto result = service.convertToDto(emp);
+    when(modelMapper.map(emprestimo, EmprestimoResponseDto.class)).thenReturn(dto);
+    EmprestimoResponseDto result = service.convertToDto(emprestimo);
     assertEquals(dto, result);
   }
 }

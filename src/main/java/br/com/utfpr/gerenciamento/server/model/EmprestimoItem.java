@@ -30,7 +30,7 @@ public class EmprestimoItem {
   @JoinColumn(name = "item_id", referencedColumnName = "id", nullable = false)
   private Item item;
 
-  @ManyToOne
+  @ManyToOne(fetch = FetchType.LAZY)
   @JsonBackReference
   @JoinColumn(name = "emprestimo_id", referencedColumnName = "id")
   private Emprestimo emprestimo;

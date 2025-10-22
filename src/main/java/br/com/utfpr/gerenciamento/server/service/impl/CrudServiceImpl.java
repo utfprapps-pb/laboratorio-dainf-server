@@ -1,6 +1,7 @@
 package br.com.utfpr.gerenciamento.server.service.impl;
 
 import br.com.utfpr.gerenciamento.server.service.CrudService;
+import jakarta.persistence.EntityNotFoundException;
 import jakarta.persistence.criteria.Predicate;
 import java.io.Serializable;
 import java.util.List;
@@ -60,7 +61,9 @@ public abstract class CrudServiceImpl<T, ID extends Serializable> implements Cru
   @Override
   @Transactional(readOnly = true)
   public T findOne(ID id) {
-    return getRepository().getOne(id);
+    return getRepository()
+        .findById(id)
+        .orElseThrow(() -> new EntityNotFoundException("Entidade não encontrada com ID: " + id));
   }
 
   @Override

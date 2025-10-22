@@ -113,7 +113,7 @@ class EmprestimoSpecificationsTest {
       boolean deveEstarAtrasado) {
     // Given
     EmprestimoFilter filtro = new EmprestimoFilter();
-    filtro.setStatus(status);
+    filtro.setStatusFromString(status); // Converte String do CSV para enum
     Specification<Emprestimo> spec = EmprestimoSpecifications.fromFilter(filtro);
 
     // When
@@ -275,7 +275,7 @@ class EmprestimoSpecificationsTest {
   void testFromFilter_QuandoExecutaCount_DeveExecutarSemJoinFetch() {
     // Given
     EmprestimoFilter filtro = new EmprestimoFilter();
-    filtro.setStatus("A");
+    filtro.setStatusFromString("A");
     Specification<Emprestimo> spec = EmprestimoSpecifications.fromFilter(filtro);
 
     // When - Executar count query
@@ -295,7 +295,7 @@ class EmprestimoSpecificationsTest {
 
     EmprestimoFilter filtro = new EmprestimoFilter();
     filtro.setUsuarioEmprestimo(filtroUsuario);
-    filtro.setStatus("F");
+    filtro.setStatusFromString("F");
     filtro.setDtIniEmp(LocalDate.now().minusDays(10).toString());
     filtro.setDtFimEmp(LocalDate.now().toString());
 
@@ -334,7 +334,7 @@ class EmprestimoSpecificationsTest {
     filtroUsuario.setId(usuarioResponsavel.getId());
 
     EmprestimoFilter filtro = new EmprestimoFilter();
-    filtro.setUsuarioResponsalvel(filtroUsuario); // Typo mantido para compatibilidade
+    filtro.setUsuarioResponsavel(filtroUsuario); // REFATORAÇÃO: Typo corrigido
     Specification<Emprestimo> spec = EmprestimoSpecifications.fromFilter(filtro);
 
     // When
@@ -352,7 +352,7 @@ class EmprestimoSpecificationsTest {
   void testFromFilter_QuandoStatusInvalido_DeveRetornarTodosEmprestimos() {
     // Given
     EmprestimoFilter filtro = new EmprestimoFilter();
-    filtro.setStatus("X"); // Status inválido
+    filtro.setStatusFromString("X"); // Status inválido - converte para null
     Specification<Emprestimo> spec = EmprestimoSpecifications.fromFilter(filtro);
 
     // When
@@ -378,7 +378,7 @@ class EmprestimoSpecificationsTest {
     entityManager.flush();
 
     EmprestimoFilter filtro = new EmprestimoFilter();
-    filtro.setStatus("P"); // Pendente, não atrasado
+    filtro.setStatusFromString("P"); // Pendente, não atrasado
     Specification<Emprestimo> spec = EmprestimoSpecifications.fromFilter(filtro);
 
     // When
@@ -484,7 +484,7 @@ class EmprestimoSpecificationsTest {
 
     // When - Filtrar pendentes
     EmprestimoFilter filtro = new EmprestimoFilter();
-    filtro.setStatus("P");
+    filtro.setStatusFromString("P");
     Specification<Emprestimo> spec = EmprestimoSpecifications.fromFilter(filtro);
     List<Emprestimo> resultado = repository.findAll(spec);
 
@@ -520,7 +520,7 @@ class EmprestimoSpecificationsTest {
     filtroUsuario.setUsername(usuarioResponsavel.getUsername());
 
     EmprestimoFilter filtro = new EmprestimoFilter();
-    filtro.setUsuarioResponsalvel(filtroUsuario); // Typo mantido
+    filtro.setUsuarioResponsavel(filtroUsuario); // REFATORAÇÃO: Typo corrigido
 
     // When
     Specification<Emprestimo> spec = EmprestimoSpecifications.fromFilter(filtro);
