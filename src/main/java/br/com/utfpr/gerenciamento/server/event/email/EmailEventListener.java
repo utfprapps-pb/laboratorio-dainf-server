@@ -135,33 +135,7 @@ public class EmailEventListener {
     }
   }
 
-  /**
-   * Método de recuperação chamado após esgotamento de todas as tentativas de retry.
-   *
-   * <p>Este método é invocado automaticamente por Spring Retry quando todas as 3 tentativas
-   * falharam. Permite tratamento final de falha sem propagar exceção.
-   *
-   * <p><b>IMPORTANTE:</b> Este método NÃO lança exceção para evitar afetar a transação original.
-   *
-   * @param e MailException que causou a falha após todas as tentativas
-   * @param event Evento de email que falhou
-   */
-  @org.springframework.retry.annotation.Recover
-  public void recoverFromMailException(MailException e, EmailEvent event) {
-    log.error(
-        "FALHA PERMANENTE: Todas as tentativas de envio de email esgotadas. "
-            + "Assunto: {}, Destinatário: {}, Erro: {}",
-        event.getSubject(),
-        EmailUtils.maskEmail(event.getRecipient()),
-        e.getMessage(),
-        e);
-
-    // TODO: Considerar adicionar evento para dead letter queue
-    // TODO: Considerar notificação para administradores de falhas críticas
-    // TODO: Considerar persistir falha em tabela de auditoria
-  }
-
-  /**
+    /**
    * Prepara dados do template baseado no tipo de evento.
    *
    * <p>Este método detecta o tipo específico do evento e carrega os dados necessários do banco em

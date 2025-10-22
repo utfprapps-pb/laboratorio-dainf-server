@@ -236,7 +236,7 @@ public class EmprestimoServiceImpl extends CrudServiceImpl<Emprestimo, Long>
 
     // Publica evento - email enviado APÓS commit
     String email = saved.getUsuarioEmprestimo().getEmail();
-    if (!EmailUtils.isValidEmail(email)) {
+    if (EmailUtils.isValidEmail(email)) {
       log.warn(
           "Email de alteração de prazo não enviado - usuário sem email válido: {}",
           saved.getUsuarioEmprestimo().getNome());
@@ -249,7 +249,7 @@ public class EmprestimoServiceImpl extends CrudServiceImpl<Emprestimo, Long>
   @Override
   public void sendEmailConfirmacaoEmprestimo(Emprestimo emprestimo) {
     String email = emprestimo.getUsuarioEmprestimo().getEmail();
-    if (!EmailUtils.isValidEmail(email)) {
+    if (EmailUtils.isValidEmail(email)) {
       log.warn(
           "Email de confirmação não enviado - usuário sem email válido: {}",
           emprestimo.getUsuarioEmprestimo().getNome());
@@ -266,7 +266,7 @@ public class EmprestimoServiceImpl extends CrudServiceImpl<Emprestimo, Long>
   public void sendEmailConfirmacaoDevolucao(Emprestimo emprestimo) {
     // REFATORADO: Usa eventos ao invés de chamada direta
     String email = emprestimo.getUsuarioEmprestimo().getEmail();
-    if (!EmailUtils.isValidEmail(email)) {
+    if (EmailUtils.isValidEmail(email)) {
       log.warn(
           "Email de devolução não enviado - usuário sem email válido: {}",
           emprestimo.getUsuarioEmprestimo().getNome());
@@ -287,7 +287,7 @@ public class EmprestimoServiceImpl extends CrudServiceImpl<Emprestimo, Long>
       emprestimos.forEach(
           emprestimo -> {
             String email = emprestimo.getUsuarioEmprestimo().getEmail();
-            if (!EmailUtils.isValidEmail(email)) {
+            if (EmailUtils.isValidEmail(email)) {
               log.warn(
                   "Email de prazo próximo não enviado - usuário sem email válido: {}",
                   emprestimo.getUsuarioEmprestimo().getNome());

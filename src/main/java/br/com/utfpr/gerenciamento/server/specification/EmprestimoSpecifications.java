@@ -2,7 +2,6 @@ package br.com.utfpr.gerenciamento.server.specification;
 
 import br.com.utfpr.gerenciamento.server.enumeration.EmprestimoStatus;
 import br.com.utfpr.gerenciamento.server.model.Emprestimo;
-import br.com.utfpr.gerenciamento.server.model.EmprestimoItem;
 import br.com.utfpr.gerenciamento.server.model.Usuario;
 import br.com.utfpr.gerenciamento.server.model.filter.DateRange;
 import br.com.utfpr.gerenciamento.server.model.filter.EmprestimoFilter;

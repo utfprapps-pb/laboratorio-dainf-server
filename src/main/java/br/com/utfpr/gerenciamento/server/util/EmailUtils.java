@@ -36,7 +36,7 @@ public final class EmailUtils {
    * @return Email mascarado para logging seguro
    */
   public static String maskEmail(String email) {
-    if (email == null || email.isEmpty() || !email.contains("@")) {
+    if (email == null || !email.contains("@")) {
       return email;
     }
 
@@ -64,6 +64,6 @@ public final class EmailUtils {
    * @return true se o email é válido, false caso contrário
    */
   public static boolean isValidEmail(String email) {
-    return email != null && !email.trim().isEmpty();
+    return email == null || email.trim().isEmpty();
   }
 }
