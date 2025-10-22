@@ -22,7 +22,6 @@ class DashboardServiceImplTest {
 
   @Mock private EmprestimoRepository emprestimoRepository;
 
-
   @InjectMocks private DashboardServiceImpl dashboardService;
 
   private LocalDate dtIni;
