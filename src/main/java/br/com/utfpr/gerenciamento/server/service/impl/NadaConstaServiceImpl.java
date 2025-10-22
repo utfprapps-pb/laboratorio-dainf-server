@@ -142,7 +142,7 @@ public class NadaConstaServiceImpl extends CrudServiceImpl<NadaConsta, Long>
       templateData.put("nomeAluno", usuario.getNome());
       templateData.put("emprestimos", itensPendentesTemplate);
       String to = usuario.getEmail();
-      if (EmailUtils.isValidEmail(to)) {
+      if (!EmailUtils.isValidEmail(to)) {
         log.warn("Email inválido ou ausente para usuário {}", usuario.getUsername());
         throw new IllegalStateException("E-mail do usuário ausente para envio de pendências.");
       }

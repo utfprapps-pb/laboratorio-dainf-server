@@ -64,6 +64,6 @@ public final class EmailUtils {
    * @return true se o email é válido, false caso contrário
    */
   public static boolean isValidEmail(String email) {
-    return email == null || email.trim().isEmpty();
+    return email != null && !email.trim().isEmpty();
   }
 }

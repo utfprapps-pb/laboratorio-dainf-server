@@ -47,31 +47,37 @@ public class EmprestimoSpecifications {
   }
 
   /**
-   * Cria Specification apenas para carregar associações via JOIN FETCH, sem filtros.
+   * Cria Specification para carregar associações via JOIN FETCH, sem filtros.
    *
    * <p>Este método é útil para paginação genérica (como em {@code filterByAllFields}) onde não há
    * filtros específicos de Emprestimo, mas é necessário carregar associações para evitar N+1
    * queries.
    *
    * <p>Internamente delega para {@link #fromFilter(EmprestimoFilter, boolean)} com filter=null e
-   * fetchCollections=true, aplicando apenas JOIN FETCH sem predicados WHERE.
+   * fetchCollections=true, aplicando JOIN FETCH para usuários e emprestimoItem.
    *
-   * @return Specification que aplica apenas fetch joins, sem filtros de negócio
+   * <p>IMPORTANTE: Apenas emprestimoItem é fetched (não emprestimoDevolucaoItem) para evitar
+   * MultipleBagFetchException. Para emprestimoDevolucaoItem, use @BatchSize na entidade.
+   *
+   * @return Specification que aplica fetch joins para usuários e emprestimoItem
    */
   public static Specification<Emprestimo> withFetchCollections() {
     return fromFilter(null, true);
   }
 
   /**
-   * Cria Specification otimizada para paginação com JOIN FETCH.
+   * Cria Specification otimizada para paginação com JOIN FETCH condicional.
    *
-   * <p>Nota: emprestimoItem e emprestimoDevolucaoItem não são fetched aqui para evitar
-   * MultipleBagFetchException (cartesian product). Em vez disso, usamos @BatchSize
-   * e @Fetch(FetchMode.SUBSELECT) na entidade Emprestimo, que previne N+1 sem cartesian product.
+   * <p>IMPORTANTE: Apenas uma collection pode ser fetched por vez para evitar
+   * MultipleBagFetchException (Hibernate não suporta múltiplos @OneToMany EAGER). Quando
+   * fetchCollections=false, apenas usuários são fetched. Quando true, adiciona emprestimoItem.
+   *
+   * <p>Para emprestimoDevolucaoItem, sempre use @BatchSize e @Fetch(FetchMode.SUBSELECT) na
+   * entidade, que previne N+1 sem causar cartesian product.
    *
    * @param filter Filtro com critérios de busca (pode ser null)
-   * @param fetchCollections Se true, carrega apenas emprestimoItem (não ambas collections para
-   *     evitar MultipleBagFetchException)
+   * @param fetchCollections Se true, adiciona LEFT JOIN FETCH para emprestimoItem além dos
+   *     usuários. Se false, carrega apenas usuários.
    * @return Specification configurada com fetches otimizados
    */
   public static Specification<Emprestimo> fromFilter(
@@ -96,6 +102,12 @@ public class EmprestimoSpecifications {
         Fetch<Emprestimo, Usuario> usuarioResponsavelFetch =
             root.fetch(USUARIO_RESPONSAVEL, JoinType.LEFT);
         usuarioResponsavelFetch.fetch("permissoes", JoinType.LEFT);
+
+        // JOIN FETCH condicional para emprestimoItem (previne N+1 quando necessário)
+        // IMPORTANTE: Não fetch emprestimoDevolucaoItem aqui para evitar MultipleBagFetchException
+        if (fetchCollections) {
+          root.fetch("emprestimoItem", JoinType.LEFT);
+        }
       }
 
       return construirPredicado(filter, root, query, cb);

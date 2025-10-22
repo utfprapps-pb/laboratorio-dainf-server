@@ -82,11 +82,23 @@ public class EmprestimoController extends CrudController<Emprestimo, Long> {
   }
 
   /**
-   * Paginação otimizada de empréstimos com JOIN FETCH completo.
+   * Paginação otimizada de empréstimos com JOIN FETCH para associações críticas.
    *
-   * <p>Retorna entidades {@link Emprestimo} com associações carregadas (usuarioEmprestimo,
-   * usuarioResponsavel, permissoes, emprestimoItem) para evitar N+1 queries. Usa {@link
-   * EmprestimoSpecifications#withFetchCollections()} para aplicar fetch joins de forma otimizada.
+   * <p><b>Associações fetched via {@link EmprestimoSpecifications#withFetchCollections()}:</b>
+   *
+   * <ul>
+   *   <li>{@code usuarioEmprestimo} - Usuário que fez o empréstimo (LEFT JOIN FETCH)
+   *   <li>{@code usuarioEmprestimo.permissoes} - Permissões do usuário empréstimo (LEFT JOIN FETCH)
+   *   <li>{@code usuarioResponsavel} - Usuário responsável pela liberação (LEFT JOIN FETCH)
+   *   <li>{@code usuarioResponsavel.permissoes} - Permissões do responsável (LEFT JOIN FETCH)
+   *   <li>{@code emprestimoItem} - Itens do empréstimo (LEFT JOIN FETCH)
+   * </ul>
+   *
+   * <p><b>NÃO fetched:</b> {@code emprestimoDevolucaoItem} (usa @BatchSize para evitar
+   * MultipleBagFetchException)
+   *
+   * <p>Esta estratégia previne N+1 queries mantendo performance ideal com DISTINCT e evitando
+   * cartesian product ao fetch apenas uma collection @OneToMany.
    *
    * <p>TODO: Padronizar demais findAllPaged depois
    *

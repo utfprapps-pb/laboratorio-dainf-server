@@ -38,7 +38,9 @@ import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -95,6 +97,7 @@ public class EmprestimoServiceImpl extends CrudServiceImpl<Emprestimo, Long>
    *
    * @param entity Emprestimo a ser salvo (deve conter IDs válidos de usuários)
    * @return Emprestimo salvo com relacionamentos carregados
+   * @throws IllegalArgumentException se usuarioEmprestimo ou usuarioEmprestimo.id for null
    * @throws EntityNotFoundException se usuarioEmprestimo ou usuarioResponsavel não existir
    */
   @Override
@@ -102,6 +105,14 @@ public class EmprestimoServiceImpl extends CrudServiceImpl<Emprestimo, Long>
   @PreAuthorize("hasAnyRole('" + ROLE_LABORATORISTA_NAME + "', '" + ROLE_ADMINISTRADOR_NAME + "')")
   @InvalidateDashboardCache
   public Emprestimo save(Emprestimo entity) {
+    // Validação fail-fast: previne NPE ao validar usuarioEmprestimo e seu ID
+    if (entity.getUsuarioEmprestimo() == null) {
+      throw new IllegalArgumentException("usuarioEmprestimo não pode ser null");
+    }
+    if (entity.getUsuarioEmprestimo().getId() == null) {
+      throw new IllegalArgumentException("usuarioEmprestimo.id não pode ser null");
+    }
+
     Usuario usuarioEmprestimo =
         usuarioRepository
             .findById(entity.getUsuarioEmprestimo().getId())
@@ -112,8 +123,9 @@ public class EmprestimoServiceImpl extends CrudServiceImpl<Emprestimo, Long>
                             + entity.getUsuarioEmprestimo().getId()));
     entity.setUsuarioEmprestimo(usuarioEmprestimo);
 
-    String username =
-        (String) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+    // Extrai username de forma segura do Authentication (evita ClassCastException)
+    Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+    String username = extractUsername(auth);
     Usuario usuarioResponsavel = usuarioService.findByUsername(username);
     Usuario usuarioResponsavelLoaded =
         usuarioRepository
@@ -236,7 +248,7 @@ public class EmprestimoServiceImpl extends CrudServiceImpl<Emprestimo, Long>
 
     // Publica evento - email enviado APÓS commit
     String email = saved.getUsuarioEmprestimo().getEmail();
-    if (EmailUtils.isValidEmail(email)) {
+    if (!EmailUtils.isValidEmail(email)) {
       log.warn(
           "Email de alteração de prazo não enviado - usuário sem email válido: {}",
           saved.getUsuarioEmprestimo().getNome());
@@ -249,7 +261,7 @@ public class EmprestimoServiceImpl extends CrudServiceImpl<Emprestimo, Long>
   @Override
   public void sendEmailConfirmacaoEmprestimo(Emprestimo emprestimo) {
     String email = emprestimo.getUsuarioEmprestimo().getEmail();
-    if (EmailUtils.isValidEmail(email)) {
+    if (!EmailUtils.isValidEmail(email)) {
       log.warn(
           "Email de confirmação não enviado - usuário sem email válido: {}",
           emprestimo.getUsuarioEmprestimo().getNome());
@@ -266,7 +278,7 @@ public class EmprestimoServiceImpl extends CrudServiceImpl<Emprestimo, Long>
   public void sendEmailConfirmacaoDevolucao(Emprestimo emprestimo) {
     // REFATORADO: Usa eventos ao invés de chamada direta
     String email = emprestimo.getUsuarioEmprestimo().getEmail();
-    if (EmailUtils.isValidEmail(email)) {
+    if (!EmailUtils.isValidEmail(email)) {
       log.warn(
           "Email de devolução não enviado - usuário sem email válido: {}",
           emprestimo.getUsuarioEmprestimo().getNome());
@@ -287,7 +299,7 @@ public class EmprestimoServiceImpl extends CrudServiceImpl<Emprestimo, Long>
       emprestimos.forEach(
           emprestimo -> {
             String email = emprestimo.getUsuarioEmprestimo().getEmail();
-            if (EmailUtils.isValidEmail(email)) {
+            if (!EmailUtils.isValidEmail(email)) {
               log.warn(
                   "Email de prazo próximo não enviado - usuário sem email válido: {}",
                   emprestimo.getUsuarioEmprestimo().getNome());
@@ -407,5 +419,49 @@ public class EmprestimoServiceImpl extends CrudServiceImpl<Emprestimo, Long>
 
     // Deleta saídas relacionadas
     saidaService.deleteSaidaByEmprestimo(emprestimo.getId());
+  }
+
+  /**
+   * Extrai o username do Authentication de forma segura.
+   *
+   * <p>Suporta dois cenários comuns do Spring Security: 1. Principal é String (username direto) 2.
+   * Principal é UserDetails (precisa chamar getUsername())
+   *
+   * <p>Prioriza auth.getName() que funciona em ambos os casos, mas valida com fallback para
+   * compatibilidade com diferentes configurações de segurança.
+   *
+   * @param auth Authentication do SecurityContext (pode ser null)
+   * @return Username extraído do authentication
+   * @throws IllegalStateException se authentication for null ou username não puder ser extraído
+   */
+  private String extractUsername(Authentication auth) {
+    if (auth == null) {
+      throw new IllegalStateException("Authentication não pode ser null");
+    }
+
+    // Prioriza getName() - funciona para ambos String e UserDetails
+    String username = auth.getName();
+    if (username != null && !username.trim().isEmpty()) {
+      return username;
+    }
+
+    // Fallback: verifica se principal é UserDetails
+    Object principal = auth.getPrincipal();
+    if (principal instanceof UserDetails userDetails) {
+      username = userDetails.getUsername();
+      if (username != null && !username.trim().isEmpty()) {
+        return username;
+      }
+    }
+
+    // Fallback final: tenta cast para String (compatibilidade com configurações antigas)
+    if (principal instanceof String stringPrincipal && !stringPrincipal.trim().isEmpty()) {
+        return stringPrincipal;
+      }
+
+
+    throw new IllegalStateException(
+        "Não foi possível extrair username do Authentication. Principal type: "
+            + (principal != null ? principal.getClass().getName() : "null"));
   }
 }

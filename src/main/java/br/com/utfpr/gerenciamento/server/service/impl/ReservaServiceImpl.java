@@ -11,7 +11,9 @@ import br.com.utfpr.gerenciamento.server.util.DateUtil;
 import java.util.List;
 import org.modelmapper.ModelMapper;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -43,18 +45,20 @@ public class ReservaServiceImpl extends CrudServiceImpl<Reserva, Long> implement
   @Override
   @Transactional
   public Reserva save(Reserva reserva) {
-    reserva.setUsuario(
-        usuarioService.findByUsername(
-            (String) SecurityContextHolder.getContext().getAuthentication().getPrincipal()));
+    // Extrai username de forma segura do Authentication (evita ClassCastException)
+    Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+    String username = extractUsername(auth);
+    reserva.setUsuario(usuarioService.findByUsername(username));
     return super.save(reserva);
   }
 
   @Override
   @Transactional(readOnly = true)
   public List<ReservaResponseDto> findAllByUsername(String username) {
-    var usuario =
-        usuarioService.findByUsername(
-            (String) SecurityContextHolder.getContext().getAuthentication().getPrincipal());
+    // Extrai username de forma segura do Authentication (evita ClassCastException)
+    Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+    String authenticatedUsername = extractUsername(auth);
+    var usuario = usuarioService.findByUsername(authenticatedUsername);
     return reservaRepository.findAllByUsuario(usuario).stream().map(this::convertToDto).toList();
   }
 
@@ -97,5 +101,49 @@ public class ReservaServiceImpl extends CrudServiceImpl<Reserva, Long> implement
     toReturn.setDtRetirada(DateUtil.parseLocalDateToString(reserva.getDataRetirada()));
     toReturn.setReservaItem(reserva.getReservaItem());
     return toReturn;
+  }
+
+  /**
+   * Extrai o username do Authentication de forma segura.
+   *
+   * <p>Suporta dois cenários comuns do Spring Security: 1. Principal é String (username direto) 2.
+   * Principal é UserDetails (precisa chamar getUsername())
+   *
+   * <p>Prioriza auth.getName() que funciona em ambos os casos, mas valida com fallback para
+   * compatibilidade com diferentes configurações de segurança.
+   *
+   * @param auth Authentication do SecurityContext (pode ser null)
+   * @return Username extraído do authentication
+   * @throws IllegalStateException se authentication for null ou username não puder ser extraído
+   */
+  private String extractUsername(Authentication auth) {
+    if (auth == null) {
+      throw new IllegalStateException("Authentication não pode ser null");
+    }
+
+    // Prioriza getName() - funciona para ambos String e UserDetails
+    String username = auth.getName();
+    if (username != null && !username.trim().isEmpty()) {
+      return username;
+    }
+
+    // Fallback: verifica se principal é UserDetails
+    Object principal = auth.getPrincipal();
+    if (principal instanceof UserDetails userDetails) {
+      username = userDetails.getUsername();
+      if (username != null && !username.trim().isEmpty()) {
+        return username;
+      }
+    }
+
+    // Fallback final: tenta cast para String (compatibilidade com configurações antigas)
+    if (principal instanceof String stringPrincipal && !stringPrincipal.trim().isEmpty()) {
+        return stringPrincipal;
+      }
+
+
+    throw new IllegalStateException(
+        "Não foi possível extrair username do Authentication. Principal type: "
+            + (principal != null ? principal.getClass().getName() : "null"));
   }
 }
