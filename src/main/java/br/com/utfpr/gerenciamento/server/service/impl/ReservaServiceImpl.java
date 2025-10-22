@@ -138,9 +138,8 @@ public class ReservaServiceImpl extends CrudServiceImpl<Reserva, Long> implement
 
     // Fallback final: tenta cast para String (compatibilidade com configurações antigas)
     if (principal instanceof String stringPrincipal && !stringPrincipal.trim().isEmpty()) {
-        return stringPrincipal;
-      }
-
+      return stringPrincipal;
+    }
 
     throw new IllegalStateException(
         "Não foi possível extrair username do Authentication. Principal type: "
