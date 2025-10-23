@@ -26,6 +26,7 @@ import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors;
 import org.springframework.security.test.web.servlet.setup.SecurityMockMvcConfigurers;
 import org.springframework.test.context.ActiveProfiles;
+import org.springframework.test.context.transaction.TestTransaction;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
@@ -55,12 +56,34 @@ class EmprestimoControllerPerformanceIT {
 
   @BeforeEach
   void setUp() {
+    // Limpa dados de testes anteriores (ordem inversa das FKs)
+    limparDadosH2();
+
+    // Cria fixtures
+    criarDadosH2ParaTestes();
+
+    // Comita dados de setup para que MockMvc (transação separada) possa vê-los
+    TestTransaction.flagForCommit();
+    TestTransaction.end();
+
+    // Configura MockMvc após commit dos dados
     mockMvc =
         MockMvcBuilders.webAppContextSetup(context)
             .apply(SecurityMockMvcConfigurers.springSecurity())
             .build();
+  }
 
-    criarDadosH2ParaTestes();
+  // Limpa dados de testes anteriores respeitando FKs
+  private void limparDadosH2() {
+    entityManager.createQuery("DELETE FROM EmprestimoItem").executeUpdate();
+    entityManager.createQuery("DELETE FROM Emprestimo").executeUpdate();
+    entityManager.createQuery("DELETE FROM Item").executeUpdate();
+    entityManager
+        .createQuery(
+            "DELETE FROM Usuario u WHERE u.username IN ('aluno@teste.com', 'professor@teste.com')")
+        .executeUpdate();
+    entityManager.createQuery("DELETE FROM Permissao WHERE nome = 'ROLE_ALUNO'").executeUpdate();
+    entityManager.flush();
   }
 
   // Cria 50 empréstimos no H2 para simular volume realista
