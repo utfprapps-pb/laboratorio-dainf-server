@@ -40,6 +40,11 @@ public class DashboardServiceImpl implements DashboardService {
   public DashboardEmprestimoCountRangeResponseDto findDadosEmprestimoCountRange(
       LocalDate dtIni, LocalDate dtFim) {
     var result = emprestimoRepository.countEmprestimosByStatusInRange(dtIni, dtFim);
+
+    if (result == null) {
+      return new DashboardEmprestimoCountRangeResponseDto(0L, 0L, 0L, 0L);
+    }
+
     return new DashboardEmprestimoCountRangeResponseDto(
         result.total(), result.emAndamento(), result.emAtraso(), result.finalizado());
   }

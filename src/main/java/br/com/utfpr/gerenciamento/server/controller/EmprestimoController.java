@@ -8,13 +8,11 @@ import br.com.utfpr.gerenciamento.server.model.Emprestimo;
 import br.com.utfpr.gerenciamento.server.model.filter.EmprestimoFilter;
 import br.com.utfpr.gerenciamento.server.service.CrudService;
 import br.com.utfpr.gerenciamento.server.service.EmprestimoService;
-import br.com.utfpr.gerenciamento.server.specification.EmprestimoSpecifications;
 import br.com.utfpr.gerenciamento.server.util.DateUtil;
 import java.util.List;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
-import org.springframework.data.jpa.domain.Specification;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
@@ -92,7 +90,7 @@ public class EmprestimoController extends CrudController<Emprestimo, Long> {
   }
 
   /**
-   * Paginação otimizada de empréstimos com JOIN FETCH para associações críticas.
+   * Paginação otimizada de empréstimos com JOIN FETCH e cache.
    *
    * <p><b>Associações fetched via {@link EmprestimoSpecifications#withFetchCollections()}:</b>
    *
@@ -107,6 +105,9 @@ public class EmprestimoController extends CrudController<Emprestimo, Long> {
    * <p><b>NÃO fetched:</b> {@code emprestimoDevolucaoItem} (usa @BatchSize para evitar
    * MultipleBagFetchException)
    *
+   * <p><b>Cache:</b> 5 minutos TTL com cache key estável (filter + pageable), resolvendo problema
+   * de Specification com equals/hashCode instável.
+   *
    * <p>Esta estratégia previne N+1 queries mantendo performance ideal com DISTINCT e evitando
    * cartesian product ao fetch apenas uma collection @OneToMany.
    *
@@ -114,11 +115,10 @@ public class EmprestimoController extends CrudController<Emprestimo, Long> {
    *
    * @param page Número da página (0-indexed)
    * @param size Tamanho da página
-   * @param filter Filtro opcional (busca textual em todos os campos via {@link
-   *     CrudService#filterByAllFields})
+   * @param filter Filtro opcional (busca textual em todos os campos)
    * @param order Campo de ordenação (padrão: "id")
    * @param asc Direção da ordenação (true = ASC, false = DESC, padrão: ASC)
-   * @return Página de entidades {@link Emprestimo} otimizada com associações carregadas
+   * @return Página de entidades {@link Emprestimo} otimizada com associações carregadas e cache
    */
   @Override
   public Page<Emprestimo> findAllPaged(
@@ -135,14 +135,7 @@ public class EmprestimoController extends CrudController<Emprestimo, Long> {
     }
     PageRequest pageRequest = PageRequest.of(page, size, sort);
 
-    Specification<Emprestimo> spec;
-    if (filter != null && !filter.isEmpty()) {
-      spec = emprestimoService.filterByAllFields(filter);
-      spec = spec.and(EmprestimoSpecifications.withFetchCollections());
-    } else {
-      // Sem filtro: usa Specification que aplica apenas fetch joins
-      spec = EmprestimoSpecifications.withFetchCollections();
-    }
-    return emprestimoService.findAllSpecification(spec, pageRequest);
+    // Usa novo método com cache key estável
+    return emprestimoService.findAllPagedWithTextFilter(filter, pageRequest);
   }
 }

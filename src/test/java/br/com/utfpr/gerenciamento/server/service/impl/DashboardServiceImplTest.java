@@ -56,6 +56,20 @@ class DashboardServiceImplTest {
   }
 
   @Test
+  void testFindDadosEmprestimoCountRange_QuandoResultRetornaNulo_DeveEntregarValorPadrao() {
+    when(emprestimoRepository.countEmprestimosByStatusInRange(dtIni, dtFim)).thenReturn(null);
+
+    DashboardEmprestimoCountRangeResponseDto result =
+        dashboardService.findDadosEmprestimoCountRange(dtIni, dtFim);
+
+    assertNotNull(result);
+    assertEquals(0L, result.total());
+    assertEquals(0L, result.emAndamento());
+    assertEquals(0L, result.emAtraso());
+    assertEquals(0L, result.finalizado());
+  }
+
+  @Test
   void testFindDadosEmprestimoCountRange_comZeroEmprestimos() {
     // Arrange
     DashboardEmprestimoCountRange mockResult = new DashboardEmprestimoCountRange(0L, 0L, 0L, 0L);

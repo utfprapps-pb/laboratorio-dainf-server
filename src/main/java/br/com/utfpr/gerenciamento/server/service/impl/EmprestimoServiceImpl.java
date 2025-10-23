@@ -35,7 +35,11 @@ import java.util.Collections;
 import java.util.List;
 import lombok.extern.slf4j.Slf4j;
 import org.modelmapper.ModelMapper;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.context.annotation.Lazy;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -86,10 +90,60 @@ public class EmprestimoServiceImpl extends CrudServiceImpl<Emprestimo, Long>
   }
 
   /**
-   * Salva ou atualiza um empréstimo e invalida o cache de dashboard.
+   * Busca paginada com filtro textual e cache otimizado.
    *
-   * <p>O cache de dashboard é invalidado para garantir que os dados exibidos estejam sempre
-   * atualizados após criar/modificar empréstimos.
+   * <p><b>Cache Key Estável:</b> Usa String filter + Pageable (toString()) para cache key
+   * determinística, resolvendo problema de Specification com equals/hashCode instável.
+   *
+   * <p><b>Cache TTL:</b> 5 minutos (automaticamente invalidado em save/delete).
+   *
+   * <p><b>Query Optimization:</b> Utiliza JOIN FETCH via {@link
+   * EmprestimoSpecifications#withFetchCollections()} para prevenir N+1.
+   *
+   * @param textFilter Filtro textual opcional (null ou vazio = sem filtro)
+   * @param pageable Configuração de paginação (page, size, sort)
+   * @return Página de empréstimos com associações carregadas
+   */
+  @Override
+  @Cacheable(
+      value = "emprestimos-page",
+      key = "T(java.util.Objects).hash(#textFilter, #pageable.toString())",
+      unless = "#result == null || #result.isEmpty()")
+  @Transactional(readOnly = true)
+  public Page<Emprestimo> findAllPagedWithTextFilter(String textFilter, Pageable pageable) {
+    Specification<Emprestimo> spec;
+
+    if (textFilter != null && !textFilter.isEmpty()) {
+      // Combina filtro textual + JOIN FETCH
+      // Usa self para garantir que proxy transacional seja usado
+      spec =
+          self.filterByAllFields(textFilter).and(EmprestimoSpecifications.withFetchCollections());
+    } else {
+      // Apenas JOIN FETCH (sem filtro)
+      spec = EmprestimoSpecifications.withFetchCollections();
+    }
+
+    // Usa self para garantir que @Transactional seja aplicado via proxy
+    return self.findAllSpecification(spec, pageable);
+  }
+
+  /**
+   * Método interno para executar Specification. Não deve ser chamado diretamente (use {@link
+   * #findAllPagedWithTextFilter}).
+   *
+   * <p><b>IMPORTANTE:</b> Não tem @Cacheable pois Specification não tem equals/hashCode estável.
+   */
+  @Override
+  @Transactional(readOnly = true)
+  public Page<Emprestimo> findAllSpecification(
+      Specification<Emprestimo> specification, Pageable pageable) {
+    return super.findAllSpecification(specification, pageable);
+  }
+
+  /**
+   * Salva ou atualiza um empréstimo e invalida os caches.
+   *
+   * <p>Invalida cache de dashboard E cache de paginação para garantir dados atualizados.
    *
    * <p>SECURITY: Requer role LABORATORISTA ou ADMINISTRADOR para prevenir invalidação não
    * autorizada do cache.
@@ -103,6 +157,7 @@ public class EmprestimoServiceImpl extends CrudServiceImpl<Emprestimo, Long>
   @Transactional
   @PreAuthorize("hasAnyRole('" + ROLE_LABORATORISTA_NAME + "', '" + ROLE_ADMINISTRADOR_NAME + "')")
   @InvalidateDashboardCache
+  @CacheEvict(value = "emprestimos-page", allEntries = true)
   public Emprestimo save(Emprestimo entity) {
     // Validação fail-fast: previne NPE ao validar usuarioEmprestimo e seu ID
     if (entity.getUsuarioEmprestimo() == null) {
@@ -138,10 +193,9 @@ public class EmprestimoServiceImpl extends CrudServiceImpl<Emprestimo, Long>
   }
 
   /**
-   * Deleta um empréstimo por ID e invalida o cache de dashboard.
+   * Deleta um empréstimo por ID e invalida os caches.
    *
-   * <p>O cache de dashboard é invalidado para garantir que os dados exibidos estejam sempre
-   * atualizados após deletar empréstimos.
+   * <p>Invalida cache de dashboard E cache de paginação para garantir dados atualizados.
    *
    * <p>SECURITY: Requer role LABORATORISTA ou ADMINISTRADOR para prevenir invalidação não
    * autorizada do cache.
@@ -150,15 +204,15 @@ public class EmprestimoServiceImpl extends CrudServiceImpl<Emprestimo, Long>
   @Transactional
   @PreAuthorize("hasAnyRole('" + ROLE_LABORATORISTA_NAME + "', '" + ROLE_ADMINISTRADOR_NAME + "')")
   @InvalidateDashboardCache
+  @CacheEvict(value = "emprestimos-page", allEntries = true)
   public void delete(Long id) {
     super.delete(id);
   }
 
   /**
-   * Deleta um empréstimo e invalida o cache de dashboard.
+   * Deleta um empréstimo e invalida os caches.
    *
-   * <p>O cache de dashboard é invalidado para garantir que os dados exibidos estejam sempre
-   * atualizados após deletar empréstimos.
+   * <p>Invalida cache de dashboard E cache de paginação para garantir dados atualizados.
    *
    * <p>SECURITY: Requer role LABORATORISTA ou ADMINISTRADOR para prevenir invalidação não
    * autorizada do cache.
@@ -167,6 +221,7 @@ public class EmprestimoServiceImpl extends CrudServiceImpl<Emprestimo, Long>
   @Transactional
   @PreAuthorize("hasAnyRole('" + ROLE_LABORATORISTA_NAME + "', '" + ROLE_ADMINISTRADOR_NAME + "')")
   @InvalidateDashboardCache
+  @CacheEvict(value = "emprestimos-page", allEntries = true)
   public void delete(Emprestimo entity) {
     super.delete(entity);
   }

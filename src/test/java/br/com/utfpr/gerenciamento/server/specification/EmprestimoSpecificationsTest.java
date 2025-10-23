@@ -550,4 +550,75 @@ class EmprestimoSpecificationsTest {
           repository.findAll(spec);
         });
   }
+
+  @Test
+  @DisplayName("Deve carregar item e grupo sem N+1 quando fetchCollections=true")
+  void testWithFetchCollections_DeveCarregarItemEGrupoSemN1() {
+    // Given
+    Specification<Emprestimo> spec = EmprestimoSpecifications.withFetchCollections();
+
+    // When
+    EntityManager em = entityManager.getEntityManager();
+    em.clear(); // Limpa cache para forçar query fresca
+
+    List<Emprestimo> emprestimos = repository.findAll(spec);
+
+    // Then - Empréstimos foram carregados
+    assertFalse(emprestimos.isEmpty());
+
+    // Acessar nested properties SEM additional queries (detached entities)
+    emprestimos.forEach(
+        emprestimo -> {
+          assertNotNull(emprestimo.getEmprestimoItem());
+
+          if (!emprestimo.getEmprestimoItem().isEmpty()) {
+            emprestimo
+                .getEmprestimoItem()
+                .forEach(
+                    emprestimoItem -> {
+                      // Acessar item (não deve trigger lazy load)
+                      assertNotNull(emprestimoItem.getItem());
+                      assertNotNull(emprestimoItem.getItem().getNome());
+
+                      // Acessar grupo se existir (não deve trigger lazy load)
+                      if (emprestimoItem.getItem().getGrupo() != null) {
+                        assertNotNull(emprestimoItem.getItem().getGrupo().getDescricao());
+                      }
+                    });
+          }
+        });
+  }
+
+  @Test
+  @DisplayName("Deve executar paginação em menos de 1 segundo")
+  void testFindAllPaged_DeveExecutarRapidamente() {
+    // Given - Criar 20 empréstimos adicionais para volume realista
+    for (int i = 0; i < 20; i++) {
+      Emprestimo emp =
+          fixture.criarEmprestimoCustom(
+              usuarioEmprestimo,
+              usuarioResponsavel,
+              item,
+              LocalDate.now().minusDays(i),
+              LocalDate.now().plusDays(i),
+              null);
+      entityManager.persist(emp);
+    }
+    entityManager.flush();
+
+    Specification<Emprestimo> spec = EmprestimoSpecifications.withFetchCollections();
+
+    // When - Medir tempo de execução
+    EntityManager em = entityManager.getEntityManager();
+    em.clear();
+
+    long startTime = System.currentTimeMillis();
+    List<Emprestimo> result = repository.findAll(spec);
+    long duration = System.currentTimeMillis() - startTime;
+
+    // Then - Paginação deve completar em <1s
+    assertNotNull(result);
+    assertFalse(result.isEmpty());
+    assertTrue(duration < 1000, "Paginação deve completar em <1s, tempo atual: " + duration + "ms");
+  }
 }

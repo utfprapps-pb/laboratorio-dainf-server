@@ -308,7 +308,8 @@ class CacheConfigTest {
         config.cacheManager(
             config.caffeineConfigReferenceData(),
             config.caffeineConfigUsuario(),
-            config.caffeineConfigDashboard());
+            config.caffeineConfigDashboard(),
+            config.caffeineConfigEmprestimo());
 
     // When - Obter cache específico
     cacheManager.getCache("usuario");
