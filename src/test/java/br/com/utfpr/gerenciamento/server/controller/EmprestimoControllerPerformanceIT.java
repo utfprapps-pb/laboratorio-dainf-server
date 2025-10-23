@@ -115,7 +115,7 @@ class EmprestimoControllerPerformanceIT {
   // Helper: Deserializa resposta JSON para Map
   private Map<String, Object> deserializarResposta(MvcResult result) throws Exception {
     String responseJson = result.getResponse().getContentAsString();
-    return objectMapper.readValue(responseJson, new TypeReference<Map<String, Object>>() {});
+    return objectMapper.readValue(responseJson, new TypeReference<>() {});
   }
 
   // Helper: Extrai lista de empréstimos da resposta paginada
@@ -155,7 +155,7 @@ class EmprestimoControllerPerformanceIT {
     assertEquals(0, pageResponse.get("number"));
 
     // Valida primeiro empréstimo com dados completos do H2
-    Map<String, Object> primeiroEmprestimo = emprestimos.get(0);
+    Map<String, Object> primeiroEmprestimo = emprestimos.getFirst();
     assertNotNull(primeiroEmprestimo.get("id"));
     assertNotNull(primeiroEmprestimo.get("dataEmprestimo"));
 
@@ -170,7 +170,7 @@ class EmprestimoControllerPerformanceIT {
     List<Map<String, Object>> emprestimoItens =
         (List<Map<String, Object>>) primeiroEmprestimo.get("emprestimoItem");
     assertFalse(emprestimoItens.isEmpty());
-    validarItemCarregado(emprestimoItens.get(0));
+    validarItemCarregado(emprestimoItens.getFirst());
 
     System.out.printf("✅ Performance OK: %dms (meta: <2000ms)%n", duration);
   }
@@ -259,8 +259,8 @@ class EmprestimoControllerPerformanceIT {
     assertEquals(50, pageResponse.get("totalElements"));
 
     // Valida que segunda página também tem dados completos
-    assertNotNull(emprestimos.get(0).get("usuarioEmprestimo"));
-    assertNotNull(emprestimos.get(0).get("emprestimoItem"));
+    assertNotNull(emprestimos.getFirst().get("usuarioEmprestimo"));
+    assertNotNull(emprestimos.getFirst().get("emprestimoItem"));
 
     System.out.printf("✅ Segunda página OK: %dms%n", duration);
   }
@@ -294,7 +294,7 @@ class EmprestimoControllerPerformanceIT {
       List<Map<String, Object>> emprestimoItens =
           (List<Map<String, Object>>) emprestimo.get("emprestimoItem");
       assertFalse(emprestimoItens.isEmpty());
-      validarItemCarregado(emprestimoItens.get(0));
+      validarItemCarregado(emprestimoItens.getFirst());
     }
 
     System.out.printf("✅ Grande volume OK: 50 itens em %dms%n", duration);
