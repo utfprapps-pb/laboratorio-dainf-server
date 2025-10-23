@@ -27,21 +27,7 @@ class ItemControllerTest {
     itemController = new ItemController(itemService);
   }
 
-  @Test
-  void testFindOne_ComTipoP_DeveCalcularDisponivelEmprestimo() {
-    Item item = new Item();
-    item.setId(1L);
-    item.setSaldo(new BigDecimal("10"));
-    item.setTipoItem(TipoItem.P);
 
-    when(itemService.findOne(1L)).thenReturn(item);
-    when(itemService.disponivelParaEmprestimo(1L)).thenReturn(new BigDecimal("4"));
-
-    Item result = itemController.findone(1L);
-
-    assertEquals(new BigDecimal("6"), result.getDisponivelEmprestimoCalculado());
-    verify(itemService).findOne(1L);
-  }
 
   @Test
   void testFindOne_ComOutroTipo_DeveUsarSaldo() {

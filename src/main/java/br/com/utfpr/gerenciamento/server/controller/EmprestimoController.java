@@ -8,6 +8,7 @@ import br.com.utfpr.gerenciamento.server.model.Emprestimo;
 import br.com.utfpr.gerenciamento.server.model.filter.EmprestimoFilter;
 import br.com.utfpr.gerenciamento.server.service.CrudService;
 import br.com.utfpr.gerenciamento.server.service.EmprestimoService;
+import br.com.utfpr.gerenciamento.server.service.ItemService;
 import br.com.utfpr.gerenciamento.server.util.DateUtil;
 import java.util.List;
 import org.springframework.data.domain.Page;
@@ -21,9 +22,11 @@ import org.springframework.web.bind.annotation.*;
 public class EmprestimoController extends CrudController<Emprestimo, Long> {
 
   private final EmprestimoService emprestimoService;
+  private final ItemService itemService;
 
-  public EmprestimoController(EmprestimoService emprestimoService) {
+  public EmprestimoController(EmprestimoService emprestimoService, ItemService itemService) {
     this.emprestimoService = emprestimoService;
+      this.itemService = itemService;
   }
 
   @Override
