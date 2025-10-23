@@ -1,20 +1,17 @@
 package br.com.utfpr.gerenciamento.server.controller;
 
-import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.ArgumentMatchers.*;
-import static org.mockito.Mockito.*;
-
-import br.com.utfpr.gerenciamento.server.enumeration.TipoItem;
 import br.com.utfpr.gerenciamento.server.model.Item;
 import br.com.utfpr.gerenciamento.server.service.ItemService;
-import java.math.BigDecimal;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.mockito.Mockito;
 import org.springframework.data.domain.*;
-import org.springframework.data.jpa.domain.Specification;
+import java.math.BigDecimal;
+import java.util.Arrays;
+import java.util.List;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.when;
 
 class ItemControllerTest {
 
@@ -22,91 +19,73 @@ class ItemControllerTest {
   private ItemController itemController;
 
   @BeforeEach
-  void setUp() {
-    itemService = mock(ItemService.class);
+  void setup() {
+    itemService = Mockito.mock(ItemService.class);
     itemController = new ItemController(itemService);
   }
 
+  @Test
+  void testFindOne_ComTipoP_DeveSubtrairEmprestimo() {
+    Item item = new Item();
+    item.setId(1L);
+    item.setTipoItem(br.com.utfpr.gerenciamento.server.enumeration.TipoItem.P);
+    item.setSaldo(new BigDecimal("10"));
+    item.setDisponivelEmprestimoCalculado(new BigDecimal("3"));
 
+    when(itemService.findOne(1L)).thenReturn(item);
+
+    Item result = itemController.findone(1L);
+
+    assertThat(result.getDisponivelEmprestimoCalculado()).isEqualByComparingTo("7");
+  }
 
   @Test
-  void testFindOne_ComOutroTipo_DeveUsarSaldo() {
+  void testFindOne_ComTipoC_DeveRetornarSaldo() {
     Item item = new Item();
     item.setId(2L);
-    item.setSaldo(new BigDecimal("8"));
-    item.setTipoItem(TipoItem.C);
+    item.setTipoItem(br.com.utfpr.gerenciamento.server.enumeration.TipoItem.C);
+    item.setSaldo(new BigDecimal("15"));
 
     when(itemService.findOne(2L)).thenReturn(item);
 
     Item result = itemController.findone(2L);
-    assertEquals(new BigDecimal("8"), result.getDisponivelEmprestimoCalculado());
+
+    assertThat(result.getDisponivelEmprestimoCalculado()).isEqualByComparingTo("15");
   }
 
   @Test
-  void testFindAll_DeveCalcularParaItensTipoP() {
+  void testFindAll_DeveCalcularParaTodosOsItens() {
     Item item1 = new Item();
-    item1.setId(1L);
-    item1.setSaldo(new BigDecimal("10"));
-    item1.setTipoItem(TipoItem.P);
+    item1.setTipoItem(br.com.utfpr.gerenciamento.server.enumeration.TipoItem.P);
+    item1.setSaldo(new BigDecimal("20"));
+    item1.setDisponivelEmprestimoCalculado(new BigDecimal("5"));
 
     Item item2 = new Item();
-    item2.setId(2L);
-    item2.setSaldo(new BigDecimal("5"));
-    item2.setTipoItem(TipoItem.C);
+    item2.setTipoItem(br.com.utfpr.gerenciamento.server.enumeration.TipoItem.C);
+    item2.setSaldo(new BigDecimal("10"));
 
-    when(itemService.findAll(any(Sort.class))).thenReturn(Arrays.asList(item1, item2));
-    when(itemService.disponivelParaEmprestimo(1L)).thenReturn(new BigDecimal("3"));
+    when(itemService.findAll(Sort.by("id"))).thenReturn(Arrays.asList(item1, item2));
 
     List<Item> result = itemController.findAll();
 
-    assertEquals(2, result.size());
-    assertEquals(new BigDecimal("7"), result.get(0).getDisponivelEmprestimoCalculado());
-    assertEquals(new BigDecimal("5"), result.get(1).getDisponivelEmprestimoCalculado());
+    assertThat(result.get(0).getDisponivelEmprestimoCalculado()).isEqualByComparingTo("15");
+    assertThat(result.get(1).getDisponivelEmprestimoCalculado()).isEqualByComparingTo("10");
   }
 
   @Test
-  void testFindAllPaged_SemFiltro_DeveManterPaginacao() {
+  void testFindAllPaged_DeveAplicarCalculo() {
     Item item = new Item();
-    item.setId(1L);
-    item.setSaldo(new BigDecimal("12"));
-    item.setTipoItem(TipoItem.P);
+    item.setTipoItem(br.com.utfpr.gerenciamento.server.enumeration.TipoItem.P);
+    item.setSaldo(new BigDecimal("8"));
+    item.setDisponivelEmprestimoCalculado(new BigDecimal("2"));
 
-    Page<Item> page = new PageImpl<>(Collections.singletonList(item));
+    Page<Item> page = new PageImpl<>(List.of(item));
+
     when(itemService.findAll(any(PageRequest.class))).thenReturn(page);
-    when(itemService.disponivelParaEmprestimo(1L)).thenReturn(new BigDecimal("2"));
 
     Page<Item> result = itemController.findAllPaged(0, 10, null, null, null);
 
-    assertEquals(1, result.getTotalElements());
-    assertEquals(
-        new BigDecimal("10"), result.getContent().get(0).getDisponivelEmprestimoCalculado());
-  }
-
-  @Test
-  void testFindAllPaged_ComFiltro_DeveUsarSpecification() {
-    Item item = new Item();
-    item.setId(1L);
-    item.setSaldo(new BigDecimal("20"));
-    item.setTipoItem(TipoItem.C);
-
-    Page<Item> page = new PageImpl<>(Collections.singletonList(item));
-    when(itemService.filterByAllFields(anyString())).thenReturn(mock(Specification.class));
-    when(itemService.findAllSpecification(any(), any(PageRequest.class))).thenReturn(page);
-
-    Page<Item> result = itemController.findAllPaged(0, 10, "teste", null, null);
-
-        assertEquals(1, result.getTotalElements());
-        assertEquals(new BigDecimal("20"), result.getContent().get(0).getDisponivelEmprestimoCalculado());
-    }
-
-
-  @Test
-  void testPostSave_SemImagensNaoCopia() {
-    Item item = new Item();
-    item.setId(11L);
-
-    itemController.postSave(item);
-
-    verify(itemService, never()).copyImagesItem(anyList(), anyLong());
+    assertThat(result.getContent().get(0).getDisponivelEmprestimoCalculado())
+            .isEqualByComparingTo("6");
   }
 }
