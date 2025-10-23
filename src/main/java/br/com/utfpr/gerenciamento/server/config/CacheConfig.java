@@ -32,7 +32,8 @@ public class CacheConfig {
   public CacheManager cacheManager(
       Caffeine<Object, Object> caffeineConfigReferenceData,
       Caffeine<Object, Object> caffeineConfigUsuario,
-      Caffeine<Object, Object> caffeineConfigDashboard) {
+      Caffeine<Object, Object> caffeineConfigDashboard,
+      Caffeine<Object, Object> caffeineConfigEmprestimo) {
     CaffeineCacheManager cacheManager = new CaffeineCacheManager();
 
     // Configuração padrão para caches não especificados
@@ -53,6 +54,9 @@ public class CacheConfig {
 
     // Usuários (TTL: 15 minutos) - preparado para uso futuro
     cacheManager.registerCustomCache("usuarios", caffeineConfigUsuario.build());
+
+    // Empréstimos (TTL: 5 minutos) - dados mudam frequentemente
+    cacheManager.registerCustomCache("emprestimos-page", caffeineConfigEmprestimo.build());
 
     return cacheManager;
   }
@@ -100,6 +104,20 @@ public class CacheConfig {
     return Caffeine.newBuilder()
         .maximumSize(200) // Combinações de filtros de data
         .expireAfter(new DashboardCacheExpiry()) // TTL variável baseado na chave
+        .recordStats();
+  }
+
+  /**
+   * Cache para paginação de empréstimos.
+   *
+   * <p>TTL curto (5 minutos) pois dados mudam frequentemente com novos empréstimos e devoluções.
+   * Tamanho limitado para armazenar combinações comuns de filtros.
+   */
+  @Bean
+  public Caffeine<Object, Object> caffeineConfigEmprestimo() {
+    return Caffeine.newBuilder()
+        .maximumSize(100) // Combinações de filtros de paginação
+        .expireAfterWrite(Duration.ofMinutes(5)) // TTL curto para dados dinâmicos
         .recordStats();
   }
 }

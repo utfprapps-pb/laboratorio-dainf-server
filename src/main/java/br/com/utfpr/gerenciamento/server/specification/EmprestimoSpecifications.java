@@ -106,7 +106,13 @@ public class EmprestimoSpecifications {
         // JOIN FETCH condicional para emprestimoItem (previne N+1 quando necessário)
         // IMPORTANTE: Não fetch emprestimoDevolucaoItem aqui para evitar MultipleBagFetchException
         if (fetchCollections) {
-          root.fetch("emprestimoItem", JoinType.LEFT);
+          Fetch<?, ?> emprestimoItemFetch = root.fetch("emprestimoItem", JoinType.LEFT);
+
+          // Fetch nested item to prevent N+1 (elimina ~30 queries adicionais)
+          Fetch<?, ?> itemFetch = emprestimoItemFetch.fetch("item", JoinType.LEFT);
+
+          // Fetch item.grupo to prevent additional N+1 (elimina ~10 queries adicionais)
+          itemFetch.fetch("grupo", JoinType.LEFT);
         }
       }
 
