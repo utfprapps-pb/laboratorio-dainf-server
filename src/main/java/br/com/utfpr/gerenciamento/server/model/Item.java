@@ -14,7 +14,6 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 import org.hibernate.annotations.Formula;
 import org.hibernate.proxy.HibernateProxy;
-import org.springframework.transaction.annotation.Transactional;
 
 @Getter
 @Setter
