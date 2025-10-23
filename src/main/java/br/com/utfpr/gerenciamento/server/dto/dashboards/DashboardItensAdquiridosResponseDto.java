@@ -1,12 +1,11 @@
 package br.com.utfpr.gerenciamento.server.dto.dashboards;
 
 import java.math.BigDecimal;
-import lombok.Data;
 
-@Data
-public class DashboardItensAdquiridosResponseDto {
-
-  private BigDecimal qtde;
-
-  private String item;
-}
+/**
+ * DTO de resposta para itens mais adquiridos.
+ *
+ * @param qtde Quantidade adquirida do item
+ * @param item Nome do item
+ */
+public record DashboardItensAdquiridosResponseDto(BigDecimal qtde, String item) {}
