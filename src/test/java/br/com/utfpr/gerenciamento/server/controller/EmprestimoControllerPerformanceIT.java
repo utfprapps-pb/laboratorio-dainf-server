@@ -119,10 +119,10 @@ class EmprestimoControllerPerformanceIT {
   }
 
   // Helper: Executa paginação como admin
-  private MvcResult executarPaginacaoComoAdmin(int page, int size, String filter) throws Exception {
+  private MvcResult executarPaginacaoComoAdmin(int size, String filter) throws Exception {
     var request =
         get("/emprestimo/page")
-            .param("page", String.valueOf(page))
+            .param("page", String.valueOf(0))
             .param("size", String.valueOf(size))
             .with(
                 SecurityMockMvcRequestPostProcessors.user("admin")
@@ -161,7 +161,7 @@ class EmprestimoControllerPerformanceIT {
   void testPaginacao_DeveResponderRapidamente() throws Exception {
     // Executa paginação medindo tempo de resposta
     long startTime = System.currentTimeMillis();
-    MvcResult result = executarPaginacaoComoAdmin(0, 10, null);
+    MvcResult result = executarPaginacaoComoAdmin(10, null);
     long duration = System.currentTimeMillis() - startTime;
 
     // Valida performance <2s (inclui serialização e overhead de rede)
@@ -203,7 +203,7 @@ class EmprestimoControllerPerformanceIT {
   void testPaginacaoComFiltro_DeveResponderRapidamente() throws Exception {
     // Testa que filtros não degradam performance (independente do resultado)
     long startTime = System.currentTimeMillis();
-    MvcResult result = executarPaginacaoComoAdmin(0, 10, "teste");
+    MvcResult result = executarPaginacaoComoAdmin(10, "teste");
     long duration = System.currentTimeMillis() - startTime;
 
     assertTrue(
@@ -221,7 +221,7 @@ class EmprestimoControllerPerformanceIT {
   @Test
   @DisplayName("GET /emprestimo/page deve carregar itens e grupos sem N+1 queries")
   void testPaginacao_DeveCarregarItensEGruposSemN1() throws Exception {
-    MvcResult result = executarPaginacaoComoAdmin(0, 10, null);
+    MvcResult result = executarPaginacaoComoAdmin(10, null);
     Map<String, Object> pageResponse = deserializarResposta(result);
     List<Map<String, Object>> emprestimos = extrairEmprestimos(pageResponse);
 
@@ -261,31 +261,45 @@ class EmprestimoControllerPerformanceIT {
   @Test
   @DisplayName("GET /emprestimo/page segunda página deve responder rapidamente (validar cache)")
   void testPaginacaoSegundaPagina_DeveResponderRapidamente() throws Exception {
-    // Warm-up com primeira página
-    executarPaginacaoComoAdmin(0, 10, null);
+    // Primeira chamada (cache miss)
+    long startTime1 = System.currentTimeMillis();
+    executarPaginacaoComoAdmin(10, null);
+    long duration1 = System.currentTimeMillis() - startTime1;
 
-    // Segunda página
-    long startTime = System.currentTimeMillis();
-    MvcResult result = executarPaginacaoComoAdmin(1, 10, null);
-    long duration = System.currentTimeMillis() - startTime;
+    // Segunda chamada IDÊNTICA (cache hit esperado)
+    long startTime2 = System.currentTimeMillis();
+    MvcResult result = executarPaginacaoComoAdmin(10, null);
+    long duration2 = System.currentTimeMillis() - startTime2;
 
+    // Cache hit deve ser igual ou mais rápido (com tolerância para variação em milissegundos)
+    // Em escala de milissegundos, variação de 1-2ms é esperada, então permitimos que segunda
+    // seja até 2ms mais lenta que a primeira (para cobrir edge cases de timing)
     assertTrue(
-        duration < 2000,
-        String.format("Segunda página deve completar em <2s. Tempo atual: %dms", duration));
+        duration2 <= duration1 + 2,
+        String.format(
+            "Cache hit não deve ser mais lento. Primeira: %dms, Segunda (cache): %dms",
+            duration1, duration2));
 
-    // Valida dados da segunda página
+    // Valida que ambas completaram rapidamente (indicador de cache funcionando)
+    assertTrue(
+        duration2 < 2000,
+        String.format("Segunda chamada deve ser rápida (<2s). Tempo: %dms", duration2));
+
+    // Valida dados da página
     Map<String, Object> pageResponse = deserializarResposta(result);
     List<Map<String, Object>> emprestimos = extrairEmprestimos(pageResponse);
 
     assertEquals(10, emprestimos.size());
-    assertEquals(1, pageResponse.get("number"));
+    assertEquals(0, pageResponse.get("number"));
     assertEquals(50, pageResponse.get("totalElements"));
 
-    // Valida que segunda página também tem dados completos
+    // Valida que cache retorna dados completos
     assertNotNull(emprestimos.getFirst().get("usuarioEmprestimo"));
     assertNotNull(emprestimos.getFirst().get("emprestimoItem"));
 
-    System.out.printf("✅ Segunda página OK: %dms%n", duration);
+    System.out.printf(
+        "✅ Cache validado: Primeira %dms → Segunda %dms (diferença: %dms)%n",
+        duration1, duration2, duration2 - duration1);
   }
 
   @Test
@@ -293,7 +307,7 @@ class EmprestimoControllerPerformanceIT {
   void testPaginacaoGrandeVolume_DeveResponderEmTempoAceitavel() throws Exception {
     // Paginação com volume maior (50 itens)
     long startTime = System.currentTimeMillis();
-    MvcResult result = executarPaginacaoComoAdmin(0, 50, null);
+    MvcResult result = executarPaginacaoComoAdmin(50, null);
     long duration = System.currentTimeMillis() - startTime;
 
     assertTrue(

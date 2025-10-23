@@ -90,13 +90,50 @@ public class EmprestimoServiceImpl extends CrudServiceImpl<Emprestimo, Long>
   }
 
   /**
-   * Busca paginada com cache de 5 minutos.
+   * Busca paginada com filtro textual e cache otimizado.
    *
-   * <p>Cache é automaticamente invalidado em save/delete. A chave inclui specification e pageable
-   * para diferenciar filtros e páginas.
+   * <p><b>Cache Key Estável:</b> Usa String filter + Pageable (toString()) para cache key
+   * determinística, resolvendo problema de Specification com equals/hashCode instável.
+   *
+   * <p><b>Cache TTL:</b> 5 minutos (automaticamente invalidado em save/delete).
+   *
+   * <p><b>Query Optimization:</b> Utiliza JOIN FETCH via {@link
+   * EmprestimoSpecifications#withFetchCollections()} para prevenir N+1.
+   *
+   * @param textFilter Filtro textual opcional (null ou vazio = sem filtro)
+   * @param pageable Configuração de paginação (page, size, sort)
+   * @return Página de empréstimos com associações carregadas
    */
   @Override
-  @Cacheable(value = "emprestimos-page", unless = "#result == null || #result.isEmpty()")
+  @Cacheable(
+      value = "emprestimos-page",
+      key = "T(java.util.Objects).hash(#textFilter, #pageable.toString())",
+      unless = "#result == null || #result.isEmpty()")
+  @Transactional(readOnly = true)
+  public Page<Emprestimo> findAllPagedWithTextFilter(String textFilter, Pageable pageable) {
+    Specification<Emprestimo> spec;
+
+    if (textFilter != null && !textFilter.isEmpty()) {
+      // Combina filtro textual + JOIN FETCH
+      // Usa self para garantir que proxy transacional seja usado
+      spec =
+          self.filterByAllFields(textFilter).and(EmprestimoSpecifications.withFetchCollections());
+    } else {
+      // Apenas JOIN FETCH (sem filtro)
+      spec = EmprestimoSpecifications.withFetchCollections();
+    }
+
+    // Usa self para garantir que @Transactional seja aplicado via proxy
+    return self.findAllSpecification(spec, pageable);
+  }
+
+  /**
+   * Método interno para executar Specification. Não deve ser chamado diretamente (use {@link
+   * #findAllPagedWithTextFilter}).
+   *
+   * <p><b>IMPORTANTE:</b> Não tem @Cacheable pois Specification não tem equals/hashCode estável.
+   */
+  @Override
   @Transactional(readOnly = true)
   public Page<Emprestimo> findAllSpecification(
       Specification<Emprestimo> specification, Pageable pageable) {

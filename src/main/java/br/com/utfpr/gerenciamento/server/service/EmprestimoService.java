@@ -9,8 +9,22 @@ import br.com.utfpr.gerenciamento.server.model.dashboards.DashboardItensEmpresta
 import br.com.utfpr.gerenciamento.server.model.filter.EmprestimoFilter;
 import java.time.LocalDate;
 import java.util.List;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 
 public interface EmprestimoService extends CrudService<Emprestimo, Long> {
+
+  /**
+   * Busca paginada com filtro textual e cache otimizado.
+   *
+   * <p>Esta versão aceita parâmetros estáveis (String + Pageable) para cache key determinística,
+   * resolvendo problema de Specification com equals/hashCode instável.
+   *
+   * @param textFilter Filtro textual opcional (busca em todos os campos)
+   * @param pageable Configuração de paginação e ordenação
+   * @return Página de empréstimos com JOIN FETCH otimizado
+   */
+  Page<Emprestimo> findAllPagedWithTextFilter(String textFilter, Pageable pageable);
 
   List<Emprestimo> findAllByDataEmprestimoBetween(LocalDate dtIni, LocalDate dtFim);
 
