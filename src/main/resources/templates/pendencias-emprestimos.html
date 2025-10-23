@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="pt-BR">
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pendências de Empréstimos</title>
+    <style>
+        body { font-family: 'Montserrat', Arial, sans-serif; background-color: #f5f5f5; }
+        .container { background: #fff; border-radius: 12px; max-width: 600px; margin: 0 auto; box-shadow: 0 4px 15px rgba(0,0,0,0.08); }
+        .header { text-align: center; padding: 30px 20px 10px 20px; }
+        .header img { width: 120px; }
+        .body { padding: 20px 30px; }
+        .body h2 { color: #E6A74A; margin-bottom: 10px; }
+        .body p { color: #333; font-size: 16px; margin-bottom: 20px; }
+        table { width: 100%; border-collapse: collapse; margin-bottom: 20px; }
+        th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+        th { background-color: #E6A74A; color: #fff; }
+        .footer { background: #E6A74A; color: #fff; text-align: center; padding: 15px 10px; border-bottom-left-radius: 12px; border-bottom-right-radius: 12px; }
+    </style>
+</head>
+<body>
+<div class="container">
+    <div class="header">
+        <img th:src="${logoUrl}" src="/static/logo-fallback.png" alt="Logo UTFPR" width="120"/>
+    </div>
+    <div class="body">
+        <h2>Pendências de Empréstimos</h2>
+        <p>Olá <strong th:text="${nomeAluno}">NOME_DO_ALUNO</strong>,</p>
+        <p>Constatamos que você possui pendências com relação aos empréstimos realizados na Sala de Apoio do Departamento Acadêmico de Informática, da Universidade Tecnológica Federal do Paraná, Campus Pato Branco. Segue a lista dos itens pendentes:</p>
+        <table>
+            <thead>
+                <tr>
+                    <th>Item</th>
+                    <th>Data do Empréstimo</th>
+                    <th>Data de Devolução Prevista</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr th:each="emprestimo : ${emprestimos}">
+                    <td th:text="${emprestimo.itemNome}">Item</td>
+                    <td th:text="${emprestimo.dataEmprestimo}">01/01/2025</td>
+                    <td th:text="${emprestimo.dataPrevistaDevolucao}">10/01/2025</td>
+                </tr>
+            </tbody>
+        </table>
+        <p>Por favor, regularize sua situação para concluir a declaração de nada consta.</p>
+    </div>
+    <div class="footer">
+        Sistema de Gestão de Laboratórios<br/>
+        <strong>UTFPR - Campus Pato Branco</strong>
+    </div>
+</div>
+</body>
+</html>
+

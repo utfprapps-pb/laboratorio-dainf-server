@@ -1,10 +1,13 @@
 package br.com.utfpr.gerenciamento.server.specification;
 
+import br.com.utfpr.gerenciamento.server.enumeration.EmprestimoStatus;
 import br.com.utfpr.gerenciamento.server.model.Emprestimo;
 import br.com.utfpr.gerenciamento.server.model.Usuario;
+import br.com.utfpr.gerenciamento.server.model.filter.DateRange;
 import br.com.utfpr.gerenciamento.server.model.filter.EmprestimoFilter;
 import jakarta.persistence.criteria.*;
 import java.time.LocalDate;
+import java.util.Objects;
 import org.springframework.data.jpa.domain.Specification;
 
 /**
@@ -40,9 +43,49 @@ public class EmprestimoSpecifications {
    * @return Specification configurada com fetches e predicados
    */
   public static Specification<Emprestimo> fromFilter(EmprestimoFilter filter) {
+    return fromFilter(filter, false);
+  }
+
+  /**
+   * Cria Specification para carregar associações via JOIN FETCH, sem filtros.
+   *
+   * <p>Este método é útil para paginação genérica (como em {@code filterByAllFields}) onde não há
+   * filtros específicos de Emprestimo, mas é necessário carregar associações para evitar N+1
+   * queries.
+   *
+   * <p>Internamente delega para {@link #fromFilter(EmprestimoFilter, boolean)} com filter=null e
+   * fetchCollections=true, aplicando JOIN FETCH para usuários e emprestimoItem.
+   *
+   * <p>IMPORTANTE: Apenas emprestimoItem é fetched (não emprestimoDevolucaoItem) para evitar
+   * MultipleBagFetchException. Para emprestimoDevolucaoItem, use @BatchSize na entidade.
+   *
+   * @return Specification que aplica fetch joins para usuários e emprestimoItem
+   */
+  public static Specification<Emprestimo> withFetchCollections() {
+    return fromFilter(null, true);
+  }
+
+  /**
+   * Cria Specification otimizada para paginação com JOIN FETCH condicional.
+   *
+   * <p>IMPORTANTE: Apenas uma collection pode ser fetched por vez para evitar
+   * MultipleBagFetchException (Hibernate não suporta múltiplos @OneToMany EAGER). Quando
+   * fetchCollections=false, apenas usuários são fetched. Quando true, adiciona emprestimoItem.
+   *
+   * <p>Para emprestimoDevolucaoItem, sempre use @BatchSize e @Fetch(FetchMode.SUBSELECT) na
+   * entidade, que previne N+1 sem causar cartesian product.
+   *
+   * @param filter Filtro com critérios de busca (pode ser null)
+   * @param fetchCollections Se true, adiciona LEFT JOIN FETCH para emprestimoItem além dos
+   *     usuários. Se false, carrega apenas usuários.
+   * @return Specification configurada com fetches otimizados
+   */
+  public static Specification<Emprestimo> fromFilter(
+      EmprestimoFilter filter, boolean fetchCollections) {
     return (root, query, cb) -> {
       // Previne duplicação de resultados em queries de count
-      if (query.getResultType() != Long.class && query.getResultType() != long.class) {
+      if (Objects.requireNonNull(query).getResultType() != Long.class
+          && query.getResultType() != long.class) {
         // Define distinct antes de realizar fetches para evitar duplicação de resultados
         query.distinct(true);
 
@@ -56,7 +99,21 @@ public class EmprestimoSpecifications {
         usuarioEmprestimoFetch.fetch("permissoes", JoinType.LEFT);
 
         // JOIN FETCH para usuarioResponsavel (se necessário)
-        root.fetch(USUARIO_RESPONSAVEL, JoinType.LEFT);
+        Fetch<Emprestimo, Usuario> usuarioResponsavelFetch =
+            root.fetch(USUARIO_RESPONSAVEL, JoinType.LEFT);
+        usuarioResponsavelFetch.fetch("permissoes", JoinType.LEFT);
+
+        // JOIN FETCH condicional para emprestimoItem (previne N+1 quando necessário)
+        // IMPORTANTE: Não fetch emprestimoDevolucaoItem aqui para evitar MultipleBagFetchException
+        if (fetchCollections) {
+          Fetch<?, ?> emprestimoItemFetch = root.fetch("emprestimoItem", JoinType.LEFT);
+
+          // Fetch nested item to prevent N+1 (elimina ~30 queries adicionais)
+          Fetch<?, ?> itemFetch = emprestimoItemFetch.fetch("item", JoinType.LEFT);
+
+          // Fetch item.grupo to prevent additional N+1 (elimina ~10 queries adicionais)
+          itemFetch.fetch("grupo", JoinType.LEFT);
+        }
       }
 
       return construirPredicado(filter, root, query, cb);
@@ -75,106 +132,165 @@ public class EmprestimoSpecifications {
   private static Predicate construirPredicado(
       EmprestimoFilter filter, Root<Emprestimo> root, CriteriaQuery<?> query, CriteriaBuilder cb) {
 
-    Predicate predicado = cb.conjunction(); // Sempre verdadeiro, equivalente a "1=1"
+    Predicate predicado = cb.conjunction();
 
     if (filter == null) {
       return predicado;
     }
 
-    // Filtro por usuarioEmprestimo (por ID ou username)
-    if (filter.getUsuarioEmprestimo() != null) {
-      Join<Emprestimo, Usuario> usuarioEmprestimoJoin =
-          root.join(USUARIO_EMPRESTIMO, JoinType.LEFT);
+    predicado = aplicarFiltroUsuarioEmprestimo(filter, root, cb, predicado);
+    predicado = aplicarFiltroUsuarioResponsavel(filter, root, cb, predicado);
+    predicado = aplicarFiltroDataEmprestimo(filter, root, cb, predicado);
+    predicado = aplicarFiltroStatus(filter, root, cb, predicado);
 
-      if (filter.getUsuarioEmprestimo().getId() != null) {
-        predicado =
-            cb.and(
-                predicado,
-                cb.equal(usuarioEmprestimoJoin.get("id"), filter.getUsuarioEmprestimo().getId()));
-      } else if (filter.getUsuarioEmprestimo().getUsername() != null) {
-        predicado =
-            cb.and(
-                predicado,
-                cb.equal(
-                    usuarioEmprestimoJoin.get(USERNAME),
-                    filter.getUsuarioEmprestimo().getUsername()));
-      }
+    return predicado;
+  }
+
+  /**
+   * Aplica filtro por usuarioEmprestimo (ID ou username).
+   *
+   * @param filter Filtro de empréstimo
+   * @param root Root da query
+   * @param cb CriteriaBuilder
+   * @param predicado Predicado atual
+   * @return Predicado atualizado
+   */
+  private static Predicate aplicarFiltroUsuarioEmprestimo(
+      EmprestimoFilter filter, Root<Emprestimo> root, CriteriaBuilder cb, Predicate predicado) {
+
+    if (filter.getUsuarioEmprestimo() == null) {
+      return predicado;
     }
 
-    // Filtro por usuarioResponsavel (por ID ou username)
-    // Nota: "usuarioResponsalvel" é um typo no EmprestimoFilter mantido para compatibilidade
-    if (filter.getUsuarioResponsalvel() != null) {
-      Join<Emprestimo, Usuario> usuarioResponsavelJoin =
-          root.join(USUARIO_RESPONSAVEL, JoinType.LEFT);
+    Join<Emprestimo, Usuario> usuarioJoin = root.join(USUARIO_EMPRESTIMO, JoinType.LEFT);
+    return aplicarFiltroUsuario(filter.getUsuarioEmprestimo(), usuarioJoin, cb, predicado);
+  }
 
-      if (filter.getUsuarioResponsalvel().getId() != null) {
-        predicado =
-            cb.and(
-                predicado,
-                cb.equal(
-                    usuarioResponsavelJoin.get("id"), filter.getUsuarioResponsalvel().getId()));
-      } else if (filter.getUsuarioResponsalvel().getUsername() != null) {
-        predicado =
-            cb.and(
-                predicado,
-                cb.equal(
-                    usuarioResponsavelJoin.get(USERNAME),
-                    filter.getUsuarioResponsalvel().getUsername()));
-      }
+  /**
+   * Aplica filtro por usuarioResponsavel (ID ou username).
+   *
+   * @param filter Filtro de empréstimo
+   * @param root Root da query
+   * @param cb CriteriaBuilder
+   * @param predicado Predicado atual
+   * @return Predicado atualizado
+   */
+  private static Predicate aplicarFiltroUsuarioResponsavel(
+      EmprestimoFilter filter, Root<Emprestimo> root, CriteriaBuilder cb, Predicate predicado) {
+
+    if (filter.getUsuarioResponsavel() == null) {
+      return predicado;
     }
 
-    // Filtro por data de empréstimo inicial (>=)
-    if (filter.getDtIniEmp() != null) {
-      LocalDate dtIni = LocalDate.parse(filter.getDtIniEmp());
-      predicado = cb.and(predicado, cb.greaterThanOrEqualTo(root.get(DATA_EMPRESTIMO), dtIni));
+    Join<Emprestimo, Usuario> usuarioJoin = root.join(USUARIO_RESPONSAVEL, JoinType.LEFT);
+    return aplicarFiltroUsuario(filter.getUsuarioResponsavel(), usuarioJoin, cb, predicado);
+  }
+
+  /**
+   * Aplica filtro genérico por usuário (ID ou username).
+   *
+   * @param usuario Filtro de usuário
+   * @param usuarioJoin Join de usuario
+   * @param cb CriteriaBuilder
+   * @param predicado Predicado atual
+   * @return Predicado atualizado
+   */
+  private static Predicate aplicarFiltroUsuario(
+      Usuario usuario,
+      Join<Emprestimo, Usuario> usuarioJoin,
+      CriteriaBuilder cb,
+      Predicate predicado) {
+
+    if (usuario.getId() != null) {
+      return cb.and(predicado, cb.equal(usuarioJoin.get("id"), usuario.getId()));
     }
 
-    // Filtro por data de empréstimo final (<=)
-    if (filter.getDtFimEmp() != null) {
-      LocalDate dtFim = LocalDate.parse(filter.getDtFimEmp());
-      predicado = cb.and(predicado, cb.lessThanOrEqualTo(root.get(DATA_EMPRESTIMO), dtFim));
-    }
-
-    // Filtro por posição do empréstimo
-    // A = atrasado, P = em andamento, F = finalizado, T = tudo
-    if (filter.getStatus() != null && !filter.getStatus().equals("T")) {
-      Predicate statusPredicado = construirPredicadoStatus(filter.getStatus(), root, cb);
-      predicado = cb.and(predicado, statusPredicado);
+    if (usuario.getUsername() != null) {
+      return cb.and(predicado, cb.equal(usuarioJoin.get(USERNAME), usuario.getUsername()));
     }
 
     return predicado;
   }
 
   /**
+   * Aplica filtro por data de empréstimo usando DateRange.
+   *
+   * @param filter Filtro de empréstimo
+   * @param root Root da query
+   * @param cb CriteriaBuilder
+   * @param predicado Predicado atual
+   * @return Predicado atualizado
+   */
+  private static Predicate aplicarFiltroDataEmprestimo(
+      EmprestimoFilter filter, Root<Emprestimo> root, CriteriaBuilder cb, Predicate predicado) {
+
+    DateRange dateRange = filter.getDateRangeEmprestimo();
+    if (dateRange == null) {
+      return predicado;
+    }
+
+    if (dateRange.hasInicio()) {
+      predicado =
+          cb.and(predicado, cb.greaterThanOrEqualTo(root.get(DATA_EMPRESTIMO), dateRange.inicio()));
+    }
+
+    if (dateRange.hasFim()) {
+      predicado =
+          cb.and(predicado, cb.lessThanOrEqualTo(root.get(DATA_EMPRESTIMO), dateRange.fim()));
+    }
+
+    return predicado;
+  }
+
+  /**
+   * Aplica filtro por status do empréstimo.
+   *
+   * @param filter Filtro de empréstimo
+   * @param root Root da query
+   * @param cb CriteriaBuilder
+   * @param predicado Predicado atual
+   * @return Predicado atualizado
+   */
+  private static Predicate aplicarFiltroStatus(
+      EmprestimoFilter filter, Root<Emprestimo> root, CriteriaBuilder cb, Predicate predicado) {
+
+    if (filter.getStatus() == null || filter.getStatus() == EmprestimoStatus.TODOS) {
+      return predicado;
+    }
+
+    Predicate statusPredicado = construirPredicadoStatus(filter.getStatus(), root, cb);
+    return cb.and(predicado, statusPredicado);
+  }
+
+  /**
    * Constrói predicado para filtro de status do empréstimo.
    *
-   * <p>Status disponíveis: - A (Atrasado): sem data de devolução e prazo vencido - P (em
-   * andamento/Pendente): sem data de devolução e prazo não vencido - F (Finalizado): com data de
-   * devolução
+   * <p>Status disponíveis: - ATRASADO: sem data de devolução e prazo vencido - EM_ANDAMENTO: sem
+   * data de devolução e prazo não vencido - FINALIZADO: com data de devolução
    *
-   * @param status Código do status (A/P/F)
+   * @param status Enum do status (ATRASADO/EM_ANDAMENTO/FINALIZADO)
    * @param root Root da query
    * @param cb CriteriaBuilder
    * @return Predicado para o status especificado
    */
   private static Predicate construirPredicadoStatus(
-      String status, Root<Emprestimo> root, CriteriaBuilder cb) {
+      EmprestimoStatus status, Root<Emprestimo> root, CriteriaBuilder cb) {
 
     LocalDate hoje = LocalDate.now();
 
     return switch (status) {
-      case "A" -> // Atrasado: sem devolução e prazo vencido
+      case ATRASADO -> // Atrasado: sem devolução e prazo vencido
           cb.and(cb.isNull(root.get(DATA_DEVOLUCAO)), cb.lessThan(root.get(PRAZO_DEVOLUCAO), hoje));
 
-      case "P" -> // em andamento: sem devolução e prazo não vencido
+      case EM_ANDAMENTO -> // Em andamento: sem devolução e prazo não vencido
           cb.and(
               cb.isNull(root.get(DATA_DEVOLUCAO)),
               cb.greaterThanOrEqualTo(root.get(PRAZO_DEVOLUCAO), hoje));
 
-      case "F" -> // Finalizado: tem data de devolução
+      case FINALIZADO -> // Finalizado: tem data de devolução
           cb.isNotNull(root.get(DATA_DEVOLUCAO));
 
-      default -> cb.conjunction(); // Status desconhecido retorna sempre verdadeiro
+      case TODOS -> cb.conjunction();
     };
   }
 }

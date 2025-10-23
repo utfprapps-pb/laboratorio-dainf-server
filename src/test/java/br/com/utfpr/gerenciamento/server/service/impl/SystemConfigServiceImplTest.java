@@ -5,11 +5,14 @@ import static org.junit.jupiter.api.Assertions.*;
 import br.com.utfpr.gerenciamento.server.model.SystemConfig;
 import br.com.utfpr.gerenciamento.server.repository.SystemConfigRepository;
 import java.util.Optional;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mockito;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.test.context.ActiveProfiles;
 
 @SpringBootTest
@@ -22,6 +25,11 @@ class SystemConfigServiceImplTest {
   void setup() {
     repository = Mockito.mock(SystemConfigRepository.class);
     service = new SystemConfigServiceImpl(repository);
+  }
+
+  @AfterEach
+  void clearSecurityContext() {
+    SecurityContextHolder.clearContext();
   }
 
   @Test
@@ -46,11 +54,24 @@ class SystemConfigServiceImplTest {
 
   @Test
   void saveConfigShouldCreateConfigIfNotExists() {
+    // Simula usuário autenticado
+    SecurityContextHolder.getContext()
+        .setAuthentication(new UsernamePasswordAuthenticationToken("testuser", "password"));
     SystemConfig newConfig = new SystemConfig();
     newConfig.setNadaConstaEmail("new@utfpr.edu.br");
     Mockito.when(repository.findFirstByIsActiveTrue()).thenReturn(Optional.empty());
     ArgumentCaptor<SystemConfig> configCaptor = ArgumentCaptor.forClass(SystemConfig.class);
-    Mockito.when(repository.save(Mockito.any())).thenAnswer(inv -> inv.getArgument(0));
+    Mockito.when(repository.save(Mockito.any()))
+        .thenAnswer(
+            inv -> {
+              SystemConfig config = inv.getArgument(0);
+              // Simula auditoria
+              config.setCreatedAt(java.time.LocalDateTime.now());
+              config.setUpdatedAt(config.getCreatedAt());
+              config.setCreatedBy("testuser");
+              config.setUpdatedBy("testuser");
+              return config;
+            });
 
     SystemConfig saved = service.saveConfig(newConfig);
     Mockito.verify(repository).save(configCaptor.capture());
@@ -58,8 +79,11 @@ class SystemConfigServiceImplTest {
     assertNull(captured.getId(), "Id should be null before persistence");
     assertTrue(captured.getIsActive(), "Config should be active");
     assertEquals("new@utfpr.edu.br", captured.getNadaConstaEmail());
-    assertEquals("new@utfpr.edu.br", saved.getNadaConstaEmail());
-    // The id may still be null in the returned object, as persistence is mocked
+    // Valida auditoria
+    assertNotNull(captured.getCreatedAt(), "createdAt should be set");
+    assertNotNull(captured.getUpdatedAt(), "updatedAt should be set");
+    assertEquals("testuser", captured.getCreatedBy(), "createdBy should match authenticated user");
+    assertEquals("testuser", captured.getUpdatedBy(), "updatedBy should match authenticated user");
   }
 
   @Test

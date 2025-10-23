@@ -46,7 +46,11 @@ public class JWTAuthenticationFilter extends UsernamePasswordAuthenticationFilte
       }
       // IMPORTANTE: Usa metodo COM @EntityGraph porque getAuthorities() precisa das permissoes
       Usuario user = usuarioService.findByUsernameForAuthentication(credentials.getUsername());
-
+      // Validação de solicitação de nada consta em aberto
+      if (usuarioService.hasSolicitacaoNadaConstaPendingOrCompleted(credentials.getUsername())) {
+        throw new PreconditionRequiredAuthenticationException(
+            "Foi realizado uma solicitação de nada consta para o usuário. Contate a administração.");
+      }
       return authenticationManager.authenticate(
           new UsernamePasswordAuthenticationToken(
               credentials.getUsername(), credentials.getPassword(), user.getAuthorities()));
@@ -64,6 +68,24 @@ public class JWTAuthenticationFilter extends UsernamePasswordAuthenticationFilte
             .withSubject(auth.getName())
             .withExpiresAt(Instant.now().plusMillis(SecurityConstants.EXPIRATION_TIME))
             .sign(HMAC512(tokenSecret));
+    res.setContentType("application/json");
+    res.addHeader(SecurityConstants.HEADER_STRING, SecurityConstants.TOKEN_PREFIX + token);
     res.getWriter().write(token);
+  }
+
+  @Override
+  protected void unsuccessfulAuthentication(
+      HttpServletRequest request, HttpServletResponse response, AuthenticationException failed)
+      throws IOException, ServletException {
+    String message = failed.getMessage();
+    ObjectMapper mapper = new ObjectMapper();
+    response.setContentType("application/json");
+    if (failed instanceof PreconditionRequiredAuthenticationException) {
+      response.setStatus(428); // PRECONDITION REQUIRED
+    } else {
+      response.setStatus(HttpServletResponse.SC_UNAUTHORIZED); // 401
+    }
+    var errorObject = java.util.Map.of("error", message);
+    mapper.writeValue(response.getWriter(), errorObject);
   }
 }

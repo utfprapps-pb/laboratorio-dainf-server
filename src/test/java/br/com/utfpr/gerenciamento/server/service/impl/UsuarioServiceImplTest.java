@@ -6,6 +6,7 @@ import static org.mockito.Mockito.*;
 
 import br.com.utfpr.gerenciamento.server.model.Permissao;
 import br.com.utfpr.gerenciamento.server.model.Usuario;
+import br.com.utfpr.gerenciamento.server.repository.NadaConstaRepository;
 import br.com.utfpr.gerenciamento.server.repository.RecoverPasswordRepository;
 import br.com.utfpr.gerenciamento.server.repository.UsuarioRepository;
 import br.com.utfpr.gerenciamento.server.service.EmailService;
@@ -38,6 +39,8 @@ class UsuarioServiceImplTest {
 
   @Mock private PermissaoService permissaoService;
 
+  @Mock private NadaConstaRepository nadaConstaRepository;
+
   @InjectMocks private UsuarioServiceImpl usuarioService;
 
   private Usuario usuario;
@@ -49,8 +52,8 @@ class UsuarioServiceImplTest {
     usuario = new Usuario();
     usuario.setId(1L);
     usuario.setNome("João Silva");
-    usuario.setEmail("joao@test.com");
-    usuario.setUsername("joao@test.com");
+    usuario.setEmail("usuario@utfpr.edu.br");
+    usuario.setUsername("usuario@utfpr.edu.br");
     usuario.setEmailVerificado(true);
 
     permissao1 = new Permissao();
@@ -298,7 +301,7 @@ class UsuarioServiceImplTest {
     // Then
     assertNotNull(response);
     assertEquals("O email do usuário foi confirmado.", response.getMessage());
-    verify(usuarioRepository).save(argThat(u -> u.getEmailVerificado() == true));
+    verify(usuarioRepository).save(argThat(Usuario::getEmailVerificado));
   }
 
   @Test
@@ -397,7 +400,6 @@ class UsuarioServiceImplTest {
 
   @Test
   void updatePassword_DeveAtualizarSenhaComSenhaAtualCorreta() {
-    // Given
     Usuario usuarioExistente = new Usuario();
     usuarioExistente.setId(1L);
     usuarioExistente.setPassword("$2a$10$senhaAntigaEncodada");
@@ -407,20 +409,17 @@ class UsuarioServiceImplTest {
     usuarioAtualizado.setId(1L);
     usuarioAtualizado.setPassword("novaSenha123");
 
-    when(usuarioRepository.getOne(1L)).thenReturn(usuarioExistente);
+    // Mock findOne para retornar usuarioExistente
+    UsuarioServiceImpl spyService = spy(usuarioService);
+    doReturn(usuarioExistente).when(spyService).findOne(1L);
     when(passwordEncoder.matches("senhaAtual", "$2a$10$senhaAntigaEncodada")).thenReturn(true);
     when(passwordEncoder.encode("novaSenha123")).thenReturn("$2a$10$novaSenhaEncodada");
     when(usuarioRepository.save(any(Usuario.class))).thenReturn(usuarioExistente);
 
-    // When
-    Usuario resultado = usuarioService.updatePassword(usuarioAtualizado, "senhaAtual");
-
-    // Then
+    Usuario resultado = spyService.updatePassword(usuarioAtualizado, "senhaAtual");
     assertNotNull(resultado);
-    verify(passwordEncoder).matches("senhaAtual", "$2a$10$senhaAntigaEncodada");
-    verify(passwordEncoder).encode("novaSenha123");
-    verify(usuarioRepository)
-        .save(argThat(u -> u.getPassword().equals("$2a$10$novaSenhaEncodada")));
+    assertEquals("$2a$10$novaSenhaEncodada", resultado.getPassword());
+    assertTrue(resultado.getEmailVerificado());
   }
 
   @Test
@@ -434,7 +433,7 @@ class UsuarioServiceImplTest {
     usuarioAtualizado.setId(1L);
     usuarioAtualizado.setPassword("novaSenha123");
 
-    when(usuarioRepository.getOne(1L)).thenReturn(usuarioExistente);
+    when(usuarioRepository.findById(1L)).thenReturn(java.util.Optional.of(usuarioExistente));
     when(passwordEncoder.matches("senhaErrada", "$2a$10$senhaAntigaEncodada")).thenReturn(false);
 
     // When/Then
@@ -444,5 +443,110 @@ class UsuarioServiceImplTest {
 
     verify(passwordEncoder, never()).encode(anyString());
     verify(usuarioRepository, never()).save(any(Usuario.class));
+  }
+
+  @Test
+  void testFindByUsername() {
+    when(usuarioRepository.findByUsernameOrEmail(anyString(), anyString())).thenReturn(usuario);
+    Usuario result = usuarioService.findByUsername("usuario@utfpr.edu.br");
+    assertNotNull(result);
+    assertEquals("usuario@utfpr.edu.br", result.getUsername());
+  }
+
+  @Test
+  void testFindByUsernameForAuthentication() {
+    Usuario usuarioMock = new Usuario();
+    usuarioMock.setId(1L);
+    usuarioMock.setUsername("user@utfpr.edu.br");
+    usuarioMock.setPermissoes(new HashSet<>());
+    when(usuarioRepository.findWithPermissoesByUsernameOrEmail(anyString(), anyString()))
+        .thenReturn(usuarioMock);
+    Usuario result = usuarioService.findByUsernameForAuthentication("user@utfpr.edu.br");
+    assertNotNull(result);
+    assertEquals("user@utfpr.edu.br", result.getUsername());
+  }
+
+  @Test
+  void testSaveUsuarioWithPermissoes() {
+    usuario.setPermissoes(Set.of(permissao1, permissao2));
+    when(permissaoService.findAllById(anySet())).thenReturn(List.of(permissao1, permissao2));
+    when(usuarioRepository.save(any(Usuario.class))).thenReturn(usuario);
+    Usuario result = usuarioService.save(usuario);
+    assertNotNull(result);
+    assertEquals(2, result.getPermissoes().size());
+  }
+
+  @Test
+  void testSaveUsuarioWithoutPermissoes() {
+    usuario.setPermissoes(null);
+    when(usuarioRepository.save(any(Usuario.class))).thenReturn(usuario);
+    Usuario result = usuarioService.save(usuario);
+    assertNotNull(result);
+    assertEquals(0, result.getPermissoes().size());
+  }
+
+  @Test
+  void testSaveNewUserAluno() {
+    usuario.setEmail("aluno@dominio.com");
+    usuario.setPassword("senha");
+    when(permissaoService.findByNome(anyString())).thenReturn(permissao1);
+    when(usuarioRepository.save(any(Usuario.class))).thenReturn(usuario);
+    Usuario result = usuarioService.saveNewUser(usuario);
+    assertNotNull(result);
+    assertFalse(result.getEmailVerificado());
+    assertEquals(1, result.getPermissoes().size());
+  }
+
+  @Test
+  void testUpdateUsuario() {
+    // Configura contexto de autenticação
+    org.springframework.security.core.context.SecurityContextHolder.getContext()
+        .setAuthentication(
+            new org.springframework.security.authentication.UsernamePasswordAuthenticationToken(
+                "usuario@utfpr.edu.br", null));
+    when(usuarioRepository.findByUsername(anyString())).thenReturn(usuario);
+    when(usuarioRepository.save(any(Usuario.class))).thenReturn(usuario);
+    usuario.setTelefone("123456789");
+    Usuario result = usuarioService.updateUsuario(usuario);
+    assertNotNull(result);
+    assertEquals("123456789", result.getTelefone());
+  }
+
+  @Test
+  void testUpdatePasswordSuccess() {
+    Usuario usuarioExistente = new Usuario();
+    usuarioExistente.setId(1L);
+    usuarioExistente.setPassword("encodedSenhaAtual");
+    usuarioExistente.setEmailVerificado(true);
+    usuarioExistente.setUsername("usuario@utfpr.edu.br");
+    usuarioExistente.setEmail("usuario@utfpr.edu.br");
+
+    Usuario usuarioAtualizado = new Usuario();
+    usuarioAtualizado.setId(1L);
+    usuarioAtualizado.setPassword("novaSenha");
+
+    // Spy para mockar findOne
+    UsuarioServiceImpl spyService = spy(usuarioService);
+    doReturn(usuarioExistente).when(spyService).findOne(1L);
+    when(passwordEncoder.matches("senhaAtual", "encodedSenhaAtual")).thenReturn(true);
+    when(passwordEncoder.encode("novaSenha")).thenReturn("encodedNovaSenha");
+    when(usuarioRepository.save(any(Usuario.class)))
+        .thenAnswer(invocation -> invocation.getArgument(0));
+
+    Usuario result = spyService.updatePassword(usuarioAtualizado, "senhaAtual");
+    assertNotNull(result);
+    assertEquals("encodedNovaSenha", result.getPassword());
+    assertTrue(result.getEmailVerificado());
+  }
+
+  @Test
+  void testUpdatePasswordFail() {
+    usuario.setPassword("encodedSenha");
+    when(usuarioRepository.findById(anyLong())).thenReturn(java.util.Optional.of(usuario));
+    when(passwordEncoder.matches(anyString(), anyString())).thenReturn(false);
+    Usuario novo = new Usuario();
+    novo.setId(1L);
+    novo.setPassword("novaSenha");
+    assertThrows(RuntimeException.class, () -> usuarioService.updatePassword(novo, "senhaErrada"));
   }
 }

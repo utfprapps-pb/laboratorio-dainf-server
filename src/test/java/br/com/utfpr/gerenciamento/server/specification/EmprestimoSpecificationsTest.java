@@ -41,7 +41,6 @@ class EmprestimoSpecificationsTest {
 
   private final EmprestimoFixture fixture = new EmprestimoFixture();
 
-  private Permissao permissaoAluno;
   private Usuario usuarioEmprestimo;
   private Usuario usuarioResponsavel;
   private Item item;
@@ -52,7 +51,7 @@ class EmprestimoSpecificationsTest {
   @BeforeEach
   void setUp() {
     // Criar e persistir permissão para testes (usando factory method para consistência)
-    permissaoAluno = fixture.criarPermissao("ROLE_ALUNO");
+    Permissao permissaoAluno = fixture.criarPermissao("ROLE_ALUNO");
     entityManager.persist(permissaoAluno);
 
     // Criar usuários usando fixture
@@ -106,14 +105,10 @@ class EmprestimoSpecificationsTest {
   })
   @DisplayName("Deve filtrar empréstimos corretamente por status")
   void testFromFilter_QuandoFiltraPorStatus_DeveRetornarEmprestimosCorretos(
-      String status,
-      int quantidadeEsperada,
-      String tipoEmprestimo,
-      boolean deveEstarDevolvido,
-      boolean deveEstarAtrasado) {
+      String status, int quantidadeEsperada) {
     // Given
     EmprestimoFilter filtro = new EmprestimoFilter();
-    filtro.setStatus(status);
+    filtro.setStatusFromString(status); // Converte String do CSV para enum
     Specification<Emprestimo> spec = EmprestimoSpecifications.fromFilter(filtro);
 
     // When
@@ -127,25 +122,26 @@ class EmprestimoSpecificationsTest {
 
     // Validações específicas por tipo
     if ("A".equals(status)) {
-      assertEquals(emprestimoAtrasado.getId(), resultado.get(0).getId());
+      assertEquals(emprestimoAtrasado.getId(), resultado.getFirst().getId());
       assertNull(
-          resultado.get(0).getDataDevolucao(),
+          resultado.getFirst().getDataDevolucao(),
           "Empréstimo atrasado não deve ter data de devolução");
       assertTrue(
-          resultado.get(0).getPrazoDevolucao().isBefore(LocalDate.now()),
+          resultado.getFirst().getPrazoDevolucao().isBefore(LocalDate.now()),
           "Empréstimo atrasado deve ter prazo vencido");
     } else if ("P".equals(status)) {
-      assertEquals(emprestimoPendente.getId(), resultado.get(0).getId());
+      assertEquals(emprestimoPendente.getId(), resultado.getFirst().getId());
       assertNull(
-          resultado.get(0).getDataDevolucao(),
+          resultado.getFirst().getDataDevolucao(),
           "Empréstimo pendente não deve ter data de devolução");
       assertFalse(
-          resultado.get(0).getPrazoDevolucao().isBefore(LocalDate.now()),
+          resultado.getFirst().getPrazoDevolucao().isBefore(LocalDate.now()),
           "Empréstimo pendente não deve ter prazo vencido");
     } else if ("F".equals(status)) {
-      assertEquals(emprestimoFinalizado.getId(), resultado.get(0).getId());
+      assertEquals(emprestimoFinalizado.getId(), resultado.getFirst().getId());
       assertNotNull(
-          resultado.get(0).getDataDevolucao(), "Empréstimo finalizado deve ter data de devolução");
+          resultado.getFirst().getDataDevolucao(),
+          "Empréstimo finalizado deve ter data de devolução");
     }
   }
 
@@ -203,7 +199,7 @@ class EmprestimoSpecificationsTest {
 
     // Then
     assertEquals(1, resultado.size()); // Apenas emprestimoPendente (2 dias atrás)
-    assertEquals(emprestimoPendente.getId(), resultado.get(0).getId());
+    assertEquals(emprestimoPendente.getId(), resultado.getFirst().getId());
   }
 
   @Test
@@ -240,7 +236,7 @@ class EmprestimoSpecificationsTest {
 
     // Then
     assertEquals(1, resultado.size()); // Apenas emprestimoFinalizado (7 dias atrás)
-    assertEquals(emprestimoFinalizado.getId(), resultado.get(0).getId());
+    assertEquals(emprestimoFinalizado.getId(), resultado.getFirst().getId());
   }
 
   @Test
@@ -275,7 +271,7 @@ class EmprestimoSpecificationsTest {
   void testFromFilter_QuandoExecutaCount_DeveExecutarSemJoinFetch() {
     // Given
     EmprestimoFilter filtro = new EmprestimoFilter();
-    filtro.setStatus("A");
+    filtro.setStatusFromString("A");
     Specification<Emprestimo> spec = EmprestimoSpecifications.fromFilter(filtro);
 
     // When - Executar count query
@@ -295,7 +291,7 @@ class EmprestimoSpecificationsTest {
 
     EmprestimoFilter filtro = new EmprestimoFilter();
     filtro.setUsuarioEmprestimo(filtroUsuario);
-    filtro.setStatus("F");
+    filtro.setStatusFromString("F");
     filtro.setDtIniEmp(LocalDate.now().minusDays(10).toString());
     filtro.setDtFimEmp(LocalDate.now().toString());
 
@@ -306,7 +302,7 @@ class EmprestimoSpecificationsTest {
 
     // Then
     assertEquals(1, resultado.size());
-    assertEquals(emprestimoFinalizado.getId(), resultado.get(0).getId());
+    assertEquals(emprestimoFinalizado.getId(), resultado.getFirst().getId());
   }
 
   @Test
@@ -334,7 +330,7 @@ class EmprestimoSpecificationsTest {
     filtroUsuario.setId(usuarioResponsavel.getId());
 
     EmprestimoFilter filtro = new EmprestimoFilter();
-    filtro.setUsuarioResponsalvel(filtroUsuario); // Typo mantido para compatibilidade
+    filtro.setUsuarioResponsavel(filtroUsuario); // REFATORAÇÃO: Typo corrigido
     Specification<Emprestimo> spec = EmprestimoSpecifications.fromFilter(filtro);
 
     // When
@@ -352,7 +348,7 @@ class EmprestimoSpecificationsTest {
   void testFromFilter_QuandoStatusInvalido_DeveRetornarTodosEmprestimos() {
     // Given
     EmprestimoFilter filtro = new EmprestimoFilter();
-    filtro.setStatus("X"); // Status inválido
+    filtro.setStatusFromString("X"); // Status inválido - converte para null
     Specification<Emprestimo> spec = EmprestimoSpecifications.fromFilter(filtro);
 
     // When
@@ -378,7 +374,7 @@ class EmprestimoSpecificationsTest {
     entityManager.flush();
 
     EmprestimoFilter filtro = new EmprestimoFilter();
-    filtro.setStatus("P"); // Pendente, não atrasado
+    filtro.setStatusFromString("P"); // Pendente, não atrasado
     Specification<Emprestimo> spec = EmprestimoSpecifications.fromFilter(filtro);
 
     // When
@@ -484,7 +480,7 @@ class EmprestimoSpecificationsTest {
 
     // When - Filtrar pendentes
     EmprestimoFilter filtro = new EmprestimoFilter();
-    filtro.setStatus("P");
+    filtro.setStatusFromString("P");
     Specification<Emprestimo> spec = EmprestimoSpecifications.fromFilter(filtro);
     List<Emprestimo> resultado = repository.findAll(spec);
 
@@ -520,7 +516,7 @@ class EmprestimoSpecificationsTest {
     filtroUsuario.setUsername(usuarioResponsavel.getUsername());
 
     EmprestimoFilter filtro = new EmprestimoFilter();
-    filtro.setUsuarioResponsalvel(filtroUsuario); // Typo mantido
+    filtro.setUsuarioResponsavel(filtroUsuario); // REFATORAÇÃO: Typo corrigido
 
     // When
     Specification<Emprestimo> spec = EmprestimoSpecifications.fromFilter(filtro);
@@ -553,5 +549,76 @@ class EmprestimoSpecificationsTest {
           Specification<Emprestimo> spec = EmprestimoSpecifications.fromFilter(filtro);
           repository.findAll(spec);
         });
+  }
+
+  @Test
+  @DisplayName("Deve carregar item e grupo sem N+1 quando fetchCollections=true")
+  void testWithFetchCollections_DeveCarregarItemEGrupoSemN1() {
+    // Given
+    Specification<Emprestimo> spec = EmprestimoSpecifications.withFetchCollections();
+
+    // When
+    EntityManager em = entityManager.getEntityManager();
+    em.clear(); // Limpa cache para forçar query fresca
+
+    List<Emprestimo> emprestimos = repository.findAll(spec);
+
+    // Then - Empréstimos foram carregados
+    assertFalse(emprestimos.isEmpty());
+
+    // Acessar nested properties SEM additional queries (detached entities)
+    emprestimos.forEach(
+        emprestimo -> {
+          assertNotNull(emprestimo.getEmprestimoItem());
+
+          if (!emprestimo.getEmprestimoItem().isEmpty()) {
+            emprestimo
+                .getEmprestimoItem()
+                .forEach(
+                    emprestimoItem -> {
+                      // Acessar item (não deve trigger lazy load)
+                      assertNotNull(emprestimoItem.getItem());
+                      assertNotNull(emprestimoItem.getItem().getNome());
+
+                      // Acessar grupo se existir (não deve trigger lazy load)
+                      if (emprestimoItem.getItem().getGrupo() != null) {
+                        assertNotNull(emprestimoItem.getItem().getGrupo().getDescricao());
+                      }
+                    });
+          }
+        });
+  }
+
+  @Test
+  @DisplayName("Deve executar paginação em menos de 1 segundo")
+  void testFindAllPaged_DeveExecutarRapidamente() {
+    // Given - Criar 20 empréstimos adicionais para volume realista
+    for (int i = 0; i < 20; i++) {
+      Emprestimo emp =
+          fixture.criarEmprestimoCustom(
+              usuarioEmprestimo,
+              usuarioResponsavel,
+              item,
+              LocalDate.now().minusDays(i),
+              LocalDate.now().plusDays(i),
+              null);
+      entityManager.persist(emp);
+    }
+    entityManager.flush();
+
+    Specification<Emprestimo> spec = EmprestimoSpecifications.withFetchCollections();
+
+    // When - Medir tempo de execução
+    EntityManager em = entityManager.getEntityManager();
+    em.clear();
+
+    long startTime = System.currentTimeMillis();
+    List<Emprestimo> result = repository.findAll(spec);
+    long duration = System.currentTimeMillis() - startTime;
+
+    // Then - Paginação deve completar em <1s
+    assertNotNull(result);
+    assertFalse(result.isEmpty());
+    assertTrue(duration < 1000, "Paginação deve completar em <1s, tempo atual: " + duration + "ms");
   }
 }

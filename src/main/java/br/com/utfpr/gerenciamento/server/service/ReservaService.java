@@ -6,7 +6,7 @@ import java.util.List;
 
 public interface ReservaService extends CrudService<Reserva, Long> {
 
-  List<ReservaResponseDto> findAllByUsername(String username);
+  List<ReservaResponseDto> findAllByAuthenticatedUser();
 
   List<ReservaResponseDto> findAllByIdItem(Long idItem);
 

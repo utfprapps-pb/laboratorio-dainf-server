@@ -8,10 +8,10 @@ import br.com.utfpr.gerenciamento.server.service.EmailService;
 import br.com.utfpr.gerenciamento.server.service.ReservaService;
 import br.com.utfpr.gerenciamento.server.service.UsuarioService;
 import br.com.utfpr.gerenciamento.server.util.DateUtil;
+import br.com.utfpr.gerenciamento.server.util.SecurityUtils;
 import java.util.List;
 import org.modelmapper.ModelMapper;
 import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -43,18 +43,18 @@ public class ReservaServiceImpl extends CrudServiceImpl<Reserva, Long> implement
   @Override
   @Transactional
   public Reserva save(Reserva reserva) {
-    reserva.setUsuario(
-        usuarioService.findByUsername(
-            (String) SecurityContextHolder.getContext().getAuthentication().getPrincipal()));
+    // Extrai username de forma segura do Authentication (evita ClassCastException)
+    String username = SecurityUtils.getAuthenticatedUsername();
+    reserva.setUsuario(usuarioService.findByUsername(username));
     return super.save(reserva);
   }
 
   @Override
   @Transactional(readOnly = true)
-  public List<ReservaResponseDto> findAllByUsername(String username) {
-    var usuario =
-        usuarioService.findByUsername(
-            (String) SecurityContextHolder.getContext().getAuthentication().getPrincipal());
+  public List<ReservaResponseDto> findAllByAuthenticatedUser() {
+    // Extrai username de forma segura do Authentication (evita ClassCastException)
+    String username = SecurityUtils.getAuthenticatedUsername();
+    var usuario = usuarioService.findByUsername(username);
     return reservaRepository.findAllByUsuario(usuario).stream().map(this::convertToDto).toList();
   }
 

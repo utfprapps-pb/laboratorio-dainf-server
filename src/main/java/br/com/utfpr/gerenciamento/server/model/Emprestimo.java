@@ -14,6 +14,9 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import org.hibernate.annotations.BatchSize;
+import org.hibernate.annotations.Fetch;
+import org.hibernate.annotations.FetchMode;
 import org.hibernate.proxy.HibernateProxy;
 
 @Getter
@@ -44,11 +47,11 @@ public class Emprestimo {
   @Column(name = "data_devolucao")
   private LocalDate dataDevolucao;
 
-  @ManyToOne
+  @ManyToOne(fetch = FetchType.LAZY)
   @JoinColumn(name = "usuario_responsavel_id", referencedColumnName = "id")
   private Usuario usuarioResponsavel;
 
-  @ManyToOne
+  @ManyToOne(fetch = FetchType.LAZY)
   @JoinColumn(name = "usuario_emprestimo_id", referencedColumnName = "id")
   private Usuario usuarioEmprestimo;
 
@@ -57,16 +60,22 @@ public class Emprestimo {
 
   @NotNull(message = "Deve ser escolhido ao menos 1 produto.") @OneToMany(
       mappedBy = "emprestimo",
+      fetch = FetchType.LAZY,
       cascade = {CascadeType.ALL},
       orphanRemoval = true)
   @JsonManagedReference
+  @BatchSize(size = 10)
+  @Fetch(FetchMode.SUBSELECT)
   private List<EmprestimoItem> emprestimoItem;
 
   @OneToMany(
       mappedBy = "emprestimo",
+      fetch = FetchType.LAZY,
       cascade = {CascadeType.ALL},
       orphanRemoval = true)
   @JsonManagedReference
+  @BatchSize(size = 10)
+  @Fetch(FetchMode.SUBSELECT)
   private List<EmprestimoDevolucaoItem> emprestimoDevolucaoItem;
 
   @Override
