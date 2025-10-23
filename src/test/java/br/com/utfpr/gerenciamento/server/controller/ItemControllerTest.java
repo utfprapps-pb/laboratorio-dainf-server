@@ -114,7 +114,7 @@ class ItemControllerTest {
         assertEquals(1, result.getTotalElements());
         assertEquals(new BigDecimal("20"), result.getContent().get(0).getDisponivelEmprestimoCalculado());
     }
-    
+
 
     @Test
     void testPostSave_SemImagensNaoCopia() {

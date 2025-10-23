@@ -49,14 +49,14 @@ public class ItemController extends CrudController<Item, Long> {
   public Item findone(@PathVariable("id") Long id) {
     Item item = itemService.findOne(id);
     if (item.getTipoItem().name().equals("P")) {
-      BigDecimal disponivel = itemService.disponivelParaEmprestimo(item.getId());
+      BigDecimal disponivel = item.getDisponivelEmprestimoCalculado();
       BigDecimal saldo = item.getSaldo();
 
       // Evita NullPointerException
       if (saldo == null) saldo = BigDecimal.ZERO;
       if (disponivel == null) disponivel = BigDecimal.ZERO;
       item.setDisponivelEmprestimoCalculado(saldo.subtract(disponivel));
-    }else{
+    }if(item.getTipoItem().name().equals("C")){
       item.setDisponivelEmprestimoCalculado(item.getSaldo());
     }
     return item;
@@ -68,7 +68,7 @@ public class ItemController extends CrudController<Item, Long> {
     return getService().findAll(Sort.by("id")).stream()
             .peek(item -> {
               if (item.getTipoItem() != null && "P".equals(item.getTipoItem().name())) {
-                BigDecimal disponivel = itemService.disponivelParaEmprestimo(item.getId());
+                BigDecimal disponivel =  item.getDisponivelEmprestimoCalculado();
                 BigDecimal saldo = item.getSaldo();
 
                 if (saldo == null) saldo = BigDecimal.ZERO;
@@ -108,7 +108,7 @@ public class ItemController extends CrudController<Item, Long> {
     // Aplica o cálculo nos itens do resultado
     pageResult.forEach(item -> {
       if (item.getTipoItem() != null && "P".equals(item.getTipoItem().name())) {
-        BigDecimal disponivel = itemService.disponivelParaEmprestimo(item.getId());
+        BigDecimal disponivel =  item.getDisponivelEmprestimoCalculado();
         BigDecimal saldo = item.getSaldo();
 
         if (saldo == null) saldo = BigDecimal.ZERO;

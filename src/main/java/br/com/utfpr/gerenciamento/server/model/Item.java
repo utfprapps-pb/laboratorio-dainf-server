@@ -12,6 +12,7 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import org.hibernate.annotations.Formula;
 import org.hibernate.proxy.HibernateProxy;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -67,7 +68,10 @@ public class Item {
   @JsonManagedReference
   private List<ItemImage> imageItem;
 
-  @Transient
+  @Formula("(SELECT COALESCE(SUM(e.qtde), 0) " +
+          "FROM emprestimo_item e " +
+          "JOIN emprestimo em ON e.emprestimo_id = em.id " +
+          "WHERE e.item_id = id AND em.data_devolucao IS NULL)")
   private BigDecimal disponivelEmprestimoCalculado;
 
   @Override
