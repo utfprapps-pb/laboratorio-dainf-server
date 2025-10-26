@@ -1,6 +1,7 @@
 package br.com.utfpr.gerenciamento.server.controller;
 
 import br.com.utfpr.gerenciamento.server.dto.ItemResponseDto;
+import br.com.utfpr.gerenciamento.server.enumeration.TipoItem;
 import br.com.utfpr.gerenciamento.server.model.Item;
 import br.com.utfpr.gerenciamento.server.model.ItemImage;
 import br.com.utfpr.gerenciamento.server.service.CrudService;
@@ -45,15 +46,15 @@ public class ItemController extends CrudController<Item, Long> {
   @GetMapping("{id}")
   public Item findone(@PathVariable("id") Long id) {
     Item item = itemService.findOne(id);
-    if (item.getTipoItem().name().equals("P")) {
-      BigDecimal disponivel = item.getDisponivelEmprestimoCalculado();
+    if (item.getTipoItem() == TipoItem.P) {
+      BigDecimal disponivel = item.getDisponivelEmprestimo();
       BigDecimal saldo = item.getSaldo();
 
-      // Evita NullPointerException
       if (saldo == null) saldo = BigDecimal.ZERO;
       if (disponivel == null) disponivel = BigDecimal.ZERO;
+
       item.setDisponivelEmprestimoCalculado(saldo.subtract(disponivel));
-    }if(item.getTipoItem().name().equals("C")){
+    } else if (item.getTipoItem() == TipoItem.C) {
       item.setDisponivelEmprestimoCalculado(item.getSaldo());
     }
     return item;
@@ -65,15 +66,15 @@ public class ItemController extends CrudController<Item, Long> {
     return getService().findAll(Sort.by("id")).stream()
         .peek(
             item -> {
-              if (item.getTipoItem() != null && "P".equals(item.getTipoItem().name())) {
-                BigDecimal disponivel =  item.getDisponivelEmprestimoCalculado();
+              if (item.getTipoItem() == TipoItem.P) {
+                BigDecimal disponivel = item.getDisponivelEmprestimo();
                 BigDecimal saldo = item.getSaldo();
 
                 if (saldo == null) saldo = BigDecimal.ZERO;
                 if (disponivel == null) disponivel = BigDecimal.ZERO;
 
                 item.setDisponivelEmprestimoCalculado(saldo.subtract(disponivel));
-              } else {
+              } else if (item.getTipoItem() == TipoItem.C) {
                 item.setDisponivelEmprestimoCalculado(item.getSaldo());
               }
             })
@@ -105,15 +106,15 @@ public class ItemController extends CrudController<Item, Long> {
 
     // Aplica o cálculo nos itens do resultado
     pageResult.forEach(item -> {
-      if (item.getTipoItem() != null && "P".equals(item.getTipoItem().name())) {
-        BigDecimal disponivel =  item.getDisponivelEmprestimoCalculado();
+      if (item.getTipoItem() == TipoItem.P) {
+        BigDecimal disponivel = item.getDisponivelEmprestimo();
         BigDecimal saldo = item.getSaldo();
 
         if (saldo == null) saldo = BigDecimal.ZERO;
         if (disponivel == null) disponivel = BigDecimal.ZERO;
 
         item.setDisponivelEmprestimoCalculado(saldo.subtract(disponivel));
-      }else{
+      } else if (item.getTipoItem() == TipoItem.C) {
         item.setDisponivelEmprestimoCalculado(item.getSaldo());
       }
     });

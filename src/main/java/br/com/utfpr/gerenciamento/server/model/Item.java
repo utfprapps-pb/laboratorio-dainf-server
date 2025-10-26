@@ -67,12 +67,14 @@ public class Item {
   @JsonManagedReference
   private List<ItemImage> imageItem;
 
+
+  private BigDecimal disponivelEmprestimoCalculado;
+
   @Formula("(SELECT COALESCE(SUM(e.qtde), 0) " +
           "FROM emprestimo_item e " +
           "JOIN emprestimo em ON e.emprestimo_id = em.id " +
           "WHERE e.item_id = id AND em.data_devolucao IS NULL)")
-  private BigDecimal disponivelEmprestimoCalculado;
-
+  private BigDecimal disponivelEmprestimo;
   @Override
   @SuppressWarnings(
       "java:S2097") // False positive - type check via HibernateProxy pattern (SONARJAVA-5765)

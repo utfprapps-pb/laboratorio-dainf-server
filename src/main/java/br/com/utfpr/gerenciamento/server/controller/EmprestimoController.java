@@ -4,6 +4,7 @@ import static br.com.utfpr.gerenciamento.server.enumeration.UserRole.ROLE_ADMINI
 import static br.com.utfpr.gerenciamento.server.enumeration.UserRole.ROLE_LABORATORISTA_NAME;
 
 import br.com.utfpr.gerenciamento.server.dto.EmprestimoResponseDto;
+import br.com.utfpr.gerenciamento.server.enumeration.TipoItem;
 import br.com.utfpr.gerenciamento.server.model.Emprestimo;
 import br.com.utfpr.gerenciamento.server.model.filter.EmprestimoFilter;
 import br.com.utfpr.gerenciamento.server.service.CrudService;
@@ -60,7 +61,7 @@ public class EmprestimoController extends CrudController<Emprestimo, Long> {
     object.getEmprestimoItem().stream()
         .forEach(
             saidaItem -> {
-              if (saidaItem.getItem().getTipoItem().name().equals("C")) {
+              if (saidaItem.getItem().getTipoItem() == TipoItem.C) {
                 itemService.diminuiSaldoItem(
                     saidaItem.getItem().getId(), saidaItem.getQtde(), true);
               }
