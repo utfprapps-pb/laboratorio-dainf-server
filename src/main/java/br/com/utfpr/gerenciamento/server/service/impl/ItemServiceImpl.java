@@ -2,29 +2,27 @@ package br.com.utfpr.gerenciamento.server.service.impl;
 
 import br.com.utfpr.gerenciamento.server.dto.ItemResponseDto;
 import br.com.utfpr.gerenciamento.server.enumeration.TipoItem;
+import br.com.utfpr.gerenciamento.server.event.item.EstoqueMinNotificacaoEvent;
 import br.com.utfpr.gerenciamento.server.exception.EntityNotFoundException;
 import br.com.utfpr.gerenciamento.server.exception.SaldoInsuficienteException;
 import br.com.utfpr.gerenciamento.server.minio.config.MinioConfig;
 import br.com.utfpr.gerenciamento.server.minio.payload.FileResponse;
 import br.com.utfpr.gerenciamento.server.minio.service.MinioService;
 import br.com.utfpr.gerenciamento.server.minio.util.FileTypeUtils;
-import br.com.utfpr.gerenciamento.server.model.Email;
 import br.com.utfpr.gerenciamento.server.model.Item;
 import br.com.utfpr.gerenciamento.server.model.ItemImage;
 import br.com.utfpr.gerenciamento.server.repository.ItemImageRepository;
 import br.com.utfpr.gerenciamento.server.repository.ItemRepository;
 import br.com.utfpr.gerenciamento.server.repository.projection.ItemWithQtdeEmprestada;
-import br.com.utfpr.gerenciamento.server.service.EmailService;
 import br.com.utfpr.gerenciamento.server.service.ItemService;
-import br.com.utfpr.gerenciamento.server.service.RelatorioService;
 import br.com.utfpr.gerenciamento.server.util.FileUtil;
 import jakarta.servlet.http.HttpServletRequest;
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
 import lombok.extern.slf4j.Slf4j;
-import net.sf.jasperreports.engine.JasperExportManager;
 import org.modelmapper.ModelMapper;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Service;
@@ -37,11 +35,10 @@ import org.springframework.web.multipart.MultipartHttpServletRequest;
 public class ItemServiceImpl extends CrudServiceImpl<Item, Long> implements ItemService {
   public static final String ITEM_NAO_ENCONTRADO_COM_ID = "Item não encontrado com ID: ";
   private final ItemRepository itemRepository;
-  private final EmailService emailService;
-  private final RelatorioService relatorioService;
   private final MinioService minioService;
   private final MinioConfig minioConfig;
   private final ItemImageRepository itemImageRepository;
+  private final ApplicationEventPublisher eventPublisher;
 
   private final ModelMapper modelMapper;
 
@@ -49,19 +46,17 @@ public class ItemServiceImpl extends CrudServiceImpl<Item, Long> implements Item
 
   public ItemServiceImpl(
       ItemRepository itemRepository,
-      EmailService emailService,
-      RelatorioService relatorioService,
       MinioService minioService,
       MinioConfig minioConfig,
       ItemImageRepository itemImageRepository,
+      ApplicationEventPublisher eventPublisher,
       ModelMapper modelMapper,
       @Lazy ItemService self) {
     this.itemRepository = itemRepository;
-    this.emailService = emailService;
-    this.relatorioService = relatorioService;
     this.minioService = minioService;
     this.minioConfig = minioConfig;
     this.itemImageRepository = itemImageRepository;
+    this.eventPublisher = eventPublisher;
     this.modelMapper = modelMapper;
     this.self = self;
   }
@@ -191,24 +186,35 @@ public class ItemServiceImpl extends CrudServiceImpl<Item, Long> implements Item
     self.save(i);
   }
 
+  /**
+   * Publica evento de notificação de estoque mínimo se houver itens abaixo do limite.
+   *
+   * <p>Este método verifica se existem itens que atingiram o estoque mínimo e, caso positivo,
+   * publica um evento que será processado de forma assíncrona pelo {@code EmailEventListener} APÓS
+   * o commit da transação.
+   *
+   * <p><b>Padrão Event-Driven:</b>
+   *
+   * <ul>
+   *   <li>✅ Desacoplamento: Service não conhece lógica de email
+   *   <li>✅ Transacional: Email enviado apenas após commit com sucesso
+   *   <li>✅ Assíncrono: Não bloqueia thread principal (@Async no listener)
+   *   <li>✅ Resiliente: Retry automático com exponential backoff (2s, 4s, 8s)
+   *   <li>✅ Seguro: Falhas de email não afetam negócio
+   * </ul>
+   *
+   * @see EstoqueMinNotificacaoEvent
+   * @see br.com.utfpr.gerenciamento.server.event.email.EmailEventListener
+   */
   @Override
+  @Transactional
   public void sendNotificationItensAtingiramQtdeMin() {
+    // Verifica se existem itens abaixo do estoque mínimo
     if (itemRepository.countAllByQtdeMinimaIsLessThanSaldo() > 0) {
-      try {
-        byte[] report =
-            JasperExportManager.exportReportToPdf(relatorioService.generateReport(6L, null));
-        Email email =
-            Email.builder()
-                .para("dainf.labs@gmail.com")
-                .de("dainf.labs@gmail.com")
-                .titulo("Notificação: Itens que atingiram o estoque mínimo")
-                .conteudo(emailService.buildTemplateEmail(null, "templateNotificacaoEstoqueMinimo"))
-                .build();
-        email.addFile("itensAtingiramEstoqueMin.pdf", report);
-        emailService.enviar(email);
-      } catch (Exception ex) {
-        log.error("Erro ao enviar notificação de estoque mínimo", ex);
-      }
+      log.info("Publicando evento de notificação de estoque mínimo");
+      eventPublisher.publishEvent(new EstoqueMinNotificacaoEvent(this));
+    } else {
+      log.debug("Nenhum item abaixo do estoque mínimo - notificação não enviada");
     }
   }
 
@@ -237,6 +243,7 @@ public class ItemServiceImpl extends CrudServiceImpl<Item, Long> implements Item
   }
 
   @Override
+  @Transactional(readOnly = true)
   public Item findOneWithDisponibilidade(Long id) {
     // Busca item com quantidade emprestada via agregação SQL (Spring Data JPA projection)
     ItemWithQtdeEmprestada projection =
