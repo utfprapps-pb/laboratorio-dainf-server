@@ -17,6 +17,7 @@ import java.util.Map;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import net.sf.jasperreports.engine.JasperExportManager;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.mail.MailException;
 import org.springframework.retry.annotation.Backoff;
 import org.springframework.retry.annotation.Retryable;
@@ -68,6 +69,22 @@ public class EmailEventListener {
 
   /** Timeout em segundos para transação de processamento de email. */
   private static final int EMAIL_TRANSACTION_TIMEOUT_SECONDS = 30;
+
+  /**
+   * Endereço de email remetente (conta SMTP autenticada).
+   *
+   * <p>Usa spring.mail.username para garantir conformidade SPF/DMARC com Gmail/SMTP autenticado.
+   */
+  @Value("${spring.mail.username}")
+  private String emailFrom;
+
+  /**
+   * Endereço(s) de email para notificações administrativas.
+   *
+   * <p>Configurável via UTFPR_EMAIL_ADMIN, com fallback para dainf.labs@gmail.com.
+   */
+  @Value("${app.email.admin:dainf.labs@gmail.com}")
+  private String adminEmail;
 
   private final EmailService emailService;
   private final EmprestimoRepository emprestimoRepository;
@@ -170,7 +187,7 @@ public class EmailEventListener {
     try {
       log.info(
           "Processando evento de notificação de estoque mínimo para {}",
-          EmailUtils.maskEmail(event.getRecipient()));
+          EmailUtils.maskEmail(adminEmail));
 
       // Gera relatório Jasper em PDF (ID 6 = relatório de estoque mínimo)
       byte[] reportPdf =
@@ -182,8 +199,8 @@ public class EmailEventListener {
       // Monta email com anexo
       Email email =
           Email.builder()
-              .para(event.getRecipient())
-              .de(event.getRecipient()) // Mesmo email (remetente = destinatário)
+              .para(adminEmail) // Envia para admin configurado
+              .de(emailFrom) // Usa conta SMTP autenticada (SPF/DMARC compliance)
               .titulo(event.getSubject())
               .conteudo(conteudo)
               .build();
@@ -195,14 +212,13 @@ public class EmailEventListener {
       emailService.enviar(email);
 
       log.info(
-          "Email de estoque mínimo enviado com sucesso para {}",
-          EmailUtils.maskEmail(event.getRecipient()));
+          "Email de estoque mínimo enviado com sucesso para {}", EmailUtils.maskEmail(adminEmail));
 
     } catch (MailException e) {
       // MailException é RETRYABLE - propaga para @Retryable funcionar
       log.warn(
           "Falha temporária ao enviar notificação de estoque mínimo para {} (tentará novamente): {}",
-          EmailUtils.maskEmail(event.getRecipient()),
+          EmailUtils.maskEmail(adminEmail),
           e.getMessage());
       throw e; // CRITICAL: Rethrow para permitir retry automático
 
@@ -210,7 +226,7 @@ public class EmailEventListener {
       // Outras exceções (geração PDF, template, etc.) NÃO são retryable
       log.error(
           "Erro não-retryável ao processar notificação de estoque mínimo para {}: {}",
-          EmailUtils.maskEmail(event.getRecipient()),
+          EmailUtils.maskEmail(adminEmail),
           e.getMessage(),
           e);
       // NÃO propaga - evita afetar transação original

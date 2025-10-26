@@ -4,6 +4,7 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
 import br.com.utfpr.gerenciamento.server.enumeration.TipoItem;
+import br.com.utfpr.gerenciamento.server.event.item.EstoqueMinNotificacaoEvent;
 import br.com.utfpr.gerenciamento.server.minio.config.MinioConfig;
 import br.com.utfpr.gerenciamento.server.minio.service.MinioService;
 import br.com.utfpr.gerenciamento.server.model.Item;
@@ -21,6 +22,7 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 import org.modelmapper.ModelMapper;
+import org.springframework.context.ApplicationEventPublisher;
 
 class ItemServiceImplTest {
 
@@ -32,6 +34,7 @@ class ItemServiceImplTest {
   @Mock private ItemImageRepository itemImageRepository;
   @Mock private EmprestimoItemRepository emprestimoItemRepository;
   @Mock private ModelMapper modelMapper;
+  @Mock private ApplicationEventPublisher eventPublisher;
 
   @InjectMocks private ItemServiceImpl service;
 
@@ -149,5 +152,31 @@ class ItemServiceImplTest {
         br.com.utfpr.gerenciamento.server.exception.EntityNotFoundException.class,
         () -> service.findOneWithDisponibilidade(999L));
     verify(itemRepository, times(1)).findByIdWithQtdeEmprestada(999L);
+  }
+
+  @Test
+  void testSendNotification_WhenItemsBelowMinimum_PublishesEvent() {
+    // Arrange
+    when(itemRepository.countAllByQtdeMinimaIsLessThanSaldo()).thenReturn(5L);
+
+    // Act
+    service.sendNotificationItensAtingiramQtdeMin();
+
+    // Assert
+    verify(itemRepository, times(1)).countAllByQtdeMinimaIsLessThanSaldo();
+    verify(eventPublisher, times(1)).publishEvent(any(EstoqueMinNotificacaoEvent.class));
+  }
+
+  @Test
+  void testSendNotification_WhenNoItemsBelowMinimum_DoesNotPublishEvent() {
+    // Arrange
+    when(itemRepository.countAllByQtdeMinimaIsLessThanSaldo()).thenReturn(0L);
+
+    // Act
+    service.sendNotificationItensAtingiramQtdeMin();
+
+    // Assert
+    verify(itemRepository, times(1)).countAllByQtdeMinimaIsLessThanSaldo();
+    verify(eventPublisher, never()).publishEvent(any(EstoqueMinNotificacaoEvent.class));
   }
 }
