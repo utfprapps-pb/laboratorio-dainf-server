@@ -27,7 +27,7 @@ public class EmprestimoController extends CrudController<Emprestimo, Long> {
 
   public EmprestimoController(EmprestimoService emprestimoService, ItemService itemService) {
     this.emprestimoService = emprestimoService;
-      this.itemService = itemService;
+    this.itemService = itemService;
   }
 
   @Override

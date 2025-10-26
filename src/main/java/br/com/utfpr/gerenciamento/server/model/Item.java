@@ -12,7 +12,6 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
-import org.hibernate.annotations.Formula;
 import org.hibernate.proxy.HibernateProxy;
 
 @Getter
@@ -67,14 +66,10 @@ public class Item {
   @JsonManagedReference
   private List<ItemImage> imageItem;
 
+  @Transient private BigDecimal disponivelEmprestimoCalculado;
 
-  private BigDecimal disponivelEmprestimoCalculado;
+  @Transient private BigDecimal quantidadeEmprestada;
 
-  @Formula("(SELECT COALESCE(SUM(e.qtde), 0) " +
-          "FROM emprestimo_item e " +
-          "JOIN emprestimo em ON e.emprestimo_id = em.id " +
-          "WHERE e.item_id = id AND em.data_devolucao IS NULL)")
-  private BigDecimal disponivelEmprestimo;
   @Override
   @SuppressWarnings(
       "java:S2097") // False positive - type check via HibernateProxy pattern (SONARJAVA-5765)

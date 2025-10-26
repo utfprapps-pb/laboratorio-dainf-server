@@ -10,7 +10,7 @@ import org.springframework.web.multipart.MultipartHttpServletRequest;
 
 public interface ItemService extends CrudService<Item, Long> {
 
-  List<ItemResponseDto> itemComplete(String query, Boolean hasEstoque);
+  List<ItemResponseDto> itemComplete(String query, boolean hasEstoque);
 
   List<ItemResponseDto> findByGrupo(Long id);
 
@@ -34,5 +34,5 @@ public interface ItemService extends CrudService<Item, Long> {
 
   ItemResponseDto convertToDto(Item entity);
 
-  BigDecimal disponivelParaEmprestimo(Long itemId);
+  Item findOneWithDisponibilidade(Long id);
 }

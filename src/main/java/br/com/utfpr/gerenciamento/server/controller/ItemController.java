@@ -1,13 +1,11 @@
 package br.com.utfpr.gerenciamento.server.controller;
 
 import br.com.utfpr.gerenciamento.server.dto.ItemResponseDto;
-import br.com.utfpr.gerenciamento.server.enumeration.TipoItem;
 import br.com.utfpr.gerenciamento.server.model.Item;
 import br.com.utfpr.gerenciamento.server.model.ItemImage;
 import br.com.utfpr.gerenciamento.server.service.CrudService;
 import br.com.utfpr.gerenciamento.server.service.ItemService;
 import jakarta.servlet.http.HttpServletRequest;
-import java.math.BigDecimal;
 import java.util.List;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -45,80 +43,36 @@ public class ItemController extends CrudController<Item, Long> {
   @Override
   @GetMapping("{id}")
   public Item findone(@PathVariable("id") Long id) {
-    Item item = itemService.findOne(id);
-    if (item.getTipoItem() == TipoItem.P) {
-      BigDecimal disponivel = item.getDisponivelEmprestimo();
-      BigDecimal saldo = item.getSaldo();
-
-      if (saldo == null) saldo = BigDecimal.ZERO;
-      if (disponivel == null) disponivel = BigDecimal.ZERO;
-
-      item.setDisponivelEmprestimoCalculado(saldo.subtract(disponivel));
-    } else if (item.getTipoItem() == TipoItem.C) {
-      item.setDisponivelEmprestimoCalculado(item.getSaldo());
-    }
-    return item;
+    return itemService.findOneWithDisponibilidade(id);
   }
 
   @Override
   @GetMapping
   public List<Item> findAll() {
-    return getService().findAll(Sort.by("id")).stream()
-        .peek(
-            item -> {
-              if (item.getTipoItem() == TipoItem.P) {
-                BigDecimal disponivel = item.getDisponivelEmprestimo();
-                BigDecimal saldo = item.getSaldo();
-
-                if (saldo == null) saldo = BigDecimal.ZERO;
-                if (disponivel == null) disponivel = BigDecimal.ZERO;
-
-                item.setDisponivelEmprestimoCalculado(saldo.subtract(disponivel));
-              } else if (item.getTipoItem() == TipoItem.C) {
-                item.setDisponivelEmprestimoCalculado(item.getSaldo());
-              }
-            })
-        .toList();
+    return getService().findAll(Sort.by("id"));
   }
 
   @Override
   @GetMapping("page")
   public Page<Item> findAllPaged(
-          @RequestParam("page") int page,
-          @RequestParam("size") int size,
-          @RequestParam(required = false) String filter,
-          @RequestParam(required = false) String order,
-          @RequestParam(required = false) Boolean asc) {
+      @RequestParam("page") int page,
+      @RequestParam("size") int size,
+      @RequestParam(required = false) String filter,
+      @RequestParam(required = false) String order,
+      @RequestParam(required = false) Boolean asc) {
 
     PageRequest pageRequest = PageRequest.of(page, size);
     if (order != null && asc != null) {
-      pageRequest = PageRequest.of(page, size, asc ? Sort.Direction.ASC : Sort.Direction.DESC, order);
+      pageRequest =
+          PageRequest.of(page, size, asc ? Sort.Direction.ASC : Sort.Direction.DESC, order);
     }
-
-    Page<Item> pageResult;
 
     if (filter != null && !filter.isEmpty()) {
       Specification<Item> spec = getService().filterByAllFields(filter);
-      pageResult = getService().findAllSpecification(spec, pageRequest);
-    } else {
-      pageResult = getService().findAll(pageRequest);
+      return getService().findAllSpecification(spec, pageRequest);
     }
 
-    // Aplica o cálculo nos itens do resultado
-    pageResult.forEach(item -> {
-      if (item.getTipoItem() == TipoItem.P) {
-        BigDecimal disponivel = item.getDisponivelEmprestimo();
-        BigDecimal saldo = item.getSaldo();
-
-        if (saldo == null) saldo = BigDecimal.ZERO;
-        if (disponivel == null) disponivel = BigDecimal.ZERO;
-
-        item.setDisponivelEmprestimoCalculado(saldo.subtract(disponivel));
-      } else if (item.getTipoItem() == TipoItem.C) {
-        item.setDisponivelEmprestimoCalculado(item.getSaldo());
-      }
-    });
-    return pageResult;
+    return getService().findAll(pageRequest);
   }
 
   @Override

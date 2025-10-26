@@ -5,30 +5,18 @@ import br.com.utfpr.gerenciamento.server.model.ItemImage;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.util.List;
-import lombok.Data;
 
-@Data
-public class ItemResponseDto {
-
-  private Long id;
-
-  private String nome;
-
-  private BigInteger patrimonio;
-
-  private BigDecimal qtdeMinima;
-
-  private String localizacao;
-
-  private TipoItem tipoItem;
-
-  private BigDecimal saldo;
-
-  private BigDecimal valor;
-
-  private GrupoResponseDto grupo;
-
-  private String descricao;
-
-  private List<ItemImage> imageItem;
-}
+public record ItemResponseDto(
+    Long id,
+    String nome,
+    BigInteger patrimonio,
+    BigDecimal qtdeMinima,
+    String localizacao,
+    TipoItem tipoItem,
+    BigDecimal saldo,
+    BigDecimal valor,
+    GrupoResponseDto grupo,
+    String descricao,
+    List<ItemImage> imageItem,
+    BigDecimal quantidadeEmprestada,
+    BigDecimal disponivelEmprestimoCalculado) {}

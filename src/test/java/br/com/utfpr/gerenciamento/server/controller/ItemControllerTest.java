@@ -1,20 +1,19 @@
 package br.com.utfpr.gerenciamento.server.controller;
 
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.when;
+
 import br.com.utfpr.gerenciamento.server.enumeration.TipoItem;
 import br.com.utfpr.gerenciamento.server.model.Item;
 import br.com.utfpr.gerenciamento.server.service.ItemService;
+import java.math.BigDecimal;
+import java.util.Arrays;
+import java.util.List;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 import org.springframework.data.domain.*;
-
-import java.math.BigDecimal;
-import java.util.Arrays;
-import java.util.List;
-
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.when;
 
 class ItemControllerTest {
 
@@ -28,41 +27,27 @@ class ItemControllerTest {
   }
 
   @Test
-  void testFindOne_ComTipoP_DeveSubtrairEmprestimo() {
+  void testFindOne_DeveDelegarParaService() {
     Item item = new Item();
     item.setId(1L);
     item.setTipoItem(TipoItem.P);
     item.setSaldo(new BigDecimal("10"));
-    item.setDisponivelEmprestimo(new BigDecimal("3"));
+    item.setQuantidadeEmprestada(new BigDecimal("3"));
+    item.setDisponivelEmprestimoCalculado(new BigDecimal("7"));
 
-    when(itemService.findOne(1L)).thenReturn(item);
+    when(itemService.findOneWithDisponibilidade(1L)).thenReturn(item);
 
     Item result = itemController.findone(1L);
 
-    // saldo - disponivelEmprestimo = 10 - 3 = 7
+    assertThat(result).isEqualTo(item);
     assertThat(result.getDisponivelEmprestimoCalculado()).isEqualByComparingTo("7");
   }
 
   @Test
-  void testFindOne_ComTipoC_DeveRetornarSaldo() {
-    Item item = new Item();
-    item.setId(2L);
-    item.setTipoItem(TipoItem.C);
-    item.setSaldo(new BigDecimal("15"));
-
-    when(itemService.findOne(2L)).thenReturn(item);
-
-    Item result = itemController.findone(2L);
-
-    assertThat(result.getDisponivelEmprestimoCalculado()).isEqualByComparingTo("15");
-  }
-
-  @Test
-  void testFindAll_DeveCalcularParaTodosOsItens() {
+  void testFindAll_DeveRetornarListaDoService() {
     Item item1 = new Item();
     item1.setTipoItem(TipoItem.P);
     item1.setSaldo(new BigDecimal("20"));
-    item1.setDisponivelEmprestimo(new BigDecimal("5"));
 
     Item item2 = new Item();
     item2.setTipoItem(TipoItem.C);
@@ -72,18 +57,16 @@ class ItemControllerTest {
 
     List<Item> result = itemController.findAll();
 
-    // item1: 20 - 5 = 15
-    assertThat(result.get(0).getDisponivelEmprestimoCalculado()).isEqualByComparingTo("15");
-    // item2: saldo = 10
-    assertThat(result.get(1).getDisponivelEmprestimoCalculado()).isEqualByComparingTo("10");
+    assertThat(result).hasSize(2);
+    assertThat(result.get(0)).isEqualTo(item1);
+    assertThat(result.get(1)).isEqualTo(item2);
   }
 
   @Test
-  void testFindAllPaged_DeveAplicarCalculo() {
+  void testFindAllPaged_DeveRetornarPaginaDoService() {
     Item item = new Item();
     item.setTipoItem(TipoItem.P);
     item.setSaldo(new BigDecimal("8"));
-    item.setDisponivelEmprestimo(new BigDecimal("2"));
 
     Page<Item> page = new PageImpl<>(List.of(item));
 
@@ -91,7 +74,7 @@ class ItemControllerTest {
 
     Page<Item> result = itemController.findAllPaged(0, 10, null, null, null);
 
-    assertThat(result.getContent().get(0).getDisponivelEmprestimoCalculado())
-            .isEqualByComparingTo("6");
+    assertThat(result.getContent()).hasSize(1);
+    assertThat(result.getContent().get(0)).isEqualTo(item);
   }
 }
