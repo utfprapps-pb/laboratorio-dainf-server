@@ -31,11 +31,12 @@ public class EstoqueMinNotificacaoEvent extends EmailEvent {
    * {@code countAllByQtdeMinimaIsLessThanSaldo()}.
    *
    * @param source Service que publicou o evento
+   * @param recipient Email do destinatário (normalmente email administrativo configurável)
    */
-  public EstoqueMinNotificacaoEvent(Object source) {
+  public EstoqueMinNotificacaoEvent(Object source, String recipient) {
     super(
         source,
-        "dainf.labs@gmail.com", // Destinatário fixo (email administrativo)
+        recipient,
         "Notificação: Itens que atingiram o estoque mínimo",
         "templateNotificacaoEstoqueMinimo");
   }
