@@ -35,8 +35,8 @@ import org.springframework.web.multipart.MultipartHttpServletRequest;
 @Service
 @Slf4j
 public class ItemServiceImpl extends CrudServiceImpl<Item, Long> implements ItemService {
-    public static final String ITEM_NÃO_ENCONTRADO_COM_ID = "Item não encontrado com ID: ";
-    private final ItemRepository itemRepository;
+  public static final String ITEM_NAO_ENCONTRADO_COM_ID = "Item não encontrado com ID: ";
+  private final ItemRepository itemRepository;
   private final EmailService emailService;
   private final RelatorioService relatorioService;
   private final MinioService minioService;
@@ -105,8 +105,7 @@ public class ItemServiceImpl extends CrudServiceImpl<Item, Long> implements Item
     Item itemToSave =
         itemRepository
             .findById(idItem)
-            .orElseThrow(
-                () -> new EntityNotFoundException(ITEM_NÃO_ENCONTRADO_COM_ID + idItem));
+            .orElseThrow(() -> new EntityNotFoundException(ITEM_NAO_ENCONTRADO_COM_ID + idItem));
     if (!needValidationSaldo
         || Boolean.TRUE.equals(this.saldoItemIsValid(itemToSave.getSaldo(), qtde))) {
       itemToSave.setSaldo(itemToSave.getSaldo().subtract(qtde));
@@ -120,8 +119,7 @@ public class ItemServiceImpl extends CrudServiceImpl<Item, Long> implements Item
     Item itemToSave =
         itemRepository
             .findById(idItem)
-            .orElseThrow(
-                () -> new EntityNotFoundException(ITEM_NÃO_ENCONTRADO_COM_ID + idItem));
+            .orElseThrow(() -> new EntityNotFoundException(ITEM_NAO_ENCONTRADO_COM_ID + idItem));
     itemToSave.setSaldo(itemToSave.getSaldo().add(qtde));
     itemRepository.save(itemToSave);
   }
@@ -131,7 +129,7 @@ public class ItemServiceImpl extends CrudServiceImpl<Item, Long> implements Item
   public BigDecimal getSaldoItem(Long idItem) {
     return itemRepository
         .findById(idItem)
-        .orElseThrow(() -> new EntityNotFoundException(ITEM_NÃO_ENCONTRADO_COM_ID + idItem))
+        .orElseThrow(() -> new EntityNotFoundException(ITEM_NAO_ENCONTRADO_COM_ID + idItem))
         .getSaldo();
   }
 
@@ -207,7 +205,7 @@ public class ItemServiceImpl extends CrudServiceImpl<Item, Long> implements Item
         email.addFile("itensAtingiramEstoqueMin.pdf", report);
         emailService.enviar(email);
       } catch (Exception ex) {
-        ex.printStackTrace();
+        log.error("Erro ao enviar notificação de estoque mínimo", ex);
       }
     }
   }
@@ -224,15 +222,14 @@ public class ItemServiceImpl extends CrudServiceImpl<Item, Long> implements Item
   public void copyImagesItem(List<ItemImage> itemImages, Long id) {
     var item = self.findOne(id);
     List<ItemImage> toReturn = new ArrayList<>();
-    itemImages.stream()
-        .forEach(
-            itemImage -> {
-              ItemImage image = new ItemImage();
-              image.setContentType(itemImage.getContentType());
-              image.setNameImage(itemImage.getNameImage());
-              image.setItem(item);
-              toReturn.add(image);
-            });
+    itemImages.forEach(
+        itemImage -> {
+          ItemImage image = new ItemImage();
+          image.setContentType(itemImage.getContentType());
+          image.setNameImage(itemImage.getNameImage());
+          image.setItem(item);
+          toReturn.add(image);
+        });
     item.setImageItem(toReturn);
     self.save(item);
   }
@@ -243,7 +240,7 @@ public class ItemServiceImpl extends CrudServiceImpl<Item, Long> implements Item
     ItemWithQtdeEmprestada projection =
         itemRepository
             .findByIdWithQtdeEmprestada(id)
-            .orElseThrow(() -> new EntityNotFoundException(ITEM_NÃO_ENCONTRADO_COM_ID + id));
+            .orElseThrow(() -> new EntityNotFoundException(ITEM_NAO_ENCONTRADO_COM_ID + id));
 
     Item item = projection.getItem();
     BigDecimal qtdeEmprestada = projection.getQtdeEmprestada();

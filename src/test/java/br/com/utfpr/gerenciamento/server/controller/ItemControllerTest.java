@@ -75,6 +75,6 @@ class ItemControllerTest {
     Page<Item> result = itemController.findAllPaged(0, 10, null, null, null);
 
     assertThat(result.getContent()).hasSize(1);
-    assertThat(result.getContent().get(0)).isEqualTo(item);
+    assertThat(result.getContent().getFirst()).isEqualTo(item);
   }
 }

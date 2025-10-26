@@ -58,7 +58,8 @@ public class EmprestimoController extends CrudController<Emprestimo, Long> {
 
   @Override
   public void postSave(Emprestimo object) {
-    object.getEmprestimoItem().stream()
+    object
+        .getEmprestimoItem()
         .forEach(
             saidaItem -> {
               if (saidaItem.getItem().getTipoItem() == TipoItem.C) {
