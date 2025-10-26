@@ -45,7 +45,7 @@ public class ItemServiceImpl extends CrudServiceImpl<Item, Long> implements Item
 
   private final ModelMapper modelMapper;
 
-  @Lazy private ItemService self;
+  private final ItemService self;
 
   public ItemServiceImpl(
       ItemRepository itemRepository,
@@ -54,7 +54,8 @@ public class ItemServiceImpl extends CrudServiceImpl<Item, Long> implements Item
       MinioService minioService,
       MinioConfig minioConfig,
       ItemImageRepository itemImageRepository,
-      ModelMapper modelMapper) {
+      ModelMapper modelMapper,
+      @Lazy ItemService self) {
     this.itemRepository = itemRepository;
     this.emailService = emailService;
     this.relatorioService = relatorioService;
@@ -62,6 +63,7 @@ public class ItemServiceImpl extends CrudServiceImpl<Item, Long> implements Item
     this.minioConfig = minioConfig;
     this.itemImageRepository = itemImageRepository;
     this.modelMapper = modelMapper;
+    this.self = self;
   }
 
   @Override

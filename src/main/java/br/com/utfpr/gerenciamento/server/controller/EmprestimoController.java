@@ -4,12 +4,10 @@ import static br.com.utfpr.gerenciamento.server.enumeration.UserRole.ROLE_ADMINI
 import static br.com.utfpr.gerenciamento.server.enumeration.UserRole.ROLE_LABORATORISTA_NAME;
 
 import br.com.utfpr.gerenciamento.server.dto.EmprestimoResponseDto;
-import br.com.utfpr.gerenciamento.server.enumeration.TipoItem;
 import br.com.utfpr.gerenciamento.server.model.Emprestimo;
 import br.com.utfpr.gerenciamento.server.model.filter.EmprestimoFilter;
 import br.com.utfpr.gerenciamento.server.service.CrudService;
 import br.com.utfpr.gerenciamento.server.service.EmprestimoService;
-import br.com.utfpr.gerenciamento.server.service.ItemService;
 import br.com.utfpr.gerenciamento.server.util.DateUtil;
 import java.util.List;
 import org.springframework.data.domain.Page;
@@ -23,11 +21,9 @@ import org.springframework.web.bind.annotation.*;
 public class EmprestimoController extends CrudController<Emprestimo, Long> {
 
   private final EmprestimoService emprestimoService;
-  private final ItemService itemService;
 
-  public EmprestimoController(EmprestimoService emprestimoService, ItemService itemService) {
+  public EmprestimoController(EmprestimoService emprestimoService) {
     this.emprestimoService = emprestimoService;
-    this.itemService = itemService;
   }
 
   @Override
@@ -58,16 +54,6 @@ public class EmprestimoController extends CrudController<Emprestimo, Long> {
 
   @Override
   public void postSave(Emprestimo object) {
-    object
-        .getEmprestimoItem()
-        .forEach(
-            saidaItem -> {
-              if (saidaItem.getItem().getTipoItem() == TipoItem.C) {
-                itemService.diminuiSaldoItem(
-                    saidaItem.getItem().getId(), saidaItem.getQtde(), true);
-              }
-            });
-    emprestimoService.sendEmailConfirmacaoEmprestimo(object);
     emprestimoService.finalizeEmprestimo(object);
   }
 
