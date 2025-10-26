@@ -67,7 +67,7 @@ public class Item {
   @JsonManagedReference
   private List<ItemImage> imageItem;
 
-
+  @Transient
   private BigDecimal disponivelEmprestimoCalculado;
 
   @Formula("(SELECT COALESCE(SUM(e.qtde), 0) " +
