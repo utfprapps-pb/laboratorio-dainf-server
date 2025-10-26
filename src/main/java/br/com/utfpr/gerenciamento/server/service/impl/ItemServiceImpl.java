@@ -22,6 +22,7 @@ import java.util.ArrayList;
 import java.util.List;
 import lombok.extern.slf4j.Slf4j;
 import org.modelmapper.ModelMapper;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -34,6 +35,16 @@ import org.springframework.web.multipart.MultipartHttpServletRequest;
 @Slf4j
 public class ItemServiceImpl extends CrudServiceImpl<Item, Long> implements ItemService {
   public static final String ITEM_NAO_ENCONTRADO_COM_ID = "Item não encontrado com ID: ";
+
+  /**
+   * Endereço(s) de email para notificações administrativas.
+   *
+   * <p>Configurável via propriedade {@code app.email.admin}, com fallback para
+   * dainf.labs@gmail.com.
+   */
+  @Value("${app.email.admin:dainf.labs@gmail.com}")
+  private String adminEmail;
+
   private final ItemRepository itemRepository;
   private final MinioService minioService;
   private final MinioConfig minioConfig;
@@ -212,7 +223,7 @@ public class ItemServiceImpl extends CrudServiceImpl<Item, Long> implements Item
     // Verifica se existem itens abaixo do estoque mínimo
     if (itemRepository.countAllByQtdeMinimaIsLessThanSaldo() > 0) {
       log.info("Publicando evento de notificação de estoque mínimo");
-      eventPublisher.publishEvent(new EstoqueMinNotificacaoEvent(this));
+      eventPublisher.publishEvent(new EstoqueMinNotificacaoEvent(this, adminEmail));
     } else {
       log.debug("Nenhum item abaixo do estoque mínimo - notificação não enviada");
     }
