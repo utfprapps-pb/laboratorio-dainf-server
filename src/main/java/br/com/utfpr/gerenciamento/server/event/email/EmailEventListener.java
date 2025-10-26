@@ -4,15 +4,20 @@ import br.com.utfpr.gerenciamento.server.event.emprestimo.EmprestimoDevolvidoEve
 import br.com.utfpr.gerenciamento.server.event.emprestimo.EmprestimoFinalizadoEvent;
 import br.com.utfpr.gerenciamento.server.event.emprestimo.EmprestimoPrazoAlteradoEvent;
 import br.com.utfpr.gerenciamento.server.event.emprestimo.EmprestimoPrazoProximoEvent;
+import br.com.utfpr.gerenciamento.server.event.item.EstoqueMinNotificacaoEvent;
 import br.com.utfpr.gerenciamento.server.exception.EntityNotFoundException;
 import br.com.utfpr.gerenciamento.server.mapper.EmprestimoTemplateMapper;
+import br.com.utfpr.gerenciamento.server.model.Email;
 import br.com.utfpr.gerenciamento.server.model.Emprestimo;
 import br.com.utfpr.gerenciamento.server.repository.EmprestimoRepository;
 import br.com.utfpr.gerenciamento.server.service.EmailService;
+import br.com.utfpr.gerenciamento.server.service.RelatorioService;
 import br.com.utfpr.gerenciamento.server.util.EmailUtils;
 import java.util.Map;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import net.sf.jasperreports.engine.JasperExportManager;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.mail.MailException;
 import org.springframework.retry.annotation.Backoff;
 import org.springframework.retry.annotation.Retryable;
@@ -65,9 +70,29 @@ public class EmailEventListener {
   /** Timeout em segundos para transação de processamento de email. */
   private static final int EMAIL_TRANSACTION_TIMEOUT_SECONDS = 30;
 
+  /** ID do relatório Jasper de estoque mínimo (itens que atingiram quantidade mínima). */
+  private static final long RELATORIO_ESTOQUE_MINIMO_ID = 6L;
+
+  /**
+   * Endereço de email remetente (conta SMTP autenticada).
+   *
+   * <p>Usa spring.mail.username para garantir conformidade SPF/DMARC com Gmail/SMTP autenticado.
+   */
+  @Value("${spring.mail.username}")
+  private String emailFrom;
+
+  /**
+   * Endereço(s) de email para notificações administrativas.
+   *
+   * <p>Configurável via UTFPR_EMAIL_ADMIN, com fallback para dainf.labs@gmail.com.
+   */
+  @Value("${app.email.admin:dainf.labs@gmail.com}")
+  private String adminEmail;
+
   private final EmailService emailService;
   private final EmprestimoRepository emprestimoRepository;
   private final EmprestimoTemplateMapper templateMapper;
+  private final RelatorioService relatorioService;
 
   /**
    * Processa eventos de email após commit da transação de forma assíncrona com retry automático.
@@ -136,6 +161,83 @@ public class EmailEventListener {
   }
 
   /**
+   * Processa eventos de notificação de estoque mínimo com relatório PDF anexado.
+   *
+   * <p>Este handler especializado processa eventos {@link EstoqueMinNotificacaoEvent} de forma
+   * assíncrona APÓS commit da transação, gerando relatório Jasper e enviando email com anexo.
+   *
+   * <p><b>Características:</b>
+   *
+   * <ul>
+   *   <li>✅ Relatório PDF gerado dinamicamente (Jasper Report ID 6)
+   *   <li>✅ Email com anexo enviado de forma assíncrona
+   *   <li>✅ Retry automático em caso de falhas transientes (MailException)
+   *   <li>✅ Falhas não afetam transação de negócio original
+   * </ul>
+   *
+   * @param event Evento de notificação de estoque mínimo
+   */
+  @Retryable(
+      retryFor = {MailException.class},
+      backoff = @Backoff(delay = 2000, multiplier = 2))
+  @Async("emailTaskExecutor")
+  @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
+  @Transactional(
+      readOnly = true,
+      propagation = org.springframework.transaction.annotation.Propagation.REQUIRES_NEW,
+      timeout = EMAIL_TRANSACTION_TIMEOUT_SECONDS)
+  public void handleEstoqueMinNotificacaoEvent(EstoqueMinNotificacaoEvent event) {
+    try {
+      log.info(
+          "Processando evento de notificação de estoque mínimo para {}",
+          EmailUtils.maskEmail(adminEmail));
+
+      // Gera relatório Jasper em PDF
+      byte[] reportPdf =
+          JasperExportManager.exportReportToPdf(
+              relatorioService.generateReport(RELATORIO_ESTOQUE_MINIMO_ID, null));
+
+      // Constrói email com template FreeMarker
+      String conteudo = emailService.buildTemplateEmail(null, event.getTemplateName());
+
+      // Monta email com anexo
+      Email email =
+          Email.builder()
+              .para(adminEmail) // Envia para admin configurado
+              .de(emailFrom) // Usa conta SMTP autenticada (SPF/DMARC compliance)
+              .titulo(event.getSubject())
+              .conteudo(conteudo)
+              .build();
+
+      // Adiciona PDF como anexo
+      email.addFile("itensAtingiramEstoqueMin.pdf", reportPdf);
+
+      // Envia email
+      emailService.enviar(email);
+
+      log.info(
+          "Email de estoque mínimo enviado com sucesso para {}", EmailUtils.maskEmail(adminEmail));
+
+    } catch (MailException e) {
+      // MailException é RETRYABLE - propaga para @Retryable funcionar
+      log.warn(
+          "Falha temporária ao enviar notificação de estoque mínimo para {} (tentará novamente): {}",
+          EmailUtils.maskEmail(adminEmail),
+          e.getMessage());
+      throw e; // CRITICAL: Rethrow para permitir retry automático
+
+    } catch (Exception e) {
+      // Outras exceções (geração PDF, template, etc.) NÃO são retryable
+      log.error(
+          "Erro não-retryável ao processar notificação de estoque mínimo para {}: {}",
+          EmailUtils.maskEmail(adminEmail),
+          e.getMessage(),
+          e);
+      // NÃO propaga - evita afetar transação original
+    }
+  }
+
+  /**
    * Prepara dados do template baseado no tipo de evento.
    *
    * <p>Este método detecta o tipo específico do evento e carrega os dados necessários do banco em
@@ -154,6 +256,9 @@ public class EmailEventListener {
       return prepareEmprestimoTemplateData(prazoEvent.getEmprestimoId());
     } else if (event instanceof EmprestimoPrazoProximoEvent prazoProximoEvent) {
       return prepareEmprestimoTemplateData(prazoProximoEvent.getEmprestimoId());
+    } else if (event instanceof EstoqueMinNotificacaoEvent) {
+      // Evento de estoque mínimo não requer template data (usa apenas null para template simples)
+      return null;
     }
 
     // TODO: Adicionar outros tipos de eventos aqui (Reserva, Usuario, etc.)

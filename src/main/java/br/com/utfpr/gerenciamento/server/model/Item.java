@@ -66,6 +66,10 @@ public class Item {
   @JsonManagedReference
   private List<ItemImage> imageItem;
 
+  @Transient private BigDecimal disponivelEmprestimoCalculado;
+
+  @Transient private BigDecimal quantidadeEmprestada;
+
   @Override
   @SuppressWarnings(
       "java:S2097") // False positive - type check via HibernateProxy pattern (SONARJAVA-5765)

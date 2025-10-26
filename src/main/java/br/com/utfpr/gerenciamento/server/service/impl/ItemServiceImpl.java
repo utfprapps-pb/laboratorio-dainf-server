@@ -1,26 +1,29 @@
 package br.com.utfpr.gerenciamento.server.service.impl;
 
 import br.com.utfpr.gerenciamento.server.dto.ItemResponseDto;
+import br.com.utfpr.gerenciamento.server.enumeration.TipoItem;
+import br.com.utfpr.gerenciamento.server.event.item.EstoqueMinNotificacaoEvent;
+import br.com.utfpr.gerenciamento.server.exception.EntityNotFoundException;
+import br.com.utfpr.gerenciamento.server.exception.SaldoInsuficienteException;
 import br.com.utfpr.gerenciamento.server.minio.config.MinioConfig;
 import br.com.utfpr.gerenciamento.server.minio.payload.FileResponse;
 import br.com.utfpr.gerenciamento.server.minio.service.MinioService;
 import br.com.utfpr.gerenciamento.server.minio.util.FileTypeUtils;
-import br.com.utfpr.gerenciamento.server.model.Email;
 import br.com.utfpr.gerenciamento.server.model.Item;
 import br.com.utfpr.gerenciamento.server.model.ItemImage;
 import br.com.utfpr.gerenciamento.server.repository.ItemImageRepository;
 import br.com.utfpr.gerenciamento.server.repository.ItemRepository;
-import br.com.utfpr.gerenciamento.server.service.EmailService;
+import br.com.utfpr.gerenciamento.server.repository.projection.ItemWithQtdeEmprestada;
 import br.com.utfpr.gerenciamento.server.service.ItemService;
-import br.com.utfpr.gerenciamento.server.service.RelatorioService;
 import br.com.utfpr.gerenciamento.server.util.FileUtil;
 import jakarta.servlet.http.HttpServletRequest;
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
 import lombok.extern.slf4j.Slf4j;
-import net.sf.jasperreports.engine.JasperExportManager;
 import org.modelmapper.ModelMapper;
+import org.springframework.context.ApplicationEventPublisher;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -30,30 +33,32 @@ import org.springframework.web.multipart.MultipartHttpServletRequest;
 @Service
 @Slf4j
 public class ItemServiceImpl extends CrudServiceImpl<Item, Long> implements ItemService {
+  public static final String ITEM_NAO_ENCONTRADO_COM_ID = "Item não encontrado com ID: ";
   private final ItemRepository itemRepository;
-  private final EmailService emailService;
-  private final RelatorioService relatorioService;
   private final MinioService minioService;
   private final MinioConfig minioConfig;
   private final ItemImageRepository itemImageRepository;
+  private final ApplicationEventPublisher eventPublisher;
 
   private final ModelMapper modelMapper;
 
+  private final ItemService self;
+
   public ItemServiceImpl(
       ItemRepository itemRepository,
-      EmailService emailService,
-      RelatorioService relatorioService,
       MinioService minioService,
       MinioConfig minioConfig,
       ItemImageRepository itemImageRepository,
-      ModelMapper modelMapper) {
+      ApplicationEventPublisher eventPublisher,
+      ModelMapper modelMapper,
+      @Lazy ItemService self) {
     this.itemRepository = itemRepository;
-    this.emailService = emailService;
-    this.relatorioService = relatorioService;
     this.minioService = minioService;
     this.minioConfig = minioConfig;
     this.itemImageRepository = itemImageRepository;
+    this.eventPublisher = eventPublisher;
     this.modelMapper = modelMapper;
+    this.self = self;
   }
 
   @Override
@@ -63,7 +68,7 @@ public class ItemServiceImpl extends CrudServiceImpl<Item, Long> implements Item
 
   @Override
   @Transactional
-  public List<ItemResponseDto> itemComplete(String query, Boolean hasEstoque) {
+  public List<ItemResponseDto> itemComplete(String query, boolean hasEstoque) {
     BigDecimal zero = new BigDecimal(0);
     if ("".equalsIgnoreCase(query)) {
       if (hasEstoque)
@@ -94,8 +99,12 @@ public class ItemServiceImpl extends CrudServiceImpl<Item, Long> implements Item
   @Override
   @Transactional
   public void diminuiSaldoItem(Long idItem, BigDecimal qtde, boolean needValidationSaldo) {
-    Item itemToSave = itemRepository.findById(idItem).get();
-    if (!needValidationSaldo || this.saldoItemIsValid(itemToSave.getSaldo(), qtde)) {
+    Item itemToSave =
+        itemRepository
+            .findById(idItem)
+            .orElseThrow(() -> new EntityNotFoundException(ITEM_NAO_ENCONTRADO_COM_ID + idItem));
+    if (!needValidationSaldo
+        || Boolean.TRUE.equals(this.saldoItemIsValid(itemToSave.getSaldo(), qtde))) {
       itemToSave.setSaldo(itemToSave.getSaldo().subtract(qtde));
       itemRepository.save(itemToSave);
     }
@@ -104,7 +113,10 @@ public class ItemServiceImpl extends CrudServiceImpl<Item, Long> implements Item
   @Override
   @Transactional
   public void aumentaSaldoItem(Long idItem, BigDecimal qtde) {
-    Item itemToSave = itemRepository.findById(idItem).get();
+    Item itemToSave =
+        itemRepository
+            .findById(idItem)
+            .orElseThrow(() -> new EntityNotFoundException(ITEM_NAO_ENCONTRADO_COM_ID + idItem));
     itemToSave.setSaldo(itemToSave.getSaldo().add(qtde));
     itemRepository.save(itemToSave);
   }
@@ -112,15 +124,18 @@ public class ItemServiceImpl extends CrudServiceImpl<Item, Long> implements Item
   @Override
   @Transactional(readOnly = true)
   public BigDecimal getSaldoItem(Long idItem) {
-    return itemRepository.findById(idItem).get().getSaldo();
+    return itemRepository
+        .findById(idItem)
+        .orElseThrow(() -> new EntityNotFoundException(ITEM_NAO_ENCONTRADO_COM_ID + idItem))
+        .getSaldo();
   }
 
   @Override
   public Boolean saldoItemIsValid(BigDecimal saldoItem, BigDecimal qtdeVerificar) {
     if (saldoItem.compareTo(new BigDecimal(0)) <= 0) {
-      throw new RuntimeException("Saldo menor ou igual a 0");
+      throw new SaldoInsuficienteException("Saldo menor ou igual a 0");
     } else if (saldoItem.compareTo(qtdeVerificar) < 0) {
-      throw new RuntimeException("Saldo menor que a quantidade informada");
+      throw new SaldoInsuficienteException("Saldo menor que a quantidade informada");
     } else {
       return true;
     }
@@ -130,7 +145,7 @@ public class ItemServiceImpl extends CrudServiceImpl<Item, Long> implements Item
   @Transactional
   public void saveImages(
       MultipartHttpServletRequest files, HttpServletRequest request, Long idItem) {
-    Item item = this.findOne(idItem);
+    Item item = self.findOne(idItem);
     var anexos = files.getFiles("anexos[]");
     List<ItemImage> list = new ArrayList<>();
     for (MultipartFile anexo : anexos) {
@@ -146,13 +161,13 @@ public class ItemServiceImpl extends CrudServiceImpl<Item, Long> implements Item
       }
     }
     item.getImageItem().addAll(list);
-    this.save(item);
+    self.save(item);
   }
 
   @Override
   @Transactional(readOnly = true)
   public List<ItemImage> getImagesItem(Long idItem) {
-    return this.findOne(idItem).getImageItem();
+    return self.findOne(idItem).getImageItem();
   }
 
   @Override
@@ -166,30 +181,40 @@ public class ItemServiceImpl extends CrudServiceImpl<Item, Long> implements Item
         log.error("Erro ao remover imagem do MinIO: {}", ex.getMessage());
       }
     }
-    Item i = this.findOne(idItem);
+    Item i = self.findOne(idItem);
     i.getImageItem().removeIf(itemImage -> itemImage.getId().equals(image.getId()));
-    this.save(i);
+    self.save(i);
   }
 
+  /**
+   * Publica evento de notificação de estoque mínimo se houver itens abaixo do limite.
+   *
+   * <p>Este método verifica se existem itens que atingiram o estoque mínimo e, caso positivo,
+   * publica um evento que será processado de forma assíncrona pelo {@code EmailEventListener} APÓS
+   * o commit da transação.
+   *
+   * <p><b>Padrão Event-Driven:</b>
+   *
+   * <ul>
+   *   <li>✅ Desacoplamento: Service não conhece lógica de email
+   *   <li>✅ Transacional: Email enviado apenas após commit com sucesso
+   *   <li>✅ Assíncrono: Não bloqueia thread principal (@Async no listener)
+   *   <li>✅ Resiliente: Retry automático com exponential backoff (2s, 4s, 8s)
+   *   <li>✅ Seguro: Falhas de email não afetam negócio
+   * </ul>
+   *
+   * @see EstoqueMinNotificacaoEvent
+   * @see br.com.utfpr.gerenciamento.server.event.email.EmailEventListener
+   */
   @Override
+  @Transactional
   public void sendNotificationItensAtingiramQtdeMin() {
+    // Verifica se existem itens abaixo do estoque mínimo
     if (itemRepository.countAllByQtdeMinimaIsLessThanSaldo() > 0) {
-      try {
-        byte[] report =
-            JasperExportManager.exportReportToPdf(relatorioService.generateReport(6L, null));
-        Email email =
-            Email.builder()
-                .para("dainf.labs@gmail.com")
-                .de("dainf.labs@gmail.com")
-                .titulo("Notificação: Itens que atingiram o estoque mínimo")
-                .conteudo(emailService.buildTemplateEmail(null, "templateNotificacaoEstoqueMinimo"))
-                .build();
-        email.addFile("itensAtingiramEstoqueMin.pdf", report);
-        emailService.enviar(email);
-
-      } catch (Exception ex) {
-        ex.printStackTrace();
-      }
+      log.info("Publicando evento de notificação de estoque mínimo");
+      eventPublisher.publishEvent(new EstoqueMinNotificacaoEvent(this));
+    } else {
+      log.debug("Nenhum item abaixo do estoque mínimo - notificação não enviada");
     }
   }
 
@@ -203,19 +228,57 @@ public class ItemServiceImpl extends CrudServiceImpl<Item, Long> implements Item
   @Override
   @Transactional
   public void copyImagesItem(List<ItemImage> itemImages, Long id) {
-    var item = this.findOne(id);
+    var item = self.findOne(id);
     List<ItemImage> toReturn = new ArrayList<>();
-    itemImages.stream()
-        .forEach(
-            itemImage -> {
-              ItemImage image = new ItemImage();
-              image.setContentType(itemImage.getContentType());
-              image.setNameImage(itemImage.getNameImage());
-              image.setItem(item);
-              toReturn.add(image);
-            });
+    itemImages.forEach(
+        itemImage -> {
+          ItemImage image = new ItemImage();
+          image.setContentType(itemImage.getContentType());
+          image.setNameImage(itemImage.getNameImage());
+          image.setItem(item);
+          toReturn.add(image);
+        });
     item.setImageItem(toReturn);
-    this.save(item);
+    self.save(item);
+  }
+
+  @Override
+  @Transactional(readOnly = true)
+  public Item findOneWithDisponibilidade(Long id) {
+    // Busca item com quantidade emprestada via agregação SQL (Spring Data JPA projection)
+    ItemWithQtdeEmprestada projection =
+        itemRepository
+            .findByIdWithQtdeEmprestada(id)
+            .orElseThrow(() -> new EntityNotFoundException(ITEM_NAO_ENCONTRADO_COM_ID + id));
+
+    Item item = projection.getItem();
+    BigDecimal qtdeEmprestada = projection.getQtdeEmprestada();
+
+    // SEMPRE setar quantidade emprestada (para exibir no frontend)
+    item.setQuantidadeEmprestada(qtdeEmprestada != null ? qtdeEmprestada : BigDecimal.ZERO);
+
+    // RN-002: Disponível apenas para TipoItem.P (Permanente)
+    if (item.getTipoItem() != TipoItem.P) {
+      item.setDisponivelEmprestimoCalculado(null);
+      return item;
+    }
+
+    // RN-001: Disponível = Saldo - Quantidade Emprestada
+    BigDecimal saldo = item.getSaldo() != null ? item.getSaldo() : BigDecimal.ZERO;
+    BigDecimal disponivel = saldo.subtract(item.getQuantidadeEmprestada());
+
+    // RN-003: Nunca negativo (log warning para inconsistências)
+    if (disponivel.compareTo(BigDecimal.ZERO) < 0) {
+      log.warn(
+          "Inconsistência detectada: Item {} (Saldo: {}, Emprestado: {}) resulta em disponibilidade negativa",
+          item.getId(),
+          saldo,
+          item.getQuantidadeEmprestada());
+      disponivel = BigDecimal.ZERO;
+    }
+
+    item.setDisponivelEmprestimoCalculado(disponivel);
+    return item;
   }
 
   @Override

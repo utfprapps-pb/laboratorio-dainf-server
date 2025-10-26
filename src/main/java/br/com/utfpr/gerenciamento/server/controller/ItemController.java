@@ -7,6 +7,10 @@ import br.com.utfpr.gerenciamento.server.service.CrudService;
 import br.com.utfpr.gerenciamento.server.service.ItemService;
 import jakarta.servlet.http.HttpServletRequest;
 import java.util.List;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartHttpServletRequest;
 
@@ -34,6 +38,41 @@ public class ItemController extends CrudController<Item, Long> {
       this.imagesToCopy = object.getImageItem();
       object.setImageItem(null);
     }
+  }
+
+  @Override
+  @GetMapping("{id}")
+  public Item findone(@PathVariable("id") Long id) {
+    return itemService.findOneWithDisponibilidade(id);
+  }
+
+  @Override
+  @GetMapping
+  public List<Item> findAll() {
+    return getService().findAll(Sort.by("id"));
+  }
+
+  @Override
+  @GetMapping("page")
+  public Page<Item> findAllPaged(
+      @RequestParam("page") int page,
+      @RequestParam("size") int size,
+      @RequestParam(required = false) String filter,
+      @RequestParam(required = false) String order,
+      @RequestParam(required = false) Boolean asc) {
+
+    PageRequest pageRequest = PageRequest.of(page, size);
+    if (order != null && asc != null) {
+      pageRequest =
+          PageRequest.of(page, size, asc ? Sort.Direction.ASC : Sort.Direction.DESC, order);
+    }
+
+    if (filter != null && !filter.isEmpty()) {
+      Specification<Item> spec = getService().filterByAllFields(filter);
+      return getService().findAllSpecification(spec, pageRequest);
+    }
+
+    return getService().findAll(pageRequest);
   }
 
   @Override

@@ -10,7 +10,7 @@ import org.springframework.web.multipart.MultipartHttpServletRequest;
 
 public interface ItemService extends CrudService<Item, Long> {
 
-  List<ItemResponseDto> itemComplete(String query, Boolean hasEstoque);
+  List<ItemResponseDto> itemComplete(String query, boolean hasEstoque);
 
   List<ItemResponseDto> findByGrupo(Long id);
 
@@ -33,4 +33,6 @@ public interface ItemService extends CrudService<Item, Long> {
   void copyImagesItem(List<ItemImage> itemImages, Long id);
 
   ItemResponseDto convertToDto(Item entity);
+
+  Item findOneWithDisponibilidade(Long id);
 }
