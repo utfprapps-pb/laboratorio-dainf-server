@@ -39,7 +39,8 @@ public class ItemServiceImpl extends CrudServiceImpl<Item, Long> implements Item
   /**
    * Endereço(s) de email para notificações administrativas.
    *
-   * <p>Configurável via UTFPR_EMAIL_ADMIN, com fallback para dainf.labs@gmail.com.
+   * <p>Configurável via propriedade {@code app.email.admin}, com fallback para
+   * dainf.labs@gmail.com.
    */
   @Value("${app.email.admin:dainf.labs@gmail.com}")
   private String adminEmail;
