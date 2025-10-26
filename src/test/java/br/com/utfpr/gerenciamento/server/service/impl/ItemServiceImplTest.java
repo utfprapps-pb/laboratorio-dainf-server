@@ -18,12 +18,14 @@ import java.math.BigDecimal;
 import java.util.Optional;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
-import org.mockito.MockitoAnnotations;
+import org.mockito.junit.jupiter.MockitoExtension;
 import org.modelmapper.ModelMapper;
 import org.springframework.context.ApplicationEventPublisher;
 
+@ExtendWith(MockitoExtension.class)
 class ItemServiceImplTest {
 
   @Mock private ItemRepository itemRepository;
@@ -42,7 +44,6 @@ class ItemServiceImplTest {
 
   @BeforeEach
   void setUp() {
-    MockitoAnnotations.openMocks(this);
     item = new Item();
     item.setId(1L);
     item.setNome("Notebook Dell");
@@ -152,6 +153,27 @@ class ItemServiceImplTest {
         br.com.utfpr.gerenciamento.server.exception.EntityNotFoundException.class,
         () -> service.findOneWithDisponibilidade(999L));
     verify(itemRepository, times(1)).findByIdWithQtdeEmprestada(999L);
+  }
+
+  @Test
+  void testFindOneWithDisponibilidade_Permanente_QtdeEmprestadaNull() {
+    // Arrange - projeção retorna null para qtdeEmprestada
+    item.setTipoItem(TipoItem.P);
+    item.setSaldo(new BigDecimal("10.00"));
+
+    ItemWithQtdeEmprestada projection = mock(ItemWithQtdeEmprestada.class);
+    when(projection.getItem()).thenReturn(item);
+    when(projection.getQtdeEmprestada()).thenReturn(null); // Simula null da projeção
+    when(itemRepository.findByIdWithQtdeEmprestada(1L)).thenReturn(Optional.of(projection));
+
+    // Act
+    Item resultItem = service.findOneWithDisponibilidade(1L);
+
+    // Assert - deve tratar null como zero
+    assertNotNull(resultItem);
+    assertEquals(0, resultItem.getQuantidadeEmprestada().compareTo(BigDecimal.ZERO));
+    assertEquals(new BigDecimal("10.00"), resultItem.getDisponivelEmprestimoCalculado());
+    verify(itemRepository, times(1)).findByIdWithQtdeEmprestada(1L);
   }
 
   @Test

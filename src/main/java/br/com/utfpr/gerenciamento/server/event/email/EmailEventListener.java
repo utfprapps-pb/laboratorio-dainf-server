@@ -70,6 +70,9 @@ public class EmailEventListener {
   /** Timeout em segundos para transação de processamento de email. */
   private static final int EMAIL_TRANSACTION_TIMEOUT_SECONDS = 30;
 
+  /** ID do relatório Jasper de estoque mínimo (itens que atingiram quantidade mínima). */
+  private static final long RELATORIO_ESTOQUE_MINIMO_ID = 6L;
+
   /**
    * Endereço de email remetente (conta SMTP autenticada).
    *
@@ -189,9 +192,10 @@ public class EmailEventListener {
           "Processando evento de notificação de estoque mínimo para {}",
           EmailUtils.maskEmail(adminEmail));
 
-      // Gera relatório Jasper em PDF (ID 6 = relatório de estoque mínimo)
+      // Gera relatório Jasper em PDF
       byte[] reportPdf =
-          JasperExportManager.exportReportToPdf(relatorioService.generateReport(6L, null));
+          JasperExportManager.exportReportToPdf(
+              relatorioService.generateReport(RELATORIO_ESTOQUE_MINIMO_ID, null));
 
       // Constrói email com template FreeMarker
       String conteudo = emailService.buildTemplateEmail(null, event.getTemplateName());
