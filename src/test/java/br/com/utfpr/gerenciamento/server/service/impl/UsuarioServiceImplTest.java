@@ -21,6 +21,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.mockito.junit.jupiter.MockitoSettings;
 import org.mockito.quality.Strictness;
 import org.modelmapper.ModelMapper;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
 @ExtendWith(MockitoExtension.class)
@@ -40,6 +41,8 @@ class UsuarioServiceImplTest {
   @Mock private PermissaoService permissaoService;
 
   @Mock private NadaConstaRepository nadaConstaRepository;
+
+  @Mock private ApplicationEventPublisher eventPublisher;
 
   @InjectMocks private UsuarioServiceImpl usuarioService;
 
@@ -333,6 +336,7 @@ class UsuarioServiceImplTest {
     br.com.utfpr.gerenciamento.server.model.RecoverPassword recoverPassword =
         new br.com.utfpr.gerenciamento.server.model.RecoverPassword();
     recoverPassword.setEmail("teste@test.com");
+    recoverPassword.setDateTime(java.time.LocalDateTime.now()); // Código não expirado
 
     Usuario usuarioMock = new Usuario();
     usuarioMock.setEmail("teste@test.com");
@@ -349,7 +353,8 @@ class UsuarioServiceImplTest {
     // Then
     assertNotNull(response);
     assertEquals(
-        "Senha alterada. Já é possível autenticar-se com a nova senha.", response.getMessage());
+        "Senha alterada com sucesso. Você já pode fazer login com a nova senha.",
+        response.getMessage());
     verify(passwordEncoder).encode("novaSenha123");
     verify(usuarioRepository)
         .save(argThat(u -> u.getPassword().equals("$2a$10$encodedNewPassword")));

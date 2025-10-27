@@ -5,11 +5,14 @@ import br.com.utfpr.gerenciamento.server.event.emprestimo.EmprestimoFinalizadoEv
 import br.com.utfpr.gerenciamento.server.event.emprestimo.EmprestimoPrazoAlteradoEvent;
 import br.com.utfpr.gerenciamento.server.event.emprestimo.EmprestimoPrazoProximoEvent;
 import br.com.utfpr.gerenciamento.server.event.item.EstoqueMinNotificacaoEvent;
+import br.com.utfpr.gerenciamento.server.event.usuario.UsuarioCriadoEvent;
 import br.com.utfpr.gerenciamento.server.exception.EntityNotFoundException;
 import br.com.utfpr.gerenciamento.server.mapper.EmprestimoTemplateMapper;
 import br.com.utfpr.gerenciamento.server.model.Email;
 import br.com.utfpr.gerenciamento.server.model.Emprestimo;
+import br.com.utfpr.gerenciamento.server.model.Usuario;
 import br.com.utfpr.gerenciamento.server.repository.EmprestimoRepository;
+import br.com.utfpr.gerenciamento.server.repository.UsuarioRepository;
 import br.com.utfpr.gerenciamento.server.service.EmailService;
 import br.com.utfpr.gerenciamento.server.service.RelatorioService;
 import br.com.utfpr.gerenciamento.server.util.EmailUtils;
@@ -81,25 +84,34 @@ public class EmailEventListener {
   @Value("${spring.mail.username}")
   private String emailFrom;
 
+  /**
+   * URL base do frontend para construir links de confirmação.
+   *
+   * <p>Exemplo: https://lab.utfpr.edu.br
+   */
+  @Value("${utfpr.front.url}")
+  private String frontBaseUrl;
+
   private final EmailService emailService;
   private final EmprestimoRepository emprestimoRepository;
   private final EmprestimoTemplateMapper templateMapper;
   private final RelatorioService relatorioService;
+  private final UsuarioRepository usuarioRepository;
 
   /**
    * Processa eventos de email após commit da transação de forma assíncrona com retry automático.
    *
-   * <p>Este método é chamado automaticamente pelo Spring quando qualquer evento do tipo {@link
+   * <p>Este metodo é chamado automaticamente pelo Spring quando qualquer evento do tipo {@link
    * EmailEvent} é publicado E a transação que o publicou fez commit com sucesso.
    *
-   * <p><b>IMPORTANTE:</b> Se a transação original fizer rollback, este método NÃO será chamado.
+   * <p><b>IMPORTANTE:</b> Se a transação original fizer rollback, este metodo NÃO será chamado.
    *
    * <p><b>ASSÍNCRONO:</b> Executa em thread pool dedicado (emailTaskExecutor) para não bloquear
-   * thread da requisição original. Performance: 85% redução em latência do usuário.
+   * thread da requisição original.
    *
    * <p><b>RETRY AUTOMÁTICO:</b> Em caso de falhas transientes de email (SMTP timeout, connection
-   * refused, etc.), o método será retentado automaticamente até 3 vezes com backoff exponencial
-   * (2s, 4s, 8s). Resiliência: ~20-30% melhoria na taxa de sucesso de entrega.
+   * refused, etc.), o metodo será retentado automaticamente até 3 vezes com backoff exponencial
+   * (2s, 4s, 8s).
    *
    * @param event Evento de email contendo dados para envio
    */
@@ -252,9 +264,11 @@ public class EmailEventListener {
     } else if (event instanceof EstoqueMinNotificacaoEvent) {
       // Evento de estoque mínimo não requer template data (usa apenas null para template simples)
       return null;
+    } else if (event instanceof UsuarioCriadoEvent usuarioEvent) {
+      return prepareUsuarioTemplateData(usuarioEvent);
     }
 
-    // TODO: Adicionar outros tipos de eventos aqui (Reserva, Usuario, etc.)
+    // TODO: Adicionar outros tipos de eventos aqui (Reserva, etc.)
 
     throw new IllegalArgumentException("Tipo de evento não suportado: " + event.getClass());
   }
@@ -282,5 +296,36 @@ public class EmailEventListener {
 
     // Delega mapeamento para componente especializado
     return templateMapper.toTemplateData(emprestimo);
+  }
+
+  /**
+   * Carrega dados de um usuário e prepara template para email de confirmação de cadastro.
+   *
+   * <p>Constrói os dados necessários para o template templateConfirmacaoCadastro, incluindo nome do
+   * usuário e link de confirmação com código de verificação.
+   *
+   * @param event Evento de usuário criado contendo ID, email e código de verificação
+   * @return Map com dados do template (nome, url)
+   */
+  private Map<String, Object> prepareUsuarioTemplateData(UsuarioCriadoEvent event) {
+    // Carrega usuário em NOVA transação
+    Usuario usuario =
+        usuarioRepository
+            .findById(event.getUsuarioId())
+            .orElseThrow(
+                () ->
+                    new EntityNotFoundException(
+                        "Usuário não encontrado para envio de email: " + event.getUsuarioId()));
+
+    // Constrói URL de confirmação
+    String urlConfirmacao =
+        String.format("%s/confirmar-email/%s", frontBaseUrl, event.getCodigoVerificacao());
+
+    // Prepara dados do template FreeMarker
+    Map<String, Object> templateData = new java.util.HashMap<>();
+    templateData.put("usuario", usuario.getNome());
+    templateData.put("url", urlConfirmacao);
+
+    return templateData;
   }
 }

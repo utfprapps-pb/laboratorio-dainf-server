@@ -6,6 +6,7 @@ import br.com.utfpr.gerenciamento.server.model.Usuario;
 import jakarta.persistence.criteria.Join;
 import jakarta.persistence.criteria.JoinType;
 import jakarta.persistence.criteria.Predicate;
+import jakarta.persistence.criteria.Root;
 import java.util.Arrays;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -19,8 +20,32 @@ import org.springframework.data.jpa.domain.Specification;
  */
 public class UsuarioSpecifications {
 
+  public static final String USERNAME_TEXT = "username";
+  public static final String DOCUMENTO_TEXT = "documento";
+
   private UsuarioSpecifications() {
     // Utility class - construtor privado
+  }
+
+  /**
+   * Obt Obtain existing permissoes JOIN or creates a new one.
+   *
+   * <p>Prevents duplicate JOINs on the same table by reusing existing joins. This optimization is
+   * critical when combining multiple specifications that all need to filter by user roles.
+   *
+   * @param root the root entity
+   * @return existing or new JOIN on permissoes
+   */
+  @SuppressWarnings("unchecked")
+  private static Join<Usuario, Permissao> getOrCreatePermissoesJoin(Root<Usuario> root) {
+    // Check if join already exists
+    for (Join<?, ?> join : root.getJoins()) {
+      if (join.getAttribute().getName().equals("permissoes")) {
+        return (Join<Usuario, Permissao>) join;
+      }
+    }
+    // Create new join only if not found
+    return root.join("permissoes", JoinType.INNER);
   }
 
   /**
@@ -42,11 +67,62 @@ public class UsuarioSpecifications {
       Set<String> roleNames =
           Arrays.stream(roles).map(UserRole::getAuthority).collect(Collectors.toSet());
 
-      // JOIN INNER em Usuario.permissoes
-      Join<Usuario, Permissao> permissoesJoin = root.join("permissoes", JoinType.INNER);
+      // Reusa JOIN existente ou cria novo
+      Join<Usuario, Permissao> permissoesJoin = getOrCreatePermissoesJoin(root);
 
       // WHERE permissao.nome IN ('ROLE_PROFESSOR', 'ROLE_ALUNO', ...)
       return permissoesJoin.get("nome").in(roleNames);
+    };
+  }
+
+  /**
+   * Filtra usuários por roles e opcionalmente por texto (nome/username/documento).
+   *
+   * <p>Este método unifica a filtragem por roles com busca textual opcional, criando apenas UM JOIN
+   * na tabela permissoes. Se o texto de busca for nulo ou vazio, retorna todos os usuários com as
+   * roles especificadas.
+   *
+   * <p>Substitui o padrão anti-pattern de combinar hasAnyRole() + searchByTextAndRoles() que criava
+   * JOINs duplicados.
+   *
+   * <p>Exemplo: searchByTextWithRoles(null, UserRole.PROFESSOR) retorna todos professores
+   * searchByTextWithRoles("joão", UserRole.PROFESSOR, UserRole.ALUNO) retorna professores e alunos
+   * cujo nome/username/documento contenha "joão"
+   *
+   * @param searchText texto para buscar (case-insensitive, busca parcial). Pode ser null/blank.
+   * @param roles varargs de UserRole para filtrar (obrigatório)
+   * @return Specification combinando filtros de roles e texto (opcional)
+   */
+  public static Specification<Usuario> searchByTextWithRoles(String searchText, UserRole... roles) {
+    if (roles == null || roles.length == 0) {
+      throw new IllegalArgumentException("Roles não podem ser nulas ou vazias");
+    }
+
+    return (root, query, cb) -> {
+      // Reusa JOIN existente ou cria novo (apenas 1 JOIN)
+      Join<Usuario, Permissao> permissoesJoin = getOrCreatePermissoesJoin(root);
+
+      // Filtro de roles (obrigatório)
+      Set<String> roleNames =
+          Arrays.stream(roles).map(UserRole::getAuthority).collect(Collectors.toSet());
+      Predicate rolesPredicate = permissoesJoin.get("nome").in(roleNames);
+
+      // Filtro textual (opcional)
+      if (searchText == null || searchText.isBlank()) {
+        // Sem filtro textual: retorna todos usuários com as roles
+        return rolesPredicate;
+      }
+
+      // Com filtro textual: combina ambos os filtros
+      String upperText = "%" + searchText.toUpperCase() + "%";
+      Predicate textPredicate =
+          cb.or(
+              cb.like(cb.upper(root.get("nome")), upperText),
+              cb.like(cb.upper(root.get(USERNAME_TEXT)), upperText),
+              cb.like(cb.upper(root.get(DOCUMENTO_TEXT)), upperText));
+
+      // WHERE (nome LIKE OR username LIKE OR documento LIKE) AND (permissao.nome IN ...)
+      return cb.and(textPredicate, rolesPredicate);
     };
   }
 
@@ -78,8 +154,8 @@ public class UsuarioSpecifications {
       Predicate textPredicate =
           cb.or(
               cb.like(cb.upper(root.get("nome")), upperText),
-              cb.like(cb.upper(root.get("username")), upperText),
-              cb.like(cb.upper(root.get("documento")), upperText));
+              cb.like(cb.upper(root.get(USERNAME_TEXT)), upperText),
+              cb.like(cb.upper(root.get(DOCUMENTO_TEXT)), upperText));
 
       // WHERE (nome LIKE OR username LIKE OR documento LIKE) AND (permissao.nome IN ...)
       return cb.and(textPredicate, rolesPredicate);
@@ -105,8 +181,8 @@ public class UsuarioSpecifications {
       String upperText = "%" + searchText.toUpperCase() + "%";
       return cb.or(
           cb.like(cb.upper(root.get("nome")), upperText),
-          cb.like(cb.upper(root.get("username")), upperText),
-          cb.like(cb.upper(root.get("documento")), upperText));
+          cb.like(cb.upper(root.get(USERNAME_TEXT)), upperText),
+          cb.like(cb.upper(root.get(DOCUMENTO_TEXT)), upperText));
     };
   }
 
@@ -120,7 +196,10 @@ public class UsuarioSpecifications {
    */
   public static Specification<Usuario> distinctResults() {
     return (root, query, cb) -> {
-      query.distinct(true);
+      if (query != null) {
+        query.distinct(true);
+      }
+
       return cb.conjunction(); // WHERE 1=1 (no-op predicate)
     };
   }
