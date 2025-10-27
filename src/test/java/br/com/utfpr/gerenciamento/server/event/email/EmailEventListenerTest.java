@@ -6,6 +6,7 @@ import static org.mockito.Mockito.*;
 import br.com.utfpr.gerenciamento.server.event.emprestimo.*;
 import br.com.utfpr.gerenciamento.server.event.item.EstoqueMinNotificacaoEvent;
 import br.com.utfpr.gerenciamento.server.event.nadaConsta.*;
+import br.com.utfpr.gerenciamento.server.exception.EntityNotFoundException;
 import br.com.utfpr.gerenciamento.server.mapper.EmprestimoTemplateMapper;
 import br.com.utfpr.gerenciamento.server.model.Email;
 import br.com.utfpr.gerenciamento.server.model.Emprestimo;
@@ -13,6 +14,7 @@ import br.com.utfpr.gerenciamento.server.repository.EmprestimoRepository;
 import br.com.utfpr.gerenciamento.server.service.EmailService;
 import br.com.utfpr.gerenciamento.server.service.RelatorioService;
 import java.lang.reflect.Field;
+import java.lang.reflect.Method;
 import java.util.*;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -226,5 +228,180 @@ class EmailEventListenerTest {
             "Pendências de Empréstimos",
             "pendencias-emprestimos.html");
     assertThrows(RuntimeException.class, () -> listener.handleNadaConstaPendenciasEvent(event));
+  }
+
+  @Test
+  void testProcessEmailWithTemplateSuccess() throws Exception {
+    doNothing()
+        .when(emailService)
+        .sendEmailWithTemplate("data", "to@email.com", "subject", "template");
+    Method m =
+        EmailEventListener.class.getDeclaredMethod(
+            "processEmailWithTemplate", Object.class, String.class, String.class, String.class);
+    m.setAccessible(true);
+    m.invoke(listener, "data", "to@email.com", "subject", "template");
+    verify(emailService).sendEmailWithTemplate("data", "to@email.com", "subject", "template");
+  }
+
+  @Test
+  void testProcessEmailWithTemplateMailException() throws Exception {
+    doThrow(new MailException("fail") {})
+        .when(emailService)
+        .sendEmailWithTemplate(any(), any(), any(), any());
+    Method m =
+        EmailEventListener.class.getDeclaredMethod(
+            "processEmailWithTemplate", Object.class, String.class, String.class, String.class);
+    m.setAccessible(true);
+    assertThrows(
+        MailException.class,
+        () -> {
+          try {
+            m.invoke(listener, "data", "to@email.com", "subject", "template");
+          } catch (Exception e) {
+            Throwable cause = e.getCause();
+            if (cause instanceof MailException) throw (MailException) cause;
+            throw new RuntimeException(e);
+          }
+        });
+  }
+
+  @Test
+  void testProcessEmailWithTemplateEntityNotFoundException() throws Exception {
+    doThrow(new EntityNotFoundException("fail"))
+        .when(emailService)
+        .sendEmailWithTemplate(any(), any(), any(), any());
+    Method m =
+        EmailEventListener.class.getDeclaredMethod(
+            "processEmailWithTemplate", Object.class, String.class, String.class, String.class);
+    m.setAccessible(true);
+    m.invoke(listener, "data", "to@email.com", "subject", "template");
+    // No exception thrown, just logs
+  }
+
+  @Test
+  void testProcessEmailWithTemplateIllegalArgumentException() throws Exception {
+    doThrow(new IllegalArgumentException("fail"))
+        .when(emailService)
+        .sendEmailWithTemplate(any(), any(), any(), any());
+    Method m =
+        EmailEventListener.class.getDeclaredMethod(
+            "processEmailWithTemplate", Object.class, String.class, String.class, String.class);
+    m.setAccessible(true);
+    m.invoke(listener, "data", "to@email.com", "subject", "template");
+    // No exception thrown, just logs
+  }
+
+  @Test
+  void testProcessEmailWithAttachmentSuccess() throws Exception {
+    Email email =
+        Email.builder()
+            .para("to@email.com")
+            .de("from@email.com")
+            .titulo("subject")
+            .conteudo("body")
+            .build();
+    doNothing().when(emailService).enviar(email);
+    Method m =
+        EmailEventListener.class.getDeclaredMethod(
+            "processEmailWithAttachment", Email.class, String.class, String.class);
+    m.setAccessible(true);
+    m.invoke(listener, email, "to@email.com", "subject");
+    verify(emailService).enviar(email);
+  }
+
+  @Test
+  void testProcessEmailWithAttachmentMailException() throws Exception {
+    Email email =
+        Email.builder()
+            .para("to@email.com")
+            .de("from@email.com")
+            .titulo("subject")
+            .conteudo("body")
+            .build();
+    doThrow(new MailException("fail") {}).when(emailService).enviar(email);
+    Method m =
+        EmailEventListener.class.getDeclaredMethod(
+            "processEmailWithAttachment", Email.class, String.class, String.class);
+    m.setAccessible(true);
+    assertThrows(
+        MailException.class,
+        () -> {
+          try {
+            m.invoke(listener, email, "to@email.com", "subject");
+          } catch (Exception e) {
+            Throwable cause = e.getCause();
+            if (cause instanceof MailException) throw (MailException) cause;
+            throw new RuntimeException(e);
+          }
+        });
+  }
+
+  @Test
+  void testProcessEmailWithAttachmentGenericException() throws Exception {
+    Email email =
+        Email.builder()
+            .para("to@email.com")
+            .de("from@email.com")
+            .titulo("subject")
+            .conteudo("body")
+            .build();
+    doThrow(new RuntimeException("fail")).when(emailService).enviar(email);
+    Method m =
+        EmailEventListener.class.getDeclaredMethod(
+            "processEmailWithAttachment", Email.class, String.class, String.class);
+    m.setAccessible(true);
+    m.invoke(listener, email, "to@email.com", "subject");
+    // No exception thrown, just logs
+  }
+
+  @Test
+  void testPrepareTemplateDataForEventUnsupportedType() throws Exception {
+    EmailEvent event = mock(EmailEvent.class);
+    Method m =
+        EmailEventListener.class.getDeclaredMethod("prepareTemplateDataForEvent", EmailEvent.class);
+    m.setAccessible(true);
+    assertThrows(
+        IllegalArgumentException.class,
+        () -> {
+          try {
+            m.invoke(listener, event);
+          } catch (Exception e) {
+            Throwable cause = e.getCause();
+            if (cause instanceof IllegalArgumentException) throw (IllegalArgumentException) cause;
+            throw new RuntimeException(e);
+          }
+        });
+  }
+
+  @Test
+  void testPrepareEmprestimoTemplateDataSuccess() throws Exception {
+    Emprestimo emp = mock(Emprestimo.class);
+    when(emprestimoRepository.findEmprestimoByIdWithRelations(10L)).thenReturn(Optional.of(emp));
+    Map<String, Object> templateData = new HashMap<>();
+    when(templateMapper.toTemplateData(emp)).thenReturn(templateData);
+    Method m =
+        EmailEventListener.class.getDeclaredMethod("prepareEmprestimoTemplateData", Long.class);
+    m.setAccessible(true);
+    Map<String, Object> result = (Map<String, Object>) m.invoke(listener, 10L);
+    assertEquals(templateData, result);
+  }
+
+  @Test
+  void testPrepareEmprestimoTemplateDataEntityNotFound() throws Exception {
+    when(emprestimoRepository.findEmprestimoByIdWithRelations(11L)).thenReturn(Optional.empty());
+    Method m =
+        EmailEventListener.class.getDeclaredMethod("prepareEmprestimoTemplateData", Long.class);
+    m.setAccessible(true);
+    assertThrows(
+        EntityNotFoundException.class,
+        () -> {
+          try {
+            m.invoke(listener, 11L);
+          } catch (Exception e) {
+            Throwable cause = e.getCause();
+            if (cause instanceof EntityNotFoundException) throw (EntityNotFoundException) cause;
+            throw new RuntimeException(e);
+          }
+        });
   }
 }

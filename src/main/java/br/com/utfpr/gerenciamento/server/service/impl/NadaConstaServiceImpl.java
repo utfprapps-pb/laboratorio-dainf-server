@@ -74,11 +74,12 @@ public class NadaConstaServiceImpl extends CrudServiceImpl<NadaConsta, Long>
   }
 
   @Override
-  public NadaConstaResponseDto convertToDto(NadaConsta entity) {
-    var dto = modelMapper.map(entity, NadaConstaResponseDto.class);
-    if (entity.getUsuario() != null) {
-      dto.setUsuarioUsername(entity.getUsuario().getUsername());
+  public NadaConstaResponseDto convertToDto(NadaConsta nadaConsta) {
+    NadaConstaResponseDto dto = modelMapper.map(nadaConsta, NadaConstaResponseDto.class);
+    if (dto == null) {
+      return null;
     }
+    dto.setUsuarioUsername(nadaConsta.getUsuario().getUsername());
     return dto;
   }
 
