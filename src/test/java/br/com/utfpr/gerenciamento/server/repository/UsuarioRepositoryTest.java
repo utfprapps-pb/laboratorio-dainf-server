@@ -39,7 +39,6 @@ class UsuarioRepositoryTest {
   @Autowired private TestEntityManager entityManager;
 
   private Permissao permissaoAluno;
-  private Permissao permissaoProfessor;
 
   @BeforeEach
   void setUp() {
@@ -48,7 +47,7 @@ class UsuarioRepositoryTest {
     permissaoAluno.setNome("ROLE_ALUNO");
     permissaoAluno = entityManager.persist(permissaoAluno);
 
-    permissaoProfessor = new Permissao();
+    Permissao permissaoProfessor = new Permissao();
     permissaoProfessor.setNome("ROLE_PROFESSOR");
     permissaoProfessor = entityManager.persist(permissaoProfessor);
 
@@ -576,14 +575,12 @@ class UsuarioRepositoryTest {
         // searchByTextAndRoles com texto blank
         Arguments.of(
             "searchByTextAndRoles com texto blank",
-            (Runnable)
-                () -> UsuarioSpecifications.searchByTextAndRoles("   ", UserRole.PROFESSOR),
+            (Runnable) () -> UsuarioSpecifications.searchByTextAndRoles("   ", UserRole.PROFESSOR),
             "Texto de busca não pode ser nulo ou vazio"),
         // searchByTextAndRoles com roles nulas
         Arguments.of(
             "searchByTextAndRoles com roles nulas",
-            (Runnable)
-                () -> UsuarioSpecifications.searchByTextAndRoles("teste", (UserRole[]) null),
+            (Runnable) () -> UsuarioSpecifications.searchByTextAndRoles("teste", (UserRole[]) null),
             "Roles não podem ser nulas ou vazias"),
         // searchByTextAndRoles com roles vazias
         Arguments.of(

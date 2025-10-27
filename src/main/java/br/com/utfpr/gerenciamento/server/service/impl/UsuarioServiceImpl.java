@@ -368,7 +368,8 @@ public class UsuarioServiceImpl extends CrudServiceImpl<Usuario, Long>
       return usuario;
     } catch (Exception ex) {
       log.error("Erro ao salvar novo usuário: ", ex);
-      throw new EmailException("Erro ao salvar novo usuário. Verifique os dados e tente novamente.", ex);
+      throw new EmailException(
+          "Erro ao salvar novo usuário. Verifique os dados e tente novamente.", ex);
     }
   }
 
