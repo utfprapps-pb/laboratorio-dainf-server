@@ -1,6 +1,7 @@
 package br.com.utfpr.gerenciamento.server.mapper;
 
 import br.com.utfpr.gerenciamento.server.model.Emprestimo;
+import br.com.utfpr.gerenciamento.server.service.SystemConfigService;
 import br.com.utfpr.gerenciamento.server.util.DateUtil;
 import java.util.HashMap;
 import java.util.Map;
@@ -17,6 +18,12 @@ import org.springframework.stereotype.Component;
  */
 @Component
 public class EmprestimoTemplateMapper {
+
+  private final SystemConfigService systemConfigService;
+
+  public EmprestimoTemplateMapper(SystemConfigService systemConfigService) {
+    this.systemConfigService = systemConfigService;
+  }
 
   /**
    * Converte Emprestimo para Map de dados do template FreeMarker.
@@ -51,6 +58,8 @@ public class EmprestimoTemplateMapper {
     // Listas de itens (emprestados e de devolução)
     template.put("emprestimoItem", emprestimo.getEmprestimoItem());
     template.put("emprestimoDevolucaoItem", emprestimo.getEmprestimoDevolucaoItem());
+    // Adiciona a URL do logo para uso no template
+    template.put("logoUrl", systemConfigService.getLogoUrl());
 
     return template;
   }

@@ -1,4 +1,4 @@
-<html>
+<html xmlns:th="http://www.thymeleaf.org">
 <head>
     <meta charset="UTF-8"/>
     <style>
@@ -59,14 +59,14 @@
 </div>
 <div>
     <div class="article">
-        <p>Olá ${usuarioEmprestimo},</p>
+        <p>Olá <span th:text="${usuarioEmprestimo}">Usuário</span>,</p>
         <br/><br/>
-        <p>O seu empréstimo realizado no dia ${dtEmprestimo} recebeu um novo prazo de devolução, a nova data é ${dtPrazoDevolucao}.</p>
+        <p>O seu empréstimo realizado no dia <span th:text="${dtEmprestimo}">data do empréstimo</span> recebeu um novo prazo de devolução, a nova data é <span th:text="${dtPrazoDevolucao}">data de devolução</span>.</p>
         <br/>
         <p>Qualquer dúvida, entrar em contato conosco.</p>
         <br/><br/>
         <p>Att,</p>
-        <p>${usuarioResponsavel}</p>
+        <p><span th:text="${usuarioResponsavel}">Usuário Responsável</span></p>
     </div>
 </div>
 

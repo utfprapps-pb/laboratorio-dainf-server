@@ -2,12 +2,13 @@ package br.com.utfpr.gerenciamento.server.service.impl;
 
 import br.com.utfpr.gerenciamento.server.dto.NadaConstaResponseDto;
 import br.com.utfpr.gerenciamento.server.enumeration.NadaConstaStatus;
+import br.com.utfpr.gerenciamento.server.event.nadaConsta.NadaConstaEmitidoEvent;
+import br.com.utfpr.gerenciamento.server.event.nadaConsta.NadaConstaPendenciasEvent;
 import br.com.utfpr.gerenciamento.server.exception.NadaConstaException;
 import br.com.utfpr.gerenciamento.server.model.Emprestimo;
 import br.com.utfpr.gerenciamento.server.model.NadaConsta;
 import br.com.utfpr.gerenciamento.server.model.Usuario;
 import br.com.utfpr.gerenciamento.server.repository.NadaConstaRepository;
-import br.com.utfpr.gerenciamento.server.service.EmailService;
 import br.com.utfpr.gerenciamento.server.service.EmprestimoService;
 import br.com.utfpr.gerenciamento.server.service.NadaConstaService;
 import br.com.utfpr.gerenciamento.server.service.SystemConfigService;
@@ -23,6 +24,7 @@ import java.util.List;
 import java.util.Map;
 import lombok.extern.slf4j.Slf4j;
 import org.modelmapper.ModelMapper;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -36,22 +38,22 @@ public class NadaConstaServiceImpl extends CrudServiceImpl<NadaConsta, Long>
   private final UsuarioService usuarioService;
   private final ModelMapper modelMapper;
   private final EmprestimoService emprestimoService;
-  private final EmailService emailService;
   private final SystemConfigService systemConfigService;
+  private final ApplicationEventPublisher eventPublisher;
 
   public NadaConstaServiceImpl(
       NadaConstaRepository nadaConstaRepository,
       UsuarioService usuarioService,
       ModelMapper modelMapper,
       EmprestimoService emprestimoService,
-      EmailService emailService,
-      SystemConfigService systemConfigService) {
+      SystemConfigService systemConfigService,
+      ApplicationEventPublisher eventPublisher) {
     this.nadaConstaRepository = nadaConstaRepository;
     this.usuarioService = usuarioService;
     this.modelMapper = modelMapper;
     this.emprestimoService = emprestimoService;
-    this.emailService = emailService;
     this.systemConfigService = systemConfigService;
+    this.eventPublisher = eventPublisher;
   }
 
   @Override
@@ -78,48 +80,26 @@ public class NadaConstaServiceImpl extends CrudServiceImpl<NadaConsta, Long>
     return dto;
   }
 
-  @Override
-  @Transactional
-  public NadaConstaResponseDto solicitarNadaConsta(String documento) {
-    Usuario usuario = usuarioService.findByDocumento(documento);
-    if (usuario == null) {
-      throw new RuntimeException("Usuário não encontrado para o documento informado.");
-    }
-    // Pre-check for open Nada Consta solicitation
-    if (usuarioService.hasSolicitacaoNadaConstaPendingOrCompleted(usuario.getUsername())) {
-      throw new NadaConstaException(
-          "Já existe uma solicitação de Nada Consta em aberto ou concluída para este usuário.");
-    }
+  public void postSave(NadaConsta entity) {
+    if (entity == null || entity.getUsuario() == null) return;
+    Usuario usuario = entity.getUsuario();
     List<Emprestimo> emprestimosAbertos =
         emprestimoService.findAllEmprestimosAbertosByUsuario(usuario.getUsername());
-    NadaConsta nadaConsta =
-        NadaConsta.builder()
-            .usuario(usuario)
-            .status(NadaConstaStatus.PENDING)
-            .createdAt(LocalDateTime.now())
-            .createdBy(usuario.getUsername())
-            .build();
-    nadaConsta = nadaConstaRepository.save(nadaConsta);
-    if (emprestimosAbertos.isEmpty()) {
-      // Buscar e-mail de destino via SystemConfigService
+    if (entity.getStatus() == NadaConstaStatus.COMPLETED && emprestimosAbertos.isEmpty()) {
       String destinatario = systemConfigService.getEmailNadaConsta();
-      // Monta dados para o template
       DateTimeFormatter formatter =
           DateTimeFormatter.ofPattern("dd 'de' MMMM 'de' yyyy").withLocale(DateUtil.PT_BR);
       Map<String, Object> templateData = new HashMap<>();
       templateData.put("nomeAluno", usuario.getNome());
       templateData.put("registroAcademico", usuario.getDocumento());
-      templateData.put("dataFormatada", LocalDateTime.now().format(formatter));
+      templateData.put(
+          "dataFormatada",
+          entity.getCreatedAt() != null
+              ? entity.getCreatedAt().format(formatter)
+              : LocalDateTime.now().format(formatter));
       templateData.put("logoUrl", systemConfigService.getLogoUrl());
-      emailService.sendEmailWithTemplate(
-          templateData, destinatario, "Declaração Nada Consta", "nada-consta-declaracao.html");
-      nadaConsta.setStatus(NadaConstaStatus.COMPLETED);
-      nadaConsta.setSendAt(LocalDateTime.now());
-      nadaConstaRepository.save(nadaConsta);
-      usuario.setAtivo(false);
-      usuarioService.save(usuario);
-    } else {
-      // Monta lista de itens pendentes para o template
+      eventPublisher.publishEvent(new NadaConstaEmitidoEvent(this, destinatario, templateData));
+    } else if (entity.getStatus() == NadaConstaStatus.PENDING && !emprestimosAbertos.isEmpty()) {
       List<Map<String, Object>> itensPendentesTemplate = new ArrayList<>();
       for (Emprestimo emp : emprestimosAbertos) {
         if (emp.getEmprestimoItem() != null) {
@@ -142,18 +122,42 @@ public class NadaConstaServiceImpl extends CrudServiceImpl<NadaConsta, Long>
       templateData.put("nomeAluno", usuario.getNome());
       templateData.put("emprestimos", itensPendentesTemplate);
       String to = usuario.getEmail();
-      if (!EmailUtils.isValidEmail(to)) {
-        log.warn("Email inválido ou ausente para usuário {}", usuario.getUsername());
-        throw new IllegalStateException("E-mail do usuário ausente para envio de pendências.");
+      if (EmailUtils.isValidEmail(to)) {
+        eventPublisher.publishEvent(new NadaConstaPendenciasEvent(this, to, templateData));
       }
-      emailService.sendEmailWithTemplate(
-          templateData, to, "Pendências de Empréstimos", "pendencias-emprestimos.html");
-      nadaConsta.setStatus(NadaConstaStatus.PENDING);
-      nadaConsta.setSendAt(LocalDateTime.now());
-      nadaConstaRepository.save(nadaConsta);
-      usuario.setAtivo(false);
-      usuarioService.save(usuario);
     }
+  }
+
+  @Override
+  @Transactional
+  public NadaConstaResponseDto solicitarNadaConsta(String documento) {
+    Usuario usuario = usuarioService.findByDocumento(documento);
+    if (usuario == null) {
+      throw new RuntimeException("Usuário não encontrado para o documento informado.");
+    }
+    // Pre-check for open Nada Consta solicitation
+    if (usuarioService.hasSolicitacaoNadaConstaPendingOrCompleted(usuario.getUsername())) {
+      throw new NadaConstaException(
+          "Já existe uma solicitação de Nada Consta em aberto ou concluída para este usuário.");
+    }
+    List<Emprestimo> emprestimosAbertos =
+        emprestimoService.findAllEmprestimosAbertosByUsuario(usuario.getUsername());
+    NadaConsta nadaConsta =
+        NadaConsta.builder()
+            .usuario(usuario)
+            .status(
+                emprestimosAbertos.isEmpty()
+                    ? NadaConstaStatus.COMPLETED
+                    : NadaConstaStatus.PENDING)
+            .createdAt(LocalDateTime.now())
+            .createdBy(usuario.getUsername())
+            .build();
+    nadaConsta = nadaConstaRepository.save(nadaConsta);
+    nadaConsta.setSendAt(LocalDateTime.now());
+    nadaConstaRepository.save(nadaConsta);
+    usuario.setAtivo(false);
+    usuarioService.save(usuario);
+    postSave(nadaConsta);
     return convertToDto(nadaConsta);
   }
 }

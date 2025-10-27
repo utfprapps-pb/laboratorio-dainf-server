@@ -128,7 +128,7 @@ public class EmprestimoServiceImpl extends CrudServiceImpl<Emprestimo, Long>
   }
 
   /**
-   * Método interno para executar Specification. Não deve ser chamado diretamente (use {@link
+   * Metodo interno para executar Specification. Não deve ser chamado diretamente (use {@link
    * #findAllPagedWithTextFilter}).
    *
    * <p><b>IMPORTANTE:</b> Não tem @Cacheable pois Specification não tem equals/hashCode estável.
@@ -472,7 +472,7 @@ public class EmprestimoServiceImpl extends CrudServiceImpl<Emprestimo, Long>
 
     // Cria itens de devolução para materiais consumíveis
     emprestimo.setEmprestimoDevolucaoItem(
-        createEmprestimoItemDevolucao(emprestimo.getEmprestimoItem()));
+        createEmprestimoItemDevolucao(new ArrayList<>(emprestimo.getEmprestimoItem())));
   }
 
   @Override

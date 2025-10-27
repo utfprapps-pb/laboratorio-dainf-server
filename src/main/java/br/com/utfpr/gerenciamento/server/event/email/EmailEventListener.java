@@ -5,6 +5,8 @@ import br.com.utfpr.gerenciamento.server.event.emprestimo.EmprestimoFinalizadoEv
 import br.com.utfpr.gerenciamento.server.event.emprestimo.EmprestimoPrazoAlteradoEvent;
 import br.com.utfpr.gerenciamento.server.event.emprestimo.EmprestimoPrazoProximoEvent;
 import br.com.utfpr.gerenciamento.server.event.item.EstoqueMinNotificacaoEvent;
+import br.com.utfpr.gerenciamento.server.event.nadaConsta.NadaConstaEmitidoEvent;
+import br.com.utfpr.gerenciamento.server.event.nadaConsta.NadaConstaPendenciasEvent;
 import br.com.utfpr.gerenciamento.server.exception.EntityNotFoundException;
 import br.com.utfpr.gerenciamento.server.mapper.EmprestimoTemplateMapper;
 import br.com.utfpr.gerenciamento.server.model.Email;
@@ -231,6 +233,96 @@ public class EmailEventListener {
   }
 
   /**
+   * Processa eventos de email de "Nada Consta" após commit da transação.
+   *
+   * <p>Este handler especializado processa eventos {@link NadaConstaEmitidoEvent} e {@link
+   * NadaConstaPendenciasEvent} de forma assíncrona APÓS commit da transação.
+   *
+   * <p><b>Características:</b>
+   *
+   * <ul>
+   *   <li>✅ Email enviado de forma assíncrona
+   *   <li>✅ Retry automático em caso de falhas transientes (MailException)
+   *   <li>✅ Falhas não afetam transação de negócio original
+   * </ul>
+   *
+   * @param event Evento de email de Nada Consta
+   */
+  @Retryable(
+      retryFor = {MailException.class},
+      backoff = @Backoff(delay = 2000, multiplier = 2))
+  @Async("emailTaskExecutor")
+  @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
+  @Transactional(
+      readOnly = true,
+      propagation = org.springframework.transaction.annotation.Propagation.REQUIRES_NEW,
+      timeout = EMAIL_TRANSACTION_TIMEOUT_SECONDS)
+  public void handleNadaConstaEmitidoEvent(NadaConstaEmitidoEvent event) {
+    try {
+      log.info(
+          "Processando evento de Nada Consta emitido para {}",
+          EmailUtils.maskEmail(event.getRecipient()));
+      emailService.sendEmailWithTemplate(
+          event.getTemplateData(),
+          event.getRecipient(),
+          event.getSubject(),
+          event.getTemplateName());
+      log.info(
+          "Email de Nada Consta enviado com sucesso para {}",
+          EmailUtils.maskEmail(event.getRecipient()));
+    } catch (MailException e) {
+      log.warn(
+          "Falha temporária ao enviar Nada Consta para {} (tentará novamente): {}",
+          EmailUtils.maskEmail(event.getRecipient()),
+          e.getMessage());
+      throw e;
+    } catch (Exception e) {
+      log.error(
+          "Erro não-retryável ao processar Nada Consta para {}: {}",
+          EmailUtils.maskEmail(event.getRecipient()),
+          e.getMessage(),
+          e);
+    }
+  }
+
+  @Retryable(
+      retryFor = {MailException.class},
+      backoff = @Backoff(delay = 2000, multiplier = 2))
+  @Async("emailTaskExecutor")
+  @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
+  @Transactional(
+      readOnly = true,
+      propagation = org.springframework.transaction.annotation.Propagation.REQUIRES_NEW,
+      timeout = EMAIL_TRANSACTION_TIMEOUT_SECONDS)
+  public void handleNadaConstaPendenciasEvent(NadaConstaPendenciasEvent event) {
+    try {
+      log.info(
+          "Processando evento de Pendências de Nada Consta para {}",
+          EmailUtils.maskEmail(event.getRecipient()));
+      emailService.sendEmailWithTemplate(
+          event.getTemplateData(),
+          event.getRecipient(),
+          event.getSubject(),
+          event.getTemplateName());
+      log.info(
+          "Email de Pendências de Nada Consta enviado com sucesso para {}",
+          EmailUtils.maskEmail(event.getRecipient()));
+    } catch (MailException e) {
+      log.warn(
+          "Falha temporária ao enviar Pendências de Nada Consta para {} (tentará novamente): {}",
+          EmailUtils.maskEmail(event.getRecipient()),
+          e.getMessage());
+      throw e;
+    } catch (Exception e) {
+      log.error(
+          "Erro não-retryável ao processar Pendências de Nada Consta para {}: {}",
+          EmailUtils.maskEmail(event.getRecipient()),
+          e.getMessage(),
+          e);
+    }
+  }
+
+  /**
    * Prepara dados do template baseado no tipo de evento.
    *
    * <p>Este método detecta o tipo específico do evento e carrega os dados necessários do banco em
@@ -252,6 +344,10 @@ public class EmailEventListener {
     } else if (event instanceof EstoqueMinNotificacaoEvent) {
       // Evento de estoque mínimo não requer template data (usa apenas null para template simples)
       return null;
+    } else if (event instanceof NadaConstaEmitidoEvent nadaConstaEmitidoEvent) {
+      return nadaConstaEmitidoEvent.getTemplateData();
+    } else if (event instanceof NadaConstaPendenciasEvent nadaConstaPendenciasEvent) {
+      return nadaConstaPendenciasEvent.getTemplateData();
     }
 
     // TODO: Adicionar outros tipos de eventos aqui (Reserva, Usuario, etc.)
