@@ -41,7 +41,7 @@
                 <tr th:each="item : ${emprestimoDevolucaoItem}">
                     <td th:text="${item.item.nome}">Item</td>
                     <td th:text="${item.qtde}">1</td>
-                    <td th:text="${item.statusDevolucao == 'D' ? 'Normal' : 'Outros'}">Normal</td>
+                    <td th:text="${item.statusDevolucao.label}">Tipo</td>
                 </tr>
             </tbody>
         </table>
