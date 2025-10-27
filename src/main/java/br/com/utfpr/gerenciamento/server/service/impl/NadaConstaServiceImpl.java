@@ -184,9 +184,8 @@ public class NadaConstaServiceImpl extends CrudServiceImpl<NadaConsta, Long>
             .createdAt(LocalDateTime.now())
             .createdBy(usuario.getUsername())
             .build();
-    nadaConsta = nadaConstaRepository.save(nadaConsta);
     nadaConsta.setSendAt(LocalDateTime.now());
-    nadaConstaRepository.save(nadaConsta);
+    nadaConsta = nadaConstaRepository.save(nadaConsta);
     usuario.setAtivo(false);
     usuarioService.save(usuario);
     postSave(nadaConsta);
