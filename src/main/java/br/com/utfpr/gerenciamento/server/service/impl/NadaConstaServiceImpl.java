@@ -160,6 +160,7 @@ public class NadaConstaServiceImpl extends CrudServiceImpl<NadaConsta, Long>
   }
 
   @Override
+  @Transactional
   public NadaConstaResponseDto solicitarNadaConsta(String documento) {
     Usuario usuario = usuarioService.findByDocumento(documento);
     if (usuario == null) {
