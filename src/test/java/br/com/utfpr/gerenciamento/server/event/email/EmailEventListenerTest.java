@@ -174,7 +174,7 @@ class EmailEventListenerTest {
         .when(emailService)
         .sendEmailWithTemplate(
             templateData, "to@email.com", "Declaração Nada Consta", "nada-consta-declaracao.html");
-    listener.handleNadaConstaEmitidoEvent(event);
+    assertThrows(RuntimeException.class, () -> listener.handleNadaConstaEmitidoEvent(event));
   }
 
   @Test
@@ -225,6 +225,6 @@ class EmailEventListenerTest {
             "to@email.com",
             "Pendências de Empréstimos",
             "pendencias-emprestimos.html");
-    listener.handleNadaConstaPendenciasEvent(event);
+    assertThrows(RuntimeException.class, () -> listener.handleNadaConstaPendenciasEvent(event));
   }
 }
