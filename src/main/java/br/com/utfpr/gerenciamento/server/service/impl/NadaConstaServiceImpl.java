@@ -176,7 +176,7 @@ public class NadaConstaServiceImpl extends CrudServiceImpl<NadaConsta, Long>
         NadaConsta.builder()
             .usuario(usuario)
             .status(
-                emprestimosAbertos.isEmpty()
+                emprestimosAbertos == null || emprestimosAbertos.isEmpty()
                     ? NadaConstaStatus.COMPLETED
                     : NadaConstaStatus.PENDING)
             .createdAt(LocalDateTime.now())
