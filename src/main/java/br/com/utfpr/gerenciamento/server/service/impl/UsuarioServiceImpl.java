@@ -3,7 +3,9 @@ package br.com.utfpr.gerenciamento.server.service.impl;
 import br.com.utfpr.gerenciamento.server.dto.*;
 import br.com.utfpr.gerenciamento.server.enumeration.NadaConstaStatus;
 import br.com.utfpr.gerenciamento.server.enumeration.UserRole;
+import br.com.utfpr.gerenciamento.server.exception.EmailException;
 import br.com.utfpr.gerenciamento.server.exception.EntityNotFoundException;
+import br.com.utfpr.gerenciamento.server.exception.InvalidPasswordException;
 import br.com.utfpr.gerenciamento.server.exception.RecoverCodeInvalidException;
 import br.com.utfpr.gerenciamento.server.model.Permissao;
 import br.com.utfpr.gerenciamento.server.model.RecoverPassword;
@@ -11,6 +13,7 @@ import br.com.utfpr.gerenciamento.server.model.Usuario;
 import br.com.utfpr.gerenciamento.server.repository.NadaConstaRepository;
 import br.com.utfpr.gerenciamento.server.repository.RecoverPasswordRepository;
 import br.com.utfpr.gerenciamento.server.repository.UsuarioRepository;
+import br.com.utfpr.gerenciamento.server.repository.specification.UsuarioSpecifications;
 import br.com.utfpr.gerenciamento.server.service.EmailService;
 import br.com.utfpr.gerenciamento.server.service.PermissaoService;
 import br.com.utfpr.gerenciamento.server.service.UsuarioService;
@@ -18,12 +21,12 @@ import br.com.utfpr.gerenciamento.server.util.Util;
 import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
+import lombok.extern.slf4j.Slf4j;
 import org.modelmapper.ModelMapper;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -33,6 +36,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+@Slf4j
 @Service
 public class UsuarioServiceImpl extends CrudServiceImpl<Usuario, Long>
     implements UsuarioService, UserDetailsService {
@@ -55,8 +59,6 @@ public class UsuarioServiceImpl extends CrudServiceImpl<Usuario, Long>
   private final PermissaoService permissaoService;
 
   private final NadaConstaRepository nadaConstaRepository;
-
-  private static final Logger LOGGER = LoggerFactory.getLogger(UsuarioServiceImpl.class.getName());
 
   public UsuarioServiceImpl(
       UsuarioRepository usuarioRepository,
@@ -83,7 +85,9 @@ public class UsuarioServiceImpl extends CrudServiceImpl<Usuario, Long>
   @Override
   @Transactional(readOnly = true)
   public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
-    Usuario usuario = findByUsernameForAuthentication(username);
+    // Normaliza e busca diretamente no repositório (evita bypass do proxy Spring)
+    username = normalizeUsername(username);
+    Usuario usuario = usuarioRepository.findWithPermissoesByUsernameOrEmail(username, username);
     if (usuario == null) {
       throw new UsernameNotFoundException("Usuário não encontrado");
     }
@@ -93,12 +97,16 @@ public class UsuarioServiceImpl extends CrudServiceImpl<Usuario, Long>
   @Override
   @Transactional(readOnly = true)
   public Page<UsuarioResponseDto> usuarioComplete(String query, Pageable pageable) {
-    if ("".equalsIgnoreCase(query)) {
-      return usuarioRepository.findAll(pageable).map(this::convertToDto);
+    // Busca todos os usuários com filtro textual opcional
+    Specification<Usuario> spec = UsuarioSpecifications.distinctResults();
+
+    // Adiciona filtro textual se query fornecida
+    if (query != null && !query.isBlank()) {
+      spec = spec.and(UsuarioSpecifications.searchByText(query));
     }
-    return usuarioRepository
-        .findByNomeLikeIgnoreCase("%" + query + "%", pageable)
-        .map(this::convertToDto);
+
+    // Usa @EntityGraph para evitar N+1 queries ao carregar permissoes
+    return usuarioRepository.findAll(spec, pageable).map(this::convertToDto);
   }
 
   @Override
@@ -137,23 +145,39 @@ public class UsuarioServiceImpl extends CrudServiceImpl<Usuario, Long>
   @Transactional(readOnly = true)
   public Page<UsuarioResponseDto> usuarioCompleteByUserAndDocAndNome(
       String query, Pageable pageable) {
-    if (query == null || query.isBlank()) {
-      return usuarioRepository.findAllCustom(pageable).map(this::convertToDto);
+    // Filtro base: PROFESSOR + ALUNO (usuários acadêmicos)
+    Specification<Usuario> spec =
+        UsuarioSpecifications.distinctResults()
+            .and(UsuarioSpecifications.hasAnyRole(UserRole.PROFESSOR, UserRole.ALUNO));
+
+    // Adiciona filtro textual se query fornecida
+    if (query != null && !query.isBlank()) {
+      spec =
+          spec.and(
+              UsuarioSpecifications.searchByTextAndRoles(
+                  query, UserRole.PROFESSOR, UserRole.ALUNO));
     }
-    return usuarioRepository
-        .findUsuarioCompleteCustom("%" + query.toUpperCase() + "%", pageable)
-        .map(this::convertToDto);
+
+    return usuarioRepository.findAll(spec, pageable).map(this::convertToDto);
   }
 
   @Override
   @Transactional(readOnly = true)
   public Page<UsuarioResponseDto> usuarioCompleteLab(String query, Pageable pageable) {
-    if (query == null || query.isBlank()) {
-      return usuarioRepository.findAllCustomLab(pageable).map(this::convertToDto);
+    // Filtro base: ADMINISTRADOR + LABORATORISTA (usuários de laboratório)
+    Specification<Usuario> spec =
+        UsuarioSpecifications.distinctResults()
+            .and(UsuarioSpecifications.hasAnyRole(UserRole.ADMINISTRADOR, UserRole.LABORATORISTA));
+
+    // Adiciona filtro textual se query fornecida
+    if (query != null && !query.isBlank()) {
+      spec =
+          spec.and(
+              UsuarioSpecifications.searchByTextAndRoles(
+                  query, UserRole.ADMINISTRADOR, UserRole.LABORATORISTA));
     }
-    return usuarioRepository
-        .findUsuarioCompleteCustomLab("%" + query.toUpperCase() + "%", pageable)
-        .map(this::convertToDto);
+
+    return usuarioRepository.findAll(spec, pageable).map(this::convertToDto);
   }
 
   @Override
@@ -219,7 +243,7 @@ public class UsuarioServiceImpl extends CrudServiceImpl<Usuario, Long>
     try {
       sendEmailNewUser(usuario);
     } catch (Exception e) {
-      throw new RuntimeException("Ocorreu um erro. O email de confirmação não pode ser enviado.");
+      throw new EmailException("Ocorreu um erro. O email de confirmação não pode ser enviado.", e);
     }
     return "Uma requisição foi enviada ao seu email.";
   }
@@ -288,7 +312,7 @@ public class UsuarioServiceImpl extends CrudServiceImpl<Usuario, Long>
         usuario.setPassword(passwordEncoder.encode(recoverPasswordRequestDto.getPassword()));
         usuarioRepository.save(usuario);
       } else {
-        throw new RuntimeException("As senhas devem ser iguais.");
+        throw new InvalidPasswordException("As senhas devem ser iguais.");
       }
       return GenericResponse.builder()
           .message("Senha alterada. Já é possível autenticar-se com a nova senha.")
@@ -302,13 +326,16 @@ public class UsuarioServiceImpl extends CrudServiceImpl<Usuario, Long>
   @Override
   @Transactional
   public Usuario updatePassword(Usuario usuario, String senhaAtual) {
-    Usuario userTemp = this.findOne(usuario.getId());
+    Usuario userTemp =
+        usuarioRepository
+            .findById(usuario.getId())
+            .orElseThrow(() -> new EntityNotFoundException("Usuário não encontrado"));
     usuario.setEmailVerificado(userTemp.getEmailVerificado());
     if (passwordEncoder.matches(senhaAtual, userTemp.getPassword())) {
       userTemp.setPassword(passwordEncoder.encode(usuario.getPassword()));
       return usuarioRepository.save(userTemp);
     }
-    throw new RuntimeException("Senha incorreta");
+    throw new InvalidPasswordException("Senha incorreta");
   }
 
   @Override
@@ -340,8 +367,8 @@ public class UsuarioServiceImpl extends CrudServiceImpl<Usuario, Long>
 
       return usuario;
     } catch (Exception ex) {
-      LOGGER.error("Erro ao salvar novo usuário: ", ex);
-      throw new RuntimeException("Erro ao salvar novo usuário.");
+      log.error("Erro ao salvar novo usuário: ", ex);
+      throw new EmailException("Erro ao salvar novo usuário. Verifique os dados e tente novamente.", ex);
     }
   }
 
@@ -369,7 +396,9 @@ public class UsuarioServiceImpl extends CrudServiceImpl<Usuario, Long>
   @Transactional
   @Override
   public boolean hasSolicitacaoNadaConstaPendingOrCompleted(String username) {
-    Usuario usuario = findByUsername(username);
+    // Normaliza e busca diretamente no repositório (evita bypass do proxy Spring)
+    username = normalizeUsername(username);
+    Usuario usuario = usuarioRepository.findByUsernameOrEmail(username, username);
     if (usuario == null) return false;
     return nadaConstaRepository.existsByUsuarioAndStatusIn(
         usuario, Set.of(NadaConstaStatus.PENDING, NadaConstaStatus.COMPLETED));

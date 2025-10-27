@@ -409,14 +409,13 @@ class UsuarioServiceImplTest {
     usuarioAtualizado.setId(1L);
     usuarioAtualizado.setPassword("novaSenha123");
 
-    // Mock findOne para retornar usuarioExistente
-    UsuarioServiceImpl spyService = spy(usuarioService);
-    doReturn(usuarioExistente).when(spyService).findOne(1L);
+    // Mock repository para retornar usuarioExistente
+    when(usuarioRepository.findById(1L)).thenReturn(java.util.Optional.of(usuarioExistente));
     when(passwordEncoder.matches("senhaAtual", "$2a$10$senhaAntigaEncodada")).thenReturn(true);
     when(passwordEncoder.encode("novaSenha123")).thenReturn("$2a$10$novaSenhaEncodada");
     when(usuarioRepository.save(any(Usuario.class))).thenReturn(usuarioExistente);
 
-    Usuario resultado = spyService.updatePassword(usuarioAtualizado, "senhaAtual");
+    Usuario resultado = usuarioService.updatePassword(usuarioAtualizado, "senhaAtual");
     assertNotNull(resultado);
     assertEquals("$2a$10$novaSenhaEncodada", resultado.getPassword());
     assertTrue(resultado.getEmailVerificado());
@@ -525,15 +524,14 @@ class UsuarioServiceImplTest {
     usuarioAtualizado.setId(1L);
     usuarioAtualizado.setPassword("novaSenha");
 
-    // Spy para mockar findOne
-    UsuarioServiceImpl spyService = spy(usuarioService);
-    doReturn(usuarioExistente).when(spyService).findOne(1L);
+    // Mock repository para retornar usuarioExistente
+    when(usuarioRepository.findById(1L)).thenReturn(java.util.Optional.of(usuarioExistente));
     when(passwordEncoder.matches("senhaAtual", "encodedSenhaAtual")).thenReturn(true);
     when(passwordEncoder.encode("novaSenha")).thenReturn("encodedNovaSenha");
     when(usuarioRepository.save(any(Usuario.class)))
         .thenAnswer(invocation -> invocation.getArgument(0));
 
-    Usuario result = spyService.updatePassword(usuarioAtualizado, "senhaAtual");
+    Usuario result = usuarioService.updatePassword(usuarioAtualizado, "senhaAtual");
     assertNotNull(result);
     assertEquals("encodedNovaSenha", result.getPassword());
     assertTrue(result.getEmailVerificado());
