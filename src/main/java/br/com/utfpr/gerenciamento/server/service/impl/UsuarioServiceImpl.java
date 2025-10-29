@@ -253,21 +253,30 @@ public class UsuarioServiceImpl extends CrudServiceImpl<Usuario, Long>
     Usuario usuario = usuarioRepository.findByEmail(email);
 
     if (usuario == null) {
-      log.warn("Tentativa de reenvio de email para usuário inexistente: {}", email);
-      throw new EntityNotFoundException("Email não cadastrado: " + email);
+      // Log sem PII, resposta genérica para evitar enumeração
+      log.info("Reenvio solicitado para email não cadastrado");
+      return "Se o email existir, um novo link de confirmação será enviado.";
     }
 
     if (usuario.getEmailVerificado()) {
-      log.info("Email já verificado para usuário: {}", email);
+      log.info(
+          "Email já verificado: {}",
+          br.com.utfpr.gerenciamento.server.util.EmailUtils.maskEmail(email));
       return "Este email já foi confirmado. Você pode fazer login normalmente.";
     }
 
     try {
       enviarEmailConfirmacao(usuario);
-      log.info("Email de confirmação reenviado para: {}", email);
+      log.info(
+          "Email de confirmação reenviado para: {}",
+          br.com.utfpr.gerenciamento.server.util.EmailUtils.maskEmail(email));
       return "Email de confirmação reenviado. Verifique sua caixa de entrada.";
     } catch (Exception e) {
-      log.error("Falha ao reenviar email de confirmação para {}: {}", email, e.getMessage(), e);
+      log.error(
+          "Falha ao reenviar email de confirmação para {}: {}",
+          br.com.utfpr.gerenciamento.server.util.EmailUtils.maskEmail(email),
+          e.getMessage(),
+          e);
       throw new EmailException(
           "Não foi possível enviar o email. Tente novamente em alguns minutos.", e);
     }
@@ -278,9 +287,11 @@ public class UsuarioServiceImpl extends CrudServiceImpl<Usuario, Long>
   public GenericResponse sendEmailCodeRecoverPassword(String email) {
     Usuario usuario = usuarioRepository.findByEmail(email);
     if (usuario == null) {
-      log.warn("Tentativa de recuperação de senha para email inexistente: {}", email);
-      throw new EntityNotFoundException(
-          "Email não encontrado na base de dados. Por favor, crie uma nova conta.");
+      // Log sem PII, resposta genérica para evitar enumeração
+      log.info("Solicitação de recuperação recebida");
+      return GenericResponse.builder()
+          .message("Se o email existir, uma solicitação foi enviada para sua caixa de entrada.")
+          .build();
     }
 
     RecoverPassword recoverPassword = new RecoverPassword();
@@ -308,9 +319,15 @@ public class UsuarioServiceImpl extends CrudServiceImpl<Usuario, Long>
     try {
       emailService.sendEmailWithTemplate(
           emailDto, emailDto.getEmailTo(), emailDto.getSubject(), "templateRecoverPassword");
-      log.info("Código de recuperação de senha enviado para: {}", email);
+      log.info(
+          "Código de recuperação de senha enviado para: {}",
+          br.com.utfpr.gerenciamento.server.util.EmailUtils.maskEmail(email));
     } catch (Exception e) {
-      log.error("Falha ao enviar email de recuperação para {}: {}", email, e.getMessage(), e);
+      log.error(
+          "Falha ao enviar email de recuperação para {}: {}",
+          br.com.utfpr.gerenciamento.server.util.EmailUtils.maskEmail(email),
+          e.getMessage(),
+          e);
       throw new EmailException("Erro ao enviar email de recuperação", e);
     }
 
@@ -349,7 +366,8 @@ public class UsuarioServiceImpl extends CrudServiceImpl<Usuario, Long>
     Usuario usuario = usuarioRepository.findByEmail(recoverPassword.getEmail());
     if (usuario == null) {
       log.error(
-          "RecoverPassword encontrado mas usuário não existe: {}", recoverPassword.getEmail());
+          "RecoverPassword encontrado mas usuário não existe: {}",
+          br.com.utfpr.gerenciamento.server.util.EmailUtils.maskEmail(recoverPassword.getEmail()));
       throw new EntityNotFoundException("Usuário não encontrado");
     }
 
@@ -359,7 +377,9 @@ public class UsuarioServiceImpl extends CrudServiceImpl<Usuario, Long>
     // Limpa código usado para evitar reutilização
     recoverPasswordRepository.delete(recoverPassword);
 
-    log.info("Senha redefinida com sucesso para usuário: {}", usuario.getEmail());
+    log.info(
+        "Senha redefinida com sucesso para usuário: {}",
+        br.com.utfpr.gerenciamento.server.util.EmailUtils.maskEmail(usuario.getEmail()));
     return GenericResponse.builder()
         .message("Senha alterada com sucesso. Você já pode fazer login com a nova senha.")
         .build();
@@ -503,14 +523,26 @@ public class UsuarioServiceImpl extends CrudServiceImpl<Usuario, Long>
   }
 
   /**
-   * Valida se as senhas coincidem.
+   * Valida se as senhas coincidem e atendem requisitos mínimos.
    *
    * @param senha senha fornecida
    * @param confirmacao confirmação da senha
-   * @throws InvalidPasswordException se as senhas não coincidirem
+   * @throws InvalidPasswordException se as senhas não coincidirem ou não atenderem requisitos
    */
   private void validarSenhasIguais(String senha, String confirmacao) {
-    if (!senha.equals(confirmacao)) {
+    if (senha == null || senha.trim().isEmpty()) {
+      throw new InvalidPasswordException("A senha não pode ser vazia.");
+    }
+
+    if (confirmacao == null || confirmacao.trim().isEmpty()) {
+      throw new InvalidPasswordException("A confirmação de senha não pode ser vazia.");
+    }
+
+    if (senha.length() < 8) {
+      throw new InvalidPasswordException("A senha deve ter no mínimo 8 caracteres.");
+    }
+
+    if (!Objects.equals(senha, confirmacao)) {
       throw new InvalidPasswordException("As senhas não coincidem. Tente novamente.");
     }
   }
