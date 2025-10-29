@@ -1,6 +1,8 @@
 package br.com.utfpr.gerenciamento.server.model;
 
 import br.com.utfpr.gerenciamento.server.config.CustomAuthorityDeserializer;
+import br.com.utfpr.gerenciamento.server.dto.PermissaoResponseDTO;
+import br.com.utfpr.gerenciamento.server.dto.UsuarioResponseDto;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
@@ -10,6 +12,8 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Set;
+import java.util.stream.Collectors;
+
 import lombok.*;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -109,5 +113,26 @@ public class Usuario implements Serializable, UserDetails {
   @Override
   public boolean isEnabled() {
     return this.ativo;
+  }
+
+  public UsuarioResponseDto toDto() {
+    UsuarioResponseDto dto = new UsuarioResponseDto();
+    dto.setId(this.id);
+    dto.setNome(this.nome);
+    dto.setUsername(this.username);
+    dto.setDocumento(this.documento);
+    dto.setEmail(this.email);
+    dto.setTelefone(this.telefone);
+    dto.setFotoUrl(this.fotoUrl);
+    dto.setEmailVerificado(this.emailVerificado);
+
+    Set<PermissaoResponseDTO> permissoesDto = this.permissoes.stream()
+            .map(permissao -> new PermissaoResponseDTO(permissao.getNome()))
+            .collect(Collectors.toSet());
+    dto.setPermissoes(permissoesDto);
+
+    dto.setAuthorities(this.getAuthorities());
+
+    return dto;
   }
 }

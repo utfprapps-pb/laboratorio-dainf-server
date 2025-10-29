@@ -68,7 +68,7 @@ public class UsuarioController {
   }
 
   @GetMapping("permissao")
-  public List<Permissao> findAllPermissao() {
+  public List<PermissaoResponseDTO> findAllPermissao() {
     return permissaoService.findAll();
   }
 

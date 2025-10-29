@@ -21,7 +21,7 @@ public class UsuarioResponseDto {
 
   private String telefone;
 
-  private Set<Permissao> permissoes;
+  private Set<PermissaoResponseDTO> permissoes;
 
   private String fotoUrl;
 
