@@ -77,7 +77,11 @@ public class NadaConstaServiceImpl extends CrudServiceImpl<NadaConsta, Long>
     if (dto == null) {
       return null;
     }
-    dto.setUsuarioUsername(nadaConsta.getUsuario().getUsername());
+    if (nadaConsta != null && nadaConsta.getUsuario() != null) {
+      dto.setUsuarioUsername(nadaConsta.getUsuario().getUsername());
+    } else {
+      dto.setUsuarioUsername(null);
+    }
     return dto;
   }
 

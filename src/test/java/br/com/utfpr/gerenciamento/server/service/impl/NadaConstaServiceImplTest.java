@@ -194,7 +194,8 @@ class NadaConstaServiceImplTest {
     when(usuarioService.save(any(Usuario.class))).thenReturn(usuario);
     NadaConstaResponseDto dto = service.solicitarNadaConsta("333333");
     assertNotNull(dto);
-    verify(eventPublisher).publishEvent(any(NadaConstaEmitidoEvent.class));
+    // Should NOT publish event if email is null/invalid
+    verify(eventPublisher, never()).publishEvent(any(NadaConstaEmitidoEvent.class));
     verify(usuarioService).save(any(Usuario.class));
   }
 
