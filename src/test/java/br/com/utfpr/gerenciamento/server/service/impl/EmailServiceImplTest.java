@@ -262,7 +262,8 @@ class EmailServiceImplTest {
       Map<String, Object> emptyMap = Collections.emptyMap();
       assertThrows(
           IllegalStateException.class,
-          () -> emailService.sendEmailWithTemplate(emptyMap, "to@test.com", "title", "template.ftl"),
+          () ->
+              emailService.sendEmailWithTemplate(emptyMap, "to@test.com", "title", "template.ftl"),
           "Erro ao gerar o conteúdo do e-mail");
     }
   }
@@ -287,7 +288,8 @@ class EmailServiceImplTest {
     Map<String, Object> variables = new HashMap<>();
     assertThrows(
         EmailException.class,
-        () -> emailService.sendEmailWithTemplate(variables, "to@test.com", "titulo", "template.html"),
+        () ->
+            emailService.sendEmailWithTemplate(variables, "to@test.com", "titulo", "template.html"),
         "Falha ao enviar email");
   }
 
