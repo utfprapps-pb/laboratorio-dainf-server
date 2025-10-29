@@ -18,6 +18,7 @@ import br.com.utfpr.gerenciamento.server.repository.specification.UsuarioSpecifi
 import br.com.utfpr.gerenciamento.server.service.EmailService;
 import br.com.utfpr.gerenciamento.server.service.PermissaoService;
 import br.com.utfpr.gerenciamento.server.service.UsuarioService;
+import br.com.utfpr.gerenciamento.server.util.SecurityUtils;
 import br.com.utfpr.gerenciamento.server.util.Util;
 import java.time.LocalDateTime;
 import java.util.HashMap;
@@ -36,7 +37,6 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.security.access.AccessDeniedException;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
@@ -183,14 +183,14 @@ public class UsuarioServiceImpl extends CrudServiceImpl<Usuario, Long>
   @Override
   @Transactional
   public Usuario updateUsuario(Usuario usuario) {
-    String usernameAutenticado =
-        (String) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+    String usernameAutenticado = SecurityUtils.getAuthenticatedUsername();
+    String usernameAlvo = normalizeUsername(usuario.getUsername());
 
-    if (!usuario.getUsername().equals(usernameAutenticado)) {
+    if (!usernameAlvo.equals(normalizeUsername(usernameAutenticado))) {
       log.warn(
           "Tentativa de atualização não autorizada: usuário {} tentou modificar {}",
           usernameAutenticado,
-          usuario.getUsername());
+          usernameAlvo);
       throw new AccessDeniedException("Usuário não autorizado a modificar este perfil");
     }
 
@@ -454,8 +454,6 @@ public class UsuarioServiceImpl extends CrudServiceImpl<Usuario, Long>
 
   /**
    * Prepara e persiste um novo usuário no sistema.
-   *
-   * <p>Este método é privado e executado dentro da transação do método chamador (saveNewUser).
    *
    * @param usuario dados do usuário a ser criado
    * @return usuário salvo com ID gerado

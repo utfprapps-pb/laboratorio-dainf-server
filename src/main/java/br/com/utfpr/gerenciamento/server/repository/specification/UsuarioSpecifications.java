@@ -38,13 +38,14 @@ public class UsuarioSpecifications {
    */
   @SuppressWarnings("unchecked")
   private static Join<Usuario, Permissao> getOrCreatePermissoesJoin(Root<Usuario> root) {
-    // Check if join already exists
+    // Reutiliza apenas JOIN em "permissoes" com mesmo JoinType (INNER)
     for (Join<?, ?> join : root.getJoins()) {
-      if (join.getAttribute().getName().equals("permissoes")) {
+      if ("permissoes".equals(join.getAttribute().getName())
+          && join.getJoinType() == JoinType.INNER) {
         return (Join<Usuario, Permissao>) join;
       }
     }
-    // Create new join only if not found
+    // Cria INNER JOIN se não existir equivalente
     return root.join("permissoes", JoinType.INNER);
   }
 
