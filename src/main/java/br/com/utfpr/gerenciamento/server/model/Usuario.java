@@ -114,25 +114,4 @@ public class Usuario implements Serializable, UserDetails {
   public boolean isEnabled() {
     return this.ativo;
   }
-
-  public UsuarioResponseDto toDto() {
-    UsuarioResponseDto dto = new UsuarioResponseDto();
-    dto.setId(this.id);
-    dto.setNome(this.nome);
-    dto.setUsername(this.username);
-    dto.setDocumento(this.documento);
-    dto.setEmail(this.email);
-    dto.setTelefone(this.telefone);
-    dto.setFotoUrl(this.fotoUrl);
-    dto.setEmailVerificado(this.emailVerificado);
-
-    Set<PermissaoResponseDTO> permissoesDto = this.permissoes.stream()
-            .map(permissao -> new PermissaoResponseDTO(permissao.getNome()))
-            .collect(Collectors.toSet());
-    dto.setPermissoes(permissoesDto);
-
-    dto.setAuthorities(this.getAuthorities());
-
-    return dto;
-  }
 }
