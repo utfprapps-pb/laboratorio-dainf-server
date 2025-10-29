@@ -28,8 +28,6 @@ import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.transaction.support.TransactionSynchronization;
-import org.springframework.transaction.support.TransactionSynchronizationManager;
 
 @Slf4j
 @Service
@@ -104,18 +102,7 @@ public class NadaConstaServiceImpl extends CrudServiceImpl<NadaConsta, Long>
               ? entity.getCreatedAt().format(formatter)
               : LocalDateTime.now().format(formatter));
       templateData.put("logoUrl", systemConfigService.getLogoUrl());
-      if (org.springframework.transaction.support.TransactionSynchronizationManager
-          .isSynchronizationActive()) {
-        TransactionSynchronizationManager.registerSynchronization(
-            new TransactionSynchronization() {
-              @Override
-              public void afterCommit() {
-                eventPublisher.publishEvent(
-                    new NadaConstaEmitidoEvent(
-                        NadaConstaServiceImpl.this, destinatario, templateData));
-              }
-            });
-      } else {
+      if (EmailUtils.isValidEmail(destinatario)) {
         eventPublisher.publishEvent(
             new NadaConstaEmitidoEvent(NadaConstaServiceImpl.this, destinatario, templateData));
       }
@@ -143,19 +130,8 @@ public class NadaConstaServiceImpl extends CrudServiceImpl<NadaConsta, Long>
       templateData.put("emprestimos", itensPendentesTemplate);
       String to = usuario.getEmail();
       if (EmailUtils.isValidEmail(to)) {
-        if (TransactionSynchronizationManager.isSynchronizationActive()) {
-          TransactionSynchronizationManager.registerSynchronization(
-              new TransactionSynchronization() {
-                @Override
-                public void afterCommit() {
-                  eventPublisher.publishEvent(
-                      new NadaConstaPendenciasEvent(NadaConstaServiceImpl.this, to, templateData));
-                }
-              });
-        } else {
-          eventPublisher.publishEvent(
-              new NadaConstaPendenciasEvent(NadaConstaServiceImpl.this, to, templateData));
-        }
+        eventPublisher.publishEvent(
+            new NadaConstaPendenciasEvent(NadaConstaServiceImpl.this, to, templateData));
       }
     }
   }
