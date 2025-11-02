@@ -4,7 +4,7 @@ import br.com.utfpr.gerenciamento.server.dto.FornecedorResponseDto;
 import br.com.utfpr.gerenciamento.server.model.Fornecedor;
 import java.util.List;
 
-public interface FornecedorService extends CrudService<Fornecedor, Long> {
+public interface FornecedorService extends CrudService<Fornecedor, Long,FornecedorResponseDto> {
 
   List<Fornecedor> completeFornecedor(String query);
 

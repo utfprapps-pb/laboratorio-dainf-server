@@ -33,6 +33,8 @@ import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.stream.Collectors;
+
 import lombok.extern.slf4j.Slf4j;
 import org.modelmapper.ModelMapper;
 import org.springframework.cache.annotation.CacheEvict;
@@ -49,7 +51,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 @Slf4j
 @Service
-public class EmprestimoServiceImpl extends CrudServiceImpl<Emprestimo, Long>
+public class EmprestimoServiceImpl extends CrudServiceImpl<Emprestimo, Long,EmprestimoResponseDto>
     implements EmprestimoService {
 
   private final EmprestimoRepository emprestimoRepository;
@@ -89,6 +91,17 @@ public class EmprestimoServiceImpl extends CrudServiceImpl<Emprestimo, Long>
     return emprestimoRepository;
   }
 
+
+  @Override
+  public EmprestimoResponseDto toDto(Emprestimo entity) {
+    return modelMapper.map(entity, EmprestimoResponseDto.class);
+  }
+
+  @Override
+  public Emprestimo toEntity(EmprestimoResponseDto entity) {
+    return modelMapper.map(entity, Emprestimo.class);
+  }
+
   /**
    * Busca paginada com filtro textual e cache otimizado.
    *
@@ -110,7 +123,7 @@ public class EmprestimoServiceImpl extends CrudServiceImpl<Emprestimo, Long>
       key = "T(java.util.Objects).hash(#textFilter, #pageable.toString())",
       unless = "#result == null || #result.isEmpty()")
   @Transactional(readOnly = true)
-  public Page<Emprestimo> findAllPagedWithTextFilter(String textFilter, Pageable pageable) {
+  public Page<EmprestimoResponseDto> findAllPagedWithTextFilter(String textFilter, Pageable pageable) {
     Specification<Emprestimo> spec;
 
     if (textFilter != null && !textFilter.isEmpty()) {
@@ -135,9 +148,9 @@ public class EmprestimoServiceImpl extends CrudServiceImpl<Emprestimo, Long>
    */
   @Override
   @Transactional(readOnly = true)
-  public Page<Emprestimo> findAllSpecification(
+  public Page<EmprestimoResponseDto> findAllSpecification(
       Specification<Emprestimo> specification, Pageable pageable) {
-    return super.findAllSpecification(specification, pageable);
+    return findAllSpecification(specification, pageable);
   }
 
   /**
@@ -158,7 +171,7 @@ public class EmprestimoServiceImpl extends CrudServiceImpl<Emprestimo, Long>
   @PreAuthorize("hasAnyRole('" + ROLE_LABORATORISTA_NAME + "', '" + ROLE_ADMINISTRADOR_NAME + "')")
   @InvalidateDashboardCache
   @CacheEvict(value = "emprestimos-page", allEntries = true)
-  public Emprestimo save(Emprestimo entity) {
+  public EmprestimoResponseDto save(Emprestimo entity) {
     // Validação fail-fast: previne NPE ao validar usuarioEmprestimo e seu ID
     if (entity.getUsuarioEmprestimo() == null) {
       throw new IllegalArgumentException("usuarioEmprestimo não pode ser null");
@@ -179,7 +192,7 @@ public class EmprestimoServiceImpl extends CrudServiceImpl<Emprestimo, Long>
 
     // Extrai username de forma segura do Authentication (evita ClassCastException)
     String username = SecurityUtils.getAuthenticatedUsername();
-    Usuario usuarioResponsavel = usuarioService.findByUsername(username);
+    Usuario usuarioResponsavel = usuarioService.toEntity( usuarioService.findByUsername(username));
     Usuario usuarioResponsavelLoaded =
         usuarioRepository
             .findById(usuarioResponsavel.getId())
@@ -189,7 +202,7 @@ public class EmprestimoServiceImpl extends CrudServiceImpl<Emprestimo, Long>
                         "Usuário responsável não encontrado: " + usuarioResponsavel.getId()));
     entity.setUsuarioResponsavel(usuarioResponsavelLoaded);
 
-    return super.save(entity);
+    return save(entity);
   }
 
   /**
@@ -206,7 +219,7 @@ public class EmprestimoServiceImpl extends CrudServiceImpl<Emprestimo, Long>
   @InvalidateDashboardCache
   @CacheEvict(value = "emprestimos-page", allEntries = true)
   public void delete(Long id) {
-    super.delete(id);
+    delete(id);
   }
 
   /**
@@ -223,13 +236,13 @@ public class EmprestimoServiceImpl extends CrudServiceImpl<Emprestimo, Long>
   @InvalidateDashboardCache
   @CacheEvict(value = "emprestimos-page", allEntries = true)
   public void delete(Emprestimo entity) {
-    super.delete(entity);
+    delete(entity);
   }
 
   @Override
   @Transactional(readOnly = true)
-  public List<Emprestimo> findAllByDataEmprestimoBetween(LocalDate dtIni, LocalDate dtFim) {
-    return emprestimoRepository.findAllByDataEmprestimoBetween(dtIni, dtFim);
+  public List<EmprestimoResponseDto> findAllByDataEmprestimoBetween(LocalDate dtIni, LocalDate dtFim) {
+    return emprestimoRepository.findAllByDataEmprestimoBetween(dtIni, dtFim).stream().map(emprestimo -> toDto(emprestimo)).collect(Collectors.toList());
   }
 
   @Override
@@ -272,39 +285,39 @@ public class EmprestimoServiceImpl extends CrudServiceImpl<Emprestimo, Long>
 
   @Override
   @Transactional(readOnly = true)
-  public List<Emprestimo> filter(EmprestimoFilter emprestimoFilter) {
+  public List<EmprestimoResponseDto> filter(EmprestimoFilter emprestimoFilter) {
     // OTIMIZAÇÃO: Usa Specification com JOIN FETCH ao invés de JDBC manual
     // Elimina N+1 queries: 200+ queries → 1 query (melhoria de 90-95%)
     Specification<Emprestimo> spec = EmprestimoSpecifications.fromFilter(emprestimoFilter);
-    return emprestimoRepository.findAll(spec, Sort.by("id"));
+    return emprestimoRepository.findAll(spec, Sort.by("id")).stream().map(emprestimo -> toDto(emprestimo)).collect(Collectors.toList());
   }
 
   @Override
   @Transactional(readOnly = true)
-  public List<Emprestimo> findAllUsuarioEmprestimo(String username) {
-    var usuario = usuarioService.findByUsername(username);
-    return emprestimoRepository.findAllByUsuarioEmprestimo(usuario);
+  public List<EmprestimoResponseDto> findAllUsuarioEmprestimo(String username) {
+    Usuario usuario = usuarioService.toEntity( usuarioService.findByUsername(username));
+    return emprestimoRepository.findAllByUsuarioEmprestimo(usuario).stream().map(emprestimo -> toDto(emprestimo)).collect(Collectors.toList());
   }
 
   @Override
   @Transactional(readOnly = true)
-  public List<Emprestimo> findAllEmprestimosAbertos() {
-    return emprestimoRepository.findAllByDataDevolucaoIsNullOrderById();
+  public List<EmprestimoResponseDto> findAllEmprestimosAbertos() {
+    return emprestimoRepository.findAllByDataDevolucaoIsNullOrderById().stream().map(emprestimo -> toDto(emprestimo)).collect(Collectors.toList());
   }
 
   @Override
   @Transactional(readOnly = true)
-  public java.util.List<Emprestimo> findAllEmprestimosAbertosByUsuario(String username) {
-    var usuario = usuarioService.findByUsername(username);
-    return emprestimoRepository.findAllByUsuarioEmprestimoAndDataDevolucaoIsNull(usuario);
+  public List<EmprestimoResponseDto> findAllEmprestimosAbertosByUsuario(String username) {
+    Usuario usuario = usuarioService.toEntity( usuarioService.findByUsername(username));
+    return emprestimoRepository.findAllByUsuarioEmprestimoAndDataDevolucaoIsNull(usuario).stream().map(emprestimo -> toDto(emprestimo)).collect(Collectors.toList());
   }
 
   @Override
   @Transactional
   public void changePrazoDevolucao(Long idEmprestimo, LocalDate novaData) {
-    var emprestimo = super.findOne(idEmprestimo);
+    var emprestimo = toEntity(findOne(idEmprestimo));
     emprestimo.setPrazoDevolucao(novaData);
-    Emprestimo saved = super.save(emprestimo);
+    EmprestimoResponseDto saved = save(emprestimo);
 
     // Publica evento - email enviado APÓS commit
     String email = saved.getUsuarioEmprestimo().getEmail();
@@ -378,23 +391,20 @@ public class EmprestimoServiceImpl extends CrudServiceImpl<Emprestimo, Long>
     }
   }
 
-  @Override
-  public EmprestimoResponseDto convertToDto(Emprestimo entity) {
-    return modelMapper.map(entity, EmprestimoResponseDto.class);
-  }
+
 
   @Override
   @Transactional
   public EmprestimoResponseDto processEmprestimo(Emprestimo emprestimo, Long idReserva) {
     prepareEmprestimo(emprestimo);
-    Emprestimo saved = self.save(emprestimo);
+    Emprestimo saved =  toEntity(self.save(emprestimo));
     finalizeEmprestimo(saved);
 
     if (idReserva != null && idReserva != 0) {
       reservaService.finalizarReserva(idReserva);
     }
 
-    return convertToDto(saved);
+    return toDto(saved);
   }
 
   @Override
@@ -416,7 +426,7 @@ public class EmprestimoServiceImpl extends CrudServiceImpl<Emprestimo, Long>
       emprestimo.setDataDevolucao(LocalDate.now());
     }
 
-    Emprestimo saved = self.save(emprestimo);
+    Emprestimo saved = toEntity(self.save(emprestimo));
 
     // Null-safe: obtém lista de itens de devolução do saved ou lista vazia se null
     List<EmprestimoDevolucaoItem> itensDevolucaoSaved =
@@ -441,14 +451,14 @@ public class EmprestimoServiceImpl extends CrudServiceImpl<Emprestimo, Long>
     }
 
     sendEmailConfirmacaoDevolucao(saved);
-    return convertToDto(saved);
+    return toDto(saved);
   }
 
   @Override
   public void prepareEmprestimo(Emprestimo emprestimo) {
     // Se está editando, restaura saldo dos itens antigos
     if (emprestimo.getId() != null) {
-      Emprestimo old = self.findOne(emprestimo.getId());
+      Emprestimo old = toEntity(self.findOne(emprestimo.getId()));
       // Null-safe: verifica se old e sua lista de itens não são null
       if (old != null && old.getEmprestimoItem() != null) {
         old.getEmprestimoItem().stream()

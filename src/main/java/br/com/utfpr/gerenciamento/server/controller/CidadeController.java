@@ -10,7 +10,7 @@ import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("cidade")
-public class CidadeController extends CrudController<Cidade, Long> {
+public class CidadeController extends CrudController<Cidade, Long,CidadeResponseDto> {
 
   private final CidadeService cidadeService;
 
@@ -19,7 +19,7 @@ public class CidadeController extends CrudController<Cidade, Long> {
   }
 
   @Override
-  protected CrudService<Cidade, Long> getService() {
+  protected CrudService<Cidade, Long,CidadeResponseDto> getService() {
     return cidadeService;
   }
 

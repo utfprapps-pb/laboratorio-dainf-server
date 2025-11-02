@@ -1,5 +1,6 @@
 package br.com.utfpr.gerenciamento.server.service.impl;
 
+import br.com.utfpr.gerenciamento.server.dto.SaidaResponseDTO;
 import br.com.utfpr.gerenciamento.server.model.EmprestimoDevolucaoItem;
 import br.com.utfpr.gerenciamento.server.model.Saida;
 import br.com.utfpr.gerenciamento.server.model.SaidaItem;
@@ -9,22 +10,36 @@ import br.com.utfpr.gerenciamento.server.service.SaidaService;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
+
+import org.modelmapper.ModelMapper;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 @Service
-public class SaidaServiceImpl extends CrudServiceImpl<Saida, Long> implements SaidaService {
+public class SaidaServiceImpl extends CrudServiceImpl<Saida, Long, SaidaResponseDTO> implements SaidaService {
 
   private final SaidaRepository saidaRepository;
+  private final ModelMapper modelMapper;
 
-  public SaidaServiceImpl(SaidaRepository saidaRepository) {
+  public SaidaServiceImpl(SaidaRepository saidaRepository, ModelMapper modelMapper) {
     this.saidaRepository = saidaRepository;
+      this.modelMapper = modelMapper;
   }
 
   @Override
   protected JpaRepository<Saida, Long> getRepository() {
     return saidaRepository;
+  }
+
+  @Override
+  public SaidaResponseDTO toDto(Saida entity) {
+    return modelMapper.map(entity, SaidaResponseDTO.class);
+  }
+
+  @Override
+  public Saida toEntity(SaidaResponseDTO saidaResponseDTO) {
+    return modelMapper.map(saidaResponseDTO, Saida.class);
   }
 
   @Override

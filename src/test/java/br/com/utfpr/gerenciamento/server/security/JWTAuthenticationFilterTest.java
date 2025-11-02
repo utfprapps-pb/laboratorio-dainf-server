@@ -50,7 +50,7 @@ class JWTAuthenticationFilterTest {
     when(request.getInputStream())
         .thenReturn(
             new DelegatingServletInputStream(new ObjectMapper().writeValueAsBytes(usuario)));
-    when(usuarioService.findByUsernameForAuthentication(anyString())).thenReturn(usuario);
+    when(usuarioService.findByUsernameForAuthentication(anyString())).thenReturn(usuarioService.toDto(usuario));
     when(usuarioService.hasSolicitacaoNadaConstaPendingOrCompleted(anyString())).thenReturn(true);
     assertThrows(
         PreconditionRequiredAuthenticationException.class,
@@ -84,7 +84,7 @@ class JWTAuthenticationFilterTest {
     when(request.getInputStream())
         .thenReturn(
             new DelegatingServletInputStream(new ObjectMapper().writeValueAsBytes(usuario)));
-    when(usuarioService.findByUsernameForAuthentication(anyString())).thenReturn(usuario);
+    when(usuarioService.findByUsernameForAuthentication(anyString())).thenReturn(usuarioService.toDto(usuario));
     when(usuarioService.hasSolicitacaoNadaConstaPendingOrCompleted(anyString())).thenReturn(false);
     when(authenticationManager.authenticate(any(Authentication.class)))
         .thenReturn(
@@ -104,7 +104,7 @@ class JWTAuthenticationFilterTest {
     when(request.getInputStream())
         .thenReturn(
             new DelegatingServletInputStream(new ObjectMapper().writeValueAsBytes(usuario)));
-    when(usuarioService.findByUsernameForAuthentication(anyString())).thenReturn(usuario);
+    when(usuarioService.findByUsernameForAuthentication(anyString())).thenReturn(usuarioService.toDto(usuario));
     when(usuarioService.hasSolicitacaoNadaConstaPendingOrCompleted(anyString())).thenReturn(true);
     Exception exception =
         assertThrows(
@@ -122,7 +122,7 @@ class JWTAuthenticationFilterTest {
     when(request.getInputStream())
         .thenReturn(
             new DelegatingServletInputStream(new ObjectMapper().writeValueAsBytes(usuario)));
-    when(usuarioService.findByUsernameForAuthentication(anyString())).thenReturn(usuario);
+    when(usuarioService.findByUsernameForAuthentication(anyString())).thenReturn(usuarioService.toDto(usuario));
     when(usuarioService.hasSolicitacaoNadaConstaPendingOrCompleted(anyString())).thenReturn(false);
     when(authenticationManager.authenticate(any(Authentication.class)))
         .thenThrow(
@@ -192,7 +192,7 @@ class JWTAuthenticationFilterTest {
     when(request.getInputStream())
         .thenReturn(
             new DelegatingServletInputStream(new ObjectMapper().writeValueAsBytes(usuario)));
-    when(usuarioService.findByUsernameForAuthentication("user@utfpr.edu.br")).thenReturn(usuario);
+    when(usuarioService.findByUsernameForAuthentication("user@utfpr.edu.br")).thenReturn(usuarioService.toDto(usuario));
     when(usuarioService.hasSolicitacaoNadaConstaPendingOrCompleted("user@utfpr.edu.br"))
         .thenReturn(false);
     when(authenticationManager.authenticate(any(Authentication.class)))
@@ -213,7 +213,7 @@ class JWTAuthenticationFilterTest {
     when(request.getInputStream())
         .thenReturn(
             new DelegatingServletInputStream(new ObjectMapper().writeValueAsBytes(usuario)));
-    when(usuarioService.findByUsernameForAuthentication("user@utfpr.edu.br")).thenReturn(usuario);
+    when(usuarioService.findByUsernameForAuthentication("user@utfpr.edu.br")).thenReturn(usuarioService.toDto(usuario));
     when(usuarioService.hasSolicitacaoNadaConstaPendingOrCompleted("user@utfpr.edu.br"))
         .thenReturn(false);
     when(authenticationManager.authenticate(any(Authentication.class)))

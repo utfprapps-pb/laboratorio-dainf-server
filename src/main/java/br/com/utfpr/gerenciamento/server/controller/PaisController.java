@@ -9,7 +9,7 @@ import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("pais")
-public class PaisController extends CrudController<Pais, Long> {
+public class PaisController extends CrudController<Pais, Long,PaisResponseDto> {
 
   private final PaisService paisService;
 
@@ -18,7 +18,7 @@ public class PaisController extends CrudController<Pais, Long> {
   }
 
   @Override
-  protected CrudService<Pais, Long> getService() {
+  protected CrudService<Pais, Long,PaisResponseDto> getService() {
     return paisService;
   }
 

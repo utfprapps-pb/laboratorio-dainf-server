@@ -4,7 +4,7 @@ import br.com.utfpr.gerenciamento.server.dto.ReservaResponseDto;
 import br.com.utfpr.gerenciamento.server.model.Reserva;
 import java.util.List;
 
-public interface ReservaService extends CrudService<Reserva, Long> {
+public interface ReservaService extends CrudService<Reserva, Long,ReservaResponseDto> {
 
   List<ReservaResponseDto> findAllByAuthenticatedUser();
 
@@ -13,6 +13,4 @@ public interface ReservaService extends CrudService<Reserva, Long> {
   void finalizarReserva(Long idReserva);
 
   void sendEmailConfirmacaoReserva(Reserva reserva);
-
-  ReservaResponseDto convertToDto(Reserva entity);
 }

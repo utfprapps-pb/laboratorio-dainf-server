@@ -4,7 +4,7 @@ import br.com.utfpr.gerenciamento.server.dto.GrupoResponseDto;
 import br.com.utfpr.gerenciamento.server.model.Grupo;
 import java.util.List;
 
-public interface GrupoService extends CrudService<Grupo, Long> {
+public interface GrupoService extends CrudService<Grupo, Long,GrupoResponseDto> {
 
   List<GrupoResponseDto> completeGrupo(String query);
 

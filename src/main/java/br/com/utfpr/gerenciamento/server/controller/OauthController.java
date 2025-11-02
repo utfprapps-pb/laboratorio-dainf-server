@@ -62,7 +62,7 @@ public class OauthController {
     final GoogleIdToken googleIdToken =
         GoogleIdToken.parse(verifier.getJsonFactory(), tokenDto.getValue());
     final GoogleIdToken.Payload payload = googleIdToken.getPayload();
-    Usuario usuario = usuarioService.findByUsername(payload.getEmail());
+    Usuario usuario = usuarioService.toEntity( usuarioService.findByUsername(payload.getEmail()));
     if (usuario == null) {
       usuario = createOAuthUser(payload.getEmail());
     }
@@ -125,7 +125,7 @@ public class OauthController {
     usuario.getPermissoes().add(permissao);
     usuario.setEmailVerificado(true); // OAuth emails são pré-verificados pelo Google
 
-    return usuarioService.save(usuario);
+    return usuarioService.toEntity( usuarioService.save(usuario));
   }
 
   /**

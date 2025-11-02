@@ -1,5 +1,6 @@
 package br.com.utfpr.gerenciamento.server.controller;
 
+import br.com.utfpr.gerenciamento.server.dto.RelatorioResponseDTO;
 import br.com.utfpr.gerenciamento.server.model.Relatorio;
 import br.com.utfpr.gerenciamento.server.model.RelatorioParamsValue;
 import br.com.utfpr.gerenciamento.server.service.CrudService;
@@ -17,7 +18,7 @@ import org.springframework.web.multipart.MultipartHttpServletRequest;
 
 @RestController
 @RequestMapping("relatorio")
-public class RelatorioController extends CrudController<Relatorio, Long> {
+public class RelatorioController extends CrudController<Relatorio, Long, RelatorioResponseDTO> {
 
   private final RelatorioService relatorioService;
 
@@ -26,7 +27,7 @@ public class RelatorioController extends CrudController<Relatorio, Long> {
   }
 
   @Override
-  protected CrudService<Relatorio, Long> getService() {
+  protected CrudService<Relatorio, Long,RelatorioResponseDTO> getService() {
     return this.relatorioService;
   }
 

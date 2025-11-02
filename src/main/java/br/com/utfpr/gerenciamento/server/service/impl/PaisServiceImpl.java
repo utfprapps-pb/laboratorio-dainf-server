@@ -13,7 +13,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 @Service
-public class PaisServiceImpl extends CrudServiceImpl<Pais, Long> implements PaisService {
+public class PaisServiceImpl extends CrudServiceImpl<Pais, Long,PaisResponseDto> implements PaisService {
 
   private final PaisRepository paisRepository;
 
@@ -27,6 +27,16 @@ public class PaisServiceImpl extends CrudServiceImpl<Pais, Long> implements Pais
   @Override
   protected JpaRepository<Pais, Long> getRepository() {
     return this.paisRepository;
+  }
+
+  @Override
+  public PaisResponseDto toDto(Pais entity) {
+    return modelMapper.map(entity, PaisResponseDto.class);
+  }
+
+  @Override
+  public Pais toEntity(PaisResponseDto paisResponseDto) {
+    return modelMapper.map(paisResponseDto, Pais.class);
   }
 
   @Override
@@ -50,7 +60,7 @@ public class PaisServiceImpl extends CrudServiceImpl<Pais, Long> implements Pais
   @Override
   @Transactional
   @CacheEvict(value = "paises", allEntries = true)
-  public Pais save(Pais pais) {
+  public PaisResponseDto save(Pais pais) {
     // Limpa cache ao salvar país
     return super.save(pais);
   }

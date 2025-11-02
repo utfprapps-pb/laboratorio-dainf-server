@@ -5,6 +5,7 @@ import br.com.utfpr.gerenciamento.server.enumeration.NadaConstaStatus;
 import br.com.utfpr.gerenciamento.server.enumeration.UserRole;
 import br.com.utfpr.gerenciamento.server.exception.EntityNotFoundException;
 import br.com.utfpr.gerenciamento.server.exception.RecoverCodeInvalidException;
+import br.com.utfpr.gerenciamento.server.model.Emprestimo;
 import br.com.utfpr.gerenciamento.server.model.Permissao;
 import br.com.utfpr.gerenciamento.server.model.RecoverPassword;
 import br.com.utfpr.gerenciamento.server.model.Usuario;
@@ -34,7 +35,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 @Service
-public class UsuarioServiceImpl extends CrudServiceImpl<Usuario, Long>
+public class UsuarioServiceImpl extends CrudServiceImpl<Usuario, Long,UsuarioResponseDto>
     implements UsuarioService, UserDetailsService {
 
   public static final String EMAIL_SUBJECT_CONFIRMACAO =
@@ -81,9 +82,19 @@ public class UsuarioServiceImpl extends CrudServiceImpl<Usuario, Long>
   }
 
   @Override
+  public UsuarioResponseDto toDto(Usuario entity) {
+    return modelMapper.map(entity, UsuarioResponseDto.class);
+  }
+
+  @Override
+  public Usuario toEntity(UsuarioResponseDto usuarioResponseDto) {
+    return modelMapper.map(usuarioResponseDto, Usuario.class);
+  }
+
+  @Override
   @Transactional(readOnly = true)
   public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
-    Usuario usuario = findByUsernameForAuthentication(username);
+    Usuario usuario = toEntity(findByUsernameForAuthentication(username));
     if (usuario == null) {
       throw new UsernameNotFoundException("Usuário não encontrado");
     }
@@ -103,18 +114,18 @@ public class UsuarioServiceImpl extends CrudServiceImpl<Usuario, Long>
 
   @Override
   @Transactional(readOnly = true)
-  public Usuario findByUsername(String username) {
+  public UsuarioResponseDto findByUsername(String username) {
     username = normalizeUsername(username);
     // Usa versão SEM permissoes (LAZY) - mais performática para uso geral
-    return usuarioRepository.findByUsernameOrEmail(username, username);
+    return toDto(usuarioRepository.findByUsernameOrEmail(username, username));
   }
 
   @Override
   @Transactional(readOnly = true)
-  public Usuario findByUsernameForAuthentication(String username) {
+  public UsuarioResponseDto findByUsernameForAuthentication(String username) {
     username = normalizeUsername(username);
     // Usa versão COM permissoes (@EntityGraph) - necessário para autenticação
-    return usuarioRepository.findWithPermissoesByUsernameOrEmail(username, username);
+    return toDto(usuarioRepository.findWithPermissoesByUsernameOrEmail(username, username));
   }
 
   /**
@@ -158,7 +169,7 @@ public class UsuarioServiceImpl extends CrudServiceImpl<Usuario, Long>
 
   @Override
   @Transactional
-  public Usuario updateUsuario(Usuario usuario) {
+  public UsuarioResponseDto updateUsuario(Usuario usuario) {
     if (usuario
         .getUsername()
         .equals(SecurityContextHolder.getContext().getAuthentication().getPrincipal())) {
@@ -166,14 +177,14 @@ public class UsuarioServiceImpl extends CrudServiceImpl<Usuario, Long>
       usuarioTmp.setTelefone(usuario.getTelefone());
       usuarioTmp.setDocumento(usuario.getDocumento());
 
-      return usuarioRepository.save(usuarioTmp);
+      return toDto( usuarioRepository.save(usuarioTmp));
     }
     return null;
   }
 
   @Override
   @Transactional
-  public Usuario save(Usuario usuario) {
+  public UsuarioResponseDto save(Usuario usuario) {
     if (usuario.getPassword() != null && !Util.isPasswordEncoded(usuario.getPassword()))
       usuario.setPassword(passwordEncoder.encode(usuario.getPassword()));
 
@@ -188,7 +199,7 @@ public class UsuarioServiceImpl extends CrudServiceImpl<Usuario, Long>
               .collect(Collectors.toSet());
 
       if (!permissaoIds.isEmpty()) {
-        Set<Permissao> permissoes = new HashSet<>(permissaoService.findAllById(permissaoIds));
+        Set<Permissao> permissoes = new HashSet<>(permissaoService.findAllById(permissaoIds).stream().map(permissaoService::toEntity).collect(Collectors.toSet()));
         usuario.setPermissoes(permissoes);
       } else {
         usuario.setPermissoes(new HashSet<>());
@@ -301,18 +312,18 @@ public class UsuarioServiceImpl extends CrudServiceImpl<Usuario, Long>
 
   @Override
   @Transactional
-  public Usuario updatePassword(Usuario usuario, String senhaAtual) {
-    Usuario userTemp = this.findOne(usuario.getId());
+  public UsuarioResponseDto updatePassword(Usuario usuario, String senhaAtual) {
+    Usuario userTemp = toEntity(this.findOne(usuario.getId()));
     usuario.setEmailVerificado(userTemp.getEmailVerificado());
     if (passwordEncoder.matches(senhaAtual, userTemp.getPassword())) {
       userTemp.setPassword(passwordEncoder.encode(usuario.getPassword()));
-      return usuarioRepository.save(userTemp);
+      return toDto(usuarioRepository.save(userTemp));
     }
     throw new RuntimeException("Senha incorreta");
   }
 
   @Override
-  public Usuario saveNewUser(Usuario usuario) {
+  public UsuarioResponseDto saveNewUser(Usuario usuario) {
     if (!Util.isPasswordEncoded(usuario.getPassword())) {
       usuario.setPassword(passwordEncoder.encode(usuario.getPassword()));
     }
@@ -338,7 +349,7 @@ public class UsuarioServiceImpl extends CrudServiceImpl<Usuario, Long>
       emailService.sendEmailWithTemplate(
           emailDto, emailDto.getEmailTo(), emailDto.getSubject(), "templateConfirmacaoCadastro");
 
-      return usuario;
+      return toDto(usuario);
     } catch (Exception ex) {
       LOGGER.error("Erro ao salvar novo usuário: ", ex);
       throw new RuntimeException("Erro ao salvar novo usuário.");
@@ -361,15 +372,15 @@ public class UsuarioServiceImpl extends CrudServiceImpl<Usuario, Long>
   }
 
   @Override
-  public Usuario findByDocumento(String documento) {
-    return usuarioRepository.findByDocumento(documento).orElse(null);
+  public UsuarioResponseDto findByDocumento(String documento) {
+    return toDto(usuarioRepository.findByDocumento(documento).orElse(null));
   }
 
   /** Verifica se o usuário possui solicitação de nada consta em aberto ou concluída. */
   @Transactional
   @Override
   public boolean hasSolicitacaoNadaConstaPendingOrCompleted(String username) {
-    Usuario usuario = findByUsername(username);
+    Usuario usuario = toEntity(findByUsername(username));
     if (usuario == null) return false;
     return nadaConstaRepository.existsByUsuarioAndStatusIn(
         usuario, Set.of(NadaConstaStatus.PENDING, NadaConstaStatus.COMPLETED));

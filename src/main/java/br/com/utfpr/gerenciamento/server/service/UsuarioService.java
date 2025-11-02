@@ -7,8 +7,9 @@ import br.com.utfpr.gerenciamento.server.dto.UsuarioResponseDto;
 import br.com.utfpr.gerenciamento.server.model.Usuario;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.security.core.userdetails.UserDetails;
 
-public interface UsuarioService extends CrudService<Usuario, Long> {
+public interface UsuarioService extends CrudService<Usuario, Long,UsuarioResponseDto> {
 
   Page<UsuarioResponseDto> usuarioComplete(String query, Pageable pageable);
 
@@ -16,23 +17,19 @@ public interface UsuarioService extends CrudService<Usuario, Long> {
    * Busca usuario por username SEM carregar permissoes (LAZY). Use para operações normais que não
    * precisam de permissões.
    */
-  Usuario findByUsername(String username);
+  UsuarioResponseDto findByUsername(String username);
 
   /**
    * Busca usuario por username COM permissoes carregadas (para autenticação). Use SOMENTE nos
    * fluxos de autenticação onde UserDetails.getAuthorities() será chamado.
    */
-  Usuario findByUsernameForAuthentication(String username);
+  UsuarioResponseDto findByUsernameForAuthentication(String username);
 
   Page<UsuarioResponseDto> usuarioCompleteByUserAndDocAndNome(String query, Pageable pageable);
 
   Page<UsuarioResponseDto> usuarioCompleteLab(String query, Pageable pageable);
 
-  Usuario updateUsuario(Usuario usuario);
-
-  UsuarioResponseDto convertToDto(Usuario entity);
-
-  Usuario convertToEntity(UsuarioResponseDto entityDto);
+  UsuarioResponseDto updateUsuario(Usuario usuario);
 
   String resendEmail(ConfirmEmailRequestDto confirmEmailRequestDto);
 
@@ -42,11 +39,11 @@ public interface UsuarioService extends CrudService<Usuario, Long> {
 
   GenericResponse resetPassword(RecoverPasswordRequestDto recoverPasswordRequestDto);
 
-  Usuario updatePassword(Usuario entity, String password);
+  UsuarioResponseDto updatePassword(Usuario entity, String password);
 
-  Usuario saveNewUser(Usuario entity);
+  UsuarioResponseDto saveNewUser(Usuario entity);
 
-  Usuario findByDocumento(String documento);
+  UsuarioResponseDto findByDocumento(String documento);
 
   boolean hasSolicitacaoNadaConstaPendingOrCompleted(String username);
 }

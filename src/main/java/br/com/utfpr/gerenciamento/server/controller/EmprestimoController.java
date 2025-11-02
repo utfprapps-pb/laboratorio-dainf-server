@@ -18,7 +18,7 @@ import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("emprestimo")
-public class EmprestimoController extends CrudController<Emprestimo, Long> {
+public class EmprestimoController extends CrudController<Emprestimo, Long,EmprestimoResponseDto> {
 
   private final EmprestimoService emprestimoService;
 
@@ -27,12 +27,12 @@ public class EmprestimoController extends CrudController<Emprestimo, Long> {
   }
 
   @Override
-  protected CrudService<Emprestimo, Long> getService() {
+  protected CrudService<Emprestimo, Long,EmprestimoResponseDto> getService() {
     return emprestimoService;
   }
 
   @Override
-  public List<Emprestimo> findAll() {
+  public List<EmprestimoResponseDto> findAll() {
     return this.emprestimoService.findAllEmprestimosAbertos();
   }
 
@@ -64,9 +64,7 @@ public class EmprestimoController extends CrudController<Emprestimo, Long> {
 
   @PostMapping("filter")
   public List<EmprestimoResponseDto> filter(@RequestBody EmprestimoFilter emprestimoFilter) {
-    return emprestimoService.filter(emprestimoFilter).stream()
-        .map(emprestimoService::convertToDto)
-        .toList();
+    return emprestimoService.filter(emprestimoFilter);
   }
 
   @PreAuthorize(
@@ -78,9 +76,7 @@ public class EmprestimoController extends CrudController<Emprestimo, Long> {
   @GetMapping("find-all-by-username/{username}")
   public List<EmprestimoResponseDto> findAllByUsuarioEmprestimo(
       @PathVariable("username") String username) {
-    return emprestimoService.findAllUsuarioEmprestimo(username).stream()
-        .map(emprestimoService::convertToDto)
-        .toList();
+    return emprestimoService.findAllUsuarioEmprestimo(username);
   }
 
   @GetMapping("change-prazo-devolucao")
@@ -92,7 +88,7 @@ public class EmprestimoController extends CrudController<Emprestimo, Long> {
   /**
    * Paginação otimizada de empréstimos com JOIN FETCH e cache.
    *
-   * <p><b>Associações fetched via {@link EmprestimoSpecifications#withFetchCollections()}:</b>
+   * <p><b>Associações fetched via :</b>
    *
    * <ul>
    *   <li>{@code usuarioEmprestimo} - Usuário que fez o empréstimo (LEFT JOIN FETCH)
@@ -121,7 +117,7 @@ public class EmprestimoController extends CrudController<Emprestimo, Long> {
    * @return Página de entidades {@link Emprestimo} otimizada com associações carregadas e cache
    */
   @Override
-  public Page<Emprestimo> findAllPaged(
+  public Page<EmprestimoResponseDto> findAllPaged(
       @RequestParam("page") int page,
       @RequestParam("size") int size,
       @RequestParam(required = false) String filter,

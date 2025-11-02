@@ -9,19 +9,19 @@ import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.web.bind.annotation.*;
 
-public abstract class CrudController<T, ID extends Serializable> {
+public abstract class CrudController<T, ID extends Serializable,DTO> {
 
-  protected abstract CrudService<T, ID> getService();
+  protected abstract CrudService<T, ID,DTO> getService();
 
   @GetMapping
-  public List<T> findAll() {
+  public List<DTO> findAll() {
     return getService().findAll(Sort.by("id"));
   }
 
   @PostMapping
-  public T save(@RequestBody T object) {
+  public DTO save(@RequestBody T object) {
     preSave(object);
-    T toReturn = getService().save(object);
+    DTO toReturn = getService().save(object);
     postSave(object);
     return toReturn;
   }
@@ -31,13 +31,13 @@ public abstract class CrudController<T, ID extends Serializable> {
   public void postSave(T object) {}
 
   @GetMapping("{id}")
-  public T findone(@PathVariable("id") ID id) {
+  public DTO findone(@PathVariable("id") ID id) {
     return getService().findOne(id);
   }
 
   @DeleteMapping("{id}")
   public void delete(@PathVariable("id") ID id) {
-    T object = getService().findOne(id);
+    T object = getService().toEntity( getService().findOne(id));
     getService().delete(id);
     postDelete(object);
   }
@@ -55,7 +55,7 @@ public abstract class CrudController<T, ID extends Serializable> {
   }
 
   @GetMapping("page")
-  public Page<T> findAllPaged(
+  public Page<DTO> findAllPaged(
       @RequestParam("page") int page,
       @RequestParam("size") int size,
       @RequestParam(required = false) String filter,

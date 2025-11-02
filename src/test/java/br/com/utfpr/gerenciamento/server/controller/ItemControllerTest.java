@@ -4,12 +4,15 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
 
+import br.com.utfpr.gerenciamento.server.dto.ItemResponseDto;
 import br.com.utfpr.gerenciamento.server.enumeration.TipoItem;
 import br.com.utfpr.gerenciamento.server.model.Item;
 import br.com.utfpr.gerenciamento.server.service.ItemService;
 import java.math.BigDecimal;
 import java.util.Arrays;
 import java.util.List;
+import java.util.stream.Collectors;
+
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
@@ -37,7 +40,7 @@ class ItemControllerTest {
 
     when(itemService.findOneWithDisponibilidade(1L)).thenReturn(item);
 
-    Item result = itemController.findone(1L);
+    ItemResponseDto result =  itemController.findone(1L);
 
     assertThat(result).isEqualTo(item);
     assertThat(result.getDisponivelEmprestimoCalculado()).isEqualByComparingTo("7");
@@ -53,9 +56,9 @@ class ItemControllerTest {
     item2.setTipoItem(TipoItem.C);
     item2.setSaldo(new BigDecimal("10"));
 
-    when(itemService.findAll(Sort.by("id"))).thenReturn(Arrays.asList(item1, item2));
+    when(itemService.findAll(Sort.by("id"))).thenReturn(Arrays.asList(item1, item2).stream().map(itemService::toDto).collect(Collectors.toList()));
 
-    List<Item> result = itemController.findAll();
+    List<Item> result = itemController.findAll().stream().map(itemService::toEntity).collect(Collectors.toList());
 
     assertThat(result).hasSize(2);
     assertThat(result.get(0)).isEqualTo(item1);
@@ -68,11 +71,11 @@ class ItemControllerTest {
     item.setTipoItem(TipoItem.P);
     item.setSaldo(new BigDecimal("8"));
 
-    Page<Item> page = new PageImpl<>(List.of(item));
+    Page<ItemResponseDto> page = new PageImpl<>(List.of(item).stream().map(itemService::toDto).collect(Collectors.toList()));
 
     when(itemService.findAll(any(PageRequest.class))).thenReturn(page);
 
-    Page<Item> result = itemController.findAllPaged(0, 10, null, null, null);
+    Page<ItemResponseDto> result = itemController.findAllPaged(0, 10, null, null, null);
 
     assertThat(result.getContent()).hasSize(1);
     assertThat(result.getContent().getFirst()).isEqualTo(item);

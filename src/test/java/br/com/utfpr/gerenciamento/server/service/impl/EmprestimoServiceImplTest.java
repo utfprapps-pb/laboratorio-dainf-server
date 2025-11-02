@@ -60,7 +60,7 @@ class EmprestimoServiceImplTest {
     LocalDate fim = ini.plusDays(1);
     List<Emprestimo> expected = Collections.singletonList(new Emprestimo());
     when(emprestimoRepository.findAllByDataEmprestimoBetween(ini, fim)).thenReturn(expected);
-    List<Emprestimo> result = service.findAllByDataEmprestimoBetween(ini, fim);
+    List<EmprestimoResponseDto> result = service.findAllByDataEmprestimoBetween(ini, fim);
     assertEquals(expected, result);
   }
 
@@ -108,7 +108,7 @@ class EmprestimoServiceImplTest {
     // Tipagem correta para evitar warning
     when(emprestimoRepository.findAll(any(Specification.class), any(Sort.class)))
         .thenReturn(expected);
-    List<Emprestimo> result = service.filter(filter);
+    List<EmprestimoResponseDto> result = service.filter(filter);
     assertEquals(expected, result);
   }
 
@@ -116,9 +116,9 @@ class EmprestimoServiceImplTest {
   void testFindAllUsuarioEmprestimo() {
     Usuario usuario = new Usuario();
     List<Emprestimo> expected = Collections.emptyList();
-    when(usuarioService.findByUsername(anyString())).thenReturn(usuario);
+    when(usuarioService.findByUsername(anyString())).thenReturn(usuarioService.toDto( usuario));
     when(emprestimoRepository.findAllByUsuarioEmprestimo(usuario)).thenReturn(expected);
-    List<Emprestimo> result = service.findAllUsuarioEmprestimo("user");
+    List<EmprestimoResponseDto> result = service.findAllUsuarioEmprestimo("user");
     assertEquals(expected, result);
   }
 
@@ -126,7 +126,7 @@ class EmprestimoServiceImplTest {
   void testFindAllEmprestimosAbertos() {
     List<Emprestimo> expected = Collections.emptyList();
     when(emprestimoRepository.findAllByDataDevolucaoIsNullOrderById()).thenReturn(expected);
-    List<Emprestimo> result = service.findAllEmprestimosAbertos();
+    List<EmprestimoResponseDto> result = service.findAllEmprestimosAbertos();
     assertEquals(expected, result);
   }
 
@@ -134,10 +134,10 @@ class EmprestimoServiceImplTest {
   void testFindAllEmprestimosAbertosByUsuario() {
     Usuario usuario = new Usuario();
     List<Emprestimo> expected = Collections.emptyList();
-    when(usuarioService.findByUsername(anyString())).thenReturn(usuario);
+    when(usuarioService.findByUsername(anyString())).thenReturn(usuarioService.toDto( usuario));
     when(emprestimoRepository.findAllByUsuarioEmprestimoAndDataDevolucaoIsNull(usuario))
         .thenReturn(expected);
-    List<Emprestimo> result = service.findAllEmprestimosAbertosByUsuario("user");
+    List<EmprestimoResponseDto> result = service.findAllEmprestimosAbertosByUsuario("user");
     assertEquals(expected, result);
   }
 
@@ -207,7 +207,7 @@ class EmprestimoServiceImplTest {
     Emprestimo emprestimo = new Emprestimo();
     EmprestimoResponseDto dto = new EmprestimoResponseDto();
     when(modelMapper.map(emprestimo, EmprestimoResponseDto.class)).thenReturn(dto);
-    EmprestimoResponseDto result = service.convertToDto(emprestimo);
+    EmprestimoResponseDto result = service.toDto(emprestimo);
     assertEquals(dto, result);
   }
 }

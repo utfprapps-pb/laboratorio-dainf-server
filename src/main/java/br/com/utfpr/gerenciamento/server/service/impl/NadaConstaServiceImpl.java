@@ -1,5 +1,6 @@
 package br.com.utfpr.gerenciamento.server.service.impl;
 
+import br.com.utfpr.gerenciamento.server.dto.EmprestimoResponseDto;
 import br.com.utfpr.gerenciamento.server.dto.NadaConstaResponseDto;
 import br.com.utfpr.gerenciamento.server.enumeration.NadaConstaStatus;
 import br.com.utfpr.gerenciamento.server.exception.NadaConstaException;
@@ -21,6 +22,8 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
+
 import lombok.extern.slf4j.Slf4j;
 import org.modelmapper.ModelMapper;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -29,7 +32,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 @Slf4j
 @Service
-public class NadaConstaServiceImpl extends CrudServiceImpl<NadaConsta, Long>
+public class NadaConstaServiceImpl extends CrudServiceImpl<NadaConsta, Long,NadaConstaResponseDto>
     implements NadaConstaService {
 
   private final NadaConstaRepository nadaConstaRepository;
@@ -60,28 +63,31 @@ public class NadaConstaServiceImpl extends CrudServiceImpl<NadaConsta, Long>
   }
 
   @Override
-  @Transactional(readOnly = true)
-  public List<NadaConstaResponseDto> findAllByUsername(String username) {
-    var usuario = usuarioService.findByUsername(username);
-    if (usuario == null) {
-      return Collections.emptyList();
-    }
-    return nadaConstaRepository.findAllByUsuario(usuario).stream().map(this::convertToDto).toList();
+  public NadaConstaResponseDto toDto(NadaConsta entity) {
+    return modelMapper.map(entity, NadaConstaResponseDto.class);
   }
 
   @Override
-  public NadaConstaResponseDto convertToDto(NadaConsta entity) {
-    var dto = modelMapper.map(entity, NadaConstaResponseDto.class);
-    if (entity.getUsuario() != null) {
-      dto.setUsuarioUsername(entity.getUsuario().getUsername());
-    }
-    return dto;
+  public NadaConsta toEntity(NadaConstaResponseDto nadaConstaResponseDto) {
+    return modelMapper.map(nadaConstaResponseDto, NadaConsta.class);
   }
+
+  @Override
+  @Transactional(readOnly = true)
+  public List<NadaConstaResponseDto> findAllByUsername(String username) {
+    Usuario usuario =usuarioService.toEntity( usuarioService.findByUsername(username));
+    if (usuario == null) {
+      return Collections.emptyList();
+    }
+    return nadaConstaRepository.findAllByUsuario(usuario).stream().map(this::toDto).toList();
+  }
+
+
 
   @Override
   @Transactional
   public NadaConstaResponseDto solicitarNadaConsta(String documento) {
-    Usuario usuario = usuarioService.findByDocumento(documento);
+    Usuario usuario = usuarioService.toEntity(usuarioService.findByDocumento(documento));
     if (usuario == null) {
       throw new RuntimeException("Usuário não encontrado para o documento informado.");
     }
@@ -91,7 +97,7 @@ public class NadaConstaServiceImpl extends CrudServiceImpl<NadaConsta, Long>
           "Já existe uma solicitação de Nada Consta em aberto ou concluída para este usuário.");
     }
     List<Emprestimo> emprestimosAbertos =
-        emprestimoService.findAllEmprestimosAbertosByUsuario(usuario.getUsername());
+        emprestimoService.findAllEmprestimosAbertosByUsuario(usuario.getUsername()).stream().map(emprestimoService::toEntity).collect(Collectors.toList());
     NadaConsta nadaConsta =
         NadaConsta.builder()
             .usuario(usuario)
@@ -154,6 +160,6 @@ public class NadaConstaServiceImpl extends CrudServiceImpl<NadaConsta, Long>
       usuario.setAtivo(false);
       usuarioService.save(usuario);
     }
-    return convertToDto(nadaConsta);
+    return toDto(nadaConsta);
   }
 }

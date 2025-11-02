@@ -13,7 +13,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 @Service
-public class EstadoServiceImpl extends CrudServiceImpl<Estado, Long> implements EstadoService {
+public class EstadoServiceImpl extends CrudServiceImpl<Estado, Long,EstadoResponseDto> implements EstadoService {
 
   private final EstadoRepository estadoRepository;
 
@@ -30,6 +30,16 @@ public class EstadoServiceImpl extends CrudServiceImpl<Estado, Long> implements 
   }
 
   @Override
+  public EstadoResponseDto toDto(Estado entity) {
+    return modelMapper.map(entity, EstadoResponseDto.class);
+  }
+
+  @Override
+  public Estado toEntity(EstadoResponseDto estadoResponseDto) {
+    return modelMapper.map(estadoResponseDto, Estado.class);
+  }
+
+  @Override
   @Transactional(readOnly = true)
   @Cacheable(
       value = "estados",
@@ -39,17 +49,17 @@ public class EstadoServiceImpl extends CrudServiceImpl<Estado, Long> implements 
     // Cache agressivo: Estados brasileiros (27) raramente mudam
     // TTL: 6 horas (configurado em CacheConfig)
     if (query == null || query.isBlank()) {
-      return estadoRepository.findAll().stream().map(this::convertToDto).toList();
+      return estadoRepository.findAll().stream().map(this::toDto).toList();
     } else {
       return estadoRepository.findByNomeLikeIgnoreCase("%" + query + "%").stream()
-          .map(this::convertToDto)
+          .map(this::toDto)
           .toList();
     }
   }
 
   @Override
   @CacheEvict(value = "estados", allEntries = true)
-  public Estado save(Estado estado) {
+  public EstadoResponseDto save(Estado estado) {
     // Limpa cache ao salvar estado
     return super.save(estado);
   }
@@ -59,10 +69,5 @@ public class EstadoServiceImpl extends CrudServiceImpl<Estado, Long> implements 
   public void delete(Long id) {
     // Limpa cache ao deletar estado
     super.delete(id);
-  }
-
-  @Override
-  public EstadoResponseDto convertToDto(Estado entity) {
-    return modelMapper.map(entity, EstadoResponseDto.class);
   }
 }

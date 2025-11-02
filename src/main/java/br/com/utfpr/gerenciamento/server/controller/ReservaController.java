@@ -12,7 +12,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 @RestController
 @RequestMapping("reserva")
-public class ReservaController extends CrudController<Reserva, Long> {
+public class ReservaController extends CrudController<Reserva, Long,ReservaResponseDto> {
 
   private final ReservaService reservaService;
 
@@ -21,7 +21,7 @@ public class ReservaController extends CrudController<Reserva, Long> {
   }
 
   @Override
-  protected CrudService<Reserva, Long> getService() {
+  protected CrudService<Reserva, Long,ReservaResponseDto> getService() {
     return reservaService;
   }
 

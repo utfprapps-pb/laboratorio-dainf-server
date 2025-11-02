@@ -12,7 +12,7 @@ import java.util.List;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 
-public interface EmprestimoService extends CrudService<Emprestimo, Long> {
+public interface EmprestimoService extends CrudService<Emprestimo, Long,EmprestimoResponseDto> {
 
   /**
    * Busca paginada com filtro textual e cache otimizado.
@@ -24,9 +24,9 @@ public interface EmprestimoService extends CrudService<Emprestimo, Long> {
    * @param pageable Configuração de paginação e ordenação
    * @return Página de empréstimos com JOIN FETCH otimizado
    */
-  Page<Emprestimo> findAllPagedWithTextFilter(String textFilter, Pageable pageable);
+  Page<EmprestimoResponseDto> findAllPagedWithTextFilter(String textFilter, Pageable pageable);
 
-  List<Emprestimo> findAllByDataEmprestimoBetween(LocalDate dtIni, LocalDate dtFim);
+  List<EmprestimoResponseDto> findAllByDataEmprestimoBetween(LocalDate dtIni, LocalDate dtFim);
 
   List<DashboardEmprestimoDia> countByDataEmprestimo(LocalDate dtIni, LocalDate dtFim);
 
@@ -34,13 +34,13 @@ public interface EmprestimoService extends CrudService<Emprestimo, Long> {
 
   List<EmprestimoDevolucaoItem> createEmprestimoItemDevolucao(List<EmprestimoItem> emprestimoItem);
 
-  List<Emprestimo> filter(EmprestimoFilter emprestimoFilter);
+  List<EmprestimoResponseDto> filter(EmprestimoFilter emprestimoFilter);
 
-  List<Emprestimo> findAllUsuarioEmprestimo(String username);
+  List<EmprestimoResponseDto> findAllUsuarioEmprestimo(String username);
 
-  List<Emprestimo> findAllEmprestimosAbertos();
+  List<EmprestimoResponseDto> findAllEmprestimosAbertos();
 
-  List<Emprestimo> findAllEmprestimosAbertosByUsuario(String username);
+  List<EmprestimoResponseDto> findAllEmprestimosAbertosByUsuario(String username);
 
   void changePrazoDevolucao(Long idEmprestimo, LocalDate novaData);
 
@@ -50,7 +50,6 @@ public interface EmprestimoService extends CrudService<Emprestimo, Long> {
 
   void sendEmailPrazoDevolucaoProximo();
 
-  EmprestimoResponseDto convertToDto(Emprestimo entity);
 
   /**
    * Processa criação/edição de empréstimo com toda lógica de negócio.

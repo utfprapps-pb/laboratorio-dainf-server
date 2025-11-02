@@ -1,5 +1,6 @@
 package br.com.utfpr.gerenciamento.server.service.impl;
 
+import br.com.utfpr.gerenciamento.server.dto.RelatorioResponseDTO;
 import br.com.utfpr.gerenciamento.server.exception.ArquivoException;
 import br.com.utfpr.gerenciamento.server.model.Relatorio;
 import br.com.utfpr.gerenciamento.server.model.RelatorioParamsValue;
@@ -19,6 +20,7 @@ import lombok.extern.slf4j.Slf4j;
 import net.sf.jasperreports.engine.*;
 import net.sf.jasperreports.engine.design.JasperDesign;
 import net.sf.jasperreports.engine.xml.JRXmlLoader;
+import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.jdbc.core.JdbcTemplate;
@@ -29,23 +31,35 @@ import org.springframework.web.multipart.MultipartHttpServletRequest;
 
 @Service
 @Slf4j
-public class RelatorioServiceImpl extends CrudServiceImpl<Relatorio, Long>
+public class RelatorioServiceImpl extends CrudServiceImpl<Relatorio, Long, RelatorioResponseDTO>
     implements RelatorioService {
 
   private final RelatorioRepository relatorioRepository;
 
   private final JdbcTemplate jdbcTemplate;
+  private final ModelMapper modelMapper;
 
   public RelatorioServiceImpl(
-      RelatorioRepository relatorioRepository,
-      @Qualifier("jdbcTemplate") JdbcTemplate jdbcTemplate) {
+          RelatorioRepository relatorioRepository,
+          @Qualifier("jdbcTemplate") JdbcTemplate jdbcTemplate, ModelMapper modelMapper) {
     this.relatorioRepository = relatorioRepository;
     this.jdbcTemplate = jdbcTemplate;
+      this.modelMapper = modelMapper;
   }
 
   @Override
   protected JpaRepository<Relatorio, Long> getRepository() {
     return this.relatorioRepository;
+  }
+
+  @Override
+  public RelatorioResponseDTO toDto(Relatorio entity) {
+    return modelMapper.map(entity, RelatorioResponseDTO.class);
+  }
+
+  @Override
+  public Relatorio toEntity(RelatorioResponseDTO relatorioResponseDTO) {
+    return modelMapper.map(relatorioResponseDTO, Relatorio.class);
   }
 
   @Override
@@ -92,7 +106,7 @@ public class RelatorioServiceImpl extends CrudServiceImpl<Relatorio, Long>
   @Transactional
   public JasperPrint generateReport(Long idRelatorio, List<RelatorioParamsValue> paramsRel)
       throws SQLException, JRException {
-    Relatorio relatorio = this.findOne(idRelatorio);
+    Relatorio relatorio = toEntity( this.findOne(idRelatorio));
     if (relatorio.getNameReport() == null) {
       throw new ArquivoException("Nenhum arquivo de report foi especificado");
     }

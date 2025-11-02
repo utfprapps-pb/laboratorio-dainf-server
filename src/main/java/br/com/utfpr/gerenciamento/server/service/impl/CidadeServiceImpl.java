@@ -12,7 +12,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 @Service
-public class CidadeServiceImpl extends CrudServiceImpl<Cidade, Long> implements CidadeService {
+public class CidadeServiceImpl extends CrudServiceImpl<Cidade, Long,CidadeResponseDto> implements CidadeService {
 
   private final CidadeRepository cidadeRepository;
 
@@ -26,6 +26,16 @@ public class CidadeServiceImpl extends CrudServiceImpl<Cidade, Long> implements 
   @Override
   protected JpaRepository<Cidade, Long> getRepository() {
     return cidadeRepository;
+  }
+
+  @Override
+  public CidadeResponseDto toDto(Cidade entity) {
+    return modelMapper.map(entity, CidadeResponseDto.class);
+  }
+
+  @Override
+  public Cidade toEntity(CidadeResponseDto cidadeResponseDto) {
+    return modelMapper.map(cidadeResponseDto, Cidade.class);
   }
 
   @Override

@@ -1,5 +1,7 @@
 package br.com.utfpr.gerenciamento.server.controller;
 
+import br.com.utfpr.gerenciamento.server.dto.SaidaItemResponseDTO;
+import br.com.utfpr.gerenciamento.server.dto.SaidaResponseDTO;
 import br.com.utfpr.gerenciamento.server.model.Saida;
 import br.com.utfpr.gerenciamento.server.service.CrudService;
 import br.com.utfpr.gerenciamento.server.service.ItemService;
@@ -9,7 +11,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 @RestController
 @RequestMapping("saida")
-public class SaidaController extends CrudController<Saida, Long> {
+public class SaidaController extends CrudController<Saida, Long, SaidaResponseDTO> {
 
   private final SaidaService saidaService;
   private final ItemService itemService;
@@ -20,7 +22,7 @@ public class SaidaController extends CrudController<Saida, Long> {
   }
 
   @Override
-  protected CrudService<Saida, Long> getService() {
+  protected CrudService<Saida, Long,SaidaResponseDTO> getService() {
     return saidaService;
   }
 
@@ -29,7 +31,7 @@ public class SaidaController extends CrudController<Saida, Long> {
     // se está editando, ele retorna o saldo de todos os itens, para depois baixar novamente com os
     // valores atualizados
     if (object.getId() != null) {
-      Saida old = saidaService.findOne(object.getId());
+      Saida old = saidaService.toEntity(  saidaService.findOne(object.getId()));
       old.getSaidaItem().stream()
           .forEach(
               saidaItem -> {

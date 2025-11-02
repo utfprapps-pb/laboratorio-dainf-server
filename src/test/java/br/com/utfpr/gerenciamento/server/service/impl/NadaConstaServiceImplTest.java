@@ -69,7 +69,7 @@ class NadaConstaServiceImplTest {
             .email("aluno@utfpr.edu.br")
             .ativo(true)
             .build();
-    when(usuarioService.findByDocumento("123456")).thenReturn(usuario);
+    when(usuarioService.findByDocumento("123456")).thenReturn(usuarioService.toDto(usuario));
     when(emprestimoService.findAllEmprestimosAbertosByUsuario(anyString())).thenReturn(List.of());
     when(systemConfigService.getEmailNadaConsta()).thenReturn("destino@utfpr.edu.br");
     NadaConsta nadaConsta =
@@ -84,7 +84,7 @@ class NadaConstaServiceImplTest {
     doNothing()
         .when(emailService)
         .sendEmailWithTemplate(any(), anyString(), anyString(), anyString());
-    when(usuarioService.save(any(Usuario.class))).thenReturn(usuario);
+    when(usuarioService.save(any(Usuario.class))).thenReturn(usuarioService.toDto( usuario));
     NadaConstaResponseDto dto = service.solicitarNadaConsta("123456");
     assertNotNull(dto);
     verify(emailService)
@@ -106,7 +106,7 @@ class NadaConstaServiceImplTest {
             .email("aluno@utfpr.edu.br")
             .ativo(true)
             .build();
-    when(usuarioService.findByDocumento("123456")).thenReturn(usuario);
+    when(usuarioService.findByDocumento("123456")).thenReturn(usuarioService.toDto( usuario));
     Item item = new Item();
     item.setNome("Notebook");
     EmprestimoItem emprestimoItem = new EmprestimoItem();
@@ -117,7 +117,7 @@ class NadaConstaServiceImplTest {
     emprestimo.setPrazoDevolucao(LocalDate.now().plusDays(7));
     // Corrige o mock para usar o username
     when(emprestimoService.findAllEmprestimosAbertosByUsuario(usuario.getUsername()))
-        .thenReturn(List.of(emprestimo));
+        .thenReturn(List.of(emprestimo).stream().map(emprestimoService::toDto).toList());
     when(nadaConstaRepository.save(any()))
         .thenReturn(
             NadaConsta.builder()

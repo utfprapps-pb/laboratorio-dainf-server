@@ -2,6 +2,7 @@ package br.com.utfpr.gerenciamento.server.service.impl;
 
 import br.com.utfpr.gerenciamento.server.dto.ReservaResponseDto;
 import br.com.utfpr.gerenciamento.server.model.Reserva;
+import br.com.utfpr.gerenciamento.server.model.Usuario;
 import br.com.utfpr.gerenciamento.server.model.modelTemplateEmail.ReservaTemplate;
 import br.com.utfpr.gerenciamento.server.repository.ReservaRepository;
 import br.com.utfpr.gerenciamento.server.service.EmailService;
@@ -16,7 +17,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 @Service
-public class ReservaServiceImpl extends CrudServiceImpl<Reserva, Long> implements ReservaService {
+public class ReservaServiceImpl extends CrudServiceImpl<Reserva, Long,ReservaResponseDto> implements ReservaService {
 
   private final ReservaRepository reservaRepository;
   private final UsuarioService usuarioService;
@@ -41,11 +42,21 @@ public class ReservaServiceImpl extends CrudServiceImpl<Reserva, Long> implement
   }
 
   @Override
+  public ReservaResponseDto toDto(Reserva entity) {
+    return modelMapper.map(entity, ReservaResponseDto.class);
+  }
+
+  @Override
+  public Reserva toEntity(ReservaResponseDto reservaResponseDto) {
+    return modelMapper.map(reservaResponseDto, Reserva.class);
+  }
+
+  @Override
   @Transactional
-  public Reserva save(Reserva reserva) {
+  public ReservaResponseDto save(Reserva reserva) {
     // Extrai username de forma segura do Authentication (evita ClassCastException)
     String username = SecurityUtils.getAuthenticatedUsername();
-    reserva.setUsuario(usuarioService.findByUsername(username));
+    reserva.setUsuario(usuarioService.toEntity(usuarioService.findByUsername(username)));
     return super.save(reserva);
   }
 
@@ -54,20 +65,20 @@ public class ReservaServiceImpl extends CrudServiceImpl<Reserva, Long> implement
   public List<ReservaResponseDto> findAllByAuthenticatedUser() {
     // Extrai username de forma segura do Authentication (evita ClassCastException)
     String username = SecurityUtils.getAuthenticatedUsername();
-    var usuario = usuarioService.findByUsername(username);
-    return reservaRepository.findAllByUsuario(usuario).stream().map(this::convertToDto).toList();
+    Usuario usuario =usuarioService.toEntity( usuarioService.findByUsername(username));
+    return reservaRepository.findAllByUsuario( usuario).stream().map(this::toDto).toList();
   }
 
   @Override
   @Transactional(readOnly = true)
   public List<ReservaResponseDto> findAllByIdItem(Long idItem) {
-    return reservaRepository.findReservaByIdItem(idItem).stream().map(this::convertToDto).toList();
+    return reservaRepository.findReservaByIdItem(idItem).stream().map(this::toDto).toList();
   }
 
   @Override
   @Transactional
   public void finalizarReserva(Long idReserva) {
-    var reserva = this.findOne(idReserva);
+    Reserva reserva = toEntity( this.findOne(idReserva));
     emailService.sendEmailWithTemplate(
         converterObjectToTemplateEmail(reserva),
         reserva.getUsuario().getEmail(),
@@ -85,10 +96,7 @@ public class ReservaServiceImpl extends CrudServiceImpl<Reserva, Long> implement
         "templateConfirmacaoReserva");
   }
 
-  @Override
-  public ReservaResponseDto convertToDto(Reserva entity) {
-    return modelMapper.map(entity, ReservaResponseDto.class);
-  }
+
 
   public ReservaTemplate converterObjectToTemplateEmail(Reserva reserva) {
     ReservaTemplate toReturn = new ReservaTemplate();
