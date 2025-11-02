@@ -114,6 +114,7 @@ public abstract class CrudServiceImpl<T, ID extends Serializable, DTO> implement
   @Override
   @Transactional
   public void delete(ID id) {
+
     getRepository().deleteById(id);
   }
 

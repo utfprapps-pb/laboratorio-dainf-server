@@ -185,14 +185,32 @@ public class UsuarioServiceImpl extends CrudServiceImpl<Usuario, Long,UsuarioRes
   @Override
   @Transactional
   public UsuarioResponseDto save(Usuario usuario) {
-    if (usuario.getPassword() != null && !Util.isPasswordEncoded(usuario.getPassword()))
-      usuario.setPassword(passwordEncoder.encode(usuario.getPassword()));
+    if (usuario.getId() != null) {
+      // Se for update, busca o usuário atual do banco
+      Usuario usuarioExistente = usuarioRepository.findById(usuario.getId())
+              .orElseThrow(() -> new EntityNotFoundException("Usuário não encontrado com ID: " + usuario.getId()));
 
-    // Normaliza permissões para evitar NPE e usa batch fetching (1 query em vez de N)
+      // Se a nova senha é nula ou vazia, mantém a senha antiga
+      if (usuario.getPassword() == null || usuario.getPassword().isBlank()) {
+        usuario.setPassword(usuarioExistente.getPassword());
+      } else if (!Util.isPasswordEncoded(usuario.getPassword())) {
+        // Se veio uma nova senha não codificada, codifica
+        usuario.setPassword(passwordEncoder.encode(usuario.getPassword()));
+      }
+
+      // Preserva campos que não devem ser sobrescritos
+      usuario.setEmailVerificado(usuarioExistente.getEmailVerificado());
+    } else {
+      // Novo usuário → codifica a senha normalmente
+      if (usuario.getPassword() != null && !Util.isPasswordEncoded(usuario.getPassword())) {
+        usuario.setPassword(passwordEncoder.encode(usuario.getPassword()));
+      }
+    }
+
+    // Normaliza permissões para evitar NPE e usa batch fetching
     Set<Permissao> permissoesInput = usuario.getPermissoes();
     if (permissoesInput != null && !permissoesInput.isEmpty()) {
-      Set<Long> permissaoIds =
-          permissoesInput.stream()
+      Set<Long> permissaoIds = permissoesInput.stream()
               .filter(Objects::nonNull)
               .map(Permissao::getId)
               .filter(Objects::nonNull)
@@ -208,12 +226,9 @@ public class UsuarioServiceImpl extends CrudServiceImpl<Usuario, Long,UsuarioRes
       usuario.setPermissoes(new HashSet<>());
     }
 
-    if (usuario.getId() != null) {
-      Usuario usuarioTmp = usuarioRepository.findByUsername(usuario.getUsername());
-      usuario.setEmailVerificado(usuarioTmp.getEmailVerificado());
-    }
-    return super.save(usuario);
+    return toDto(usuarioRepository.save(usuario));
   }
+
 
   public UsuarioResponseDto convertToDto(Usuario entity) {
     return modelMapper.map(entity, UsuarioResponseDto.class);
