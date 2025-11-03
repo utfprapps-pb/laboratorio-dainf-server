@@ -21,6 +21,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.mockito.junit.jupiter.MockitoSettings;
 import org.mockito.quality.Strictness;
 import org.modelmapper.ModelMapper;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
 @ExtendWith(MockitoExtension.class)
@@ -40,6 +41,8 @@ class UsuarioServiceImplTest {
   @Mock private PermissaoService permissaoService;
 
   @Mock private NadaConstaRepository nadaConstaRepository;
+
+  @Mock private ApplicationEventPublisher eventPublisher;
 
   @InjectMocks private UsuarioServiceImpl usuarioService;
 
@@ -333,6 +336,7 @@ class UsuarioServiceImplTest {
     br.com.utfpr.gerenciamento.server.model.RecoverPassword recoverPassword =
         new br.com.utfpr.gerenciamento.server.model.RecoverPassword();
     recoverPassword.setEmail("teste@test.com");
+    recoverPassword.setDateTime(java.time.LocalDateTime.now()); // Código não expirado
 
     Usuario usuarioMock = new Usuario();
     usuarioMock.setEmail("teste@test.com");
@@ -349,7 +353,8 @@ class UsuarioServiceImplTest {
     // Then
     assertNotNull(response);
     assertEquals(
-        "Senha alterada. Já é possível autenticar-se com a nova senha.", response.getMessage());
+        "Senha alterada com sucesso. Você já pode fazer login com a nova senha.",
+        response.getMessage());
     verify(passwordEncoder).encode("novaSenha123");
     verify(usuarioRepository)
         .save(argThat(u -> u.getPassword().equals("$2a$10$encodedNewPassword")));
@@ -409,14 +414,13 @@ class UsuarioServiceImplTest {
     usuarioAtualizado.setId(1L);
     usuarioAtualizado.setPassword("novaSenha123");
 
-    // Mock findOne para retornar usuarioExistente
-    UsuarioServiceImpl spyService = spy(usuarioService);
-    doReturn(usuarioExistente).when(spyService).findOne(1L);
+    // Mock repository para retornar usuarioExistente
+    when(usuarioRepository.findById(1L)).thenReturn(java.util.Optional.of(usuarioExistente));
     when(passwordEncoder.matches("senhaAtual", "$2a$10$senhaAntigaEncodada")).thenReturn(true);
     when(passwordEncoder.encode("novaSenha123")).thenReturn("$2a$10$novaSenhaEncodada");
     when(usuarioRepository.save(any(Usuario.class))).thenReturn(usuarioExistente);
 
-    Usuario resultado = usuarioService.toEntity( spyService.updatePassword(usuarioAtualizado, "senhaAtual"));
+    Usuario resultado = usuarioService.updatePassword(usuarioAtualizado, "senhaAtual");
     assertNotNull(resultado);
     assertEquals("$2a$10$novaSenhaEncodada", resultado.getPassword());
     assertTrue(resultado.getEmailVerificado());
@@ -525,15 +529,14 @@ class UsuarioServiceImplTest {
     usuarioAtualizado.setId(1L);
     usuarioAtualizado.setPassword("novaSenha");
 
-    // Spy para mockar findOne
-    UsuarioServiceImpl spyService = spy(usuarioService);
-    doReturn(usuarioExistente).when(spyService).findOne(1L);
+    // Mock repository para retornar usuarioExistente
+    when(usuarioRepository.findById(1L)).thenReturn(java.util.Optional.of(usuarioExistente));
     when(passwordEncoder.matches("senhaAtual", "encodedSenhaAtual")).thenReturn(true);
     when(passwordEncoder.encode("novaSenha")).thenReturn("encodedNovaSenha");
     when(usuarioRepository.save(any(Usuario.class)))
         .thenAnswer(invocation -> invocation.getArgument(0));
 
-    Usuario result = usuarioService.toEntity( spyService.updatePassword(usuarioAtualizado, "senhaAtual"));
+    Usuario result = usuarioService.updatePassword(usuarioAtualizado, "senhaAtual");
     assertNotNull(result);
     assertEquals("encodedNovaSenha", result.getPassword());
     assertTrue(result.getEmailVerificado());
@@ -548,5 +551,447 @@ class UsuarioServiceImplTest {
     novo.setId(1L);
     novo.setPassword("novaSenha");
     assertThrows(RuntimeException.class, () -> usuarioService.updatePassword(novo, "senhaErrada"));
+  }
+
+  // Testes para métodos não cobertos
+
+  @Test
+  void loadUserByUsername_DeveCarregarUsuarioPorUsername() {
+    // Given
+    String username = "usuario@utfpr.edu.br";
+    Usuario usuarioMock = new Usuario();
+    usuarioMock.setUsername(username);
+    usuarioMock.setPermissoes(new HashSet<>());
+
+    when(usuarioRepository.findWithPermissoesByUsernameOrEmail(username, username))
+        .thenReturn(usuarioMock);
+
+    // When
+    org.springframework.security.core.userdetails.UserDetails resultado =
+        usuarioService.loadUserByUsername(username);
+
+    // Then
+    assertNotNull(resultado);
+    assertEquals(username, resultado.getUsername());
+  }
+
+  @Test
+  void loadUserByUsername_DeveLancarExcecaoQuandoUsuarioNaoEncontrado() {
+    // Given
+    String username = "inexistente@test.com";
+    when(usuarioRepository.findWithPermissoesByUsernameOrEmail(username, username))
+        .thenReturn(null);
+
+    // When/Then
+    assertThrows(
+        org.springframework.security.core.userdetails.UsernameNotFoundException.class,
+        () -> usuarioService.loadUserByUsername(username));
+  }
+
+  @Test
+  void loadUserByUsername_DeveNormalizarUsername() {
+    // Given: username com subdomínio UTFPR
+    String usernameComSubdominio = "prof@professores.utfpr.edu.br";
+    String usernameNormalizado = "prof@utfpr.edu.br";
+    Usuario usuarioMock = new Usuario();
+    usuarioMock.setUsername(usernameNormalizado);
+    usuarioMock.setPermissoes(new HashSet<>());
+
+    when(usuarioRepository.findWithPermissoesByUsernameOrEmail(
+            usernameNormalizado, usernameNormalizado))
+        .thenReturn(usuarioMock);
+
+    // When
+    org.springframework.security.core.userdetails.UserDetails resultado =
+        usuarioService.loadUserByUsername(usernameComSubdominio);
+
+    // Then
+    assertNotNull(resultado);
+    verify(usuarioRepository)
+        .findWithPermissoesByUsernameOrEmail(usernameNormalizado, usernameNormalizado);
+  }
+
+  @Test
+  void usuarioComplete_DeveRetornarPaginaComFiltroTextual() {
+    // Given
+    String query = "João";
+    org.springframework.data.domain.Pageable pageable =
+        org.springframework.data.domain.PageRequest.of(0, 10);
+    org.springframework.data.domain.Page<Usuario> pageMock =
+        new org.springframework.data.domain.PageImpl<>(Collections.singletonList(usuario));
+
+    when(usuarioRepository.findAll(
+            any(org.springframework.data.jpa.domain.Specification.class), eq(pageable)))
+        .thenReturn(pageMock);
+    when(modelMapper.map(
+            any(Usuario.class), eq(br.com.utfpr.gerenciamento.server.dto.UsuarioResponseDto.class)))
+        .thenReturn(new br.com.utfpr.gerenciamento.server.dto.UsuarioResponseDto());
+
+    // When
+    org.springframework.data.domain.Page<br.com.utfpr.gerenciamento.server.dto.UsuarioResponseDto>
+        resultado = usuarioService.usuarioComplete(query, pageable);
+
+    // Then
+    assertNotNull(resultado);
+    assertEquals(1, resultado.getTotalElements());
+  }
+
+  @Test
+  void usuarioComplete_DeveRetornarTodosUsuariosQuandoQueryNula() {
+    // Given
+    org.springframework.data.domain.Pageable pageable =
+        org.springframework.data.domain.PageRequest.of(0, 10);
+    org.springframework.data.domain.Page<Usuario> pageMock =
+        new org.springframework.data.domain.PageImpl<>(Collections.singletonList(usuario));
+
+    when(usuarioRepository.findAll(
+            any(org.springframework.data.jpa.domain.Specification.class), eq(pageable)))
+        .thenReturn(pageMock);
+    when(modelMapper.map(
+            any(Usuario.class), eq(br.com.utfpr.gerenciamento.server.dto.UsuarioResponseDto.class)))
+        .thenReturn(new br.com.utfpr.gerenciamento.server.dto.UsuarioResponseDto());
+
+    // When
+    org.springframework.data.domain.Page<br.com.utfpr.gerenciamento.server.dto.UsuarioResponseDto>
+        resultado = usuarioService.usuarioComplete(null, pageable);
+
+    // Then
+    assertNotNull(resultado);
+  }
+
+  @Test
+  void resendEmail_DeveEnviarEmailQuandoUsuarioExisteENaoVerificado() {
+    // Given
+    br.com.utfpr.gerenciamento.server.dto.ConfirmEmailRequestDto requestDto =
+        new br.com.utfpr.gerenciamento.server.dto.ConfirmEmailRequestDto();
+    requestDto.setEmail("usuario@test.com");
+
+    Usuario usuarioNaoVerificado = new Usuario();
+    usuarioNaoVerificado.setEmail("usuario@test.com");
+    usuarioNaoVerificado.setEmailVerificado(false);
+    usuarioNaoVerificado.setCodigoVerificacao("codigo-123");
+
+    when(usuarioRepository.findByEmail("usuario@test.com")).thenReturn(usuarioNaoVerificado);
+    doNothing()
+        .when(emailService)
+        .sendEmailWithTemplate(any(), anyString(), anyString(), anyString());
+
+    // When
+    String resultado = usuarioService.resendEmail(requestDto);
+
+    // Then
+    assertNotNull(resultado);
+    assertTrue(resultado.contains("reenviado"));
+    verify(emailService)
+        .sendEmailWithTemplate(
+            any(), eq("usuario@test.com"), anyString(), eq("templateConfirmacaoCadastro"));
+  }
+
+  @Test
+  void resendEmail_DeveRetornarMensagemQuandoEmailJaVerificado() {
+    // Given
+    br.com.utfpr.gerenciamento.server.dto.ConfirmEmailRequestDto requestDto =
+        new br.com.utfpr.gerenciamento.server.dto.ConfirmEmailRequestDto();
+    requestDto.setEmail("usuario@test.com");
+
+    Usuario usuarioVerificado = new Usuario();
+    usuarioVerificado.setEmail("usuario@test.com");
+    usuarioVerificado.setEmailVerificado(true);
+
+    when(usuarioRepository.findByEmail("usuario@test.com")).thenReturn(usuarioVerificado);
+
+    // When
+    String resultado = usuarioService.resendEmail(requestDto);
+
+    // Then
+    assertNotNull(resultado);
+    assertTrue(resultado.contains("já foi confirmado"));
+    verify(emailService, never())
+        .sendEmailWithTemplate(any(), anyString(), anyString(), anyString());
+  }
+
+  @Test
+  void resendEmail_DeveRetornarMensagemGenericaQuandoEmailNaoExiste() {
+    // Given
+    br.com.utfpr.gerenciamento.server.dto.ConfirmEmailRequestDto requestDto =
+        new br.com.utfpr.gerenciamento.server.dto.ConfirmEmailRequestDto();
+    requestDto.setEmail("inexistente@test.com");
+
+    when(usuarioRepository.findByEmail("inexistente@test.com")).thenReturn(null);
+
+    // When
+    String resultado = usuarioService.resendEmail(requestDto);
+
+    // Then
+    assertNotNull(resultado);
+    assertTrue(resultado.contains("Se o email existir"));
+    verify(emailService, never())
+        .sendEmailWithTemplate(any(), anyString(), anyString(), anyString());
+  }
+
+  @Test
+  void sendEmailCodeRecoverPassword_DeveEnviarCodigoQuandoUsuarioExiste() {
+    // Given
+    String email = "usuario@test.com";
+    Usuario usuarioMock = new Usuario();
+    usuarioMock.setEmail(email);
+    usuarioMock.setNome("Usuário Teste");
+
+    when(usuarioRepository.findByEmail(email)).thenReturn(usuarioMock);
+    when(recoverPasswordRepository.save(any())).thenAnswer(invocation -> invocation.getArgument(0));
+    doNothing()
+        .when(emailService)
+        .sendEmailWithTemplate(any(), anyString(), anyString(), anyString());
+
+    // When
+    br.com.utfpr.gerenciamento.server.dto.GenericResponse resultado =
+        usuarioService.sendEmailCodeRecoverPassword(email);
+
+    // Then
+    assertNotNull(resultado);
+    assertTrue(resultado.getMessage().contains("solicitação foi enviada"));
+    verify(recoverPasswordRepository).save(any());
+    verify(emailService)
+        .sendEmailWithTemplate(any(), eq(email), anyString(), eq("templateRecoverPassword"));
+  }
+
+  @Test
+  void sendEmailCodeRecoverPassword_DeveRetornarMensagemGenericaQuandoUsuarioNaoExiste() {
+    // Given
+    String email = "inexistente@test.com";
+    when(usuarioRepository.findByEmail(email)).thenReturn(null);
+
+    // When
+    br.com.utfpr.gerenciamento.server.dto.GenericResponse resultado =
+        usuarioService.sendEmailCodeRecoverPassword(email);
+
+    // Then
+    assertNotNull(resultado);
+    assertTrue(resultado.getMessage().contains("Se o email existir"));
+    verify(recoverPasswordRepository, never()).save(any());
+    verify(emailService, never())
+        .sendEmailWithTemplate(any(), anyString(), anyString(), anyString());
+  }
+
+  @Test
+  void resetPassword_DeveLancarExcecaoQuandoCodigoExpirado() {
+    // Given
+    br.com.utfpr.gerenciamento.server.dto.RecoverPasswordRequestDto requestDto =
+        new br.com.utfpr.gerenciamento.server.dto.RecoverPasswordRequestDto();
+    requestDto.setCode("codigo-expirado");
+    requestDto.setPassword("novaSenha123");
+    requestDto.setRepeatPassword("novaSenha123");
+
+    br.com.utfpr.gerenciamento.server.model.RecoverPassword recoverPasswordExpirado =
+        new br.com.utfpr.gerenciamento.server.model.RecoverPassword();
+    recoverPasswordExpirado.setEmail("teste@test.com");
+    recoverPasswordExpirado.setDateTime(
+        java.time.LocalDateTime.now().minusHours(25)); // Expirado (>24h)
+
+    when(recoverPasswordRepository.findByCode("codigo-expirado"))
+        .thenReturn(recoverPasswordExpirado);
+
+    // When/Then
+    assertThrows(
+        br.com.utfpr.gerenciamento.server.exception.RecoverCodeInvalidException.class,
+        () -> usuarioService.resetPassword(requestDto));
+
+    verify(recoverPasswordRepository).delete(recoverPasswordExpirado);
+    verify(usuarioRepository, never()).save(any());
+  }
+
+  @Test
+  void resetPassword_DeveLancarExcecaoQuandoSenhaVazia() {
+    // Given
+    br.com.utfpr.gerenciamento.server.dto.RecoverPasswordRequestDto requestDto =
+        new br.com.utfpr.gerenciamento.server.dto.RecoverPasswordRequestDto();
+    requestDto.setCode("codigo-123");
+    requestDto.setPassword("");
+    requestDto.setRepeatPassword("");
+
+    br.com.utfpr.gerenciamento.server.model.RecoverPassword recoverPassword =
+        new br.com.utfpr.gerenciamento.server.model.RecoverPassword();
+    recoverPassword.setEmail("teste@test.com");
+    recoverPassword.setDateTime(java.time.LocalDateTime.now());
+
+    when(recoverPasswordRepository.findByCode("codigo-123")).thenReturn(recoverPassword);
+
+    // When/Then
+    assertThrows(
+        br.com.utfpr.gerenciamento.server.exception.InvalidPasswordException.class,
+        () -> usuarioService.resetPassword(requestDto));
+  }
+
+  @Test
+  void resetPassword_DeveLancarExcecaoQuandoSenhaMuitoCurta() {
+    // Given
+    br.com.utfpr.gerenciamento.server.dto.RecoverPasswordRequestDto requestDto =
+        new br.com.utfpr.gerenciamento.server.dto.RecoverPasswordRequestDto();
+    requestDto.setCode("codigo-123");
+    requestDto.setPassword("123");
+    requestDto.setRepeatPassword("123");
+
+    br.com.utfpr.gerenciamento.server.model.RecoverPassword recoverPassword =
+        new br.com.utfpr.gerenciamento.server.model.RecoverPassword();
+    recoverPassword.setEmail("teste@test.com");
+    recoverPassword.setDateTime(java.time.LocalDateTime.now());
+
+    when(recoverPasswordRepository.findByCode("codigo-123")).thenReturn(recoverPassword);
+
+    // When/Then
+    assertThrows(
+        br.com.utfpr.gerenciamento.server.exception.InvalidPasswordException.class,
+        () -> usuarioService.resetPassword(requestDto));
+  }
+
+  @Test
+  void findByDocumento_DeveRetornarUsuarioQuandoDocumentoExiste() {
+    // Given
+    String documento = "12345678901";
+    when(usuarioRepository.findByDocumento(documento)).thenReturn(java.util.Optional.of(usuario));
+
+    // When
+    Usuario resultado = usuarioService.findByDocumento(documento);
+
+    // Then
+    assertNotNull(resultado);
+    verify(usuarioRepository).findByDocumento(documento);
+  }
+
+  @Test
+  void findByDocumento_DeveRetornarNullQuandoDocumentoNaoExiste() {
+    // Given
+    String documento = "00000000000";
+    when(usuarioRepository.findByDocumento(documento)).thenReturn(java.util.Optional.empty());
+
+    // When
+    Usuario resultado = usuarioService.findByDocumento(documento);
+
+    // Then
+    assertNull(resultado);
+  }
+
+  @Test
+  void hasSolicitacaoNadaConstaPendingOrCompleted_DeveRetornarTrueQuandoExisteSolicitacao() {
+    // Given
+    String username = "usuario@utfpr.edu.br";
+    when(usuarioRepository.findByUsernameOrEmail(username, username)).thenReturn(usuario);
+    when(nadaConstaRepository.existsByUsuarioAndStatusIn(eq(usuario), anySet())).thenReturn(true);
+
+    // When
+    boolean resultado = usuarioService.hasSolicitacaoNadaConstaPendingOrCompleted(username);
+
+    // Then
+    assertTrue(resultado);
+  }
+
+  @Test
+  void hasSolicitacaoNadaConstaPendingOrCompleted_DeveRetornarFalseQuandoNaoExisteSolicitacao() {
+    // Given
+    String username = "usuario@utfpr.edu.br";
+    when(usuarioRepository.findByUsernameOrEmail(username, username)).thenReturn(usuario);
+    when(nadaConstaRepository.existsByUsuarioAndStatusIn(eq(usuario), anySet())).thenReturn(false);
+
+    // When
+    boolean resultado = usuarioService.hasSolicitacaoNadaConstaPendingOrCompleted(username);
+
+    // Then
+    assertFalse(resultado);
+  }
+
+  @Test
+  void hasSolicitacaoNadaConstaPendingOrCompleted_DeveRetornarFalseQuandoUsuarioNaoExiste() {
+    // Given
+    String username = "inexistente@test.com";
+    when(usuarioRepository.findByUsernameOrEmail(username, username)).thenReturn(null);
+
+    // When
+    boolean resultado = usuarioService.hasSolicitacaoNadaConstaPendingOrCompleted(username);
+
+    // Then
+    assertFalse(resultado);
+    verify(nadaConstaRepository, never()).existsByUsuarioAndStatusIn(any(), anySet());
+  }
+
+  @Test
+  void updateUsuario_DeveLancarExcecaoQuandoUsuarioNaoAutorizado() {
+    // Given
+    org.springframework.security.core.context.SecurityContextHolder.getContext()
+        .setAuthentication(
+            new org.springframework.security.authentication.UsernamePasswordAuthenticationToken(
+                "outroUsuario@test.com", null));
+
+    Usuario usuarioParaAtualizar = new Usuario();
+    usuarioParaAtualizar.setUsername("usuario@utfpr.edu.br");
+
+    // When/Then
+    assertThrows(
+        org.springframework.security.access.AccessDeniedException.class,
+        () -> usuarioService.updateUsuario(usuarioParaAtualizar));
+
+    verify(usuarioRepository, never()).save(any());
+  }
+
+  @Test
+  void updateUsuario_DeveLancarExcecaoQuandoUsuarioNaoEncontrado() {
+    // Given
+    org.springframework.security.core.context.SecurityContextHolder.getContext()
+        .setAuthentication(
+            new org.springframework.security.authentication.UsernamePasswordAuthenticationToken(
+                "usuario@utfpr.edu.br", null));
+
+    Usuario usuarioParaAtualizar = new Usuario();
+    usuarioParaAtualizar.setUsername("usuario@utfpr.edu.br");
+
+    when(usuarioRepository.findByUsername("usuario@utfpr.edu.br")).thenReturn(null);
+
+    // When/Then
+    assertThrows(
+        br.com.utfpr.gerenciamento.server.exception.EntityNotFoundException.class,
+        () -> usuarioService.updateUsuario(usuarioParaAtualizar));
+  }
+
+  @Test
+  void saveNewUser_DevePublicarEventoAposSalvar() {
+    // Given
+    Usuario novoUsuario = new Usuario();
+    novoUsuario.setEmail("novo@utfpr.edu.br");
+    novoUsuario.setPassword("senha123");
+    novoUsuario.setNome("Novo Professor");
+
+    when(permissaoService.findByNome(anyString())).thenReturn(permissao1);
+    when(usuarioRepository.save(any(Usuario.class)))
+        .thenAnswer(
+            invocation -> {
+              Usuario u = invocation.getArgument(0);
+              u.setId(999L);
+              return u;
+            });
+
+    // When
+    Usuario resultado = usuarioService.saveNewUser(novoUsuario);
+
+    // Then
+    assertNotNull(resultado);
+    assertNotNull(resultado.getId());
+    assertFalse(resultado.getEmailVerificado());
+    verify(eventPublisher)
+        .publishEvent(
+            any(br.com.utfpr.gerenciamento.server.event.usuario.UsuarioCriadoEvent.class));
+  }
+
+  @Test
+  void updatePassword_DeveLancarExcecaoQuandoUsuarioNaoEncontrado() {
+    // Given
+    Usuario usuarioAtualizado = new Usuario();
+    usuarioAtualizado.setId(999L);
+    usuarioAtualizado.setPassword("novaSenha");
+
+    when(usuarioRepository.findById(999L)).thenReturn(java.util.Optional.empty());
+
+    // When/Then
+    assertThrows(
+        br.com.utfpr.gerenciamento.server.exception.EntityNotFoundException.class,
+        () -> usuarioService.updatePassword(usuarioAtualizado, "senhaAtual"));
   }
 }

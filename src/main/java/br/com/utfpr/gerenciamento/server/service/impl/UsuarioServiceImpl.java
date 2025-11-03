@@ -3,7 +3,10 @@ package br.com.utfpr.gerenciamento.server.service.impl;
 import br.com.utfpr.gerenciamento.server.dto.*;
 import br.com.utfpr.gerenciamento.server.enumeration.NadaConstaStatus;
 import br.com.utfpr.gerenciamento.server.enumeration.UserRole;
+import br.com.utfpr.gerenciamento.server.event.usuario.UsuarioCriadoEvent;
+import br.com.utfpr.gerenciamento.server.exception.EmailException;
 import br.com.utfpr.gerenciamento.server.exception.EntityNotFoundException;
+import br.com.utfpr.gerenciamento.server.exception.InvalidPasswordException;
 import br.com.utfpr.gerenciamento.server.exception.RecoverCodeInvalidException;
 import br.com.utfpr.gerenciamento.server.model.Emprestimo;
 import br.com.utfpr.gerenciamento.server.model.Permissao;
@@ -12,21 +15,29 @@ import br.com.utfpr.gerenciamento.server.model.Usuario;
 import br.com.utfpr.gerenciamento.server.repository.NadaConstaRepository;
 import br.com.utfpr.gerenciamento.server.repository.RecoverPasswordRepository;
 import br.com.utfpr.gerenciamento.server.repository.UsuarioRepository;
+import br.com.utfpr.gerenciamento.server.repository.specification.UsuarioSpecifications;
 import br.com.utfpr.gerenciamento.server.service.EmailService;
 import br.com.utfpr.gerenciamento.server.service.PermissaoService;
 import br.com.utfpr.gerenciamento.server.service.UsuarioService;
+import br.com.utfpr.gerenciamento.server.util.SecurityUtils;
 import br.com.utfpr.gerenciamento.server.util.Util;
 import java.time.LocalDateTime;
-import java.util.*;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Set;
+import java.util.UUID;
 import java.util.stream.Collectors;
+import lombok.extern.slf4j.Slf4j;
 import org.modelmapper.ModelMapper;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
@@ -34,6 +45,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+@Slf4j
 @Service
 public class UsuarioServiceImpl extends CrudServiceImpl<Usuario, Long,UsuarioResponseDto>
     implements UsuarioService, UserDetailsService {
@@ -57,7 +69,7 @@ public class UsuarioServiceImpl extends CrudServiceImpl<Usuario, Long,UsuarioRes
 
   private final NadaConstaRepository nadaConstaRepository;
 
-  private static final Logger LOGGER = LoggerFactory.getLogger(UsuarioServiceImpl.class.getName());
+  private final ApplicationEventPublisher eventPublisher;
 
   public UsuarioServiceImpl(
       UsuarioRepository usuarioRepository,
@@ -66,7 +78,8 @@ public class UsuarioServiceImpl extends CrudServiceImpl<Usuario, Long,UsuarioRes
       PasswordEncoder passwordEncoder,
       EmailService emailService,
       PermissaoService permissaoService,
-      NadaConstaRepository nadaConstaRepository) {
+      NadaConstaRepository nadaConstaRepository,
+      ApplicationEventPublisher eventPublisher) {
     this.usuarioRepository = usuarioRepository;
     this.modelMapper = modelMapper;
     this.recoverPasswordRepository = recoverPasswordRepository;
@@ -74,6 +87,7 @@ public class UsuarioServiceImpl extends CrudServiceImpl<Usuario, Long,UsuarioRes
     this.emailService = emailService;
     this.permissaoService = permissaoService;
     this.nadaConstaRepository = nadaConstaRepository;
+    this.eventPublisher = eventPublisher;
   }
 
   @Override
@@ -94,7 +108,8 @@ public class UsuarioServiceImpl extends CrudServiceImpl<Usuario, Long,UsuarioRes
   @Override
   @Transactional(readOnly = true)
   public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
-    Usuario usuario = toEntity(findByUsernameForAuthentication(username));
+    username = normalizeUsername(username);
+    Usuario usuario = toEntity(usuarioRepository.findWithPermissoesByUsernameOrEmail(username, username));
     if (usuario == null) {
       throw new UsernameNotFoundException("Usuário não encontrado");
     }
@@ -104,12 +119,16 @@ public class UsuarioServiceImpl extends CrudServiceImpl<Usuario, Long,UsuarioRes
   @Override
   @Transactional(readOnly = true)
   public Page<UsuarioResponseDto> usuarioComplete(String query, Pageable pageable) {
-    if ("".equalsIgnoreCase(query)) {
-      return usuarioRepository.findAll(pageable).map(this::convertToDto);
+    // Busca todos os usuários com filtro textual opcional
+    Specification<Usuario> spec = UsuarioSpecifications.distinctResults();
+
+    // Adiciona filtro textual se query fornecida
+    if (query != null && !query.isBlank()) {
+      spec = spec.and(UsuarioSpecifications.searchByText(query));
     }
-    return usuarioRepository
-        .findByNomeLikeIgnoreCase("%" + query + "%", pageable)
-        .map(this::convertToDto);
+
+    // Usa @EntityGraph para evitar N+1 queries ao carregar permissoes
+    return usuarioRepository.findAll(spec, pageable).map(this::convertToDto);
   }
 
   @Override
@@ -148,38 +167,52 @@ public class UsuarioServiceImpl extends CrudServiceImpl<Usuario, Long,UsuarioRes
   @Transactional(readOnly = true)
   public Page<UsuarioResponseDto> usuarioCompleteByUserAndDocAndNome(
       String query, Pageable pageable) {
-    if (query == null || query.isBlank()) {
-      return usuarioRepository.findAllCustom(pageable).map(this::convertToDto);
-    }
-    return usuarioRepository
-        .findUsuarioCompleteCustom("%" + query.toUpperCase() + "%", pageable)
-        .map(this::convertToDto);
+    // Usa searchByTextWithRoles que cria apenas 1 JOIN (query pode ser null/blank)
+    Specification<Usuario> spec =
+        UsuarioSpecifications.distinctResults()
+            .and(
+                UsuarioSpecifications.searchByTextWithRoles(
+                    query, UserRole.PROFESSOR, UserRole.ALUNO));
+
+    return usuarioRepository.findAll(spec, pageable).map(this::convertToDto);
   }
 
   @Override
   @Transactional(readOnly = true)
   public Page<UsuarioResponseDto> usuarioCompleteLab(String query, Pageable pageable) {
-    if (query == null || query.isBlank()) {
-      return usuarioRepository.findAllCustomLab(pageable).map(this::convertToDto);
-    }
-    return usuarioRepository
-        .findUsuarioCompleteCustomLab("%" + query.toUpperCase() + "%", pageable)
-        .map(this::convertToDto);
+    // Usa searchByTextWithRoles que cria apenas 1 JOIN (query pode ser null/blank)
+    Specification<Usuario> spec =
+        UsuarioSpecifications.distinctResults()
+            .and(
+                UsuarioSpecifications.searchByTextWithRoles(
+                    query, UserRole.ADMINISTRADOR, UserRole.LABORATORISTA));
+
+    return usuarioRepository.findAll(spec, pageable).map(this::convertToDto);
   }
 
   @Override
   @Transactional
   public UsuarioResponseDto updateUsuario(Usuario usuario) {
-    if (usuario
-        .getUsername()
-        .equals(SecurityContextHolder.getContext().getAuthentication().getPrincipal())) {
-      Usuario usuarioTmp = usuarioRepository.findByUsername(usuario.getUsername());
-      usuarioTmp.setTelefone(usuario.getTelefone());
-      usuarioTmp.setDocumento(usuario.getDocumento());
+    String usernameAutenticado = SecurityUtils.getAuthenticatedUsername();
+    String usernameAlvo = normalizeUsername(usuario.getUsername());
 
-      return toDto( usuarioRepository.save(usuarioTmp));
+    if (!usernameAlvo.equals(normalizeUsername(usernameAutenticado))) {
+      log.warn(
+          "Tentativa de atualização não autorizada: usuário {} tentou modificar {}",
+          usernameAutenticado,
+          usernameAlvo);
+      throw new AccessDeniedException("Usuário não autorizado a modificar este perfil");
     }
-    return null;
+
+    Usuario usuarioExistente = usuarioRepository.findByUsername(usuario.getUsername());
+    if (usuarioExistente == null) {
+      throw new EntityNotFoundException("Usuário não encontrado: " + usuario.getUsername());
+    }
+
+    usuarioExistente.setTelefone(usuario.getTelefone());
+    usuarioExistente.setDocumento(usuario.getDocumento());
+
+    return toDto( usuarioRepository.save(usuarioExistente));
   }
 
   @Override
@@ -239,24 +272,52 @@ public class UsuarioServiceImpl extends CrudServiceImpl<Usuario, Long,UsuarioRes
   }
 
   @Override
-  @Transactional
+  @Transactional(readOnly = true)
   public String resendEmail(ConfirmEmailRequestDto confirmEmailRequestDto) {
-    Usuario usuario = usuarioRepository.findByEmail(confirmEmailRequestDto.getEmail());
-    try {
-      sendEmailNewUser(usuario);
-    } catch (Exception e) {
-      throw new RuntimeException("Ocorreu um erro. O email de confirmação não pode ser enviado.");
+    String email = confirmEmailRequestDto.getEmail();
+    Usuario usuario = usuarioRepository.findByEmail(email);
+
+    if (usuario == null) {
+      // Log sem PII, resposta genérica para evitar enumeração
+      log.info("Reenvio solicitado para email não cadastrado");
+      return "Se o email existir, um novo link de confirmação será enviado.";
     }
-    return "Uma requisição foi enviada ao seu email.";
+
+    if (usuario.getEmailVerificado()) {
+      log.info(
+          "Email já verificado: {}",
+          br.com.utfpr.gerenciamento.server.util.EmailUtils.maskEmail(email));
+      return "Este email já foi confirmado. Você pode fazer login normalmente.";
+    }
+
+    try {
+      enviarEmailConfirmacao(usuario);
+      log.info(
+          "Email de confirmação reenviado para: {}",
+          br.com.utfpr.gerenciamento.server.util.EmailUtils.maskEmail(email));
+      return "Email de confirmação reenviado. Verifique sua caixa de entrada.";
+    } catch (Exception e) {
+      log.error(
+          "Falha ao reenviar email de confirmação para {}: {}",
+          br.com.utfpr.gerenciamento.server.util.EmailUtils.maskEmail(email),
+          e.getMessage(),
+          e);
+      throw new EmailException(
+          "Não foi possível enviar o email. Tente novamente em alguns minutos.", e);
+    }
   }
 
   @Override
   @Transactional
   public GenericResponse sendEmailCodeRecoverPassword(String email) {
     Usuario usuario = usuarioRepository.findByEmail(email);
-    if (Objects.isNull(usuario))
-      throw new EntityNotFoundException(
-          "Email não encontrado na base de dados. Por favor, crie uma nova conta.");
+    if (usuario == null) {
+      // Log sem PII, resposta genérica para evitar enumeração
+      log.info("Solicitação de recuperação recebida");
+      return GenericResponse.builder()
+          .message("Se o email existir, uma solicitação foi enviada para sua caixa de entrada.")
+          .build();
+    }
 
     RecoverPassword recoverPassword = new RecoverPassword();
     recoverPassword.setEmail(email);
@@ -279,8 +340,21 @@ public class UsuarioServiceImpl extends CrudServiceImpl<Usuario, Long,UsuarioRes
             .build();
 
     recoverPasswordRepository.save(recoverPassword);
-    emailService.sendEmailWithTemplate(
-        emailDto, emailDto.getEmailTo(), emailDto.getSubject(), "templateRecoverPassword");
+
+    try {
+      emailService.sendEmailWithTemplate(
+          emailDto, emailDto.getEmailTo(), emailDto.getSubject(), "templateRecoverPassword");
+      log.info(
+          "Código de recuperação de senha enviado para: {}",
+          br.com.utfpr.gerenciamento.server.util.EmailUtils.maskEmail(email));
+    } catch (Exception e) {
+      log.error(
+          "Falha ao enviar email de recuperação para {}: {}",
+          br.com.utfpr.gerenciamento.server.util.EmailUtils.maskEmail(email),
+          e.getMessage(),
+          e);
+      throw new EmailException("Erro ao enviar email de recuperação", e);
+    }
 
     return GenericResponse.builder()
         .message("Uma solicitação foi enviada para o seu email.")
@@ -303,87 +377,200 @@ public class UsuarioServiceImpl extends CrudServiceImpl<Usuario, Long,UsuarioRes
 
   @Override
   @Transactional
-  public GenericResponse resetPassword(RecoverPasswordRequestDto recoverPasswordRequestDto) {
-    RecoverPassword recoverPassword =
-        recoverPasswordRepository.findByCode(recoverPasswordRequestDto.getCode());
-    if (recoverPassword != null) {
-      Usuario usuario = usuarioRepository.findByEmail(recoverPassword.getEmail());
-      if (recoverPasswordRequestDto
-          .getPassword()
-          .equals(recoverPasswordRequestDto.getRepeatPassword())) {
-        usuario.setPassword(passwordEncoder.encode(recoverPasswordRequestDto.getPassword()));
-        usuarioRepository.save(usuario);
-      } else {
-        throw new RuntimeException("As senhas devem ser iguais.");
-      }
-      return GenericResponse.builder()
-          .message("Senha alterada. Já é possível autenticar-se com a nova senha.")
-          .build();
-    } else {
+  public GenericResponse resetPassword(RecoverPasswordRequestDto request) {
+    validarSenhasIguais(request.getPassword(), request.getRepeatPassword());
+
+    RecoverPassword recoverPassword = recoverPasswordRepository.findByCode(request.getCode());
+    if (recoverPassword == null) {
       throw new RecoverCodeInvalidException(
-          "O código de recuperação de senha expirou. Por favor, solicite um novo código.");
+          "Código de recuperação inválido ou expirado. Solicite um novo código.");
     }
+
+    validarCodigoNaoExpirado(recoverPassword);
+
+    Usuario usuario = usuarioRepository.findByEmail(recoverPassword.getEmail());
+    if (usuario == null) {
+      log.error(
+          "RecoverPassword encontrado mas usuário não existe: {}",
+          br.com.utfpr.gerenciamento.server.util.EmailUtils.maskEmail(recoverPassword.getEmail()));
+      throw new EntityNotFoundException("Usuário não encontrado");
+    }
+
+    usuario.setPassword(passwordEncoder.encode(request.getPassword()));
+    usuarioRepository.save(usuario);
+
+    // Limpa código usado para evitar reutilização
+    recoverPasswordRepository.delete(recoverPassword);
+
+    log.info(
+        "Senha redefinida com sucesso para usuário: {}",
+        br.com.utfpr.gerenciamento.server.util.EmailUtils.maskEmail(usuario.getEmail()));
+    return GenericResponse.builder()
+        .message("Senha alterada com sucesso. Você já pode fazer login com a nova senha.")
+        .build();
   }
 
   @Override
   @Transactional
   public UsuarioResponseDto updatePassword(Usuario usuario, String senhaAtual) {
-    Usuario userTemp = toEntity(this.findOne(usuario.getId()));
+    Usuario userTemp =
+        usuarioRepository
+            .findById(usuario.getId())
+            .orElseThrow(() -> new EntityNotFoundException("Usuário não encontrado"));
     usuario.setEmailVerificado(userTemp.getEmailVerificado());
     if (passwordEncoder.matches(senhaAtual, userTemp.getPassword())) {
       userTemp.setPassword(passwordEncoder.encode(usuario.getPassword()));
       return toDto(usuarioRepository.save(userTemp));
     }
-    throw new RuntimeException("Senha incorreta");
+    throw new InvalidPasswordException("Senha incorreta");
   }
 
+  /**
+   * Cria novo usuário e publica evento para envio de email de confirmação.
+   *
+   * <p><b>PADRÃO EVENT-DRIVEN:</b> Email será enviado APÓS commit da transação via {@link
+   * UsuarioCriadoEvent}. Benefícios:
+   *
+   * <ul>
+   *   <li>✅ Falha no email NÃO causa rollback da criação do usuário
+   *   <li>✅ Usuário sempre é criado, independente de problemas de SMTP
+   *   <li>✅ Email pode ser reenviado posteriormente via endpoint /resend-email
+   *   <li>✅ Processamento assíncrono (não bloqueia requisição do usuário)
+   * </ul>
+   *
+   * @param usuario Dados do usuário a ser criado
+   * @return Usuario criado e salvo no banco de dados
+   * @throws IllegalStateException se houver erro ao salvar usuário no banco
+   */
   @Override
+  @Transactional
   public UsuarioResponseDto saveNewUser(Usuario usuario) {
+    try {
+     if (!Util.isPasswordEncoded(usuario.getPassword())) {
+      usuario.setPassword(passwordEncoder.encode(usuario.getPassword()));
+    }
+      Usuario usuarioSalvo = prepareAndSaveNewUser(usuario);
+      // Publica evento para envio de email APÓS commit da transação
+      eventPublisher.publishEvent(
+          new UsuarioCriadoEvent(
+              this,
+              usuarioSalvo.getId(),
+              usuarioSalvo.getEmail(),
+              usuarioSalvo.getCodigoVerificacao()));
+
+      log.info(
+          "Novo usuário criado: {} (email de confirmação será enviado após commit)",
+          usuarioSalvo.getEmail());
+      return toDto(usuarioSalvo);
+    } catch (Exception ex) {
+      log.error("Erro ao criar novo usuário: email={}", usuario.getEmail(), ex);
+      throw new IllegalStateException("Erro ao criar novo usuário. Tente novamente.", ex);
+    }
+  }
+
+  /**
+   * Constrói o EmailDto para email de confirmação de cadastro.
+   *
+   * @param usuario usuário para o qual o email será enviado
+   * @return EmailDto configurado com dados de confirmação
+   */
+  private EmailDto construirEmailConfirmacao(Usuario usuario) {
+    String urlConfirmacao =
+        String.format("%s/confirmar-email/%s", frontBaseUrl, usuario.getCodigoVerificacao());
+
+    return EmailDto.builder()
+        .emailTo(usuario.getEmail())
+        .usuario(usuario.getNome())
+        .url(urlConfirmacao)
+        .subject(EMAIL_SUBJECT_CONFIRMACAO)
+        .subjectBody(EMAIL_SUBJECT_CONFIRMACAO)
+        .build();
+  }
+
+  /**
+   * Determina a permissão do usuário baseado no domínio do email.
+   *
+   * @param email email do usuário
+   * @return Permissão correspondente (PROFESSOR para @utfpr.edu.br, ALUNO caso contrário)
+   */
+  private Permissao determinarPermissaoPorEmail(String email) {
+    UserRole role = email.contains("@utfpr.edu.br") ? UserRole.PROFESSOR : UserRole.ALUNO;
+    return permissaoService.findByNome(role.getAuthority());
+  }
+
+  /**
+   * Prepara e persiste um novo usuário no sistema.
+   *
+   * @param usuario dados do usuário a ser criado
+   * @return usuário salvo com ID gerado
+   */
+  private Usuario prepareAndSaveNewUser(Usuario usuario) {
     if (!Util.isPasswordEncoded(usuario.getPassword())) {
       usuario.setPassword(passwordEncoder.encode(usuario.getPassword()));
     }
-    try {
-      usuario.setPermissoes(new HashSet<>());
-      usuario.setUsername(usuario.getEmail());
-      if (usuario.getEmail().contains("@utfpr.edu.br")) {
-        usuario.getPermissoes().add(permissaoService.findByNome(UserRole.PROFESSOR.getAuthority()));
-      } else {
-        usuario.getPermissoes().add(permissaoService.findByNome(UserRole.ALUNO.getAuthority()));
-      }
-      usuario.setCodigoVerificacao(UUID.randomUUID().toString());
-      usuario.setEmailVerificado(false);
-      usuarioRepository.save(usuario);
 
-      EmailDto emailDto = new EmailDto();
-      emailDto.setEmailTo(usuario.getEmail());
-      emailDto.setUsuario(usuario.getNome());
-      emailDto.setUrl(frontBaseUrl + "/confirmar-email/" + usuario.getCodigoVerificacao());
-      emailDto.setSubject(EMAIL_SUBJECT_CONFIRMACAO);
-      emailDto.setSubjectBody(EMAIL_SUBJECT_CONFIRMACAO);
+    usuario.setPermissoes(new HashSet<>());
+    usuario.setUsername(usuario.getEmail());
 
-      emailService.sendEmailWithTemplate(
-          emailDto, emailDto.getEmailTo(), emailDto.getSubject(), "templateConfirmacaoCadastro");
+    Permissao permissao = determinarPermissaoPorEmail(usuario.getEmail());
+    usuario.getPermissoes().add(permissao);
 
-      return toDto(usuario);
-    } catch (Exception ex) {
-      LOGGER.error("Erro ao salvar novo usuário: ", ex);
-      throw new RuntimeException("Erro ao salvar novo usuário.");
+    usuario.setCodigoVerificacao(UUID.randomUUID().toString());
+    usuario.setEmailVerificado(false);
+
+    return usuarioRepository.save(usuario);
+  }
+
+  /**
+   * Envia email de confirmação de cadastro para o usuário.
+   *
+   * @param usuario usuário para o qual enviar o email
+   * @throws EmailException se o envio falhar
+   */
+  private void enviarEmailConfirmacao(Usuario usuario) {
+    EmailDto emailDto = construirEmailConfirmacao(usuario);
+    emailService.sendEmailWithTemplate(
+        emailDto, emailDto.getEmailTo(), emailDto.getSubject(), "templateConfirmacaoCadastro");
+  }
+
+  /**
+   * Valida se o código de recuperação não expirou (limite: 24 horas).
+   *
+   * @param recoverPassword código de recuperação a validar
+   * @throws RecoverCodeInvalidException se o código estiver expirado
+   */
+  private void validarCodigoNaoExpirado(RecoverPassword recoverPassword) {
+    LocalDateTime limiteExpiracao = LocalDateTime.now().minusHours(24);
+    if (recoverPassword.getDateTime().isBefore(limiteExpiracao)) {
+      recoverPasswordRepository.delete(recoverPassword); // Cleanup
+      throw new RecoverCodeInvalidException(
+          "Este código expirou. Solicite um novo código de recuperação.");
     }
   }
 
-  private void sendEmailNewUser(Usuario usuario) {
-    EmailDto emailDto = new EmailDto();
-    emailDto.setEmailTo(usuario.getEmail());
-    emailDto.setUsuario(usuario.getNome());
-    emailDto.setUrl(frontBaseUrl + "/confirmar-email/" + usuario.getCodigoVerificacao());
-    emailDto.setSubject(EMAIL_SUBJECT_CONFIRMACAO);
-    emailDto.setSubjectBody(EMAIL_SUBJECT_CONFIRMACAO);
-    Map<String, Object> body = new HashMap<>();
-    body.put("usuario", usuario.getNome());
-    body.put("url", emailDto.getUrl());
+  /**
+   * Valida se as senhas coincidem e atendem requisitos mínimos.
+   *
+   * @param senha senha fornecida
+   * @param confirmacao confirmação da senha
+   * @throws InvalidPasswordException se as senhas não coincidirem ou não atenderem requisitos
+   */
+  private void validarSenhasIguais(String senha, String confirmacao) {
+    if (senha == null || senha.trim().isEmpty()) {
+      throw new InvalidPasswordException("A senha não pode ser vazia.");
+    }
 
-    emailService.sendEmailWithTemplate(
-        emailDto, emailDto.getEmailTo(), emailDto.getSubject(), "templateConfirmacaoCadastro");
+    if (confirmacao == null || confirmacao.trim().isEmpty()) {
+      throw new InvalidPasswordException("A confirmação de senha não pode ser vazia.");
+    }
+
+    if (senha.length() < 8) {
+      throw new InvalidPasswordException("A senha deve ter no mínimo 8 caracteres.");
+    }
+
+    if (!Objects.equals(senha, confirmacao)) {
+      throw new InvalidPasswordException("As senhas não coincidem. Tente novamente.");
+    }
   }
 
   @Override
@@ -395,7 +582,9 @@ public class UsuarioServiceImpl extends CrudServiceImpl<Usuario, Long,UsuarioRes
   @Transactional
   @Override
   public boolean hasSolicitacaoNadaConstaPendingOrCompleted(String username) {
-    Usuario usuario = toEntity(findByUsername(username));
+    // Normaliza e busca diretamente no repositório (evita bypass do proxy Spring)
+    username = normalizeUsername(username);
+    Usuario usuario = usuarioRepository.findByUsernameOrEmail(username, username);
     if (usuario == null) return false;
     return nadaConstaRepository.existsByUsuarioAndStatusIn(
         usuario, Set.of(NadaConstaStatus.PENDING, NadaConstaStatus.COMPLETED));
