@@ -109,7 +109,7 @@ public class UsuarioServiceImpl extends CrudServiceImpl<Usuario, Long,UsuarioRes
   @Transactional(readOnly = true)
   public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
     username = normalizeUsername(username);
-    Usuario usuario = toEntity(usuarioRepository.findWithPermissoesByUsernameOrEmail(username, username));
+    Usuario usuario = usuarioRepository.findWithPermissoesByUsernameOrEmail(username, username);
     if (usuario == null) {
       throw new UsernameNotFoundException("Usuário não encontrado");
     }
