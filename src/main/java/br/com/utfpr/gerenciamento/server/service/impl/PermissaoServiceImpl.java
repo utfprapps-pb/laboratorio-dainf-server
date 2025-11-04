@@ -18,7 +18,7 @@ public class PermissaoServiceImpl extends CrudServiceImpl<Permissao, Long, Permi
 
   public PermissaoServiceImpl(PermissaoRepository permissaoRepository, ModelMapper modelMapper) {
     this.permissaoRepository = permissaoRepository;
-      this.modelMapper = modelMapper;
+    this.modelMapper = modelMapper;
   }
 
   @Override

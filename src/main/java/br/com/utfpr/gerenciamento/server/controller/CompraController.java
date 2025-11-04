@@ -22,7 +22,7 @@ public class CompraController extends CrudController<Compra, Long, CompraRespons
   }
 
   @Override
-  protected CrudService<Compra, Long,CompraResponseDTO> getService() {
+  protected CrudService<Compra, Long, CompraResponseDTO> getService() {
     return compraService;
   }
 
@@ -30,7 +30,7 @@ public class CompraController extends CrudController<Compra, Long, CompraRespons
   public void preSave(Compra object) {
     if (object.getId() != null) {
       // remove o saldo antigo do item
-      compraOld = compraService.toEntity( compraService.findOne(object.getId()));
+      compraOld = compraService.toEntity(compraService.findOne(object.getId()));
       compraOld.getCompraItem().stream()
           .forEach(
               compraItem ->

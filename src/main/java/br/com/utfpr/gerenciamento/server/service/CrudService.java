@@ -40,7 +40,10 @@ public interface CrudService<T, ID extends Serializable, DTO> {
   void delete(Iterable<T> iterable);
 
   Specification<T> filterByAllFields(String filter);
+
   void deleteAll();
+
   DTO toDto(T entity);
+
   T toEntity(DTO dto);
 }

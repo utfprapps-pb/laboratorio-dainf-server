@@ -13,7 +13,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 @Service
-public class EstadoServiceImpl extends CrudServiceImpl<Estado, Long,EstadoResponseDto> implements EstadoService {
+public class EstadoServiceImpl extends CrudServiceImpl<Estado, Long, EstadoResponseDto>
+    implements EstadoService {
 
   private final EstadoRepository estadoRepository;
 

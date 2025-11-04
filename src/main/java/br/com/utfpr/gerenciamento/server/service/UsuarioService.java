@@ -7,9 +7,8 @@ import br.com.utfpr.gerenciamento.server.dto.UsuarioResponseDto;
 import br.com.utfpr.gerenciamento.server.model.Usuario;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
-import org.springframework.security.core.userdetails.UserDetails;
 
-public interface UsuarioService extends CrudService<Usuario, Long,UsuarioResponseDto> {
+public interface UsuarioService extends CrudService<Usuario, Long, UsuarioResponseDto> {
 
   Page<UsuarioResponseDto> usuarioComplete(String query, Pageable pageable);
 

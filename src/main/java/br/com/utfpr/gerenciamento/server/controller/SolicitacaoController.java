@@ -12,7 +12,8 @@ import org.springframework.web.bind.annotation.RestController;
 
 @RestController
 @RequestMapping("solicitacao-compra")
-public class SolicitacaoController extends CrudController<Solicitacao, Long,SolicitacaoResponseDto> {
+public class SolicitacaoController
+    extends CrudController<Solicitacao, Long, SolicitacaoResponseDto> {
 
   private final SolicitacaoService solicitacaoService;
 
@@ -21,7 +22,7 @@ public class SolicitacaoController extends CrudController<Solicitacao, Long,Soli
   }
 
   @Override
-  protected CrudService<Solicitacao, Long,SolicitacaoResponseDto> getService() {
+  protected CrudService<Solicitacao, Long, SolicitacaoResponseDto> getService() {
     return solicitacaoService;
   }
 

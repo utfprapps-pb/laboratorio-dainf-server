@@ -1,6 +1,5 @@
 package br.com.utfpr.gerenciamento.server.service.impl;
 
-import br.com.utfpr.gerenciamento.server.dto.EmprestimoResponseDto;
 import br.com.utfpr.gerenciamento.server.dto.NadaConstaResponseDto;
 import br.com.utfpr.gerenciamento.server.enumeration.NadaConstaStatus;
 import br.com.utfpr.gerenciamento.server.exception.NadaConstaException;
@@ -23,7 +22,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
-
 import lombok.extern.slf4j.Slf4j;
 import org.modelmapper.ModelMapper;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -32,7 +30,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 @Slf4j
 @Service
-public class NadaConstaServiceImpl extends CrudServiceImpl<NadaConsta, Long,NadaConstaResponseDto>
+public class NadaConstaServiceImpl extends CrudServiceImpl<NadaConsta, Long, NadaConstaResponseDto>
     implements NadaConstaService {
 
   private final NadaConstaRepository nadaConstaRepository;
@@ -75,14 +73,12 @@ public class NadaConstaServiceImpl extends CrudServiceImpl<NadaConsta, Long,Nada
   @Override
   @Transactional(readOnly = true)
   public List<NadaConstaResponseDto> findAllByUsername(String username) {
-    Usuario usuario =usuarioService.toEntity( usuarioService.findByUsername(username));
+    Usuario usuario = usuarioService.toEntity(usuarioService.findByUsername(username));
     if (usuario == null) {
       return Collections.emptyList();
     }
     return nadaConstaRepository.findAllByUsuario(usuario).stream().map(this::toDto).toList();
   }
-
-
 
   @Override
   @Transactional
@@ -97,7 +93,9 @@ public class NadaConstaServiceImpl extends CrudServiceImpl<NadaConsta, Long,Nada
           "Já existe uma solicitação de Nada Consta em aberto ou concluída para este usuário.");
     }
     List<Emprestimo> emprestimosAbertos =
-        emprestimoService.findAllEmprestimosAbertosByUsuario(usuario.getUsername()).stream().map(emprestimoService::toEntity).collect(Collectors.toList());
+        emprestimoService.findAllEmprestimosAbertosByUsuario(usuario.getUsername()).stream()
+            .map(emprestimoService::toEntity)
+            .collect(Collectors.toList());
     NadaConsta nadaConsta =
         NadaConsta.builder()
             .usuario(usuario)

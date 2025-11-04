@@ -13,7 +13,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 @Service
-public class PaisServiceImpl extends CrudServiceImpl<Pais, Long,PaisResponseDto> implements PaisService {
+public class PaisServiceImpl extends CrudServiceImpl<Pais, Long, PaisResponseDto>
+    implements PaisService {
 
   private final PaisRepository paisRepository;
 

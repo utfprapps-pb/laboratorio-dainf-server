@@ -8,7 +8,6 @@ import br.com.utfpr.gerenciamento.server.exception.EmailException;
 import br.com.utfpr.gerenciamento.server.exception.EntityNotFoundException;
 import br.com.utfpr.gerenciamento.server.exception.InvalidPasswordException;
 import br.com.utfpr.gerenciamento.server.exception.RecoverCodeInvalidException;
-import br.com.utfpr.gerenciamento.server.model.Emprestimo;
 import br.com.utfpr.gerenciamento.server.model.Permissao;
 import br.com.utfpr.gerenciamento.server.model.RecoverPassword;
 import br.com.utfpr.gerenciamento.server.model.Usuario;
@@ -47,7 +46,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 @Slf4j
 @Service
-public class UsuarioServiceImpl extends CrudServiceImpl<Usuario, Long,UsuarioResponseDto>
+public class UsuarioServiceImpl extends CrudServiceImpl<Usuario, Long, UsuarioResponseDto>
     implements UsuarioService, UserDetailsService {
 
   public static final String EMAIL_SUBJECT_CONFIRMACAO =
@@ -212,7 +211,7 @@ public class UsuarioServiceImpl extends CrudServiceImpl<Usuario, Long,UsuarioRes
     usuarioExistente.setTelefone(usuario.getTelefone());
     usuarioExistente.setDocumento(usuario.getDocumento());
 
-    return toDto( usuarioRepository.save(usuarioExistente));
+    return toDto(usuarioRepository.save(usuarioExistente));
   }
 
   @Override
@@ -220,8 +219,13 @@ public class UsuarioServiceImpl extends CrudServiceImpl<Usuario, Long,UsuarioRes
   public UsuarioResponseDto save(Usuario usuario) {
     if (usuario.getId() != null) {
       // Se for update, busca o usuário atual do banco
-      Usuario usuarioExistente = usuarioRepository.findById(usuario.getId())
-              .orElseThrow(() -> new EntityNotFoundException("Usuário não encontrado com ID: " + usuario.getId()));
+      Usuario usuarioExistente =
+          usuarioRepository
+              .findById(usuario.getId())
+              .orElseThrow(
+                  () ->
+                      new EntityNotFoundException(
+                          "Usuário não encontrado com ID: " + usuario.getId()));
 
       // Se a nova senha é nula ou vazia, mantém a senha antiga
       if (usuario.getPassword() == null || usuario.getPassword().isBlank()) {
@@ -243,14 +247,19 @@ public class UsuarioServiceImpl extends CrudServiceImpl<Usuario, Long,UsuarioRes
     // Normaliza permissões para evitar NPE e usa batch fetching
     Set<Permissao> permissoesInput = usuario.getPermissoes();
     if (permissoesInput != null && !permissoesInput.isEmpty()) {
-      Set<Long> permissaoIds = permissoesInput.stream()
+      Set<Long> permissaoIds =
+          permissoesInput.stream()
               .filter(Objects::nonNull)
               .map(Permissao::getId)
               .filter(Objects::nonNull)
               .collect(Collectors.toSet());
 
       if (!permissaoIds.isEmpty()) {
-        Set<Permissao> permissoes = new HashSet<>(permissaoService.findAllById(permissaoIds).stream().map(permissaoService::toEntity).collect(Collectors.toSet()));
+        Set<Permissao> permissoes =
+            new HashSet<>(
+                permissaoService.findAllById(permissaoIds).stream()
+                    .map(permissaoService::toEntity)
+                    .collect(Collectors.toSet()));
         usuario.setPermissoes(permissoes);
       } else {
         usuario.setPermissoes(new HashSet<>());
@@ -261,7 +270,6 @@ public class UsuarioServiceImpl extends CrudServiceImpl<Usuario, Long,UsuarioRes
 
     return toDto(usuarioRepository.save(usuario));
   }
-
 
   public UsuarioResponseDto convertToDto(Usuario entity) {
     return modelMapper.map(entity, UsuarioResponseDto.class);
@@ -446,9 +454,9 @@ public class UsuarioServiceImpl extends CrudServiceImpl<Usuario, Long,UsuarioRes
   @Transactional
   public UsuarioResponseDto saveNewUser(Usuario usuario) {
     try {
-     if (!Util.isPasswordEncoded(usuario.getPassword())) {
-      usuario.setPassword(passwordEncoder.encode(usuario.getPassword()));
-    }
+      if (!Util.isPasswordEncoded(usuario.getPassword())) {
+        usuario.setPassword(passwordEncoder.encode(usuario.getPassword()));
+      }
       Usuario usuarioSalvo = prepareAndSaveNewUser(usuario);
       // Publica evento para envio de email APÓS commit da transação
       eventPublisher.publishEvent(

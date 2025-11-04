@@ -33,7 +33,8 @@ import org.springframework.web.multipart.MultipartHttpServletRequest;
 
 @Service
 @Slf4j
-public class ItemServiceImpl extends CrudServiceImpl<Item, Long,ItemResponseDto> implements ItemService {
+public class ItemServiceImpl extends CrudServiceImpl<Item, Long, ItemResponseDto>
+    implements ItemService {
   public static final String ITEM_NAO_ENCONTRADO_COM_ID = "Item não encontrado com ID: ";
 
   /**
@@ -202,7 +203,7 @@ public class ItemServiceImpl extends CrudServiceImpl<Item, Long,ItemResponseDto>
         log.error("Erro ao remover imagem do MinIO: {}", ex.getMessage());
       }
     }
-    Item i = toEntity( self.findOne(idItem));
+    Item i = toEntity(self.findOne(idItem));
     i.getImageItem().removeIf(itemImage -> itemImage.getId().equals(image.getId()));
     self.save(i);
   }
@@ -249,7 +250,7 @@ public class ItemServiceImpl extends CrudServiceImpl<Item, Long,ItemResponseDto>
   @Override
   @Transactional
   public void copyImagesItem(List<ItemImage> itemImages, Long id) {
-    var item = toEntity( self.findOne(id));
+    var item = toEntity(self.findOne(id));
     List<ItemImage> toReturn = new ArrayList<>();
     itemImages.forEach(
         itemImage -> {

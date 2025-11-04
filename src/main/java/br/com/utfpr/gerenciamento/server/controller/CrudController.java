@@ -9,9 +9,9 @@ import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.web.bind.annotation.*;
 
-public abstract class CrudController<T, ID extends Serializable,DTO> {
+public abstract class CrudController<T, ID extends Serializable, DTO> {
 
-  protected abstract CrudService<T, ID,DTO> getService();
+  protected abstract CrudService<T, ID, DTO> getService();
 
   @GetMapping
   public List<DTO> findAll() {
@@ -37,7 +37,7 @@ public abstract class CrudController<T, ID extends Serializable,DTO> {
 
   @DeleteMapping("{id}")
   public void delete(@PathVariable("id") ID id) {
-    T object = getService().toEntity( getService().findOne(id));
+    T object = getService().toEntity(getService().findOne(id));
     getService().delete(id);
     postDelete(object);
   }

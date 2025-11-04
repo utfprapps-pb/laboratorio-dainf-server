@@ -40,11 +40,12 @@ public class RelatorioServiceImpl extends CrudServiceImpl<Relatorio, Long, Relat
   private final ModelMapper modelMapper;
 
   public RelatorioServiceImpl(
-          RelatorioRepository relatorioRepository,
-          @Qualifier("jdbcTemplate") JdbcTemplate jdbcTemplate, ModelMapper modelMapper) {
+      RelatorioRepository relatorioRepository,
+      @Qualifier("jdbcTemplate") JdbcTemplate jdbcTemplate,
+      ModelMapper modelMapper) {
     this.relatorioRepository = relatorioRepository;
     this.jdbcTemplate = jdbcTemplate;
-      this.modelMapper = modelMapper;
+    this.modelMapper = modelMapper;
   }
 
   @Override
@@ -106,7 +107,7 @@ public class RelatorioServiceImpl extends CrudServiceImpl<Relatorio, Long, Relat
   @Transactional
   public JasperPrint generateReport(Long idRelatorio, List<RelatorioParamsValue> paramsRel)
       throws SQLException, JRException {
-    Relatorio relatorio = toEntity( this.findOne(idRelatorio));
+    Relatorio relatorio = toEntity(this.findOne(idRelatorio));
     if (relatorio.getNameReport() == null) {
       throw new ArquivoException("Nenhum arquivo de report foi especificado");
     }
