@@ -34,7 +34,6 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
-
 import lombok.extern.slf4j.Slf4j;
 import org.modelmapper.ModelMapper;
 import org.springframework.cache.annotation.CacheEvict;
@@ -51,7 +50,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 @Slf4j
 @Service
-public class EmprestimoServiceImpl extends CrudServiceImpl<Emprestimo, Long,EmprestimoResponseDto>
+public class EmprestimoServiceImpl extends CrudServiceImpl<Emprestimo, Long, EmprestimoResponseDto>
     implements EmprestimoService {
 
   private final EmprestimoRepository emprestimoRepository;
@@ -91,7 +90,6 @@ public class EmprestimoServiceImpl extends CrudServiceImpl<Emprestimo, Long,Empr
     return emprestimoRepository;
   }
 
-
   @Override
   public EmprestimoResponseDto toDto(Emprestimo entity) {
     return modelMapper.map(entity, EmprestimoResponseDto.class);
@@ -123,7 +121,8 @@ public class EmprestimoServiceImpl extends CrudServiceImpl<Emprestimo, Long,Empr
       key = "T(java.util.Objects).hash(#textFilter, #pageable.toString())",
       unless = "#result == null || #result.isEmpty()")
   @Transactional(readOnly = true)
-  public Page<EmprestimoResponseDto> findAllPagedWithTextFilter(String textFilter, Pageable pageable) {
+  public Page<EmprestimoResponseDto> findAllPagedWithTextFilter(
+      String textFilter, Pageable pageable) {
     Specification<Emprestimo> spec;
 
     if (textFilter != null && !textFilter.isEmpty()) {
@@ -188,7 +187,7 @@ public class EmprestimoServiceImpl extends CrudServiceImpl<Emprestimo, Long,Empr
                             + entity.getUsuarioEmprestimo().getId()));
     entity.setUsuarioEmprestimo(usuarioEmprestimo);
     String username = SecurityUtils.getAuthenticatedUsername();
-    Usuario usuarioResponsavel = usuarioService.toEntity( usuarioService.findByUsername(username));
+    Usuario usuarioResponsavel = usuarioService.toEntity(usuarioService.findByUsername(username));
     Usuario usuarioResponsavelLoaded =
         usuarioRepository
             .findById(usuarioResponsavel.getId())
@@ -236,8 +235,11 @@ public class EmprestimoServiceImpl extends CrudServiceImpl<Emprestimo, Long,Empr
 
   @Override
   @Transactional(readOnly = true)
-  public List<EmprestimoResponseDto> findAllByDataEmprestimoBetween(LocalDate dtIni, LocalDate dtFim) {
-    return emprestimoRepository.findAllByDataEmprestimoBetween(dtIni, dtFim).stream().map(emprestimo -> toDto(emprestimo)).collect(Collectors.toList());
+  public List<EmprestimoResponseDto> findAllByDataEmprestimoBetween(
+      LocalDate dtIni, LocalDate dtFim) {
+    return emprestimoRepository.findAllByDataEmprestimoBetween(dtIni, dtFim).stream()
+        .map(emprestimo -> toDto(emprestimo))
+        .collect(Collectors.toList());
   }
 
   @Override
@@ -284,27 +286,35 @@ public class EmprestimoServiceImpl extends CrudServiceImpl<Emprestimo, Long,Empr
     // OTIMIZAÇÃO: Usa Specification com JOIN FETCH ao invés de JDBC manual
     // Elimina N+1 queries: 200+ queries → 1 query (melhoria de 90-95%)
     Specification<Emprestimo> spec = EmprestimoSpecifications.fromFilter(emprestimoFilter);
-    return emprestimoRepository.findAll(spec, Sort.by("id")).stream().map(emprestimo -> toDto(emprestimo)).collect(Collectors.toList());
+    return emprestimoRepository.findAll(spec, Sort.by("id")).stream()
+        .map(emprestimo -> toDto(emprestimo))
+        .collect(Collectors.toList());
   }
 
   @Override
   @Transactional(readOnly = true)
   public List<EmprestimoResponseDto> findAllUsuarioEmprestimo(String username) {
-    Usuario usuario = usuarioService.toEntity( usuarioService.findByUsername(username));
-    return emprestimoRepository.findAllByUsuarioEmprestimo(usuario).stream().map(emprestimo -> toDto(emprestimo)).collect(Collectors.toList());
+    Usuario usuario = usuarioService.toEntity(usuarioService.findByUsername(username));
+    return emprestimoRepository.findAllByUsuarioEmprestimo(usuario).stream()
+        .map(emprestimo -> toDto(emprestimo))
+        .collect(Collectors.toList());
   }
 
   @Override
   @Transactional(readOnly = true)
   public List<EmprestimoResponseDto> findAllEmprestimosAbertos() {
-    return emprestimoRepository.findAllByDataDevolucaoIsNullOrderById().stream().map(emprestimo -> toDto(emprestimo)).collect(Collectors.toList());
+    return emprestimoRepository.findAllByDataDevolucaoIsNullOrderById().stream()
+        .map(emprestimo -> toDto(emprestimo))
+        .collect(Collectors.toList());
   }
 
   @Override
   @Transactional(readOnly = true)
   public List<EmprestimoResponseDto> findAllEmprestimosAbertosByUsuario(String username) {
-    Usuario usuario = usuarioService.toEntity( usuarioService.findByUsername(username));
-    return emprestimoRepository.findAllByUsuarioEmprestimoAndDataDevolucaoIsNull(usuario).stream().map(emprestimo -> toDto(emprestimo)).collect(Collectors.toList());
+    Usuario usuario = usuarioService.toEntity(usuarioService.findByUsername(username));
+    return emprestimoRepository.findAllByUsuarioEmprestimoAndDataDevolucaoIsNull(usuario).stream()
+        .map(emprestimo -> toDto(emprestimo))
+        .collect(Collectors.toList());
   }
 
   @Override
@@ -385,8 +395,6 @@ public class EmprestimoServiceImpl extends CrudServiceImpl<Emprestimo, Long,Empr
       log.info("Nenhum empréstimo vencerá daqui 3 dias.");
     }
   }
-
-
 
   @Override
   @Transactional
