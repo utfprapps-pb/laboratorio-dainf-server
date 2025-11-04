@@ -14,6 +14,7 @@ import br.com.utfpr.gerenciamento.server.model.dashboards.DashboardItensEmpresta
 import br.com.utfpr.gerenciamento.server.model.filter.EmprestimoFilter;
 import br.com.utfpr.gerenciamento.server.repository.EmprestimoRepository;
 import br.com.utfpr.gerenciamento.server.repository.UsuarioRepository;
+import br.com.utfpr.gerenciamento.server.service.EmprestimoService;
 import br.com.utfpr.gerenciamento.server.service.ItemService;
 import br.com.utfpr.gerenciamento.server.service.SaidaService;
 import br.com.utfpr.gerenciamento.server.service.UsuarioService;
@@ -51,7 +52,6 @@ class EmprestimoServiceImplTest {
 
   private Emprestimo emp;
   private Usuario usuarioResponsavel;
-  private AutoCloseable closeable;
 
   @BeforeEach
   void setUp() {
@@ -68,16 +68,14 @@ class EmprestimoServiceImplTest {
     try {
       Field selfField = EmprestimoServiceImpl.class.getDeclaredField("self");
       selfField.setAccessible(true);
-      selfField.set(service, (br.com.utfpr.gerenciamento.server.service.EmprestimoService) service);
+      selfField.set(service, (EmprestimoService) service);
     } catch (Exception e) {
       throw new RuntimeException(e);
     }
   }
 
   @AfterEach
-  void tearDown() throws Exception {
-    if (closeable != null) closeable.close();
-  }
+  void tearDown() {}
 
   @Test
   void testFindAllByDataEmprestimoBetween() {
@@ -130,7 +128,6 @@ class EmprestimoServiceImplTest {
   void testFilter() {
     EmprestimoFilter filter = new EmprestimoFilter();
     List<Emprestimo> expected = Collections.emptyList();
-    // Tipagem correta para evitar warning
     when(emprestimoRepository.findAll(any(Specification.class), any(Sort.class)))
         .thenReturn(expected);
     List<Emprestimo> result = service.filter(filter);
@@ -256,13 +253,7 @@ class EmprestimoServiceImplTest {
     Usuario usuarioEmprestimo = new Usuario();
     usuarioEmprestimo.setId(1L);
     emprestimo.setUsuarioEmprestimo(usuarioEmprestimo);
-    // Mocka busca do usuário do empréstimo (não encontrado)
-    when(usuarioRepository.findById(1L)).thenReturn(java.util.Optional.empty());
-    // Mocka busca do usuário responsável (encontrado)
-    Usuario usuarioResponsavel = new Usuario();
-    usuarioResponsavel.setId(2L);
-    when(usuarioService.findByUsername(anyString())).thenReturn(usuarioResponsavel);
-    when(usuarioRepository.findById(2L)).thenReturn(java.util.Optional.of(usuarioResponsavel));
+    when(usuarioRepository.findById(1L)).thenReturn(Optional.empty());
     assertThrows(EntityNotFoundException.class, () -> service.save(emprestimo));
   }
 
@@ -302,9 +293,6 @@ class EmprestimoServiceImplTest {
               return Optional.empty();
             });
     when(usuarioService.findByUsername(eq("testuser"))).thenReturn(usuarioResponsavel);
-    doNothing().when(itemService).aumentaSaldoItem(anyLong(), any());
-    when(itemService.saldoItemIsValid(any(), any())).thenReturn(true);
-    doNothing().when(itemService).diminuiSaldoItem(anyLong(), any(), eq(true));
     doNothing().when(eventPublisher).publishEvent(any());
     when(emprestimoRepository.save(any(Emprestimo.class))).thenReturn(emprestimo);
     when(modelMapper.map(any(Emprestimo.class), eq(EmprestimoResponseDto.class))).thenReturn(dto);
@@ -316,9 +304,10 @@ class EmprestimoServiceImplTest {
   }
 
   @Test
+  @SuppressWarnings("unchecked")
   void testFindAllPagedWithTextFilterCallsFindAllSpecification() {
     Pageable pageable = PageRequest.of(0, 10);
-    Specification<Emprestimo> spec = mock(Specification.class);
+    Specification<Emprestimo> spec = (Specification<Emprestimo>) mock(Specification.class);
     when(emprestimoRepository.findAll(any(Specification.class), eq(pageable)))
         .thenReturn(new PageImpl<>(Collections.emptyList()));
     // Testa apenas o resultado final esperado
@@ -345,11 +334,10 @@ class EmprestimoServiceImplTest {
     java.util.Set<EmprestimoItem> itensSet = new HashSet<>();
     itensSet.add(empItem);
     emprestimoComItens.setEmprestimoItem(itensSet);
-    doNothing().when(itemService).aumentaSaldoItem(anyLong(), any());
     when(itemService.saldoItemIsValid(any(), any())).thenReturn(true);
     service.prepareEmprestimo(emprestimoComItens);
     assertNotNull(emprestimoComItens.getEmprestimoDevolucaoItem());
-    assertTrue(!emprestimoComItens.getEmprestimoDevolucaoItem().isEmpty());
+    assertFalse(emprestimoComItens.getEmprestimoDevolucaoItem().isEmpty());
   }
 
   @Test
@@ -359,7 +347,6 @@ class EmprestimoServiceImplTest {
     Usuario usuarioEmprestimo = new Usuario();
     usuarioEmprestimo.setEmail("mail@test.com");
     emprestimo.setUsuarioEmprestimo(usuarioEmprestimo);
-    doNothing().when(itemService).diminuiSaldoItem(anyLong(), any(), eq(true));
     service.finalizeEmprestimo(emprestimo);
     // No exception means success
   }
@@ -367,8 +354,6 @@ class EmprestimoServiceImplTest {
   @Test
   void testCleanupAfterDeleteHandlesNulls() {
     Emprestimo emprestimo = new Emprestimo();
-    doNothing().when(itemService).aumentaSaldoItem(anyLong(), any());
-    doNothing().when(saidaService).deleteSaidaByEmprestimo(anyLong());
     service.cleanupAfterDelete(emprestimo);
     // No exception means success
   }

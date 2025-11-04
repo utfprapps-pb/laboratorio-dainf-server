@@ -5,9 +5,9 @@ import br.com.utfpr.gerenciamento.server.event.emprestimo.EmprestimoFinalizadoEv
 import br.com.utfpr.gerenciamento.server.event.emprestimo.EmprestimoPrazoAlteradoEvent;
 import br.com.utfpr.gerenciamento.server.event.emprestimo.EmprestimoPrazoProximoEvent;
 import br.com.utfpr.gerenciamento.server.event.item.EstoqueMinNotificacaoEvent;
-import br.com.utfpr.gerenciamento.server.event.usuario.UsuarioCriadoEvent;
 import br.com.utfpr.gerenciamento.server.event.nadaConsta.NadaConstaEmitidoEvent;
 import br.com.utfpr.gerenciamento.server.event.nadaConsta.NadaConstaPendenciasEvent;
+import br.com.utfpr.gerenciamento.server.event.usuario.UsuarioCriadoEvent;
 import br.com.utfpr.gerenciamento.server.exception.EntityNotFoundException;
 import br.com.utfpr.gerenciamento.server.mapper.EmprestimoTemplateMapper;
 import br.com.utfpr.gerenciamento.server.model.Email;
