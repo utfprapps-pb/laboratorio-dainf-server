@@ -3,7 +3,9 @@ package br.com.utfpr.gerenciamento.server.service.impl;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
+import br.com.utfpr.gerenciamento.server.dto.EmprestimoResponseDto;
 import br.com.utfpr.gerenciamento.server.dto.NadaConstaResponseDto;
+import br.com.utfpr.gerenciamento.server.dto.UsuarioResponseDto;
 import br.com.utfpr.gerenciamento.server.enumeration.NadaConstaStatus;
 import br.com.utfpr.gerenciamento.server.model.Emprestimo;
 import br.com.utfpr.gerenciamento.server.model.EmprestimoItem;
@@ -57,6 +59,8 @@ class NadaConstaServiceImplTest {
     // Corrige o modelMapper para retornar um DTO válido
     when(modelMapper.map(any(), eq(NadaConstaResponseDto.class)))
         .thenReturn(new NadaConstaResponseDto());
+    // Mock padrão para hasSolicitacaoNadaConstaPendingOrCompleted
+    when(usuarioService.hasSolicitacaoNadaConstaPendingOrCompleted(anyString())).thenReturn(false);
   }
 
   @Test
@@ -65,11 +69,25 @@ class NadaConstaServiceImplTest {
         Usuario.builder()
             .id(1L)
             .nome("Aluno Teste")
+            .username("aluno@utfpr.edu.br")
             .documento("123456")
             .email("aluno@utfpr.edu.br")
             .ativo(true)
             .build();
-    when(usuarioService.findByDocumento("123456")).thenReturn(usuarioService.toDto(usuario));
+    UsuarioResponseDto usuarioDto = new UsuarioResponseDto();
+    usuarioDto.setId(usuario.getId());
+    usuarioDto.setNome(usuario.getNome());
+    usuarioDto.setUsername(usuario.getUsername());
+    usuarioDto.setDocumento(usuario.getDocumento());
+    usuarioDto.setEmail(usuario.getEmail());
+    usuarioDto.setTelefone(null);
+    usuarioDto.setPermissoes(null);
+    usuarioDto.setFotoUrl(null);
+    usuarioDto.setEmailVerificado(false);
+    usuarioDto.setAuthorities(null);
+    when(usuarioService.findByDocumento("123456")).thenReturn(usuarioDto);
+    when(usuarioService.toEntity(usuarioDto)).thenReturn(usuario);
+    when(modelMapper.map(usuarioDto, Usuario.class)).thenReturn(usuario);
     when(emprestimoService.findAllEmprestimosAbertosByUsuario(anyString())).thenReturn(List.of());
     when(systemConfigService.getEmailNadaConsta()).thenReturn("destino@utfpr.edu.br");
     NadaConsta nadaConsta =
@@ -84,7 +102,7 @@ class NadaConstaServiceImplTest {
     doNothing()
         .when(emailService)
         .sendEmailWithTemplate(any(), anyString(), anyString(), anyString());
-    when(usuarioService.save(any(Usuario.class))).thenReturn(usuarioService.toDto(usuario));
+    when(usuarioService.save(any(Usuario.class))).thenReturn(usuarioDto);
     NadaConstaResponseDto dto = service.solicitarNadaConsta("123456");
     assertNotNull(dto);
     verify(emailService)
@@ -102,11 +120,25 @@ class NadaConstaServiceImplTest {
         Usuario.builder()
             .id(1L)
             .nome("Aluno Teste")
+            .username("aluno@utfpr.edu.br")
             .documento("123456")
             .email("aluno@utfpr.edu.br")
             .ativo(true)
             .build();
-    when(usuarioService.findByDocumento("123456")).thenReturn(usuarioService.toDto(usuario));
+    UsuarioResponseDto usuarioDto = new UsuarioResponseDto();
+    usuarioDto.setId(usuario.getId());
+    usuarioDto.setNome(usuario.getNome());
+    usuarioDto.setUsername(usuario.getUsername());
+    usuarioDto.setDocumento(usuario.getDocumento());
+    usuarioDto.setEmail(usuario.getEmail());
+    usuarioDto.setTelefone(null);
+    usuarioDto.setPermissoes(null);
+    usuarioDto.setFotoUrl(null);
+    usuarioDto.setEmailVerificado(false);
+    usuarioDto.setAuthorities(null);
+    when(usuarioService.findByDocumento("123456")).thenReturn(usuarioDto);
+    when(usuarioService.toEntity(usuarioDto)).thenReturn(usuario);
+    when(modelMapper.map(usuarioDto, Usuario.class)).thenReturn(usuario);
     Item item = new Item();
     item.setNome("Notebook");
     EmprestimoItem emprestimoItem = new EmprestimoItem();
@@ -115,9 +147,14 @@ class NadaConstaServiceImplTest {
     emprestimo.setEmprestimoItem(List.of(emprestimoItem));
     emprestimo.setDataEmprestimo(LocalDate.now());
     emprestimo.setPrazoDevolucao(LocalDate.now().plusDays(7));
-    // Corrige o mock para usar o username
+    EmprestimoResponseDto emprestimoDto = new EmprestimoResponseDto();
+    emprestimoDto.setId(1L);
+    emprestimoDto.setDataEmprestimo(emprestimo.getDataEmprestimo());
+    emprestimoDto.setPrazoDevolucao(emprestimo.getPrazoDevolucao());
     when(emprestimoService.findAllEmprestimosAbertosByUsuario(usuario.getUsername()))
-        .thenReturn(List.of(emprestimo).stream().map(emprestimoService::toDto).toList());
+        .thenReturn(List.of(emprestimoDto));
+    when(emprestimoService.toEntity(emprestimoDto)).thenReturn(emprestimo);
+    when(modelMapper.map(emprestimoDto, Emprestimo.class)).thenReturn(emprestimo);
     when(nadaConstaRepository.save(any()))
         .thenReturn(
             NadaConsta.builder()
@@ -144,6 +181,7 @@ class NadaConstaServiceImplTest {
     @SuppressWarnings("unchecked")
     List<Map<String, Object>> itens = (List<Map<String, Object>>) emprestimosObj;
     assertEquals(1, itens.size());
+    // O nome do item é "Notebook" conforme simulado
     assertEquals("Notebook", itens.get(0).get("itemNome"));
   }
 

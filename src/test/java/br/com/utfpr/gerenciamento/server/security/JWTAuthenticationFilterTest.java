@@ -3,6 +3,7 @@ package br.com.utfpr.gerenciamento.server.security;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
+import br.com.utfpr.gerenciamento.server.dto.UsuarioResponseDto;
 import br.com.utfpr.gerenciamento.server.model.Usuario;
 import br.com.utfpr.gerenciamento.server.service.impl.UsuarioServiceImpl;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -46,12 +47,15 @@ class JWTAuthenticationFilterTest {
     Usuario usuario = new Usuario();
     usuario.setUsername("user@utfpr.edu.br");
     usuario.setPassword("pass");
-    usuario.setPermissoes(new java.util.HashSet<>()); // Correção definitiva
+    usuario.setPermissoes(new java.util.HashSet<>());
+    UsuarioResponseDto usuarioDto = new UsuarioResponseDto();
+    usuarioDto.setUsername(usuario.getUsername());
+    usuarioDto.setPermissoes(new java.util.HashSet<>());
     when(request.getInputStream())
         .thenReturn(
             new DelegatingServletInputStream(new ObjectMapper().writeValueAsBytes(usuario)));
-    when(usuarioService.findByUsernameForAuthentication(anyString()))
-        .thenReturn(usuarioService.toDto(usuario));
+    when(usuarioService.findByUsernameForAuthentication(anyString())).thenReturn(usuarioDto);
+    doAnswer(invocation -> usuario).when(usuarioService).toEntity(any());
     when(usuarioService.hasSolicitacaoNadaConstaPendingOrCompleted(anyString())).thenReturn(true);
     assertThrows(
         PreconditionRequiredAuthenticationException.class,
@@ -81,12 +85,15 @@ class JWTAuthenticationFilterTest {
     Usuario usuario = new Usuario();
     usuario.setUsername("user@utfpr.edu.br");
     usuario.setPassword("password");
-    usuario.setPermissoes(new java.util.HashSet<>()); // Correção definitiva
+    usuario.setPermissoes(new java.util.HashSet<>());
+    UsuarioResponseDto usuarioDto = new UsuarioResponseDto();
+    usuarioDto.setUsername(usuario.getUsername());
+    usuarioDto.setPermissoes(new java.util.HashSet<>());
     when(request.getInputStream())
         .thenReturn(
             new DelegatingServletInputStream(new ObjectMapper().writeValueAsBytes(usuario)));
-    when(usuarioService.findByUsernameForAuthentication(anyString()))
-        .thenReturn(usuarioService.toDto(usuario));
+    when(usuarioService.findByUsernameForAuthentication(anyString())).thenReturn(usuarioDto);
+    doAnswer(invocation -> usuario).when(usuarioService).toEntity(any());
     when(usuarioService.hasSolicitacaoNadaConstaPendingOrCompleted(anyString())).thenReturn(false);
     when(authenticationManager.authenticate(any(Authentication.class)))
         .thenReturn(
@@ -102,12 +109,15 @@ class JWTAuthenticationFilterTest {
     Usuario usuario = new Usuario();
     usuario.setUsername("user@utfpr.edu.br");
     usuario.setPassword("password");
-    usuario.setPermissoes(new java.util.HashSet<>()); // Correção definitiva
+    usuario.setPermissoes(new java.util.HashSet<>());
+    UsuarioResponseDto usuarioDto = new UsuarioResponseDto();
+    usuarioDto.setUsername(usuario.getUsername());
+    usuarioDto.setPermissoes(new java.util.HashSet<>());
     when(request.getInputStream())
         .thenReturn(
             new DelegatingServletInputStream(new ObjectMapper().writeValueAsBytes(usuario)));
-    when(usuarioService.findByUsernameForAuthentication(anyString()))
-        .thenReturn(usuarioService.toDto(usuario));
+    when(usuarioService.findByUsernameForAuthentication(anyString())).thenReturn(usuarioDto);
+    doAnswer(invocation -> usuario).when(usuarioService).toEntity(any());
     when(usuarioService.hasSolicitacaoNadaConstaPendingOrCompleted(anyString())).thenReturn(true);
     Exception exception =
         assertThrows(
@@ -121,12 +131,15 @@ class JWTAuthenticationFilterTest {
     Usuario usuario = new Usuario();
     usuario.setUsername("user@utfpr.edu.br");
     usuario.setPassword("wrong");
-    usuario.setPermissoes(new java.util.HashSet<>()); // Correção definitiva
+    usuario.setPermissoes(new java.util.HashSet<>());
+    UsuarioResponseDto usuarioDto = new UsuarioResponseDto();
+    usuarioDto.setUsername(usuario.getUsername());
+    usuarioDto.setPermissoes(new java.util.HashSet<>());
     when(request.getInputStream())
         .thenReturn(
             new DelegatingServletInputStream(new ObjectMapper().writeValueAsBytes(usuario)));
-    when(usuarioService.findByUsernameForAuthentication(anyString()))
-        .thenReturn(usuarioService.toDto(usuario));
+    when(usuarioService.findByUsernameForAuthentication(anyString())).thenReturn(usuarioDto);
+    doAnswer(invocation -> usuario).when(usuarioService).toEntity(any());
     when(usuarioService.hasSolicitacaoNadaConstaPendingOrCompleted(anyString())).thenReturn(false);
     when(authenticationManager.authenticate(any(Authentication.class)))
         .thenThrow(
@@ -193,11 +206,15 @@ class JWTAuthenticationFilterTest {
     usuario.setUsername("user@professores.utfpr.edu.br");
     usuario.setPassword("password");
     usuario.setPermissoes(new java.util.HashSet<>()); // Correção definitiva
+    UsuarioResponseDto usuarioDto = new UsuarioResponseDto();
+    usuarioDto.setUsername("user@utfpr.edu.br");
+    usuarioDto.setPermissoes(new java.util.HashSet<>());
     when(request.getInputStream())
         .thenReturn(
             new DelegatingServletInputStream(new ObjectMapper().writeValueAsBytes(usuario)));
     when(usuarioService.findByUsernameForAuthentication("user@utfpr.edu.br"))
-        .thenReturn(usuarioService.toDto(usuario));
+        .thenReturn(usuarioDto);
+    doAnswer(invocation -> usuario).when(usuarioService).toEntity(any());
     when(usuarioService.hasSolicitacaoNadaConstaPendingOrCompleted("user@utfpr.edu.br"))
         .thenReturn(false);
     when(authenticationManager.authenticate(any(Authentication.class)))
@@ -215,11 +232,15 @@ class JWTAuthenticationFilterTest {
     usuario.setUsername("user@administrativo.utfpr.edu.br");
     usuario.setPassword("password");
     usuario.setPermissoes(new java.util.HashSet<>()); // Correção definitiva
+    UsuarioResponseDto usuarioDto = new UsuarioResponseDto();
+    usuarioDto.setUsername("user@utfpr.edu.br");
+    usuarioDto.setPermissoes(new java.util.HashSet<>());
     when(request.getInputStream())
         .thenReturn(
             new DelegatingServletInputStream(new ObjectMapper().writeValueAsBytes(usuario)));
     when(usuarioService.findByUsernameForAuthentication("user@utfpr.edu.br"))
-        .thenReturn(usuarioService.toDto(usuario));
+        .thenReturn(usuarioDto);
+    doAnswer(invocation -> usuario).when(usuarioService).toEntity(any());
     when(usuarioService.hasSolicitacaoNadaConstaPendingOrCompleted("user@utfpr.edu.br"))
         .thenReturn(false);
     when(authenticationManager.authenticate(any(Authentication.class)))
