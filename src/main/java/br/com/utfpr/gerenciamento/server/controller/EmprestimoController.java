@@ -116,6 +116,7 @@ public class EmprestimoController extends CrudController<Emprestimo, Long,Empres
    * @param asc Direção da ordenação (true = ASC, false = DESC, padrão: ASC)
    * @return Página de entidades {@link Emprestimo} otimizada com associações carregadas e cache
    */
+  @GetMapping("page")
   @Override
   public Page<EmprestimoResponseDto> findAllPaged(
       @RequestParam("page") int page,
