@@ -28,15 +28,17 @@ import java.util.Optional;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.MockedStatic;
-import org.mockito.MockitoAnnotations;
+import org.mockito.junit.jupiter.MockitoExtension;
 import org.modelmapper.ModelMapper;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.*;
 import org.springframework.data.jpa.domain.Specification;
 
+@ExtendWith(MockitoExtension.class)
 class EmprestimoServiceImplTest {
   @Mock private EmprestimoRepository emprestimoRepository;
   @Mock private UsuarioService usuarioService;
@@ -53,7 +55,6 @@ class EmprestimoServiceImplTest {
 
   @BeforeEach
   void setUp() {
-    closeable = MockitoAnnotations.openMocks(this);
     Usuario usuarioEmprestimo = new Usuario();
     usuarioEmprestimo.setEmail("mail@test.com");
     usuarioResponsavel = new Usuario();
