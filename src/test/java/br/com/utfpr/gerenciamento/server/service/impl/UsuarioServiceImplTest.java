@@ -83,10 +83,12 @@ class UsuarioServiceImplTest {
     when(usuarioRepository.findById(anyLong())).thenReturn(java.util.Optional.of(usuario));
 
     // Mock para conversão de DTO para Entity no PermissaoService
-    when(permissaoService.toEntity(any(br.com.utfpr.gerenciamento.server.dto.PermissaoResponseDTO.class)))
-            .thenAnswer(invocation -> {
+    when(permissaoService.toEntity(
+            any(br.com.utfpr.gerenciamento.server.dto.PermissaoResponseDTO.class)))
+        .thenAnswer(
+            invocation -> {
               br.com.utfpr.gerenciamento.server.dto.PermissaoResponseDTO dto =
-                      invocation.getArgument(0);
+                  invocation.getArgument(0);
               Permissao entity = new Permissao();
               entity.setId(dto.getId());
               entity.setNome(dto.getNome());
@@ -99,10 +101,12 @@ class UsuarioServiceImplTest {
     // Given: Usuário sem permissões (null)
     usuario.setPermissoes(null);
     when(usuarioRepository.save(any(Usuario.class))).thenReturn(usuario);
-    when(modelMapper.map(any(Usuario.class), any())).thenReturn(new br.com.utfpr.gerenciamento.server.dto.UsuarioResponseDto());
+    when(modelMapper.map(any(Usuario.class), any()))
+        .thenReturn(new br.com.utfpr.gerenciamento.server.dto.UsuarioResponseDto());
 
     // When
-    br.com.utfpr.gerenciamento.server.dto.UsuarioResponseDto resultado = usuarioService.save(usuario);
+    br.com.utfpr.gerenciamento.server.dto.UsuarioResponseDto resultado =
+        usuarioService.save(usuario);
 
     // Then: Deve criar Set vazio, não lançar NPE
     assertNotNull(resultado);
@@ -114,10 +118,12 @@ class UsuarioServiceImplTest {
     // Given: Usuário com Set vazio de permissões
     usuario.setPermissoes(new HashSet<>());
     when(usuarioRepository.save(any(Usuario.class))).thenReturn(usuario);
-    when(modelMapper.map(any(Usuario.class), any())).thenReturn(new br.com.utfpr.gerenciamento.server.dto.UsuarioResponseDto());
+    when(modelMapper.map(any(Usuario.class), any()))
+        .thenReturn(new br.com.utfpr.gerenciamento.server.dto.UsuarioResponseDto());
 
     // When
-    br.com.utfpr.gerenciamento.server.dto.UsuarioResponseDto resultado = usuarioService.save(usuario);
+    br.com.utfpr.gerenciamento.server.dto.UsuarioResponseDto resultado =
+        usuarioService.save(usuario);
 
     // Then: Deve manter Set vazio
     assertNotNull(resultado);
@@ -136,21 +142,23 @@ class UsuarioServiceImplTest {
 
     when(permissaoService.findAllById(any())).thenReturn(Collections.singletonList(permissaoDto1));
     when(usuarioRepository.save(any(Usuario.class))).thenReturn(usuario);
-    when(modelMapper.map(any(Usuario.class), any())).thenReturn(new br.com.utfpr.gerenciamento.server.dto.UsuarioResponseDto());
+    when(modelMapper.map(any(Usuario.class), any()))
+        .thenReturn(new br.com.utfpr.gerenciamento.server.dto.UsuarioResponseDto());
 
     // When
-    br.com.utfpr.gerenciamento.server.dto.UsuarioResponseDto resultado = usuarioService.save(usuario);
+    br.com.utfpr.gerenciamento.server.dto.UsuarioResponseDto resultado =
+        usuarioService.save(usuario);
 
     // Then: Deve filtrar nulls e processar apenas permissão válida
     assertNotNull(resultado);
     verify(permissaoService)
-            .findAllById(
-                    argThat(
-                            ids -> {
-                              List<Long> idList = new ArrayList<>();
-                              ids.forEach(idList::add);
-                              return idList.size() == 1 && idList.contains(1L);
-                            }));
+        .findAllById(
+            argThat(
+                ids -> {
+                  List<Long> idList = new ArrayList<>();
+                  ids.forEach(idList::add);
+                  return idList.size() == 1 && idList.contains(1L);
+                }));
   }
 
   @Test
@@ -168,21 +176,23 @@ class UsuarioServiceImplTest {
 
     when(permissaoService.findAllById(any())).thenReturn(Collections.singletonList(permissaoDto1));
     when(usuarioRepository.save(any(Usuario.class))).thenReturn(usuario);
-    when(modelMapper.map(any(Usuario.class), any())).thenReturn(new br.com.utfpr.gerenciamento.server.dto.UsuarioResponseDto());
+    when(modelMapper.map(any(Usuario.class), any()))
+        .thenReturn(new br.com.utfpr.gerenciamento.server.dto.UsuarioResponseDto());
 
     // When
-    br.com.utfpr.gerenciamento.server.dto.UsuarioResponseDto resultado = usuarioService.save(usuario);
+    br.com.utfpr.gerenciamento.server.dto.UsuarioResponseDto resultado =
+        usuarioService.save(usuario);
 
     // Then: Deve ignorar permissão sem ID e processar apenas a válida
     assertNotNull(resultado);
     verify(permissaoService)
-            .findAllById(
-                    argThat(
-                            ids -> {
-                              List<Long> idList = new ArrayList<>();
-                              ids.forEach(idList::add);
-                              return idList.size() == 1 && idList.contains(1L);
-                            }));
+        .findAllById(
+            argThat(
+                ids -> {
+                  List<Long> idList = new ArrayList<>();
+                  ids.forEach(idList::add);
+                  return idList.size() == 1 && idList.contains(1L);
+                }));
   }
 
   @Test
@@ -195,25 +205,27 @@ class UsuarioServiceImplTest {
     usuario.setPermissoes(permissoes);
 
     List<br.com.utfpr.gerenciamento.server.dto.PermissaoResponseDTO> permissoesResolvidas =
-            Arrays.asList(permissaoDto1, permissaoDto2);
+        Arrays.asList(permissaoDto1, permissaoDto2);
 
     when(permissaoService.findAllById(any())).thenReturn(permissoesResolvidas);
     when(usuarioRepository.save(any(Usuario.class))).thenReturn(usuario);
-    when(modelMapper.map(any(Usuario.class), any())).thenReturn(new br.com.utfpr.gerenciamento.server.dto.UsuarioResponseDto());
+    when(modelMapper.map(any(Usuario.class), any()))
+        .thenReturn(new br.com.utfpr.gerenciamento.server.dto.UsuarioResponseDto());
 
     // When
-    br.com.utfpr.gerenciamento.server.dto.UsuarioResponseDto resultado = usuarioService.save(usuario);
+    br.com.utfpr.gerenciamento.server.dto.UsuarioResponseDto resultado =
+        usuarioService.save(usuario);
 
     // Then: Deve chamar findAllById UMA VEZ (batch), não N vezes
     assertNotNull(resultado);
     verify(permissaoService, times(1))
-            .findAllById(
-                    argThat(
-                            ids -> {
-                              List<Long> idList = new ArrayList<>();
-                              ids.forEach(idList::add);
-                              return idList.size() == 2 && idList.contains(1L) && idList.contains(2L);
-                            }));
+        .findAllById(
+            argThat(
+                ids -> {
+                  List<Long> idList = new ArrayList<>();
+                  ids.forEach(idList::add);
+                  return idList.size() == 2 && idList.contains(1L) && idList.contains(2L);
+                }));
     verify(permissaoService, never()).findOne(anyLong()); // Não deve usar findOne individual
   }
 
@@ -227,10 +239,12 @@ class UsuarioServiceImplTest {
 
     when(permissaoService.findAllById(any())).thenReturn(Collections.emptyList());
     when(usuarioRepository.save(any(Usuario.class))).thenReturn(usuario);
-    when(modelMapper.map(any(Usuario.class), any())).thenReturn(new br.com.utfpr.gerenciamento.server.dto.UsuarioResponseDto());
+    when(modelMapper.map(any(Usuario.class), any()))
+        .thenReturn(new br.com.utfpr.gerenciamento.server.dto.UsuarioResponseDto());
 
     // When
-    br.com.utfpr.gerenciamento.server.dto.UsuarioResponseDto resultado = usuarioService.save(usuario);
+    br.com.utfpr.gerenciamento.server.dto.UsuarioResponseDto resultado =
+        usuarioService.save(usuario);
 
     // Then: Deve criar Set vazio, não lançar exceção
     assertNotNull(resultado);
@@ -246,21 +260,23 @@ class UsuarioServiceImplTest {
 
     when(permissaoService.findAllById(any())).thenReturn(Collections.singletonList(permissaoDto1));
     when(usuarioRepository.save(any(Usuario.class))).thenReturn(usuario);
-    when(modelMapper.map(any(Usuario.class), any())).thenReturn(new br.com.utfpr.gerenciamento.server.dto.UsuarioResponseDto());
+    when(modelMapper.map(any(Usuario.class), any()))
+        .thenReturn(new br.com.utfpr.gerenciamento.server.dto.UsuarioResponseDto());
 
     // When
-    br.com.utfpr.gerenciamento.server.dto.UsuarioResponseDto resultado = usuarioService.save(usuario);
+    br.com.utfpr.gerenciamento.server.dto.UsuarioResponseDto resultado =
+        usuarioService.save(usuario);
 
     // Then: Permissões devem ser resolvidas e atribuídas ao usuário
     assertNotNull(resultado);
     verify(permissaoService)
-            .findAllById(
-                    argThat(
-                            ids -> {
-                              List<Long> idList = new ArrayList<>();
-                              ids.forEach(idList::add);
-                              return idList.contains(1L);
-                            }));
+        .findAllById(
+            argThat(
+                ids -> {
+                  List<Long> idList = new ArrayList<>();
+                  ids.forEach(idList::add);
+                  return idList.contains(1L);
+                }));
     verify(usuarioRepository).save(usuario);
   }
 
@@ -272,10 +288,12 @@ class UsuarioServiceImplTest {
     when(permissaoService.findAllById(any())).thenReturn(Collections.emptyList());
     when(passwordEncoder.encode(anyString())).thenReturn("$2a$10$encodedPassword");
     when(usuarioRepository.save(any(Usuario.class))).thenReturn(usuario);
-    when(modelMapper.map(any(Usuario.class), any())).thenReturn(new br.com.utfpr.gerenciamento.server.dto.UsuarioResponseDto());
+    when(modelMapper.map(any(Usuario.class), any()))
+        .thenReturn(new br.com.utfpr.gerenciamento.server.dto.UsuarioResponseDto());
 
     // When
-    br.com.utfpr.gerenciamento.server.dto.UsuarioResponseDto resultado = usuarioService.save(usuario);
+    br.com.utfpr.gerenciamento.server.dto.UsuarioResponseDto resultado =
+        usuarioService.save(usuario);
 
     // Then: Senha deve ser encodada
     assertNotNull(resultado);
@@ -286,15 +304,17 @@ class UsuarioServiceImplTest {
   void save_NaoDeveReencodarPasswordJaEncodada() {
     // Given: Usuário com senha já encodada (formato BCrypt válido)
     String senhaJaEncodada =
-            "$2a$10$N9qo8uLOickgx2ZMRZoMye/IVI9lvfjv4LvvQm.0M9cJXH/3u4bly"; // BCrypt válido
+        "$2a$10$N9qo8uLOickgx2ZMRZoMye/IVI9lvfjv4LvvQm.0M9cJXH/3u4bly"; // BCrypt válido
     usuario.setPassword(senhaJaEncodada);
 
     when(permissaoService.findAllById(any())).thenReturn(Collections.emptyList());
     when(usuarioRepository.save(any(Usuario.class))).thenReturn(usuario);
-    when(modelMapper.map(any(Usuario.class), any())).thenReturn(new br.com.utfpr.gerenciamento.server.dto.UsuarioResponseDto());
+    when(modelMapper.map(any(Usuario.class), any()))
+        .thenReturn(new br.com.utfpr.gerenciamento.server.dto.UsuarioResponseDto());
 
     // When
-    br.com.utfpr.gerenciamento.server.dto.UsuarioResponseDto resultado = usuarioService.save(usuario);
+    br.com.utfpr.gerenciamento.server.dto.UsuarioResponseDto resultado =
+        usuarioService.save(usuario);
 
     // Then: Senha não deve ser re-encodada
     assertNotNull(resultado);
@@ -305,7 +325,7 @@ class UsuarioServiceImplTest {
   void confirmEmail_DeveConfirmarEmailComCodigoValido() {
     // Given
     br.com.utfpr.gerenciamento.server.dto.ConfirmEmailRequestDto requestDto =
-            new br.com.utfpr.gerenciamento.server.dto.ConfirmEmailRequestDto();
+        new br.com.utfpr.gerenciamento.server.dto.ConfirmEmailRequestDto();
     requestDto.setCode("codigo-valido-123");
 
     Usuario usuarioMock = new Usuario();
@@ -317,7 +337,7 @@ class UsuarioServiceImplTest {
 
     // When
     br.com.utfpr.gerenciamento.server.dto.GenericResponse response =
-            usuarioService.confirmEmail(requestDto);
+        usuarioService.confirmEmail(requestDto);
 
     // Then
     assertNotNull(response);
@@ -329,15 +349,15 @@ class UsuarioServiceImplTest {
   void confirmEmail_DeveLancarExcecaoComCodigoInvalido() {
     // Given
     br.com.utfpr.gerenciamento.server.dto.ConfirmEmailRequestDto requestDto =
-            new br.com.utfpr.gerenciamento.server.dto.ConfirmEmailRequestDto();
+        new br.com.utfpr.gerenciamento.server.dto.ConfirmEmailRequestDto();
     requestDto.setCode("codigo-invalido");
 
     when(usuarioRepository.findByCodigoVerificacao("codigo-invalido")).thenReturn(null);
 
     // When/Then
     assertThrows(
-            br.com.utfpr.gerenciamento.server.exception.RecoverCodeInvalidException.class,
-            () -> usuarioService.confirmEmail(requestDto));
+        br.com.utfpr.gerenciamento.server.exception.RecoverCodeInvalidException.class,
+        () -> usuarioService.confirmEmail(requestDto));
 
     verify(usuarioRepository, never()).save(any(Usuario.class));
   }
@@ -346,13 +366,13 @@ class UsuarioServiceImplTest {
   void resetPassword_DeveResetarSenhaComCodigoValido() {
     // Given
     br.com.utfpr.gerenciamento.server.dto.RecoverPasswordRequestDto requestDto =
-            new br.com.utfpr.gerenciamento.server.dto.RecoverPasswordRequestDto();
+        new br.com.utfpr.gerenciamento.server.dto.RecoverPasswordRequestDto();
     requestDto.setCode("recover-code-123");
     requestDto.setPassword("novaSenha123");
     requestDto.setRepeatPassword("novaSenha123");
 
     br.com.utfpr.gerenciamento.server.model.RecoverPassword recoverPassword =
-            new br.com.utfpr.gerenciamento.server.model.RecoverPassword();
+        new br.com.utfpr.gerenciamento.server.model.RecoverPassword();
     recoverPassword.setEmail("teste@test.com");
     recoverPassword.setDateTime(java.time.LocalDateTime.now()); // Código não expirado
 
@@ -366,13 +386,13 @@ class UsuarioServiceImplTest {
 
     // When
     br.com.utfpr.gerenciamento.server.dto.GenericResponse response =
-            usuarioService.resetPassword(requestDto);
+        usuarioService.resetPassword(requestDto);
 
     // Then
     assertNotNull(response);
     assertEquals(
-            "Senha alterada com sucesso. Você já pode fazer login com a nova senha.",
-            response.getMessage());
+        "Senha alterada com sucesso. Você já pode fazer login com a nova senha.",
+        response.getMessage());
     verify(passwordEncoder).encode("novaSenha123");
   }
 
@@ -380,13 +400,13 @@ class UsuarioServiceImplTest {
   void resetPassword_DeveLancarExcecaoQuandoSenhasNaoCoincidem() {
     // Given
     br.com.utfpr.gerenciamento.server.dto.RecoverPasswordRequestDto requestDto =
-            new br.com.utfpr.gerenciamento.server.dto.RecoverPasswordRequestDto();
+        new br.com.utfpr.gerenciamento.server.dto.RecoverPasswordRequestDto();
     requestDto.setCode("recover-code-123");
     requestDto.setPassword("senha1");
     requestDto.setRepeatPassword("senha2"); // Diferente
 
     br.com.utfpr.gerenciamento.server.model.RecoverPassword recoverPassword =
-            new br.com.utfpr.gerenciamento.server.model.RecoverPassword();
+        new br.com.utfpr.gerenciamento.server.model.RecoverPassword();
     recoverPassword.setEmail("teste@test.com");
 
     Usuario usuarioMock = new Usuario();
@@ -394,8 +414,9 @@ class UsuarioServiceImplTest {
     when(usuarioRepository.findByEmail("teste@test.com")).thenReturn(usuarioMock);
 
     // When/Then
-    assertThrows(br.com.utfpr.gerenciamento.server.exception.InvalidPasswordException.class,
-            () -> usuarioService.resetPassword(requestDto));
+    assertThrows(
+        br.com.utfpr.gerenciamento.server.exception.InvalidPasswordException.class,
+        () -> usuarioService.resetPassword(requestDto));
 
     verify(passwordEncoder, never()).encode(anyString());
     verify(usuarioRepository, never()).save(any(Usuario.class));
@@ -405,7 +426,7 @@ class UsuarioServiceImplTest {
   void resetPassword_DeveLancarExcecaoComCodigoInvalido() {
     // Given
     br.com.utfpr.gerenciamento.server.dto.RecoverPasswordRequestDto requestDto =
-            new br.com.utfpr.gerenciamento.server.dto.RecoverPasswordRequestDto();
+        new br.com.utfpr.gerenciamento.server.dto.RecoverPasswordRequestDto();
     requestDto.setCode("codigo-invalido");
     requestDto.setPassword("senha123");
     requestDto.setRepeatPassword("senha123");
@@ -414,8 +435,8 @@ class UsuarioServiceImplTest {
 
     // When/Then
     assertThrows(
-            br.com.utfpr.gerenciamento.server.exception.RecoverCodeInvalidException.class,
-            () -> usuarioService.resetPassword(requestDto));
+        br.com.utfpr.gerenciamento.server.exception.RecoverCodeInvalidException.class,
+        () -> usuarioService.resetPassword(requestDto));
 
     verify(usuarioRepository, never()).save(any(Usuario.class));
   }
@@ -436,10 +457,11 @@ class UsuarioServiceImplTest {
     when(passwordEncoder.matches("senhaAtual", "$2a$10$senhaAntigaEncodada")).thenReturn(true);
     when(passwordEncoder.encode("novaSenha123")).thenReturn("$2a$10$novaSenhaEncodada");
     when(usuarioRepository.save(any(Usuario.class))).thenReturn(usuarioExistente);
-    when(modelMapper.map(any(Usuario.class), any())).thenReturn(new br.com.utfpr.gerenciamento.server.dto.UsuarioResponseDto());
+    when(modelMapper.map(any(Usuario.class), any()))
+        .thenReturn(new br.com.utfpr.gerenciamento.server.dto.UsuarioResponseDto());
 
     br.com.utfpr.gerenciamento.server.dto.UsuarioResponseDto resultado =
-            usuarioService.updatePassword(usuarioAtualizado, "senhaAtual");
+        usuarioService.updatePassword(usuarioAtualizado, "senhaAtual");
 
     assertNotNull(resultado);
     verify(passwordEncoder).encode("novaSenha123");
@@ -461,8 +483,8 @@ class UsuarioServiceImplTest {
 
     // When/Then
     assertThrows(
-            br.com.utfpr.gerenciamento.server.exception.InvalidPasswordException.class,
-            () -> usuarioService.updatePassword(usuarioAtualizado, "senhaErrada"));
+        br.com.utfpr.gerenciamento.server.exception.InvalidPasswordException.class,
+        () -> usuarioService.updatePassword(usuarioAtualizado, "senhaErrada"));
 
     verify(passwordEncoder, never()).encode(anyString());
     verify(usuarioRepository, never()).save(any(Usuario.class));
@@ -471,10 +493,11 @@ class UsuarioServiceImplTest {
   @Test
   void testFindByUsername() {
     when(usuarioRepository.findByUsernameOrEmail(anyString(), anyString())).thenReturn(usuario);
-    when(modelMapper.map(any(Usuario.class), any())).thenReturn(new br.com.utfpr.gerenciamento.server.dto.UsuarioResponseDto());
+    when(modelMapper.map(any(Usuario.class), any()))
+        .thenReturn(new br.com.utfpr.gerenciamento.server.dto.UsuarioResponseDto());
 
     br.com.utfpr.gerenciamento.server.dto.UsuarioResponseDto result =
-            usuarioService.findByUsername("usuario@utfpr.edu.br");
+        usuarioService.findByUsername("usuario@utfpr.edu.br");
 
     assertNotNull(result);
   }
@@ -487,11 +510,12 @@ class UsuarioServiceImplTest {
     usuarioMock.setPermissoes(new HashSet<>());
 
     when(usuarioRepository.findWithPermissoesByUsernameOrEmail(anyString(), anyString()))
-            .thenReturn(usuarioMock);
-    when(modelMapper.map(any(Usuario.class), any())).thenReturn(new br.com.utfpr.gerenciamento.server.dto.UsuarioResponseDto());
+        .thenReturn(usuarioMock);
+    when(modelMapper.map(any(Usuario.class), any()))
+        .thenReturn(new br.com.utfpr.gerenciamento.server.dto.UsuarioResponseDto());
 
     br.com.utfpr.gerenciamento.server.dto.UsuarioResponseDto result =
-            usuarioService.findByUsernameForAuthentication("user@utfpr.edu.br");
+        usuarioService.findByUsernameForAuthentication("user@utfpr.edu.br");
 
     assertNotNull(result);
   }
@@ -500,11 +524,12 @@ class UsuarioServiceImplTest {
   void testSaveUsuarioWithPermissoes() {
     usuario.setPermissoes(Set.of(permissao1, permissao2));
     List<br.com.utfpr.gerenciamento.server.dto.PermissaoResponseDTO> permissoesDto =
-            List.of(permissaoDto1, permissaoDto2);
+        List.of(permissaoDto1, permissaoDto2);
 
     when(permissaoService.findAllById(anySet())).thenReturn(permissoesDto);
     when(usuarioRepository.save(any(Usuario.class))).thenReturn(usuario);
-    when(modelMapper.map(any(Usuario.class), any())).thenReturn(new br.com.utfpr.gerenciamento.server.dto.UsuarioResponseDto());
+    when(modelMapper.map(any(Usuario.class), any()))
+        .thenReturn(new br.com.utfpr.gerenciamento.server.dto.UsuarioResponseDto());
 
     br.com.utfpr.gerenciamento.server.dto.UsuarioResponseDto result = usuarioService.save(usuario);
 
@@ -515,7 +540,8 @@ class UsuarioServiceImplTest {
   void testSaveUsuarioWithoutPermissoes() {
     usuario.setPermissoes(null);
     when(usuarioRepository.save(any(Usuario.class))).thenReturn(usuario);
-    when(modelMapper.map(any(Usuario.class), any())).thenReturn(new br.com.utfpr.gerenciamento.server.dto.UsuarioResponseDto());
+    when(modelMapper.map(any(Usuario.class), any()))
+        .thenReturn(new br.com.utfpr.gerenciamento.server.dto.UsuarioResponseDto());
 
     br.com.utfpr.gerenciamento.server.dto.UsuarioResponseDto result = usuarioService.save(usuario);
 
@@ -531,11 +557,11 @@ class UsuarioServiceImplTest {
     usuarioMock.setPermissoes(new HashSet<>());
 
     when(usuarioRepository.findWithPermissoesByUsernameOrEmail(username, username))
-            .thenReturn(usuarioMock);
+        .thenReturn(usuarioMock);
 
     // When
     org.springframework.security.core.userdetails.UserDetails resultado =
-            usuarioService.loadUserByUsername(username);
+        usuarioService.loadUserByUsername(username);
 
     // Then
     assertNotNull(resultado);
@@ -547,12 +573,12 @@ class UsuarioServiceImplTest {
     // Given
     String username = "inexistente@test.com";
     when(usuarioRepository.findWithPermissoesByUsernameOrEmail(username, username))
-            .thenReturn(null);
+        .thenReturn(null);
 
     // When/Then
     assertThrows(
-            org.springframework.security.core.userdetails.UsernameNotFoundException.class,
-            () -> usuarioService.loadUserByUsername(username));
+        org.springframework.security.core.userdetails.UsernameNotFoundException.class,
+        () -> usuarioService.loadUserByUsername(username));
   }
 
   @Test
@@ -566,8 +592,8 @@ class UsuarioServiceImplTest {
 
     // When/Then
     assertThrows(
-            br.com.utfpr.gerenciamento.server.exception.EntityNotFoundException.class,
-            () -> usuarioService.updatePassword(usuarioAtualizado, "senhaAtual"));
+        br.com.utfpr.gerenciamento.server.exception.EntityNotFoundException.class,
+        () -> usuarioService.updatePassword(usuarioAtualizado, "senhaAtual"));
   }
 
   @Test
@@ -582,11 +608,12 @@ class UsuarioServiceImplTest {
 
     when(usuarioRepository.findById(1L)).thenReturn(java.util.Optional.of(usuario));
     when(usuarioRepository.save(any(Usuario.class))).thenReturn(usuario);
-    when(modelMapper.map(any(Usuario.class), any())).thenReturn(new br.com.utfpr.gerenciamento.server.dto.UsuarioResponseDto());
+    when(modelMapper.map(any(Usuario.class), any()))
+        .thenReturn(new br.com.utfpr.gerenciamento.server.dto.UsuarioResponseDto());
 
     // When
     br.com.utfpr.gerenciamento.server.dto.UsuarioResponseDto resultado =
-            usuarioService.save(usuarioUpdate);
+        usuarioService.save(usuarioUpdate);
 
     // Then: Senha antiga deve ser preservada
     assertNotNull(resultado);
@@ -602,11 +629,12 @@ class UsuarioServiceImplTest {
 
     when(usuarioRepository.save(any(Usuario.class))).thenReturn(novoUsuario);
     when(passwordEncoder.encode("senhaNova")).thenReturn("$2a$10$senhaCodificada");
-    when(modelMapper.map(any(Usuario.class), any())).thenReturn(new br.com.utfpr.gerenciamento.server.dto.UsuarioResponseDto());
+    when(modelMapper.map(any(Usuario.class), any()))
+        .thenReturn(new br.com.utfpr.gerenciamento.server.dto.UsuarioResponseDto());
 
     // When
     br.com.utfpr.gerenciamento.server.dto.UsuarioResponseDto resultado =
-            usuarioService.save(novoUsuario);
+        usuarioService.save(novoUsuario);
 
     // Then: Senha deve ser codificada
     assertNotNull(resultado);

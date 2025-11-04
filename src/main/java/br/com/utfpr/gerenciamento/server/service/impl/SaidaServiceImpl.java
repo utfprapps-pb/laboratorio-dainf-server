@@ -10,21 +10,21 @@ import br.com.utfpr.gerenciamento.server.service.SaidaService;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
-
 import org.modelmapper.ModelMapper;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 @Service
-public class SaidaServiceImpl extends CrudServiceImpl<Saida, Long, SaidaResponseDTO> implements SaidaService {
+public class SaidaServiceImpl extends CrudServiceImpl<Saida, Long, SaidaResponseDTO>
+    implements SaidaService {
 
   private final SaidaRepository saidaRepository;
   private final ModelMapper modelMapper;
 
   public SaidaServiceImpl(SaidaRepository saidaRepository, ModelMapper modelMapper) {
     this.saidaRepository = saidaRepository;
-      this.modelMapper = modelMapper;
+    this.modelMapper = modelMapper;
   }
 
   @Override

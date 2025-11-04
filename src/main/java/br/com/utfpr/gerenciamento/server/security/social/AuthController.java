@@ -75,7 +75,8 @@ public class AuthController {
           }
 
           String username = payload.getEmail();
-          Usuario user = usuarioService.toEntity( usuarioService.findByUsernameForAuthentication(username));
+          Usuario user =
+              usuarioService.toEntity(usuarioService.findByUsernameForAuthentication(username));
           if (user == null) {
             user = createOAuthUser(payload, isProfessor);
           } else {

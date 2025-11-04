@@ -12,7 +12,7 @@ import java.util.List;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 
-public interface EmprestimoService extends CrudService<Emprestimo, Long,EmprestimoResponseDto> {
+public interface EmprestimoService extends CrudService<Emprestimo, Long, EmprestimoResponseDto> {
 
   /**
    * Busca paginada com filtro textual e cache otimizado.
@@ -49,7 +49,6 @@ public interface EmprestimoService extends CrudService<Emprestimo, Long,Empresti
   void sendEmailConfirmacaoDevolucao(Emprestimo emprestimo);
 
   void sendEmailPrazoDevolucaoProximo();
-
 
   /**
    * Processa criação/edição de empréstimo com toda lógica de negócio.

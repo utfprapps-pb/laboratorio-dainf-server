@@ -11,7 +11,7 @@ import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("grupo")
-public class GrupoController extends CrudController<Grupo, Long,GrupoResponseDto> {
+public class GrupoController extends CrudController<Grupo, Long, GrupoResponseDto> {
 
   private final GrupoService grupoService;
   private final ItemService itemService;
@@ -22,7 +22,7 @@ public class GrupoController extends CrudController<Grupo, Long,GrupoResponseDto
   }
 
   @Override
-  protected CrudService<Grupo, Long,GrupoResponseDto> getService() {
+  protected CrudService<Grupo, Long, GrupoResponseDto> getService() {
     return grupoService;
   }
 

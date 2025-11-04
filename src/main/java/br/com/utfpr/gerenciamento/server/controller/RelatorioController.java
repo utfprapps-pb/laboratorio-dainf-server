@@ -27,7 +27,7 @@ public class RelatorioController extends CrudController<Relatorio, Long, Relator
   }
 
   @Override
-  protected CrudService<Relatorio, Long,RelatorioResponseDTO> getService() {
+  protected CrudService<Relatorio, Long, RelatorioResponseDTO> getService() {
     return this.relatorioService;
   }
 

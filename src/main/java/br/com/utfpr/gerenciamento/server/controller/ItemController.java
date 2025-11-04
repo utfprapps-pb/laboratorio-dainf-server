@@ -16,7 +16,7 @@ import org.springframework.web.multipart.MultipartHttpServletRequest;
 
 @RestController
 @RequestMapping("item")
-public class ItemController extends CrudController<Item, Long,ItemResponseDto> {
+public class ItemController extends CrudController<Item, Long, ItemResponseDto> {
 
   private final ItemService itemService;
   private List<ItemImage> imagesToCopy;
@@ -26,7 +26,7 @@ public class ItemController extends CrudController<Item, Long,ItemResponseDto> {
   }
 
   @Override
-  protected CrudService<Item, Long,ItemResponseDto> getService() {
+  protected CrudService<Item, Long, ItemResponseDto> getService() {
     return itemService;
   }
 
@@ -43,7 +43,7 @@ public class ItemController extends CrudController<Item, Long,ItemResponseDto> {
   @Override
   @GetMapping("{id}")
   public ItemResponseDto findone(@PathVariable("id") Long id) {
-    return itemService.toDto( itemService.findOneWithDisponibilidade(id));
+    return itemService.toDto(itemService.findOneWithDisponibilidade(id));
   }
 
   @Override

@@ -17,7 +17,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 @Service
-public class ReservaServiceImpl extends CrudServiceImpl<Reserva, Long,ReservaResponseDto> implements ReservaService {
+public class ReservaServiceImpl extends CrudServiceImpl<Reserva, Long, ReservaResponseDto>
+    implements ReservaService {
 
   private final ReservaRepository reservaRepository;
   private final UsuarioService usuarioService;
@@ -65,8 +66,8 @@ public class ReservaServiceImpl extends CrudServiceImpl<Reserva, Long,ReservaRes
   public List<ReservaResponseDto> findAllByAuthenticatedUser() {
     // Extrai username de forma segura do Authentication (evita ClassCastException)
     String username = SecurityUtils.getAuthenticatedUsername();
-    Usuario usuario =usuarioService.toEntity( usuarioService.findByUsername(username));
-    return reservaRepository.findAllByUsuario( usuario).stream().map(this::toDto).toList();
+    Usuario usuario = usuarioService.toEntity(usuarioService.findByUsername(username));
+    return reservaRepository.findAllByUsuario(usuario).stream().map(this::toDto).toList();
   }
 
   @Override
@@ -78,7 +79,7 @@ public class ReservaServiceImpl extends CrudServiceImpl<Reserva, Long,ReservaRes
   @Override
   @Transactional
   public void finalizarReserva(Long idReserva) {
-    Reserva reserva = toEntity( this.findOne(idReserva));
+    Reserva reserva = toEntity(this.findOne(idReserva));
     emailService.sendEmailWithTemplate(
         converterObjectToTemplateEmail(reserva),
         reserva.getUsuario().getEmail(),
@@ -95,8 +96,6 @@ public class ReservaServiceImpl extends CrudServiceImpl<Reserva, Long,ReservaRes
         "Confirmação de Reserva de Materiais",
         "templateConfirmacaoReserva");
   }
-
-
 
   public ReservaTemplate converterObjectToTemplateEmail(Reserva reserva) {
     ReservaTemplate toReturn = new ReservaTemplate();

@@ -11,7 +11,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 @Service
-public class FornecedorServiceImpl extends CrudServiceImpl<Fornecedor, Long,FornecedorResponseDto>
+public class FornecedorServiceImpl extends CrudServiceImpl<Fornecedor, Long, FornecedorResponseDto>
     implements FornecedorService {
 
   private final FornecedorRepository fornecedorRepository;

@@ -84,7 +84,7 @@ class NadaConstaServiceImplTest {
     doNothing()
         .when(emailService)
         .sendEmailWithTemplate(any(), anyString(), anyString(), anyString());
-    when(usuarioService.save(any(Usuario.class))).thenReturn(usuarioService.toDto( usuario));
+    when(usuarioService.save(any(Usuario.class))).thenReturn(usuarioService.toDto(usuario));
     NadaConstaResponseDto dto = service.solicitarNadaConsta("123456");
     assertNotNull(dto);
     verify(emailService)
@@ -106,7 +106,7 @@ class NadaConstaServiceImplTest {
             .email("aluno@utfpr.edu.br")
             .ativo(true)
             .build();
-    when(usuarioService.findByDocumento("123456")).thenReturn(usuarioService.toDto( usuario));
+    when(usuarioService.findByDocumento("123456")).thenReturn(usuarioService.toDto(usuario));
     Item item = new Item();
     item.setNome("Notebook");
     EmprestimoItem emprestimoItem = new EmprestimoItem();

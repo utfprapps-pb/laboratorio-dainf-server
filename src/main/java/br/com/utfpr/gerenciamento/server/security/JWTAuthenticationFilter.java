@@ -45,7 +45,9 @@ public class JWTAuthenticationFilter extends UsernamePasswordAuthenticationFilte
         credentials.setUsername(credentials.getUsername().replace("administrativo.", ""));
       }
       // IMPORTANTE: Usa metodo COM @EntityGraph porque getAuthorities() precisa das permissoes
-      Usuario user = usuarioService.toEntity( usuarioService.findByUsernameForAuthentication(credentials.getUsername()));
+      Usuario user =
+          usuarioService.toEntity(
+              usuarioService.findByUsernameForAuthentication(credentials.getUsername()));
       // Validação de solicitação de nada consta em aberto
       if (usuarioService.hasSolicitacaoNadaConstaPendingOrCompleted(credentials.getUsername())) {
         throw new PreconditionRequiredAuthenticationException(

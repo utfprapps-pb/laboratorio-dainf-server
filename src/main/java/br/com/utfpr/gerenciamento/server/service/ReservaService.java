@@ -4,7 +4,7 @@ import br.com.utfpr.gerenciamento.server.dto.ReservaResponseDto;
 import br.com.utfpr.gerenciamento.server.model.Reserva;
 import java.util.List;
 
-public interface ReservaService extends CrudService<Reserva, Long,ReservaResponseDto> {
+public interface ReservaService extends CrudService<Reserva, Long, ReservaResponseDto> {
 
   List<ReservaResponseDto> findAllByAuthenticatedUser();
 

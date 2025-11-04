@@ -18,7 +18,7 @@ import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("emprestimo")
-public class EmprestimoController extends CrudController<Emprestimo, Long,EmprestimoResponseDto> {
+public class EmprestimoController extends CrudController<Emprestimo, Long, EmprestimoResponseDto> {
 
   private final EmprestimoService emprestimoService;
 
@@ -27,7 +27,7 @@ public class EmprestimoController extends CrudController<Emprestimo, Long,Empres
   }
 
   @Override
-  protected CrudService<Emprestimo, Long,EmprestimoResponseDto> getService() {
+  protected CrudService<Emprestimo, Long, EmprestimoResponseDto> getService() {
     return emprestimoService;
   }
 

@@ -8,14 +8,14 @@ import br.com.utfpr.gerenciamento.server.service.SolicitacaoService;
 import br.com.utfpr.gerenciamento.server.service.UsuarioService;
 import java.util.List;
 import java.util.stream.Collectors;
-
 import org.modelmapper.ModelMapper;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 @Service
-public class SolicitacaoServiceImpl extends CrudServiceImpl<Solicitacao, Long,SolicitacaoResponseDto>
+public class SolicitacaoServiceImpl
+    extends CrudServiceImpl<Solicitacao, Long, SolicitacaoResponseDto>
     implements SolicitacaoService {
 
   private final SolicitacaoRepository solicitacaoRepository;
@@ -49,9 +49,9 @@ public class SolicitacaoServiceImpl extends CrudServiceImpl<Solicitacao, Long,So
   @Override
   @Transactional(readOnly = true)
   public List<SolicitacaoResponseDto> findAllByUsername(String username) {
-    Usuario usuario =usuarioService.toEntity(  usuarioService.findByUsername(username));
-    return solicitacaoRepository.findAllByUsuario(usuario).stream().map(solicitacao -> toDto(solicitacao)).collect(Collectors.toList());
+    Usuario usuario = usuarioService.toEntity(usuarioService.findByUsername(username));
+    return solicitacaoRepository.findAllByUsuario(usuario).stream()
+        .map(solicitacao -> toDto(solicitacao))
+        .collect(Collectors.toList());
   }
-
-
 }

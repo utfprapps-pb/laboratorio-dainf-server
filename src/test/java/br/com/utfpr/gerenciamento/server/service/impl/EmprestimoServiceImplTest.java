@@ -26,7 +26,6 @@ import java.time.LocalDate;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
-
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -42,31 +41,21 @@ import org.springframework.data.jpa.domain.Specification;
 @ExtendWith(MockitoExtension.class)
 class EmprestimoServiceImplTest {
 
-  @Mock
-  private EmprestimoRepository emprestimoRepository;
+  @Mock private EmprestimoRepository emprestimoRepository;
 
-  @Mock
-  private UsuarioService usuarioService;
+  @Mock private UsuarioService usuarioService;
 
-  @Mock
-  private ItemService itemService;
+  @Mock private ItemService itemService;
 
-  @Mock
-  private SaidaService saidaService;
+  @Mock private SaidaService saidaService;
 
-  @Mock
-  private ReservaService reservaService;
+  @Mock private ReservaService reservaService;
 
-  @Mock
-  private ApplicationEventPublisher eventPublisher;
+  @Mock private ApplicationEventPublisher eventPublisher;
 
-  @Mock
-  private ModelMapper modelMapper;
+  @Mock private ModelMapper modelMapper;
 
-  @Mock
-  private EmprestimoServiceImpl service;
-
-
+  @Spy @InjectMocks private EmprestimoServiceImpl service;
 
   private Emprestimo emprestimo;
   private EmprestimoResponseDto emprestimoDto;
@@ -116,7 +105,7 @@ class EmprestimoServiceImplTest {
     List<Emprestimo> emprestimos = Collections.singletonList(emprestimo);
 
     when(emprestimoRepository.findAllByDataEmprestimoBetween(ini, fim)).thenReturn(emprestimos);
-    when(service.toDto(emprestimo)).thenReturn(emprestimoDto);
+    doReturn(emprestimoDto).when(service).toDto(emprestimo);
 
     // When
     List<EmprestimoResponseDto> result = service.findAllByDataEmprestimoBetween(ini, fim);
@@ -227,8 +216,8 @@ class EmprestimoServiceImplTest {
     List<Emprestimo> emprestimos = Collections.singletonList(emprestimo);
 
     when(emprestimoRepository.findAll(any(Specification.class), any(Sort.class)))
-            .thenReturn(emprestimos);
-    when(service.toDto(emprestimo)).thenReturn(emprestimoDto);
+        .thenReturn(emprestimos);
+    doReturn(emprestimoDto).when(service).toDto(emprestimo);
 
     // When
     List<EmprestimoResponseDto> result = service.filter(filter);
@@ -248,8 +237,9 @@ class EmprestimoServiceImplTest {
 
     when(usuarioService.findByUsername(username)).thenReturn(usuarioDto);
     when(usuarioService.toEntity(usuarioDto)).thenReturn(usuarioEmprestimo);
-    when(emprestimoRepository.findAllByUsuarioEmprestimo(usuarioEmprestimo)).thenReturn(emprestimos);
-    when(service.toDto(emprestimo)).thenReturn(emprestimoDto);
+    when(emprestimoRepository.findAllByUsuarioEmprestimo(usuarioEmprestimo))
+        .thenReturn(emprestimos);
+    doReturn(emprestimoDto).when(service).toDto(emprestimo);
 
     // When
     List<EmprestimoResponseDto> result = service.findAllUsuarioEmprestimo(username);
@@ -267,7 +257,7 @@ class EmprestimoServiceImplTest {
     List<Emprestimo> emprestimos = Collections.singletonList(emprestimo);
 
     when(emprestimoRepository.findAllByDataDevolucaoIsNullOrderById()).thenReturn(emprestimos);
-    when(service.toDto(emprestimo)).thenReturn(emprestimoDto);
+    doReturn(emprestimoDto).when(service).toDto(emprestimo);
 
     // When
     List<EmprestimoResponseDto> result = service.findAllEmprestimosAbertos();
@@ -287,8 +277,8 @@ class EmprestimoServiceImplTest {
     when(usuarioService.findByUsername(username)).thenReturn(usuarioDto);
     when(usuarioService.toEntity(usuarioDto)).thenReturn(usuarioEmprestimo);
     when(emprestimoRepository.findAllByUsuarioEmprestimoAndDataDevolucaoIsNull(usuarioEmprestimo))
-            .thenReturn(emprestimos);
-    when(service.toDto(emprestimo)).thenReturn(emprestimoDto);
+        .thenReturn(emprestimos);
+    doReturn(emprestimoDto).when(service).toDto(emprestimo);
 
     // When
     List<EmprestimoResponseDto> result = service.findAllEmprestimosAbertosByUsuario(username);
@@ -297,25 +287,29 @@ class EmprestimoServiceImplTest {
     assertNotNull(result);
     assertEquals(1, result.size());
     verify(usuarioService).findByUsername(username);
-    verify(emprestimoRepository).findAllByUsuarioEmprestimoAndDataDevolucaoIsNull(usuarioEmprestimo);
+    verify(emprestimoRepository)
+        .findAllByUsuarioEmprestimoAndDataDevolucaoIsNull(usuarioEmprestimo);
   }
 
   @Test
-  void testChangePrazoDevolucao() {
+  void testChangePrazoDevolucao_FixUsingRepository() {
     // Given
     Long emprestimoId = 1L;
     LocalDate novaData = LocalDate.now().plusDays(10);
 
-    // Mock do findOne para evitar EntityNotFoundException
-    when(service.findOne(emprestimoId)).thenReturn(emprestimoDto);
-    when(service.toEntity(emprestimoDto)).thenReturn(emprestimo);
-    when(service.save(any(Emprestimo.class))).thenReturn(emprestimoDto);
+    // Ensure repository findById returns the entity so CrudServiceImpl.findOne doesn't throw
+    when(emprestimoRepository.findById(emprestimoId)).thenReturn(Optional.of(emprestimo));
+
+    // Spy allows stubbing toDto/toEntity/save
+    doReturn(emprestimoDto).when(service).toDto(emprestimo);
+    doReturn(emprestimo).when(service).toEntity(emprestimoDto);
+    doReturn(emprestimoDto).when(service).save(any(Emprestimo.class));
 
     // When
     service.changePrazoDevolucao(emprestimoId, novaData);
 
     // Then
-    verify(service).findOne(emprestimoId);
+    verify(emprestimoRepository).findById(emprestimoId);
     verify(service).save(any(Emprestimo.class));
     verify(eventPublisher).publishEvent(any());
   }
@@ -370,28 +364,32 @@ class EmprestimoServiceImplTest {
     // Given
     List<Emprestimo> emprestimos = Collections.singletonList(emprestimo);
 
-    when(emprestimoRepository.findByDataDevolucaoIsNullAndPrazoDevolucaoEquals(any(LocalDate.class)))
-            .thenReturn(emprestimos);
+    when(emprestimoRepository.findByDataDevolucaoIsNullAndPrazoDevolucaoEquals(
+            any(LocalDate.class)))
+        .thenReturn(emprestimos);
 
     // When
     service.sendEmailPrazoDevolucaoProximo();
 
     // Then
-    verify(emprestimoRepository).findByDataDevolucaoIsNullAndPrazoDevolucaoEquals(any(LocalDate.class));
+    verify(emprestimoRepository)
+        .findByDataDevolucaoIsNullAndPrazoDevolucaoEquals(any(LocalDate.class));
     verify(eventPublisher, atLeastOnce()).publishEvent(any());
   }
 
   @Test
   void testSendEmailPrazoDevolucaoProximo_SemEmprestimos() {
     // Given
-    when(emprestimoRepository.findByDataDevolucaoIsNullAndPrazoDevolucaoEquals(any(LocalDate.class)))
-            .thenReturn(Collections.emptyList());
+    when(emprestimoRepository.findByDataDevolucaoIsNullAndPrazoDevolucaoEquals(
+            any(LocalDate.class)))
+        .thenReturn(Collections.emptyList());
 
     // When
     service.sendEmailPrazoDevolucaoProximo();
 
     // Then
-    verify(emprestimoRepository).findByDataDevolucaoIsNullAndPrazoDevolucaoEquals(any(LocalDate.class));
+    verify(emprestimoRepository)
+        .findByDataDevolucaoIsNullAndPrazoDevolucaoEquals(any(LocalDate.class));
     verify(eventPublisher, never()).publishEvent(any());
   }
 
@@ -490,6 +488,4 @@ class EmprestimoServiceImplTest {
     // Then - Deve ignorar itens null
     assertTrue(result.isEmpty());
   }
-
-
 }
