@@ -2,27 +2,26 @@ package br.com.utfpr.gerenciamento.server.service.impl;
 
 import br.com.utfpr.gerenciamento.server.dto.NadaConstaResponseDto;
 import br.com.utfpr.gerenciamento.server.enumeration.NadaConstaStatus;
+import br.com.utfpr.gerenciamento.server.event.nadaConsta.NadaConstaEmitidoEvent;
+import br.com.utfpr.gerenciamento.server.event.nadaConsta.NadaConstaPendenciasEvent;
 import br.com.utfpr.gerenciamento.server.exception.NadaConstaException;
 import br.com.utfpr.gerenciamento.server.model.Emprestimo;
 import br.com.utfpr.gerenciamento.server.model.NadaConsta;
 import br.com.utfpr.gerenciamento.server.model.Usuario;
 import br.com.utfpr.gerenciamento.server.repository.NadaConstaRepository;
-import br.com.utfpr.gerenciamento.server.service.EmailService;
 import br.com.utfpr.gerenciamento.server.service.EmprestimoService;
 import br.com.utfpr.gerenciamento.server.service.NadaConstaService;
 import br.com.utfpr.gerenciamento.server.service.SystemConfigService;
 import br.com.utfpr.gerenciamento.server.service.UsuarioService;
-import br.com.utfpr.gerenciamento.server.util.DateUtil;
 import br.com.utfpr.gerenciamento.server.util.EmailUtils;
 import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import lombok.extern.slf4j.Slf4j;
 import org.modelmapper.ModelMapper;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -36,22 +35,22 @@ public class NadaConstaServiceImpl extends CrudServiceImpl<NadaConsta, Long>
   private final UsuarioService usuarioService;
   private final ModelMapper modelMapper;
   private final EmprestimoService emprestimoService;
-  private final EmailService emailService;
   private final SystemConfigService systemConfigService;
+  private final ApplicationEventPublisher eventPublisher;
 
   public NadaConstaServiceImpl(
       NadaConstaRepository nadaConstaRepository,
       UsuarioService usuarioService,
       ModelMapper modelMapper,
       EmprestimoService emprestimoService,
-      EmailService emailService,
-      SystemConfigService systemConfigService) {
+      SystemConfigService systemConfigService,
+      ApplicationEventPublisher eventPublisher) {
     this.nadaConstaRepository = nadaConstaRepository;
     this.usuarioService = usuarioService;
     this.modelMapper = modelMapper;
     this.emprestimoService = emprestimoService;
-    this.emailService = emailService;
     this.systemConfigService = systemConfigService;
+    this.eventPublisher = eventPublisher;
   }
 
   @Override
@@ -70,10 +69,15 @@ public class NadaConstaServiceImpl extends CrudServiceImpl<NadaConsta, Long>
   }
 
   @Override
-  public NadaConstaResponseDto convertToDto(NadaConsta entity) {
-    var dto = modelMapper.map(entity, NadaConstaResponseDto.class);
-    if (entity.getUsuario() != null) {
-      dto.setUsuarioUsername(entity.getUsuario().getUsername());
+  public NadaConstaResponseDto convertToDto(NadaConsta nadaConsta) {
+    NadaConstaResponseDto dto = modelMapper.map(nadaConsta, NadaConstaResponseDto.class);
+    if (dto == null) {
+      return null;
+    }
+    if (nadaConsta != null && nadaConsta.getUsuario() != null) {
+      dto.setUsuarioUsername(nadaConsta.getUsuario().getUsername());
+    } else {
+      dto.setUsuarioUsername(null);
     }
     return dto;
   }
@@ -95,64 +99,54 @@ public class NadaConstaServiceImpl extends CrudServiceImpl<NadaConsta, Long>
     NadaConsta nadaConsta =
         NadaConsta.builder()
             .usuario(usuario)
-            .status(NadaConstaStatus.PENDING)
+            .status(
+                emprestimosAbertos == null || emprestimosAbertos.isEmpty()
+                    ? NadaConstaStatus.COMPLETED
+                    : NadaConstaStatus.PENDING)
             .createdAt(LocalDateTime.now())
             .createdBy(usuario.getUsername())
             .build();
+    nadaConsta.setSendAt(LocalDateTime.now());
     nadaConsta = nadaConstaRepository.save(nadaConsta);
-    if (emprestimosAbertos.isEmpty()) {
-      // Buscar e-mail de destino via SystemConfigService
+    usuario.setAtivo(false);
+    usuarioService.save(usuario);
+
+    if (emprestimosAbertos == null || emprestimosAbertos.isEmpty()) {
       String destinatario = systemConfigService.getEmailNadaConsta();
-      // Monta dados para o template
-      DateTimeFormatter formatter =
-          DateTimeFormatter.ofPattern("dd 'de' MMMM 'de' yyyy").withLocale(DateUtil.PT_BR);
+      if (!EmailUtils.isValidEmail(destinatario)) {
+        log.warn("Email de Nada Consta não enviado - email do sistema inválido: {}", destinatario);
+        return convertToDto(nadaConsta);
+      }
       Map<String, Object> templateData = new HashMap<>();
-      templateData.put("nomeAluno", usuario.getNome());
-      templateData.put("registroAcademico", usuario.getDocumento());
-      templateData.put("dataFormatada", LocalDateTime.now().format(formatter));
-      templateData.put("logoUrl", systemConfigService.getLogoUrl());
-      emailService.sendEmailWithTemplate(
-          templateData, destinatario, "Declaração Nada Consta", "nada-consta-declaracao.html");
-      nadaConsta.setStatus(NadaConstaStatus.COMPLETED);
-      nadaConsta.setSendAt(LocalDateTime.now());
-      nadaConstaRepository.save(nadaConsta);
-      usuario.setAtivo(false);
-      usuarioService.save(usuario);
+      templateData.put("usuario", usuario);
+      templateData.put("nadaConsta", nadaConsta);
+      eventPublisher.publishEvent(new NadaConstaEmitidoEvent(this, destinatario, templateData));
     } else {
-      // Monta lista de itens pendentes para o template
-      List<Map<String, Object>> itensPendentesTemplate = new ArrayList<>();
-      for (Emprestimo emp : emprestimosAbertos) {
-        if (emp.getEmprestimoItem() != null) {
-          for (var emprestimoItem : emp.getEmprestimoItem()) {
-            Map<String, Object> itemMap = new HashMap<>();
-            var item = emprestimoItem.getItem();
-            itemMap.put("itemNome", item != null ? item.getNome() : "-");
-            itemMap.put(
-                "dataEmprestimo", emp.getDataEmprestimo().format(DateUtil.BR_DATE_FORMATTER));
-            itemMap.put(
-                "dataPrevistaDevolucao",
-                emp.getPrazoDevolucao() != null
-                    ? emp.getPrazoDevolucao().format(DateUtil.BR_DATE_FORMATTER)
-                    : "-");
-            itensPendentesTemplate.add(itemMap);
-          }
-        }
+      String destinatario = usuario.getEmail();
+      if (!EmailUtils.isValidEmail(destinatario)) {
+        log.warn(
+            "Email de pendências de Nada Consta não enviado - usuário sem email válido: {}",
+            usuario.getNome());
+        return convertToDto(nadaConsta);
       }
       Map<String, Object> templateData = new HashMap<>();
-      templateData.put("nomeAluno", usuario.getNome());
-      templateData.put("emprestimos", itensPendentesTemplate);
-      String to = usuario.getEmail();
-      if (!EmailUtils.isValidEmail(to)) {
-        log.warn("Email inválido ou ausente para usuário {}", usuario.getUsername());
-        throw new IllegalStateException("E-mail do usuário ausente para envio de pendências.");
-      }
-      emailService.sendEmailWithTemplate(
-          templateData, to, "Pendências de Empréstimos", "pendencias-emprestimos.html");
-      nadaConsta.setStatus(NadaConstaStatus.PENDING);
-      nadaConsta.setSendAt(LocalDateTime.now());
-      nadaConstaRepository.save(nadaConsta);
-      usuario.setAtivo(false);
-      usuarioService.save(usuario);
+      templateData.put("usuario", usuario);
+      templateData.put(
+          "emprestimos",
+          emprestimosAbertos.stream()
+              .flatMap(
+                  e ->
+                      e.getEmprestimoItem() != null
+                          ? e.getEmprestimoItem().stream()
+                          : java.util.stream.Stream.empty())
+              .map(
+                  item -> {
+                    Map<String, Object> map = new HashMap<>();
+                    map.put("itemNome", item.getItem() != null ? item.getItem().getNome() : null);
+                    return map;
+                  })
+              .toList());
+      eventPublisher.publishEvent(new NadaConstaPendenciasEvent(this, destinatario, templateData));
     }
     return convertToDto(nadaConsta);
   }

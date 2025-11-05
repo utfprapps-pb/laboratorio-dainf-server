@@ -3,7 +3,7 @@
 <head>
     <meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Confirmação de Cadastro</title>
+    <title>Confirmação de Finalização de Empréstimo</title>
     <style>
         body { font-family: 'Montserrat', Arial, sans-serif; background-color: #f5f5f5; }
         .container { background: #fff; border-radius: 12px; max-width: 600px; margin: 0 auto; box-shadow: 0 4px 15px rgba(0,0,0,0.08); }
@@ -14,6 +14,9 @@
         .body p { color: #333; font-size: 16px; margin-bottom: 20px; }
         .footer { background: #E6A74A; color: #fff; text-align: center; padding: 15px 10px; border-bottom-left-radius: 12px; border-bottom-right-radius: 12px; }
         .footer strong { font-size: 16px; }
+        table { width: 100%; border-collapse: collapse; margin-bottom: 20px; margin-left: auto; margin-right: auto; }
+        th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+        th { background-color: #E6A74A; color: #fff; }
     </style>
 </head>
 <body>
@@ -22,11 +25,25 @@
         <img th:src="${logoUrl}" src="/static/logo-fallback.png" alt="Logo UTFPR" width="120"/>
     </div>
     <div class="body">
-        <h2>Confirmação de Cadastro</h2>
-        <p>Olá <strong th:text="${usuario}">USUÁRIO</strong>,</p>
-        <p>Para confirmar seu cadastro, clique em: <a th:href="${url}">Confirmar Cadastro</a></p>
-        <p>Ou copie e cole o endereço a seguir no seu navegador: <span th:text="${url}">URL</span></p>
-        <p>Qualquer dúvida, entrar em contato conosco na sala de apoio do bloco V.</p>
+        <h2>Confirmação de Finalização de Empréstimo</h2>
+        <p>Olá <strong th:text="${usuarioEmprestimo}">USUÁRIO</strong>,</p>
+        <p>Seu empréstimo foi realizado com sucesso no dia <span th:text="${dtEmprestimo}">DATA_EMPRESTIMO</span>.</p>
+        <p>Segue abaixo a lista dos materiais emprestados:</p>
+        <table>
+            <thead>
+            <tr>
+                <th>Item</th>
+                <th>Qtde</th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr th:each="item : ${emprestimoItem}">
+                <td th:text="${item.item.nome}">Item</td>
+                <td th:text="${item.qtde}">1</td>
+            </tr>
+            </tbody>
+        </table>
+        <p>O(s) item(ns) emprestados são permanentes, logo não será necessário efetuar a devolução do(s) mesmo(s).</p>
         <p style="font-size: 12px; color: #aaaaaa; line-height: 1.5;">Esta é uma mensagem automática. Por favor, não responda a este email.</p>
     </div>
     <div class="footer">
