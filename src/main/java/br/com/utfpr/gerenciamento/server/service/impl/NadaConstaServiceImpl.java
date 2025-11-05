@@ -134,7 +134,11 @@ public class NadaConstaServiceImpl extends CrudServiceImpl<NadaConsta, Long>
       templateData.put(
           "emprestimos",
           emprestimosAbertos.stream()
-              .flatMap(e -> e.getEmprestimoItem().stream())
+              .flatMap(
+                  e ->
+                      e.getEmprestimoItem() != null
+                          ? e.getEmprestimoItem().stream()
+                          : java.util.stream.Stream.empty())
               .map(
                   item -> {
                     Map<String, Object> map = new HashMap<>();
