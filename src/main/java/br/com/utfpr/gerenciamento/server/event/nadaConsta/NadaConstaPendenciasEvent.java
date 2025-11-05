@@ -7,7 +7,7 @@ import lombok.Getter;
 /** Evento publicado quando há pendências de empréstimos ao solicitar Nada Consta. */
 @Getter
 public class NadaConstaPendenciasEvent extends EmailEvent {
-  private final Map<String, Object> templateData;
+  private final transient Map<String, Object> templateData;
 
   public NadaConstaPendenciasEvent(
       Object source, String recipient, Map<String, Object> templateData) {

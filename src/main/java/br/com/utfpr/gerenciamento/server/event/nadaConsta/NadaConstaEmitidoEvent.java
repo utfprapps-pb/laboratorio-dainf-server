@@ -7,7 +7,7 @@ import lombok.Getter;
 /** Evento publicado quando uma declaração de Nada Consta é emitida. */
 @Getter
 public class NadaConstaEmitidoEvent extends EmailEvent {
-  private final Map<String, Object> templateData;
+  private final transient Map<String, Object> templateData;
 
   public NadaConstaEmitidoEvent(Object source, String recipient, Map<String, Object> templateData) {
     super(source, recipient, "Declaração Nada Consta", "nada-consta-declaracao.html");
