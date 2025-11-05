@@ -48,8 +48,4 @@ public class FornecedorServiceImpl extends CrudServiceImpl<Fornecedor, Long, For
     }
   }
 
-  @Override
-  public FornecedorResponseDto convertToDto(Fornecedor entity) {
-    return modelMapper.map(entity, FornecedorResponseDto.class);
-  }
 }

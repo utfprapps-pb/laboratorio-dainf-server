@@ -43,10 +43,10 @@ public class CidadeServiceImpl extends CrudServiceImpl<Cidade, Long, CidadeRespo
   @Transactional(readOnly = true)
   public List<CidadeResponseDto> cidadeComplete(String query) {
     if (query == null || query.isBlank()) {
-      return this.cidadeRepository.findAll().stream().map(this::convertToDto).toList();
+      return this.cidadeRepository.findAll().stream().map(this::toDto).toList();
     } else {
       return this.cidadeRepository.findByNomeLikeIgnoreCase("%" + query + "%").stream()
-          .map(this::convertToDto)
+          .map(this::toDto)
           .toList();
     }
   }
@@ -58,19 +58,14 @@ public class CidadeServiceImpl extends CrudServiceImpl<Cidade, Long, CidadeRespo
 
     if (query == null || query.isBlank()) {
       return this.cidadeRepository.findAllByEstado(estado).stream()
-          .map(this::convertToDto)
+          .map(this::toDto)
           .toList();
     } else {
       return this.cidadeRepository
           .findByNomeLikeIgnoreCaseAndEstado("%" + query + "%", estado)
           .stream()
-          .map(this::convertToDto)
+          .map(this::toDto)
           .toList();
     }
-  }
-
-  @Override
-  public CidadeResponseDto convertToDto(Cidade entity) {
-    return modelMapper.map(entity, CidadeResponseDto.class);
   }
 }

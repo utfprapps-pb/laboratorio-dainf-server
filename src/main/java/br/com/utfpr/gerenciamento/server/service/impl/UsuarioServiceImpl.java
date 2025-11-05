@@ -127,7 +127,7 @@ public class UsuarioServiceImpl extends CrudServiceImpl<Usuario, Long, UsuarioRe
     }
 
     // Usa @EntityGraph para evitar N+1 queries ao carregar permissoes
-    return usuarioRepository.findAll(spec, pageable).map(this::convertToDto);
+    return usuarioRepository.findAll(spec, pageable).map(this::toDto);
   }
 
   @Override
@@ -173,7 +173,7 @@ public class UsuarioServiceImpl extends CrudServiceImpl<Usuario, Long, UsuarioRe
                 UsuarioSpecifications.searchByTextWithRoles(
                     query, UserRole.PROFESSOR, UserRole.ALUNO));
 
-    return usuarioRepository.findAll(spec, pageable).map(this::convertToDto);
+    return usuarioRepository.findAll(spec, pageable).map(this::toDto);
   }
 
   @Override
@@ -186,7 +186,7 @@ public class UsuarioServiceImpl extends CrudServiceImpl<Usuario, Long, UsuarioRe
                 UsuarioSpecifications.searchByTextWithRoles(
                     query, UserRole.ADMINISTRADOR, UserRole.LABORATORISTA));
 
-    return usuarioRepository.findAll(spec, pageable).map(this::convertToDto);
+    return usuarioRepository.findAll(spec, pageable).map(this::toDto);
   }
 
   @Override
@@ -269,14 +269,6 @@ public class UsuarioServiceImpl extends CrudServiceImpl<Usuario, Long, UsuarioRe
     }
 
     return toDto(usuarioRepository.save(usuario));
-  }
-
-  public UsuarioResponseDto convertToDto(Usuario entity) {
-    return modelMapper.map(entity, UsuarioResponseDto.class);
-  }
-
-  public Usuario convertToEntity(UsuarioResponseDto entityDto) {
-    return modelMapper.map(entityDto, Usuario.class);
   }
 
   @Override

@@ -20,6 +20,4 @@ public interface DashboardService {
       LocalDate dtIni, LocalDate dtFim);
 
   List<DashboardItensSaidasResponseDto> findItensComMaisSaidas(LocalDate dtIni, LocalDate dtFim);
-
-  <D, E> D convertToDto(E entity, Class<D> dtoClass);
 }

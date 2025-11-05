@@ -10,6 +10,4 @@ public interface CidadeService extends CrudService<Cidade, Long, CidadeResponseD
   List<CidadeResponseDto> cidadeComplete(String query);
 
   List<CidadeResponseDto> completeByEstado(String query, Estado estado);
-
-  CidadeResponseDto convertToDto(Cidade entity);
 }

@@ -7,6 +7,4 @@ import java.util.List;
 public interface FornecedorService extends CrudService<Fornecedor, Long, FornecedorResponseDto> {
 
   List<Fornecedor> completeFornecedor(String query);
-
-  FornecedorResponseDto convertToDto(Fornecedor entity);
 }

@@ -85,9 +85,5 @@ public class DashboardServiceImpl implements DashboardService {
         .toList();
   }
 
-  @Override
-  public <D, E> D convertToDto(E entity, Class<D> dtoClass) {
-    throw new UnsupportedOperationException(
-        "Dashboard DTOs são records - conversão não necessária. Retorne o record diretamente.");
-  }
+
 }

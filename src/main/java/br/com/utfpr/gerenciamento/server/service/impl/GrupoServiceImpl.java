@@ -42,17 +42,12 @@ public class GrupoServiceImpl extends CrudServiceImpl<Grupo, Long, GrupoResponse
   @Transactional(readOnly = true)
   public List<GrupoResponseDto> completeGrupo(String query) {
     if (query == null || query.isBlank()) {
-      return grupoRepository.findAll().stream().map(this::convertToDto).toList();
+      return grupoRepository.findAll().stream().map(this::toDto).toList();
     } else {
       final String newQuery = query.trim();
       return grupoRepository.findByDescricaoLikeIgnoreCase("%" + newQuery + "%").stream()
-          .map(this::convertToDto)
+          .map(this::toDto)
           .toList();
     }
-  }
-
-  @Override
-  public GrupoResponseDto convertToDto(Grupo entity) {
-    return modelMapper.map(entity, GrupoResponseDto.class);
   }
 }

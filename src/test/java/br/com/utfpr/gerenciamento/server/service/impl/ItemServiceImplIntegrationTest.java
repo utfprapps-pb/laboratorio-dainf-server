@@ -116,7 +116,7 @@ class ItemServiceImplIntegrationTest {
   @Test
   void testConvertToDto_DeveConverterEntityParaDto() {
     // Act
-    ItemResponseDto dto = itemService.convertToDto(itemPermanente);
+    ItemResponseDto dto = itemService.toDto(itemPermanente);
 
     // Assert
     assertThat(dto.getId()).isEqualTo(itemPermanente.getId());

@@ -7,6 +7,4 @@ import java.util.List;
 public interface GrupoService extends CrudService<Grupo, Long, GrupoResponseDto> {
 
   List<GrupoResponseDto> completeGrupo(String query);
-
-  GrupoResponseDto convertToDto(Grupo entity);
 }

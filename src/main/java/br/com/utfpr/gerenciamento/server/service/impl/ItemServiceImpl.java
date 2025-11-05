@@ -95,19 +95,19 @@ public class ItemServiceImpl extends CrudServiceImpl<Item, Long, ItemResponseDto
     if ("".equalsIgnoreCase(query)) {
       if (hasEstoque)
         return itemRepository.findAllBySaldoIsGreaterThanOrderByNome(zero).stream()
-            .map(this::convertToDto)
+            .map(this::toDto)
             .toList();
-      else return itemRepository.findAllByOrderByNome().stream().map(this::convertToDto).toList();
+      else return itemRepository.findAllByOrderByNome().stream().map(this::toDto).toList();
     } else {
       if (hasEstoque)
         return itemRepository
             .findByNomeLikeIgnoreCaseAndSaldoIsGreaterThanOrderByNome("%" + query + "%", zero)
             .stream()
-            .map(this::convertToDto)
+            .map(this::toDto)
             .toList();
       else
         return itemRepository.findByNomeLikeIgnoreCaseOrderByNome("%" + query + "%").stream()
-            .map(this::convertToDto)
+            .map(this::toDto)
             .toList();
     }
   }
@@ -115,7 +115,7 @@ public class ItemServiceImpl extends CrudServiceImpl<Item, Long, ItemResponseDto
   @Override
   @Transactional(readOnly = true)
   public List<ItemResponseDto> findByGrupo(Long id) {
-    return itemRepository.findByGrupoIdOrderByNome(id).stream().map(this::convertToDto).toList();
+    return itemRepository.findByGrupoIdOrderByNome(id).stream().map(this::toDto).toList();
   }
 
   @Override
@@ -303,8 +303,5 @@ public class ItemServiceImpl extends CrudServiceImpl<Item, Long, ItemResponseDto
     return item;
   }
 
-  @Override
-  public ItemResponseDto convertToDto(Item entity) {
-    return modelMapper.map(entity, ItemResponseDto.class);
-  }
+
 }
