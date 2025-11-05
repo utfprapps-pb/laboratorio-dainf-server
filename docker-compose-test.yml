@@ -1,0 +1,59 @@
+########################### SERVICES
+services:
+  ########################### LABS API
+  test-labs-api:
+    image: "${DOCKER_IMAGE_NAME}:${DOCKER_TAG}"
+    container_name: ${DOCKER_IMAGE_NAME}
+    build:
+      context: ./
+      dockerfile: Dockerfile
+    environment:
+      - SERVER_PORT=${CONTAINER_PORT}
+      - DATABASE_URL=${DATABASE_URL}
+      - SPRING_DATASOURCE_USERNAME=${DATABASE_USERNAME}
+      - SPRING_DATASOURCE_PASSWORD=${DATABASE_PASSWORD}
+      - GOOGLE_CLIENT_ID=${GOOGLE_CLIENT_ID}
+      - GOOGLE_CLIENT_SECRET=${GOOGLE_CLIENT_SECRET}
+      - UTFPR_TOKEN_SECRET=${UTFPR_TOKEN_SECRET}
+      - UTFPR_EMAIL_ADDRESS=${UTFPR_EMAIL_ADDRESS}
+      - UTFPR_EMAIL_PASSWORD=${UTFPR_EMAIL_PASSWORD}
+      - UTFPR_EMAIL_USERNAME=${UTFPR_EMAIL_USERNAME}
+      - UTFPR_EMAIL_HOST=${UTFPR_EMAIL_HOST}
+      - UTFPR_EMAIL_PORT=${UTFPR_EMAIL_PORT}
+      - UTFPR_FRONT_URL=${UTFPR_FRONT_URL}
+      - MINIO_ACCESS_KEY=${MINIO_ACCESS_KEY}
+      - MINIO_SECRET_KEY=${MINIO_SECRET_KEY}
+      - MINIO_ENDPOINT=${MINIO_ENDPOINT}
+      - MINIO_PORT=${MINIO_PORT}
+      - MINIO_SECURE=${MINIO_SECURE}
+      - MINIO_BUCKET_NAME=${MINIO_BUCKET_NAME}
+      - SPRING_PROFILES_ACTIVE=${SPRING_PROFILES_ACTIVE}
+      - TZ=America/Sao_Paulo
+    ports:
+      - "${HOST_PORT}:${CONTAINER_PORT}"
+    labels:
+        # Traefik Config
+      - "traefik.enable=true"
+      - "traefik.http.routers.${DOCKER_IMAGE_NAME}.rule=Host(`${API_URL}`)"
+      - "traefik.http.routers.${DOCKER_IMAGE_NAME}.tls.certresolver=letsencrypt"
+      - "traefik.http.routers.${DOCKER_IMAGE_NAME}.entrypoints=websecure"
+
+    volumes:
+      - "./appdata/${API_PUBLIC_FOLDER}/upload:/opt/uploads"
+    restart: unless-stopped
+    networks:
+      - web
+      - database
+
+########################### NETWORKS
+networks:
+  web:
+    name: web
+    driver: bridge
+    external: true
+    attachable: true
+  database:
+    name: database
+    driver: bridge
+    external: false
+    attachable: true
