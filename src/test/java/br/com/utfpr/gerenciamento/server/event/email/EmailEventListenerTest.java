@@ -151,7 +151,8 @@ class EmailEventListenerTest {
         .when(emailService)
         .sendEmailWithTemplate(
             templateData, "to@email.com", "Declaração Nada Consta", "nada-consta-declaracao.html");
-    listener.handleNadaConstaEmitidoEvent(event);
+    // Novo: usar handleEmailEvent, pois o handler dedicado foi removido
+    listener.handleEmailEvent(event);
     verify(emailService)
         .sendEmailWithTemplate(
             templateData, "to@email.com", "Declaração Nada Consta", "nada-consta-declaracao.html");
@@ -165,7 +166,8 @@ class EmailEventListenerTest {
         .when(emailService)
         .sendEmailWithTemplate(
             templateData, "to@email.com", "Declaração Nada Consta", "nada-consta-declaracao.html");
-    assertThrows(MailException.class, () -> listener.handleNadaConstaEmitidoEvent(event));
+    // Novo: usar handleEmailEvent, pois o handler dedicado foi removido
+    assertThrows(MailException.class, () -> listener.handleEmailEvent(event));
   }
 
   @Test
@@ -176,7 +178,8 @@ class EmailEventListenerTest {
         .when(emailService)
         .sendEmailWithTemplate(
             templateData, "to@email.com", "Declaração Nada Consta", "nada-consta-declaracao.html");
-    assertThrows(RuntimeException.class, () -> listener.handleNadaConstaEmitidoEvent(event));
+    // Novo: usar handleEmailEvent, pois o handler dedicado foi removido
+    assertThrows(RuntimeException.class, () -> listener.handleEmailEvent(event));
   }
 
   @Test
@@ -191,7 +194,8 @@ class EmailEventListenerTest {
             "to@email.com",
             "Pendências de Empréstimos",
             "pendencias-emprestimos.html");
-    listener.handleNadaConstaPendenciasEvent(event);
+    // Novo: usar handleEmailEvent, pois o handler dedicado foi removido
+    listener.handleEmailEvent(event);
     verify(emailService)
         .sendEmailWithTemplate(
             templateData,
@@ -212,7 +216,8 @@ class EmailEventListenerTest {
             "to@email.com",
             "Pendências de Empréstimos",
             "pendencias-emprestimos.html");
-    assertThrows(MailException.class, () -> listener.handleNadaConstaPendenciasEvent(event));
+    // Novo: usar handleEmailEvent, pois o handler dedicado foi removido
+    assertThrows(MailException.class, () -> listener.handleEmailEvent(event));
   }
 
   @Test
@@ -227,7 +232,8 @@ class EmailEventListenerTest {
             "to@email.com",
             "Pendências de Empréstimos",
             "pendencias-emprestimos.html");
-    assertThrows(RuntimeException.class, () -> listener.handleNadaConstaPendenciasEvent(event));
+    // Novo: usar handleEmailEvent, pois o handler dedicado foi removido
+    assertThrows(RuntimeException.class, () -> listener.handleEmailEvent(event));
   }
 
   @Test

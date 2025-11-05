@@ -199,49 +199,7 @@ public class EmailEventListener {
     }
   }
 
-  /**
-   * Processa eventos de email de "Nada Consta" após commit da transação.
-   *
-   * <p>Este handler especializado processa eventos {@link NadaConstaEmitidoEvent} e {@link
-   * NadaConstaPendenciasEvent} de forma assíncrona APÓS commit da transação.
-   *
-   * <p><b>Características:</b>
-   *
-   * <ul>
-   *   <li>✅ Email enviado de forma assíncrona
-   *   <li>✅ Retry automático em caso de falhas transientes (MailException)
-   *   <li>✅ Falhas não afetam transação de negócio original
-   * </ul>
-   *
-   * @param event Evento de email de Nada Consta
-   */
-  @Retryable(
-      retryFor = {MailException.class},
-      backoff = @Backoff(delay = 2000, multiplier = 2))
-  @Async("emailTaskExecutor")
-  @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
-  @Transactional(
-      readOnly = true,
-      propagation = org.springframework.transaction.annotation.Propagation.REQUIRES_NEW,
-      timeout = EMAIL_TRANSACTION_TIMEOUT_SECONDS)
-  public void handleNadaConstaEmitidoEvent(NadaConstaEmitidoEvent event) {
-    processEmailWithTemplate(
-        event.getTemplateData(), event.getRecipient(), event.getSubject(), event.getTemplateName());
-  }
-
-  @Retryable(
-      retryFor = {MailException.class},
-      backoff = @Backoff(delay = 2000, multiplier = 2))
-  @Async("emailTaskExecutor")
-  @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
-  @Transactional(
-      readOnly = true,
-      propagation = org.springframework.transaction.annotation.Propagation.REQUIRES_NEW,
-      timeout = EMAIL_TRANSACTION_TIMEOUT_SECONDS)
-  public void handleNadaConstaPendenciasEvent(NadaConstaPendenciasEvent event) {
-    processEmailWithTemplate(
-        event.getTemplateData(), event.getRecipient(), event.getSubject(), event.getTemplateName());
-  }
+  // REMOVIDOS: Handlers duplicados para NadaConstaEmitidoEvent e NadaConstaPendenciasEvent
 
   /**
    * Helper to process email sending with template and logging, with retryable exception
