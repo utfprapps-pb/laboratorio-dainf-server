@@ -13,11 +13,8 @@ import br.com.utfpr.gerenciamento.server.service.EmprestimoService;
 import br.com.utfpr.gerenciamento.server.service.NadaConstaService;
 import br.com.utfpr.gerenciamento.server.service.SystemConfigService;
 import br.com.utfpr.gerenciamento.server.service.UsuarioService;
-import br.com.utfpr.gerenciamento.server.util.DateUtil;
 import br.com.utfpr.gerenciamento.server.util.EmailUtils;
 import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -85,61 +82,6 @@ public class NadaConstaServiceImpl extends CrudServiceImpl<NadaConsta, Long>
     return dto;
   }
 
-  public void postSave(NadaConsta entity) {
-    if (entity == null || entity.getUsuario() == null) return;
-    Usuario usuario = entity.getUsuario();
-    List<Emprestimo> emprestimosAbertos =
-        emprestimoService.findAllEmprestimosAbertosByUsuario(usuario.getUsername());
-    if (emprestimosAbertos == null) {
-      emprestimosAbertos = Collections.emptyList();
-    }
-    if (entity.getStatus() == NadaConstaStatus.COMPLETED && emprestimosAbertos.isEmpty()) {
-      String destinatario = systemConfigService.getEmailNadaConsta();
-      DateTimeFormatter formatter =
-          DateTimeFormatter.ofPattern("dd 'de' MMMM 'de' yyyy").withLocale(DateUtil.PT_BR);
-      Map<String, Object> templateData = new HashMap<>();
-      templateData.put("nomeAluno", usuario.getNome());
-      templateData.put("registroAcademico", usuario.getDocumento());
-      templateData.put(
-          "dataFormatada",
-          entity.getCreatedAt() != null
-              ? entity.getCreatedAt().format(formatter)
-              : LocalDateTime.now().format(formatter));
-      templateData.put("logoUrl", systemConfigService.getLogoUrl());
-      if (EmailUtils.isValidEmail(destinatario)) {
-        eventPublisher.publishEvent(
-            new NadaConstaEmitidoEvent(NadaConstaServiceImpl.this, destinatario, templateData));
-      }
-    } else if (entity.getStatus() == NadaConstaStatus.PENDING && !emprestimosAbertos.isEmpty()) {
-      List<Map<String, Object>> itensPendentesTemplate = new ArrayList<>();
-      for (Emprestimo emp : emprestimosAbertos) {
-        if (emp.getEmprestimoItem() != null) {
-          for (var emprestimoItem : emp.getEmprestimoItem()) {
-            Map<String, Object> itemMap = new HashMap<>();
-            var item = emprestimoItem.getItem();
-            itemMap.put("itemNome", item != null ? item.getNome() : "-");
-            itemMap.put(
-                "dataEmprestimo", emp.getDataEmprestimo().format(DateUtil.BR_DATE_FORMATTER));
-            itemMap.put(
-                "dataPrevistaDevolucao",
-                emp.getPrazoDevolucao() != null
-                    ? emp.getPrazoDevolucao().format(DateUtil.BR_DATE_FORMATTER)
-                    : "-");
-            itensPendentesTemplate.add(itemMap);
-          }
-        }
-      }
-      Map<String, Object> templateData = new HashMap<>();
-      templateData.put("nomeAluno", usuario.getNome());
-      templateData.put("emprestimos", itensPendentesTemplate);
-      String to = usuario.getEmail();
-      if (EmailUtils.isValidEmail(to)) {
-        eventPublisher.publishEvent(
-            new NadaConstaPendenciasEvent(NadaConstaServiceImpl.this, to, templateData));
-      }
-    }
-  }
-
   @Override
   @Transactional
   public NadaConstaResponseDto solicitarNadaConsta(String documento) {
@@ -168,7 +110,40 @@ public class NadaConstaServiceImpl extends CrudServiceImpl<NadaConsta, Long>
     nadaConsta = nadaConstaRepository.save(nadaConsta);
     usuario.setAtivo(false);
     usuarioService.save(usuario);
-    postSave(nadaConsta);
+
+    if (emprestimosAbertos == null || emprestimosAbertos.isEmpty()) {
+      String destinatario = systemConfigService.getEmailNadaConsta();
+      if (!EmailUtils.isValidEmail(destinatario)) {
+        log.warn("Email de Nada Consta não enviado - email do sistema inválido: {}", destinatario);
+        return convertToDto(nadaConsta);
+      }
+      Map<String, Object> templateData = new HashMap<>();
+      templateData.put("usuario", usuario);
+      templateData.put("nadaConsta", nadaConsta);
+      eventPublisher.publishEvent(new NadaConstaEmitidoEvent(this, destinatario, templateData));
+    } else {
+      String destinatario = usuario.getEmail();
+      if (!EmailUtils.isValidEmail(destinatario)) {
+        log.warn(
+            "Email de pendências de Nada Consta não enviado - usuário sem email válido: {}",
+            usuario.getNome());
+        return convertToDto(nadaConsta);
+      }
+      Map<String, Object> templateData = new HashMap<>();
+      templateData.put("usuario", usuario);
+      templateData.put(
+          "emprestimos",
+          emprestimosAbertos.stream()
+              .flatMap(e -> e.getEmprestimoItem().stream())
+              .map(
+                  item -> {
+                    Map<String, Object> map = new HashMap<>();
+                    map.put("itemNome", item.getItem() != null ? item.getItem().getNome() : null);
+                    return map;
+                  })
+              .toList());
+      eventPublisher.publishEvent(new NadaConstaPendenciasEvent(this, destinatario, templateData));
+    }
     return convertToDto(nadaConsta);
   }
 }
