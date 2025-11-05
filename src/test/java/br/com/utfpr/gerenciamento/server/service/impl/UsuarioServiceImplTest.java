@@ -15,6 +15,7 @@ import java.util.*;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -618,6 +619,12 @@ class UsuarioServiceImplTest {
     // Then: Senha antiga deve ser preservada
     assertNotNull(resultado);
     verify(passwordEncoder, never()).encode(anyString());
+
+    // Capture the Usuario passed to save and assert password is preserved
+    ArgumentCaptor<Usuario> usuarioCaptor = ArgumentCaptor.forClass(Usuario.class);
+    verify(usuarioRepository).save(usuarioCaptor.capture());
+    Usuario capturedUsuario = usuarioCaptor.getValue();
+    assertEquals(senhaAntiga, capturedUsuario.getPassword());
   }
 
   @Test
@@ -639,5 +646,10 @@ class UsuarioServiceImplTest {
     // Then: Senha deve ser codificada
     assertNotNull(resultado);
     verify(passwordEncoder).encode("senhaNova");
+    // Capture the Usuario passed to save and assert password is encoded
+    ArgumentCaptor<Usuario> usuarioCaptor = ArgumentCaptor.forClass(Usuario.class);
+    verify(usuarioRepository).save(usuarioCaptor.capture());
+    Usuario capturedUsuario = usuarioCaptor.getValue();
+    assertEquals("$2a$10$senhaCodificada", capturedUsuario.getPassword());
   }
 }

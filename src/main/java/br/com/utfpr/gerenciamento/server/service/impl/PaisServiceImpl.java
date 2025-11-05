@@ -50,10 +50,10 @@ public class PaisServiceImpl extends CrudServiceImpl<Pais, Long, PaisResponseDto
     // Cache agressivo: Lista de países raramente muda
     // TTL: 6 horas (configurado em CacheConfig)
     if ("".equalsIgnoreCase(query)) {
-      return this.paisRepository.findAll().stream().map(this::convertToDto).toList();
+      return this.paisRepository.findAll().stream().map(this::toDto).toList();
     } else {
       return this.paisRepository.findByNomeLikeIgnoreCase("%" + query + "%").stream()
-          .map(this::convertToDto)
+          .map(this::toDto)
           .toList();
     }
   }
@@ -74,8 +74,4 @@ public class PaisServiceImpl extends CrudServiceImpl<Pais, Long, PaisResponseDto
     super.delete(id);
   }
 
-  @Override
-  public PaisResponseDto convertToDto(Pais entity) {
-    return modelMapper.map(entity, PaisResponseDto.class);
-  }
 }

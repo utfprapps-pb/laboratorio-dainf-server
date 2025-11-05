@@ -32,6 +32,20 @@ import org.springframework.test.context.ActiveProfiles;
 @SpringBootTest
 @ActiveProfiles("test")
 class NadaConstaServiceImplTest {
+    private UsuarioResponseDto buildUsuarioResponseDto(Usuario usuario) {
+        UsuarioResponseDto usuarioDto = new UsuarioResponseDto();
+        usuarioDto.setId(usuario.getId());
+        usuarioDto.setNome(usuario.getNome());
+        usuarioDto.setUsername(usuario.getUsername());
+        usuarioDto.setDocumento(usuario.getDocumento());
+        usuarioDto.setEmail(usuario.getEmail());
+        usuarioDto.setTelefone(null);
+        usuarioDto.setPermissoes(null);
+        usuarioDto.setFotoUrl(null);
+        usuarioDto.setEmailVerificado(false);
+        usuarioDto.setAuthorities(null);
+        return usuarioDto;
+    }
   private NadaConstaRepository nadaConstaRepository;
   private UsuarioService usuarioService;
   private EmprestimoService emprestimoService;
@@ -74,20 +88,9 @@ class NadaConstaServiceImplTest {
             .email("aluno@utfpr.edu.br")
             .ativo(true)
             .build();
-    UsuarioResponseDto usuarioDto = new UsuarioResponseDto();
-    usuarioDto.setId(usuario.getId());
-    usuarioDto.setNome(usuario.getNome());
-    usuarioDto.setUsername(usuario.getUsername());
-    usuarioDto.setDocumento(usuario.getDocumento());
-    usuarioDto.setEmail(usuario.getEmail());
-    usuarioDto.setTelefone(null);
-    usuarioDto.setPermissoes(null);
-    usuarioDto.setFotoUrl(null);
-    usuarioDto.setEmailVerificado(false);
-    usuarioDto.setAuthorities(null);
+    UsuarioResponseDto usuarioDto = buildUsuarioResponseDto(usuario);
     when(usuarioService.findByDocumento("123456")).thenReturn(usuarioDto);
     when(usuarioService.toEntity(usuarioDto)).thenReturn(usuario);
-    when(modelMapper.map(usuarioDto, Usuario.class)).thenReturn(usuario);
     when(emprestimoService.findAllEmprestimosAbertosByUsuario(anyString())).thenReturn(List.of());
     when(systemConfigService.getEmailNadaConsta()).thenReturn("destino@utfpr.edu.br");
     NadaConsta nadaConsta =

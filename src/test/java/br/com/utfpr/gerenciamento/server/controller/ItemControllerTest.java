@@ -177,6 +177,8 @@ class ItemControllerTest {
     // Then
     assertThat(result).isNotNull();
     assertThat(result.getId()).isEqualTo(1L);
+    Mockito.verify(itemService).save(item);
+
   }
 
   @Test
@@ -196,6 +198,8 @@ class ItemControllerTest {
     itemController.delete(itemId);
 
     // Then - Não deve lançar exceção e deve chamar o serviço
+    Mockito.verify(itemService).findOne(itemId);
+    Mockito.verify(itemService).toEntity(itemDto);
     Mockito.verify(itemService).delete(itemId);
   }
 
@@ -223,4 +227,4 @@ class ItemControllerTest {
     // Then
     assertThat(result).isEqualTo(5L);
   }
-}
+} 

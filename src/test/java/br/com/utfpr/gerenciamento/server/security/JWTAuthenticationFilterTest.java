@@ -5,6 +5,8 @@ import static org.mockito.Mockito.*;
 
 import br.com.utfpr.gerenciamento.server.dto.UsuarioResponseDto;
 import br.com.utfpr.gerenciamento.server.model.Usuario;
+import br.com.utfpr.gerenciamento.server.service.PermissaoService;
+import br.com.utfpr.gerenciamento.server.service.impl.PermissaoServiceImpl;
 import br.com.utfpr.gerenciamento.server.service.impl.UsuarioServiceImpl;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.servlet.FilterChain;
@@ -15,6 +17,8 @@ import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.util.Collections;
+import java.util.stream.Collectors;
+
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -29,6 +33,7 @@ class JWTAuthenticationFilterTest {
   private HttpServletRequest request;
   private HttpServletResponse response;
   private FilterChain chain;
+  private PermissaoService permissaoService;
 
   @BeforeEach
   void setUp() {
@@ -40,6 +45,7 @@ class JWTAuthenticationFilterTest {
     request = mock(HttpServletRequest.class);
     response = mock(HttpServletResponse.class);
     chain = mock(FilterChain.class);
+    permissaoService = mock(PermissaoServiceImpl.class);
   }
 
   @Test
@@ -214,7 +220,14 @@ class JWTAuthenticationFilterTest {
             new DelegatingServletInputStream(new ObjectMapper().writeValueAsBytes(usuario)));
     when(usuarioService.findByUsernameForAuthentication("user@utfpr.edu.br"))
         .thenReturn(usuarioDto);
-    doAnswer(invocation -> usuario).when(usuarioService).toEntity(any());
+    doAnswer(invocation -> {
+      UsuarioResponseDto dto = (UsuarioResponseDto) invocation.getArgument(0);
+      Usuario mappedUsuario = new Usuario();
+      mappedUsuario.setUsername(dto.getUsername());
+      mappedUsuario.setPermissoes(dto.getPermissoes().stream().map(permissaoService::toEntity).collect(Collectors.toSet()));
+      // Adicione outros campos relevantes conforme necessário
+      return mappedUsuario;
+    }).when(usuarioService).toEntity(any());
     when(usuarioService.hasSolicitacaoNadaConstaPendingOrCompleted("user@utfpr.edu.br"))
         .thenReturn(false);
     when(authenticationManager.authenticate(any(Authentication.class)))
@@ -228,19 +241,26 @@ class JWTAuthenticationFilterTest {
 
   @Test
   void testAttemptAuthentication_UsernameAdministrativo() throws Exception {
-    Usuario usuario = new Usuario();
-    usuario.setUsername("user@administrativo.utfpr.edu.br");
-    usuario.setPassword("password");
-    usuario.setPermissoes(new java.util.HashSet<>()); // Correção definitiva
-    UsuarioResponseDto usuarioDto = new UsuarioResponseDto();
+  Usuario usuario = new Usuario();
+  usuario.setUsername("user@administrativo.utfpr.edu.br");
+  usuario.setPassword("password");
+  usuario.setPermissoes(new java.util.HashSet<>()); // Correção definitiva
+  UsuarioResponseDto usuarioDto = new UsuarioResponseDto();
     usuarioDto.setUsername("user@utfpr.edu.br");
-    usuarioDto.setPermissoes(new java.util.HashSet<>());
+  usuarioDto.setPermissoes(new java.util.HashSet<>());
     when(request.getInputStream())
         .thenReturn(
             new DelegatingServletInputStream(new ObjectMapper().writeValueAsBytes(usuario)));
     when(usuarioService.findByUsernameForAuthentication("user@utfpr.edu.br"))
         .thenReturn(usuarioDto);
-    doAnswer(invocation -> usuario).when(usuarioService).toEntity(any());
+    doAnswer(invocation -> {
+      UsuarioResponseDto dto = (UsuarioResponseDto) invocation.getArgument(0);
+      Usuario mappedUsuario = new Usuario();
+      mappedUsuario.setUsername(dto.getUsername());
+      mappedUsuario.setPermissoes(dto.getPermissoes().stream().map(permissaoService::toEntity).collect(Collectors.toSet()));
+      // Adicione outros campos relevantes conforme necessário
+      return mappedUsuario;
+    }).when(usuarioService).toEntity(any());
     when(usuarioService.hasSolicitacaoNadaConstaPendingOrCompleted("user@utfpr.edu.br"))
         .thenReturn(false);
     when(authenticationManager.authenticate(any(Authentication.class)))
