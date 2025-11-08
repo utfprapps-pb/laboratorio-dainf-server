@@ -24,7 +24,11 @@ public class EmprestimoPrazoAlteradoEvent extends EmailEvent {
    * @param recipient Email do usuário do empréstimo
    */
   public EmprestimoPrazoAlteradoEvent(Object source, Long emprestimoId, String recipient) {
-    super(source, recipient, "Alteração do prazo de devolução", "templateAlteracaoPrazoDevolucao");
+    super(
+        source,
+        recipient,
+        "Alteração do prazo de devolução",
+        "templateAlteracaoPrazoDevolucao.html");
     this.emprestimoId = emprestimoId;
   }
 }

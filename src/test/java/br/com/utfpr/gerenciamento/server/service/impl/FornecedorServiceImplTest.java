@@ -1,17 +1,9 @@
 package br.com.utfpr.gerenciamento.server.service.impl;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.Mockito.*;
-
 import br.com.utfpr.gerenciamento.server.dto.FornecedorResponseDto;
-import br.com.utfpr.gerenciamento.server.model.Cidade;
-import br.com.utfpr.gerenciamento.server.model.Estado;
 import br.com.utfpr.gerenciamento.server.model.Fornecedor;
 import br.com.utfpr.gerenciamento.server.repository.FornecedorRepository;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
+import jakarta.persistence.EntityNotFoundException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -19,254 +11,438 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.modelmapper.ModelMapper;
+import org.springframework.data.domain.*;
+
+import java.util.Arrays;
+import java.util.List;
+import java.util.Optional;
+
+import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.*;
+import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 class FornecedorServiceImplTest {
 
-  @Mock private FornecedorRepository fornecedorRepository;
-  @Mock private ModelMapper modelMapper;
+    @Mock
+    private FornecedorRepository fornecedorRepository;
 
-  @InjectMocks private FornecedorServiceImpl fornecedorService;
+    @Mock
+    private ModelMapper modelMapper;
 
-  private Fornecedor fornecedor;
-  private FornecedorResponseDto fornecedorResponseDto;
+    @InjectMocks
+    private FornecedorServiceImpl fornecedorService;
 
-  @BeforeEach
-  void setUp() {
-    fornecedor = criarFornecedor(1L, "Fornecedor Teste Ltda", "Teste");
-    fornecedorResponseDto = criarFornecedorResponseDto(1L, "Fornecedor Teste Ltda", "Teste");
-  }
+    private Fornecedor fornecedor;
+    private FornecedorResponseDto fornecedorResponseDto;
+    private List<Fornecedor> fornecedores;
+    private List<FornecedorResponseDto> fornecedoresDto;
 
-  @Test
-  void testGetRepository_DeveRetornarFornecedorRepository() {
-    // When
-    var result = fornecedorService.getRepository();
+    @BeforeEach
+    void setUp() {
+        // Criar primeiro fornecedor
+        fornecedor = new Fornecedor();
+        fornecedor.setId(1L);
+        fornecedor.setRazaoSocial("Razão Social Teste LTDA");
+        fornecedor.setNomeFantasia("Fornecedor Teste LTDA");
+        fornecedor.setCnpj("12345678000195");
+        fornecedor.setIe("1234567890");
 
-    // Then
-    assertThat(result).isEqualTo(fornecedorRepository);
-  }
+        // Criar segundo fornecedor
+        Fornecedor outroFornecedor = new Fornecedor();
+        outroFornecedor.setId(2L);
+        outroFornecedor.setRazaoSocial("Outra Razão Social LTDA");
+        outroFornecedor.setNomeFantasia("Outro Fornecedor");
+        outroFornecedor.setCnpj("98765432000110");
+        outroFornecedor.setIe("0987654321");
 
-  @Test
-  void testToDto_DeveConverterFornecedorParaDTO() {
-    // Given
-    when(modelMapper.map(fornecedor, FornecedorResponseDto.class))
-        .thenReturn(fornecedorResponseDto);
+        fornecedores = Arrays.asList(fornecedor, outroFornecedor);
 
-    // When
-    FornecedorResponseDto result = fornecedorService.toDto(fornecedor);
+        // Criar primeiro DTO
+        fornecedorResponseDto = new FornecedorResponseDto();
+        fornecedorResponseDto.setId(1L);
+        fornecedorResponseDto.setRazaoSocial("Razão Social Teste LTDA");
+        fornecedorResponseDto.setNomeFantasia("Fornecedor Teste LTDA");
+        fornecedorResponseDto.setCnpj("12345678000195");
+        fornecedorResponseDto.setIe("1234567890");
 
-    // Then
-    assertNotNull(result);
-    assertThat(result).isEqualTo(fornecedorResponseDto);
-    verify(modelMapper).map(fornecedor, FornecedorResponseDto.class);
-  }
+        // Criar segundo DTO
+        FornecedorResponseDto outroFornecedorDto = new FornecedorResponseDto();
+        outroFornecedorDto.setId(2L);
+        outroFornecedorDto.setRazaoSocial("Outra Razão Social LTDA");
+        outroFornecedorDto.setNomeFantasia("Outro Fornecedor");
+        outroFornecedorDto.setCnpj("98765432000110");
+        outroFornecedorDto.setIe("0987654321");
 
-  @Test
-  void testToDto_ComFornecedorCompleto_DeveConverterCorretamente() {
-    // Given
-    fornecedor.setEmail("teste@example.com");
-    fornecedor.setTelefone("46999999999");
-    fornecedor.setObservacao("Observação teste");
+        fornecedoresDto = Arrays.asList(fornecedorResponseDto, outroFornecedorDto);
+    }
 
-    FornecedorResponseDto dtoEsperado =
-        criarFornecedorResponseDto(1L, "Fornecedor Teste Ltda", "Teste");
+    // Método helper para criar FornecedorResponseDto simplificado
+    private FornecedorResponseDto createFornecedorResponseDto(Long id, String nomeFantasia) {
+        FornecedorResponseDto dto = new FornecedorResponseDto();
+        dto.setId(id);
+        dto.setNomeFantasia(nomeFantasia);
+        dto.setRazaoSocial("Razão Social " + nomeFantasia);
+        dto.setCnpj("12345678000195");
+        dto.setIe("1234567890");
+        return dto;
+    }
 
-    when(modelMapper.map(fornecedor, FornecedorResponseDto.class)).thenReturn(dtoEsperado);
+    // Método helper para criar Fornecedor simplificado
+    private Fornecedor createFornecedor(Long id, String nomeFantasia) {
+        Fornecedor fornecedor = new Fornecedor();
+        fornecedor.setId(id);
+        fornecedor.setNomeFantasia(nomeFantasia);
+        fornecedor.setRazaoSocial("Razão Social " + nomeFantasia);
+        fornecedor.setCnpj("12345678000195");
+        fornecedor.setIe("1234567890");
+        return fornecedor;
+    }
 
-    // When
-    FornecedorResponseDto result = fornecedorService.toDto(fornecedor);
+    @Test
+    void testGetRepository() {
+        // When
+        var repository = fornecedorService.getRepository();
 
-    // Then
-    assertNotNull(result);
-    verify(modelMapper).map(fornecedor, FornecedorResponseDto.class);
-  }
+        // Then
+        assertNotNull(repository);
+        assertEquals(fornecedorRepository, repository);
+    }
 
-  @Test
-  void testToDto_ComFornecedorNulo_DeveRetornarNull() {
-    // Given
-    when(modelMapper.map(null, FornecedorResponseDto.class)).thenReturn(null);
+    @Test
+    void testToDto() {
+        // Given
+        when(modelMapper.map(fornecedor, FornecedorResponseDto.class))
+                .thenReturn(fornecedorResponseDto);
 
-    // When
-    FornecedorResponseDto result = fornecedorService.toDto(null);
+        // When
+        FornecedorResponseDto result = fornecedorService.toDto(fornecedor);
 
-    // Then
-    assertNull(result);
-  }
+        // Then
+        assertNotNull(result);
+        assertEquals(fornecedorResponseDto, result);
+        verify(modelMapper).map(fornecedor, FornecedorResponseDto.class);
+    }
 
-  @Test
-  void testToEntity_DeveConverterDTOParaFornecedor() {
-    // Given
-    when(modelMapper.map(fornecedorResponseDto, Fornecedor.class)).thenReturn(fornecedor);
+    @Test
+    void testToEntity() {
+        // Given
+        when(modelMapper.map(fornecedorResponseDto, Fornecedor.class))
+                .thenReturn(fornecedor);
 
-    // When
-    Fornecedor result = fornecedorService.toEntity(fornecedorResponseDto);
+        // When
+        Fornecedor result = fornecedorService.toEntity(fornecedorResponseDto);
 
-    // Then
-    assertNotNull(result);
-    assertThat(result).isEqualTo(fornecedor);
-    verify(modelMapper).map(fornecedorResponseDto, Fornecedor.class);
-  }
+        // Then
+        assertNotNull(result);
+        assertEquals(fornecedor, result);
+        verify(modelMapper).map(fornecedorResponseDto, Fornecedor.class);
+    }
 
-  @Test
-  void testToEntity_ComDTONull_DeveRetornarNull() {
-    // Given
-    when(modelMapper.map(null, Fornecedor.class)).thenReturn(null);
+    @Test
+    void testConvertToDto() {
+        // Given
+        when(modelMapper.map(fornecedor, FornecedorResponseDto.class))
+                .thenReturn(fornecedorResponseDto);
 
-    // When
-    Fornecedor result = fornecedorService.toEntity(null);
+        // When
+        FornecedorResponseDto result = fornecedorService.convertToDto(fornecedor);
 
-    // Then
-    assertNull(result);
-  }
+        // Then
+        assertNotNull(result);
+        assertEquals(fornecedorResponseDto, result);
+        verify(modelMapper).map(fornecedor, FornecedorResponseDto.class);
+    }
 
-  @Test
-  void testCompleteFornecedor_ComQueryVazia_DeveRetornarTodos() {
-    // Given
-    String query = "";
+    @Test
+    void testCompleteFornecedor_WithQuery() {
+        // Given
+        String query = "teste";
+        when(fornecedorRepository.findByNomeFantasiaLikeIgnoreCase("%" + query + "%"))
+                .thenReturn(fornecedores);
 
-    Fornecedor f1 = criarFornecedor(1L, "Fornecedor A", "A");
-    Fornecedor f2 = criarFornecedor(2L, "Fornecedor B", "B");
+        // When
+        List<Fornecedor> result = fornecedorService.completeFornecedor(query);
 
-    List<Fornecedor> fornecedores = Arrays.asList(f1, f2);
-    when(fornecedorRepository.findAll()).thenReturn(fornecedores);
+        // Then
+        assertNotNull(result);
+        assertEquals(2, result.size());
+        verify(fornecedorRepository).findByNomeFantasiaLikeIgnoreCase("%" + query + "%");
+        verify(fornecedorRepository, never()).findAll();
+    }
 
-    // When
-    List<Fornecedor> result = fornecedorService.completeFornecedor(query);
+    @Test
+    void testCompleteFornecedor_WithEmptyQuery() {
+        // Given
+        String query = "";
+        when(fornecedorRepository.findAll()).thenReturn(fornecedores);
 
-    // Then
-    assertNotNull(result);
-    assertThat(result).hasSize(2);
-    verify(fornecedorRepository).findAll();
-    verify(fornecedorRepository, never()).findByNomeFantasiaLikeIgnoreCase(anyString());
-  }
+        // When
+        List<Fornecedor> result = fornecedorService.completeFornecedor(query);
 
-  @Test
-  void testCompleteFornecedor_ComQuery_DeveBuscarPorNomeFantasia() {
-    // Given
-    String query = "Teste";
+        // Then
+        assertNotNull(result);
+        assertEquals(2, result.size());
+        verify(fornecedorRepository).findAll();
+        verify(fornecedorRepository, never()).findByNomeFantasiaLikeIgnoreCase(anyString());
+    }
 
-    Fornecedor fornecedor = criarFornecedor(1L, "Fornecedor Teste Ltda", "Teste");
+  
 
-    when(fornecedorRepository.findByNomeFantasiaLikeIgnoreCase("%Teste%"))
-        .thenReturn(Collections.singletonList(fornecedor));
+    @Test
+    void testFindAll() {
+        // Given
+        when(fornecedorRepository.findAll()).thenReturn(fornecedores);
+        when(modelMapper.map(any(Fornecedor.class), eq(FornecedorResponseDto.class)))
+                .thenReturn(fornecedorResponseDto)
+                .thenReturn(fornecedoresDto.get(1));
 
-    // When
-    List<Fornecedor> result = fornecedorService.completeFornecedor(query);
+        // When
+        List<FornecedorResponseDto> result = fornecedorService.findAll();
 
-    // Then
-    assertNotNull(result);
-    assertThat(result).hasSize(1);
-    assertThat(result.get(0).getNomeFantasia()).isEqualTo("Teste");
-    verify(fornecedorRepository).findByNomeFantasiaLikeIgnoreCase("%Teste%");
-    verify(fornecedorRepository, never()).findAll();
-  }
+        // Then
+        assertNotNull(result);
+        assertEquals(2, result.size());
+        verify(fornecedorRepository).findAll();
+        verify(modelMapper, times(2)).map(any(Fornecedor.class), eq(FornecedorResponseDto.class));
+    }
 
-  @Test
-  void testCompleteFornecedor_SemResultados_DeveRetornarListaVazia() {
-    // Given
-    String query = "Inexistente";
+    @Test
+    void testFindAllWithSort() {
+        // Given
+        Sort sort = Sort.by("nomeFantasia").ascending();
+        when(fornecedorRepository.findAll(sort)).thenReturn(fornecedores);
+        when(modelMapper.map(any(Fornecedor.class), eq(FornecedorResponseDto.class)))
+                .thenReturn(fornecedorResponseDto)
+                .thenReturn(fornecedoresDto.get(1));
 
-    when(fornecedorRepository.findByNomeFantasiaLikeIgnoreCase("%Inexistente%"))
-        .thenReturn(Collections.emptyList());
+        // When
+        List<FornecedorResponseDto> result = fornecedorService.findAll(sort);
 
-    // When
-    List<Fornecedor> result = fornecedorService.completeFornecedor(query);
+        // Then
+        assertNotNull(result);
+        assertEquals(2, result.size());
+        verify(fornecedorRepository).findAll(sort);
+        verify(modelMapper, times(2)).map(any(Fornecedor.class), eq(FornecedorResponseDto.class));
+    }
 
-    // Then
-    assertNotNull(result);
-    assertThat(result).isEmpty();
-    verify(fornecedorRepository).findByNomeFantasiaLikeIgnoreCase("%Inexistente%");
-  }
+    @Test
+    void testFindAllWithPageable() {
+        // Given
+        Pageable pageable = PageRequest.of(0, 10);
+        Page<Fornecedor> page = new PageImpl<>(fornecedores, pageable, fornecedores.size());
+        when(fornecedorRepository.findAll(pageable)).thenReturn(page);
+        when(modelMapper.map(any(Fornecedor.class), eq(FornecedorResponseDto.class)))
+                .thenReturn(fornecedorResponseDto)
+                .thenReturn(fornecedoresDto.get(1));
 
-  @Test
-  void testCompleteFornecedor_ComVariosResultados_DeveRetornarTodos() {
-    // Given
-    String query = "ABC";
+        // When
+        Page<FornecedorResponseDto> result = fornecedorService.findAll(pageable);
 
-    Fornecedor f1 = criarFornecedor(1L, "ABC Materiais", "ABC");
-    Fornecedor f2 = criarFornecedor(2L, "ABC Distribuidora", "ABC Dist");
-    Fornecedor f3 = criarFornecedor(3L, "ABC Equipamentos", "ABC Equip");
+        // Then
+        assertNotNull(result);
+        assertEquals(2, result.getContent().size());
+        assertEquals(2, result.getTotalElements());
+        verify(fornecedorRepository).findAll(pageable);
+        verify(modelMapper, times(2)).map(any(Fornecedor.class), eq(FornecedorResponseDto.class));
+    }
 
-    List<Fornecedor> fornecedores = Arrays.asList(f1, f2, f3);
-    when(fornecedorRepository.findByNomeFantasiaLikeIgnoreCase("%ABC%"))
-        .thenReturn(fornecedores);
+    @Test
+    void testSave() {
+        // Given
+        when(fornecedorRepository.save(fornecedor)).thenReturn(fornecedor);
+        when(modelMapper.map(fornecedor, FornecedorResponseDto.class))
+                .thenReturn(fornecedorResponseDto);
 
-    // When
-    List<Fornecedor> result = fornecedorService.completeFornecedor(query);
+        // When
+        FornecedorResponseDto result = fornecedorService.save(fornecedor);
 
-    // Then
-    assertNotNull(result);
-    assertThat(result).hasSize(3);
-    verify(fornecedorRepository).findByNomeFantasiaLikeIgnoreCase("%ABC%");
-  }
+        // Then
+        assertNotNull(result);
+        assertEquals(fornecedorResponseDto, result);
+        verify(fornecedorRepository).save(fornecedor);
+        verify(modelMapper).map(fornecedor, FornecedorResponseDto.class);
+    }
 
-  @Test
-  void testCompleteFornecedor_DeveConstruirQueryCorretamente() {
-    // Given
-    String query = "Test";
+    @Test
+    void testSaveAndFlush() {
+        // Given
+        when(fornecedorRepository.saveAndFlush(fornecedor)).thenReturn(fornecedor);
+        when(modelMapper.map(fornecedor, FornecedorResponseDto.class))
+                .thenReturn(fornecedorResponseDto);
 
-    when(fornecedorRepository.findByNomeFantasiaLikeIgnoreCase("%Test%"))
-        .thenReturn(Collections.emptyList());
+        // When
+        FornecedorResponseDto result = fornecedorService.saveAndFlush(fornecedor);
 
-    // When
-    fornecedorService.completeFornecedor(query);
+        // Then
+        assertNotNull(result);
+        assertEquals(fornecedorResponseDto, result);
+        verify(fornecedorRepository).saveAndFlush(fornecedor);
+        verify(modelMapper).map(fornecedor, FornecedorResponseDto.class);
+    }
 
-    // Then
-    verify(fornecedorRepository).findByNomeFantasiaLikeIgnoreCase("%Test%");
-  }
+    @Test
+    void testFindOne() {
+        // Given
+        Long id = 1L;
+        when(fornecedorRepository.findById(id)).thenReturn(Optional.of(fornecedor));
+        when(modelMapper.map(fornecedor, FornecedorResponseDto.class))
+                .thenReturn(fornecedorResponseDto);
 
-  @Test
-  void testCompleteFornecedor_CaseSensitive_DeveUsarIgnoreCase() {
-    // Given
-    String query = "TESTE";
+        // When
+        FornecedorResponseDto result = fornecedorService.findOne(id);
 
-    Fornecedor fornecedor = criarFornecedor(1L, "Fornecedor teste", "teste");
+        // Then
+        assertNotNull(result);
+        assertEquals(fornecedorResponseDto, result);
+        verify(fornecedorRepository).findById(id);
+        verify(modelMapper).map(fornecedor, FornecedorResponseDto.class);
+    }
 
-    when(fornecedorRepository.findByNomeFantasiaLikeIgnoreCase("%TESTE%"))
-        .thenReturn(Collections.singletonList(fornecedor));
+    @Test
+    void testFindOne_NotFound() {
+        // Given
+        Long id = 999L;
+        when(fornecedorRepository.findById(id)).thenReturn(Optional.empty());
 
-    // When
-    List<Fornecedor> result = fornecedorService.completeFornecedor(query);
+        // When & Then
+        assertThrows(EntityNotFoundException.class, () -> {
+            fornecedorService.findOne(id);
+        });
+        verify(fornecedorRepository).findById(id);
+        verify(modelMapper, never()).map(any(), eq(FornecedorResponseDto.class));
+    }
 
-    // Then
-    assertNotNull(result);
-    assertThat(result).hasSize(1);
-    verify(fornecedorRepository).findByNomeFantasiaLikeIgnoreCase("%TESTE%");
-  }
+    @Test
+    void testExists() {
+        // Given
+        Long id = 1L;
+        when(fornecedorRepository.existsById(id)).thenReturn(true);
 
-  // Métodos auxiliares para criar objetos de teste
+        // When
+        boolean result = fornecedorService.exists(id);
 
-  private Fornecedor criarFornecedor(Long id, String razaoSocial, String nomeFantasia) {
-    Fornecedor fornecedor = new Fornecedor();
-    fornecedor.setId(id);
-    fornecedor.setRazaoSocial(razaoSocial);
-    fornecedor.setNomeFantasia(nomeFantasia);
-    fornecedor.setCnpj("12345678901234");
-    fornecedor.setIe("123456789012");
+        // Then
+        assertTrue(result);
+        verify(fornecedorRepository).existsById(id);
+    }
 
-    Estado estado = new Estado();
-    estado.setId(1L);
-    estado.setNome("Paraná");
-    estado.setUf("PR");
+    @Test
+    void testCount() {
+        // Given
+        when(fornecedorRepository.count()).thenReturn(10L);
 
-    Cidade cidade = new Cidade();
-    cidade.setId(1L);
-    cidade.setNome("Pato Branco");
-    cidade.setEstado(estado);
+        // When
+        long result = fornecedorService.count();
 
-    fornecedor.setEstado(estado);
-    fornecedor.setCidade(cidade);
+        // Then
+        assertEquals(10L, result);
+        verify(fornecedorRepository).count();
+    }
 
-    return fornecedor;
-  }
+    @Test
+    void testDeleteById() {
+        // Given
+        Long id = 1L;
+        doNothing().when(fornecedorRepository).deleteById(id);
 
-  private FornecedorResponseDto criarFornecedorResponseDto(
-      Long id, String razaoSocial, String nomeFantasia) {
-    FornecedorResponseDto dto = new FornecedorResponseDto();
-    dto.setId(id);
-    dto.setRazaoSocial(razaoSocial);
-    dto.setNomeFantasia(nomeFantasia);
-    dto.setCnpj("12345678901234");
-    return dto;
-  }
+        // When
+        fornecedorService.delete(id);
+
+        // Then
+        verify(fornecedorRepository).deleteById(id);
+    }
+
+    @Test
+    void testDeleteByEntity() {
+        // Given
+        doNothing().when(fornecedorRepository).delete(fornecedor);
+
+        // When
+        fornecedorService.delete(fornecedor);
+
+        // Then
+        verify(fornecedorRepository).delete(fornecedor);
+    }
+
+    @Test
+    void testFlush() {
+        // Given
+        doNothing().when(fornecedorRepository).flush();
+
+        // When
+        fornecedorService.flush();
+
+        // Then
+        verify(fornecedorRepository).flush();
+    }
+
+    @Test
+    void testSaveAll() {
+        // Given
+        List<Fornecedor> entities = Arrays.asList(
+                createFornecedor(1L, "Fornecedor 1"),
+                createFornecedor(2L, "Fornecedor 2")
+        );
+
+        when(fornecedorRepository.saveAll(entities)).thenReturn(entities);
+        when(modelMapper.map(any(Fornecedor.class), eq(FornecedorResponseDto.class)))
+                .thenReturn(createFornecedorResponseDto(1L, "Fornecedor 1"))
+                .thenReturn(createFornecedorResponseDto(2L, "Fornecedor 2"));
+
+        // When
+        Iterable<FornecedorResponseDto> result = fornecedorService.save(entities);
+
+        // Then
+        assertNotNull(result);
+        verify(fornecedorRepository).saveAll(entities);
+        verify(modelMapper, times(2)).map(any(Fornecedor.class), eq(FornecedorResponseDto.class));
+    }
+
+    @Test
+    void testFindAllById() {
+        // Given
+        List<Long> ids = Arrays.asList(1L, 2L);
+        when(fornecedorRepository.findAllById(ids)).thenReturn(fornecedores);
+        when(modelMapper.map(any(Fornecedor.class), eq(FornecedorResponseDto.class)))
+                .thenReturn(fornecedorResponseDto)
+                .thenReturn(fornecedoresDto.get(1));
+
+        // When
+        List<FornecedorResponseDto> result = fornecedorService.findAllById(ids);
+
+        // Then
+        assertNotNull(result);
+        assertEquals(2, result.size());
+        verify(fornecedorRepository).findAllById(ids);
+        verify(modelMapper, times(2)).map(any(Fornecedor.class), eq(FornecedorResponseDto.class));
+    }
+
+    @Test
+    void testDeleteAll() {
+        // Given
+        doNothing().when(fornecedorRepository).deleteAll();
+
+        // When
+        fornecedorService.deleteAll();
+
+        // Then
+        verify(fornecedorRepository).deleteAll();
+    }
+
+    @Test
+    void testDeleteIterable() {
+        // Given
+        List<Fornecedor> entities = Arrays.asList(
+                createFornecedor(1L, "Fornecedor 1"),
+                createFornecedor(2L, "Fornecedor 2")
+        );
+        doNothing().when(fornecedorRepository).deleteAll(entities);
+
+        // When
+        fornecedorService.delete(entities);
+
+        // Then
+        verify(fornecedorRepository).deleteAll(entities);
+    }
 }

@@ -1,48 +1,37 @@
 <!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org">
+<html xmlns:th="http://www.thymeleaf.org" lang="pt-BR">
 <head>
-    <meta charset="UTF-8">
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Email Template</title>
     <style>
-        body {
-            font-family: Arial, sans-serif;
-            margin: 0;
-            padding: 0;
-        }
-        .container {
-            max-width: 600px;
-            margin: 0 auto;
-            padding: 20px;
-            background-color: #f8f8f8;
-            border-radius: 10px;
-        }
-        h1 {
-            font-size: 24px;
-            font-weight: bold;
-            text-align: center;
-            color: #5c5c5c;
-            margin-bottom: 20px;
-        }
-        p {
-            font-size: 16px;
-            line-height: 1.5;
-            color: #333;
-        }
-        .image-container {
-            text-align: center;
-            margin-top: 20px;
-        }
-        img {
-            max-width: 100%;
-            height: auto;
-            border-radius: 5px;
-        }
+        body { font-family: 'Montserrat', Arial, sans-serif; background-color: #f5f5f5; }
+        .container { background: #fff; border-radius: 12px; max-width: 600px; margin: 0 auto; box-shadow: 0 4px 15px rgba(0,0,0,0.08); }
+        .header { text-align: center; padding: 30px 20px 10px 20px; }
+        .header img { width: 120px; }
+        .body { padding: 20px 30px; text-align: center; }
+        .body h2 { color: #E6A74A; margin-bottom: 10px; }
+        .body p { color: #333; font-size: 16px; margin-bottom: 20px; }
+        .footer { background: #E6A74A; color: #fff; text-align: center; padding: 15px 10px; border-bottom-left-radius: 12px; border-bottom-right-radius: 12px; }
+        .footer strong { font-size: 16px; }
+        table { width: 100%; border-collapse: collapse; margin-bottom: 20px; margin-left: auto; margin-right: auto; }
+        th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+        th { background-color: #E6A74A; color: #fff; }
     </style>
 </head>
 <body>
 <div class="container">
-    <h1 th:text="${subject}">Contexto</h1>
-    <p th:utext="${content}">Mensagem teste...</p>
+    <div class="header">
+        <img th:src="${logoUrl}" src="/static/logo-fallback.png" alt="Logo UTFPR" width="120"/>
+    </div>
+    <div class="body">
+        <h2 th:text="${subject}">Assunto do Email</h2>
+        <p th:text="${content}">Conteúdo do email</p>
+    </div>
+    <div class="footer">
+        Sistema de Gestão de Laboratórios<br/>
+        <strong>UTFPR - Campus Pato Branco</strong>
+    </div>
 </div>
 </body>
 </html>

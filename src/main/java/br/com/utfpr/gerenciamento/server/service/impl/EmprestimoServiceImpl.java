@@ -33,6 +33,8 @@ import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Optional;
+import java.util.Set;
 import java.util.stream.Collectors;
 import lombok.extern.slf4j.Slf4j;
 import org.modelmapper.ModelMapper;
@@ -140,7 +142,7 @@ public class EmprestimoServiceImpl extends CrudServiceImpl<Emprestimo, Long, Emp
   }
 
   /**
-   * Método interno para executar Specification. Não deve ser chamado diretamente (use {@link
+   * Metodo interno para executar Specification. Não deve ser chamado diretamente (use {@link
    * #findAllPagedWithTextFilter}).
    *
    * <p><b>IMPORTANTE:</b> Não tem @Cacheable pois Specification não tem equals/hashCode estável.
@@ -157,7 +159,7 @@ public class EmprestimoServiceImpl extends CrudServiceImpl<Emprestimo, Long, Emp
    *
    * <p>Invalida cache de dashboard E cache de paginação para garantir dados atualizados.
    *
-   * <p>SECURITY: Requer role LABORATORISTA ou ADMINISTRADOR para prevenir invalidação não
+   * <p><b>SECURITY:</b> Requer role LABORATORISTA ou ADMINISTRADOR para prevenir invalidação não
    * autorizada do cache.
    *
    * @param entity Emprestimo a ser salvo (deve conter IDs válidos de usuários)
@@ -204,7 +206,7 @@ public class EmprestimoServiceImpl extends CrudServiceImpl<Emprestimo, Long, Emp
    *
    * <p>Invalida cache de dashboard E cache de paginação para garantir dados atualizados.
    *
-   * <p>SECURITY: Requer role LABORATORISTA ou ADMINISTRADOR para prevenir invalidação não
+   * <p><b>SECURITY:</b> Requer role LABORATORISTA ou ADMINISTRADOR para prevenir invalidação não
    * autorizada do cache.
    */
   @Override
@@ -221,7 +223,7 @@ public class EmprestimoServiceImpl extends CrudServiceImpl<Emprestimo, Long, Emp
    *
    * <p>Invalida cache de dashboard E cache de paginação para garantir dados atualizados.
    *
-   * <p>SECURITY: Requer role LABORATORISTA ou ADMINISTRADOR para prevenir invalidação não
+   * <p><b>SECURITY:</b> Requer role LABORATORISTA ou ADMINISTRADOR para prevenir invalidação não
    * autorizada do cache.
    */
   @Override
@@ -312,6 +314,9 @@ public class EmprestimoServiceImpl extends CrudServiceImpl<Emprestimo, Long, Emp
   @Transactional(readOnly = true)
   public List<EmprestimoResponseDto> findAllEmprestimosAbertosByUsuario(String username) {
     Usuario usuario = usuarioService.toEntity(usuarioService.findByUsername(username));
+    if (usuario == null) {
+      return Collections.emptyList();
+    }
     return emprestimoRepository.findAllByUsuarioEmprestimoAndDataDevolucaoIsNull(usuario).stream()
         .map(emprestimo -> toDto(emprestimo))
         .collect(Collectors.toList());
@@ -463,8 +468,11 @@ public class EmprestimoServiceImpl extends CrudServiceImpl<Emprestimo, Long, Emp
                   itemService.saldoItemIsValid(
                       itemService.getSaldoItem(empItem.getItem().getId()), empItem.getQtde()));
     }
-    emprestimo.setEmprestimoDevolucaoItem(
-        createEmprestimoItemDevolucao(emprestimo.getEmprestimoItem()));
+
+    // Cria itens de devolução para materiais consumíveis
+    Set<EmprestimoItem> itensSet =
+        Optional.ofNullable(emprestimo.getEmprestimoItem()).orElse(Collections.emptySet());
+    emprestimo.setEmprestimoDevolucaoItem(createEmprestimoItemDevolucao(new ArrayList<>(itensSet)));
   }
 
   @Override

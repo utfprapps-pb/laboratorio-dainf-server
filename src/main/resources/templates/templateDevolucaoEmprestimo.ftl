@@ -79,10 +79,14 @@
                 <tr class="tableBody">
                     <td>${item.item.nome}</td>
                     <td class="text-center">${item.qtde}</td>
-                    <#if item.statusDevolucao == 'D'>
-                        <td class="text-center">Normal</td>
+                    <#if item.statusDevolucao == 'P'>
+                        <td class="text-center">Pendente</td>
+                    <#elseif item.statusDevolucao == 'D'>
+                        <td class="text-center">Devolvido</td>
+                    <#elseif item.statusDevolucao == 'S'>
+                        <td class="text-center">Saida</td>
                     <#else>
-                        <td class="text-center">Outros</td>
+                        <td class="text-center">-</td>
                     </#if>
                 </tr>
             </#foreach>
