@@ -1,11 +1,10 @@
 package br.com.utfpr.gerenciamento.server.service.impl;
 
+import br.com.utfpr.gerenciamento.server.exception.EntityNotFoundException;
 import br.com.utfpr.gerenciamento.server.service.CrudService;
-import jakarta.persistence.EntityNotFoundException;
 import jakarta.persistence.criteria.Predicate;
 import java.io.Serializable;
 import java.util.List;
-import java.util.stream.Collectors;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
@@ -19,31 +18,23 @@ public abstract class CrudServiceImpl<T, ID extends Serializable, DTO>
 
   protected abstract JpaRepository<T, ID> getRepository();
 
-  /**
-   * 🔁 Métodos para conversão — devem ser implementados nas subclasses (ex: usando ModelMapper,
-   * MapStruct, ou manualmente)
-   */
-  public abstract DTO toDto(T entity);
-
-  public abstract T toEntity(DTO dto);
-
   @Override
   @Transactional(readOnly = true)
   public List<DTO> findAll() {
-    return getRepository().findAll().stream().map(this::toDto).collect(Collectors.toList());
+    return getRepository().findAll().stream().map(this::toDto).toList();
   }
 
   @Override
   @Transactional(readOnly = true)
   public List<DTO> findAll(Sort sort) {
-    return getRepository().findAll(sort).stream().map(this::toDto).collect(Collectors.toList());
+    return getRepository().findAll(sort).stream().map(this::toDto).toList();
   }
 
   @Override
   @Transactional(readOnly = true)
   public Page<DTO> findAll(Pageable pageable) {
     Page<T> page = getRepository().findAll(pageable);
-    List<DTO> dtoList = page.getContent().stream().map(this::toDto).collect(Collectors.toList());
+    List<DTO> dtoList = page.getContent().stream().map(this::toDto).toList();
     return new PageImpl<>(dtoList, pageable, page.getTotalElements());
   }
 
@@ -63,7 +54,7 @@ public abstract class CrudServiceImpl<T, ID extends Serializable, DTO>
   @Transactional
   public Iterable<DTO> save(Iterable<T> iterable) {
     List<T> entities = (List<T>) iterable;
-    return getRepository().saveAll(entities).stream().map(this::toDto).collect(Collectors.toList());
+    return getRepository().saveAll(entities).stream().map(this::toDto).toList();
   }
 
   @Override
@@ -86,7 +77,7 @@ public abstract class CrudServiceImpl<T, ID extends Serializable, DTO>
   @Override
   @Transactional(readOnly = true)
   public List<DTO> findAllById(Iterable<ID> ids) {
-    return getRepository().findAllById(ids).stream().map(this::toDto).collect(Collectors.toList());
+    return getRepository().findAllById(ids).stream().map(this::toDto).toList();
   }
 
   @Override
@@ -163,7 +154,7 @@ public abstract class CrudServiceImpl<T, ID extends Serializable, DTO>
     var repo =
         (org.springframework.data.jpa.repository.JpaSpecificationExecutor<T>) getRepository();
     Page<T> page = repo.findAll(specification, pageable);
-    List<DTO> dtoList = page.getContent().stream().map(this::toDto).collect(Collectors.toList());
+    List<DTO> dtoList = page.getContent().stream().map(this::toDto).toList();
     return new PageImpl<>(dtoList, pageable, page.getTotalElements());
   }
 }
