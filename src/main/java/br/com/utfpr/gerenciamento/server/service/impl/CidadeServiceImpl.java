@@ -57,9 +57,7 @@ public class CidadeServiceImpl extends CrudServiceImpl<Cidade, Long, CidadeRespo
     if (estado == null) return List.of();
 
     if (query == null || query.isBlank()) {
-      return this.cidadeRepository.findAllByEstado(estado).stream()
-          .map(this::toDto)
-          .toList();
+      return this.cidadeRepository.findAllByEstado(estado).stream().map(this::toDto).toList();
     } else {
       return this.cidadeRepository
           .findByNomeLikeIgnoreCaseAndEstado("%" + query + "%", estado)

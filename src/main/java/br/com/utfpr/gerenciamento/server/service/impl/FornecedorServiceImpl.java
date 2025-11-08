@@ -47,5 +47,4 @@ public class FornecedorServiceImpl extends CrudServiceImpl<Fornecedor, Long, For
       return fornecedorRepository.findByNomeFantasiaLikeIgnoreCase("%" + query + "%");
     }
   }
-
 }

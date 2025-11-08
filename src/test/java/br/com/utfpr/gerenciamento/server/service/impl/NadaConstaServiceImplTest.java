@@ -32,20 +32,21 @@ import org.springframework.test.context.ActiveProfiles;
 @SpringBootTest
 @ActiveProfiles("test")
 class NadaConstaServiceImplTest {
-    private UsuarioResponseDto buildUsuarioResponseDto(Usuario usuario) {
-        UsuarioResponseDto usuarioDto = new UsuarioResponseDto();
-        usuarioDto.setId(usuario.getId());
-        usuarioDto.setNome(usuario.getNome());
-        usuarioDto.setUsername(usuario.getUsername());
-        usuarioDto.setDocumento(usuario.getDocumento());
-        usuarioDto.setEmail(usuario.getEmail());
-        usuarioDto.setTelefone(null);
-        usuarioDto.setPermissoes(null);
-        usuarioDto.setFotoUrl(null);
-        usuarioDto.setEmailVerificado(false);
-        usuarioDto.setAuthorities(null);
-        return usuarioDto;
-    }
+  private UsuarioResponseDto buildUsuarioResponseDto(Usuario usuario) {
+    UsuarioResponseDto usuarioDto = new UsuarioResponseDto();
+    usuarioDto.setId(usuario.getId());
+    usuarioDto.setNome(usuario.getNome());
+    usuarioDto.setUsername(usuario.getUsername());
+    usuarioDto.setDocumento(usuario.getDocumento());
+    usuarioDto.setEmail(usuario.getEmail());
+    usuarioDto.setTelefone(null);
+    usuarioDto.setPermissoes(null);
+    usuarioDto.setFotoUrl(null);
+    usuarioDto.setEmailVerificado(false);
+    usuarioDto.setAuthorities(null);
+    return usuarioDto;
+  }
+
   private NadaConstaRepository nadaConstaRepository;
   private UsuarioService usuarioService;
   private EmprestimoService emprestimoService;

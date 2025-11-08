@@ -178,7 +178,6 @@ class ItemControllerTest {
     assertThat(result).isNotNull();
     assertThat(result.getId()).isEqualTo(1L);
     Mockito.verify(itemService).save(item);
-
   }
 
   @Test
@@ -227,4 +226,4 @@ class ItemControllerTest {
     // Then
     assertThat(result).isEqualTo(5L);
   }
-} 
+}

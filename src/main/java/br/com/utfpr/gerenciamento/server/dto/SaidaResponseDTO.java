@@ -1,10 +1,9 @@
-
 package br.com.utfpr.gerenciamento.server.dto;
 
-import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
-import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import br.com.utfpr.gerenciamento.server.config.LocalDateDeserializer;
 import br.com.utfpr.gerenciamento.server.config.LocalDateSerializer;
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
+import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import java.time.LocalDate;
 import java.util.List;
 import lombok.AllArgsConstructor;

@@ -302,6 +302,4 @@ public class ItemServiceImpl extends CrudServiceImpl<Item, Long, ItemResponseDto
     item.setDisponivelEmprestimoCalculado(disponivel);
     return item;
   }
-
-
 }
