@@ -86,6 +86,7 @@ public class ItemController extends CrudController<Item, Long, ItemResponseDto> 
   @GetMapping("/complete")
   public List<ItemResponseDto> complete(
       @RequestParam("query") String query, @RequestParam("hasEstoque") Boolean hasEstoque) {
+    // TODO: Migrar parâmetro para disponivelParaEmprestimo quando atualizar frontend
     return itemService.itemComplete(query, hasEstoque);
   }
 
