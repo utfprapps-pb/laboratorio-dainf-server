@@ -25,9 +25,7 @@ public interface ItemRepository extends JpaRepository<Item, Long>, JpaSpecificat
   @Query("SELECT COUNT(i.id) FROM Item i WHERE i.saldo <= i.qtdeMinima")
   long countAllByQtdeMinimaIsLessThanSaldo();
 
-  List<Item> findAllByOrderByNome();
-
-  /**
+    /**
    * Busca Item com quantidade emprestada calculada via agregação SQL.
    *
    * <p><b>Spring Data JPA Projection:</b> Retorna interface projection automaticamente mapeada
@@ -49,8 +47,7 @@ public interface ItemRepository extends JpaRepository<Item, Long>, JpaSpecificat
       """
       SELECT i as item, COALESCE(SUM(ei.qtde), 0) as qtdeEmprestada
       FROM Item i
-      LEFT JOIN EmprestimoItem ei ON ei.item.id = i.id
-      LEFT JOIN Emprestimo e ON ei.emprestimo.id = e.id AND e.dataDevolucao IS NULL
+      LEFT JOIN EmprestimoItem ei ON ei.item.id = i.id AND ei.emprestimo.dataDevolucao IS NULL
       WHERE i.id = :id
       GROUP BY i.id
       """)
@@ -86,8 +83,7 @@ public interface ItemRepository extends JpaRepository<Item, Long>, JpaSpecificat
              i.grupo as grupo,
              COALESCE(SUM(ei.qtde), 0) as qtdeEmprestada
       FROM Item i
-      LEFT JOIN EmprestimoItem ei ON ei.item.id = i.id
-      LEFT JOIN Emprestimo e ON ei.emprestimo.id = e.id AND e.dataDevolucao IS NULL
+      LEFT JOIN EmprestimoItem ei ON ei.item.id = i.id AND ei.emprestimo.dataDevolucao IS NULL
       WHERE (:query IS NULL OR :query = '' OR LOWER(i.nome) LIKE LOWER(CONCAT('%', :query, '%')))
       GROUP BY i.id, i.nome, i.saldo, i.tipoItem, i.grupo
       ORDER BY i.nome
@@ -117,8 +113,7 @@ public interface ItemRepository extends JpaRepository<Item, Long>, JpaSpecificat
              i.grupo as grupo,
              COALESCE(SUM(ei.qtde), 0) as qtdeEmprestada
       FROM Item i
-      LEFT JOIN EmprestimoItem ei ON ei.item.id = i.id
-      LEFT JOIN Emprestimo e ON ei.emprestimo.id = e.id AND e.dataDevolucao IS NULL
+      LEFT JOIN EmprestimoItem ei ON ei.item.id = i.id AND ei.emprestimo.dataDevolucao IS NULL
       WHERE (:query IS NULL OR :query = '' OR LOWER(i.nome) LIKE LOWER(CONCAT('%', :query, '%')))
       AND (
         (i.tipoItem = 'C' AND i.saldo > 0)
