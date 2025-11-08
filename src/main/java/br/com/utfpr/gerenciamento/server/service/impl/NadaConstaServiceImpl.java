@@ -67,7 +67,7 @@ public class NadaConstaServiceImpl extends CrudServiceImpl<NadaConsta, Long, Nad
   /**
    * Busca todas as solicitações de Nada Consta pelo username do usuário.
    *
-   * @param username Username do usuário
+   * @param entity Username do usuário
    * @return Lista de NadaConstaResponseDto
    */
   @Override
@@ -78,7 +78,7 @@ public class NadaConstaServiceImpl extends CrudServiceImpl<NadaConsta, Long, Nad
   /**
    * Converte uma entidade NadaConsta para o DTO de resposta.
    *
-   * @param nadaConsta Entidade NadaConsta
+   * @param nadaConstaResponseDto Entidade NadaConsta
    * @return NadaConstaResponseDto correspondente
    */
   @Override
@@ -192,8 +192,10 @@ public class NadaConstaServiceImpl extends CrudServiceImpl<NadaConsta, Long, Nad
     }
     Usuario usuario = nadaConsta.getUsuario();
     List<Emprestimo> emprestimosAbertos =
-        emprestimoService.findAllEmprestimosAbertosByUsuario(usuario.getUsername());
-    if (emprestimosAbertos == null || emprestimosAbertos.isEmpty()) {
+        emprestimoService.findAllEmprestimosAbertosByUsuario(usuario.getUsername()).stream()
+            .map(emprestimoService::toEntity)
+            .toList();
+    if (emprestimosAbertos.isEmpty()) {
       nadaConsta.setStatus(NadaConstaStatus.COMPLETED);
       nadaConstaRepository.save(nadaConsta);
       // Dispara evento de conclusão
@@ -236,5 +238,10 @@ public class NadaConstaServiceImpl extends CrudServiceImpl<NadaConsta, Long, Nad
     usuarioService.save(usuario);
     log.info("Nada Consta id={} invalidado (status INVALIDATED) e usuário reativado.", id);
     return convertToDto(nadaConsta);
+  }
+
+  @Override
+  public NadaConstaResponseDto convertToDto(NadaConsta entity) {
+    return modelMapper.map(entity, NadaConstaResponseDto.class);
   }
 }

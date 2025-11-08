@@ -25,6 +25,7 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Stream;
 import org.junit.jupiter.api.BeforeEach;
@@ -285,7 +286,9 @@ class NadaConstaServiceImplTest {
   void shouldHandleNullEmprestimosList() {
     Usuario usuario =
         Usuario.builder().id(2L).documento("222222").email("user@utfpr.edu.br").ativo(true).build();
-    when(usuarioService.findByDocumento("222222")).thenReturn(usuario);
+    UsuarioResponseDto usuarioDto = usuarioFactory.criarUsuarioResponseDto(usuario);
+    when(usuarioService.findByDocumento("222222")).thenReturn(usuarioDto);
+    when(usuarioService.toEntity(any(UsuarioResponseDto.class))).thenReturn(usuario);
     when(emprestimoService.findAllEmprestimosAbertosByUsuario(anyString())).thenReturn(null);
     when(systemConfigService.getEmailNadaConsta()).thenReturn("destino@utfpr.edu.br");
     NadaConsta nadaConsta =
@@ -297,7 +300,8 @@ class NadaConstaServiceImplTest {
             .createdBy("user")
             .build();
     when(nadaConstaRepository.save(any())).thenReturn(nadaConsta);
-    when(usuarioService.save(any(Usuario.class))).thenReturn(usuario);
+    when(usuarioService.save(any(Usuario.class)))
+        .thenReturn(usuarioFactory.criarUsuarioResponseDto(usuario));
     NadaConstaResponseDto dto = service.solicitarNadaConsta("222222");
     assertNotNull(dto);
     verify(eventPublisher).publishEvent(any(NadaConstaEmitidoEvent.class));
@@ -308,7 +312,9 @@ class NadaConstaServiceImplTest {
   void shouldHandleNullSystemConfigEmail() {
     Usuario usuario =
         Usuario.builder().id(3L).documento("333333").email("user@utfpr.edu.br").ativo(true).build();
-    when(usuarioService.findByDocumento("333333")).thenReturn(usuario);
+    when(usuarioService.findByDocumento("333333"))
+        .thenReturn(usuarioFactory.criarUsuarioResponseDto(usuario));
+    when(usuarioService.toEntity(any(UsuarioResponseDto.class))).thenReturn(usuario);
     when(emprestimoService.findAllEmprestimosAbertosByUsuario(anyString())).thenReturn(List.of());
     when(systemConfigService.getEmailNadaConsta()).thenReturn(null);
     NadaConsta nadaConsta =
@@ -320,7 +326,8 @@ class NadaConstaServiceImplTest {
             .createdBy("user")
             .build();
     when(nadaConstaRepository.save(any())).thenReturn(nadaConsta);
-    when(usuarioService.save(any(Usuario.class))).thenReturn(usuario);
+    when(usuarioService.save(any(Usuario.class)))
+        .thenReturn(usuarioFactory.criarUsuarioResponseDto(usuario));
     NadaConstaResponseDto dto = service.solicitarNadaConsta("333333");
     assertNotNull(dto);
     // Should NOT publish event if email is null/invalid
@@ -332,7 +339,9 @@ class NadaConstaServiceImplTest {
   void shouldHandleModelMapperReturnsNull() {
     Usuario usuario =
         Usuario.builder().id(4L).documento("444444").email("user@utfpr.edu.br").ativo(true).build();
-    when(usuarioService.findByDocumento("444444")).thenReturn(usuario);
+    UsuarioResponseDto usuarioDto = usuarioFactory.criarUsuarioResponseDto(usuario);
+    when(usuarioService.findByDocumento("444444")).thenReturn(usuarioDto);
+    when(usuarioService.toEntity(any(UsuarioResponseDto.class))).thenReturn(usuario);
     when(emprestimoService.findAllEmprestimosAbertosByUsuario(anyString())).thenReturn(List.of());
     when(systemConfigService.getEmailNadaConsta()).thenReturn("destino@utfpr.edu.br");
     NadaConsta nadaConsta =
@@ -344,7 +353,8 @@ class NadaConstaServiceImplTest {
             .createdBy("user")
             .build();
     when(nadaConstaRepository.save(any())).thenReturn(nadaConsta);
-    when(usuarioService.save(any(Usuario.class))).thenReturn(usuario);
+    when(usuarioService.save(any(Usuario.class)))
+        .thenReturn(usuarioFactory.criarUsuarioResponseDto(usuario));
     when(modelMapper.map(any(), eq(NadaConstaResponseDto.class))).thenReturn(null);
     NadaConstaResponseDto dto = service.solicitarNadaConsta("444444");
     assertNull(dto);
@@ -356,7 +366,8 @@ class NadaConstaServiceImplTest {
   void shouldThrowExceptionWhenRepositoryFails() {
     Usuario usuario =
         Usuario.builder().id(5L).documento("555555").email("user@utfpr.edu.br").ativo(true).build();
-    when(usuarioService.findByDocumento("555555")).thenReturn(usuario);
+    when(usuarioService.findByDocumento("555555"))
+        .thenReturn(usuarioFactory.criarUsuarioResponseDto(usuario));
     when(emprestimoService.findAllEmprestimosAbertosByUsuario(anyString())).thenReturn(List.of());
     when(systemConfigService.getEmailNadaConsta()).thenReturn("destino@utfpr.edu.br");
     when(nadaConstaRepository.save(any())).thenThrow(new RuntimeException("DB error"));
@@ -367,7 +378,8 @@ class NadaConstaServiceImplTest {
   void shouldThrowExceptionWhenUsuarioServiceFails() {
     Usuario usuario =
         Usuario.builder().id(6L).documento("666666").email("user@utfpr.edu.br").ativo(true).build();
-    when(usuarioService.findByDocumento("666666")).thenReturn(usuario);
+    when(usuarioService.findByDocumento("666666"))
+        .thenReturn(usuarioFactory.criarUsuarioResponseDto(usuario));
     when(emprestimoService.findAllEmprestimosAbertosByUsuario(anyString())).thenReturn(List.of());
     when(systemConfigService.getEmailNadaConsta()).thenReturn("destino@utfpr.edu.br");
     NadaConsta nadaConsta =
@@ -387,7 +399,9 @@ class NadaConstaServiceImplTest {
   @Test
   void shouldHandleUserWithoutEmail() {
     Usuario usuario = Usuario.builder().id(7L).documento("777777").email(null).ativo(true).build();
-    when(usuarioService.findByDocumento("777777")).thenReturn(usuario);
+    when(usuarioService.findByDocumento("777777"))
+        .thenReturn(usuarioFactory.criarUsuarioResponseDto(usuario));
+    when(usuarioService.toEntity(any(UsuarioResponseDto.class))).thenReturn(usuario);
     when(emprestimoService.findAllEmprestimosAbertosByUsuario(anyString())).thenReturn(List.of());
     when(systemConfigService.getEmailNadaConsta()).thenReturn("destino@utfpr.edu.br");
     NadaConsta nadaConsta =
@@ -399,7 +413,8 @@ class NadaConstaServiceImplTest {
             .createdBy("user")
             .build();
     when(nadaConstaRepository.save(any())).thenReturn(nadaConsta);
-    when(usuarioService.save(any(Usuario.class))).thenReturn(usuario);
+    when(usuarioService.save(any(Usuario.class)))
+        .thenReturn(usuarioFactory.criarUsuarioResponseDto(usuario));
     NadaConstaResponseDto dto = service.solicitarNadaConsta("777777");
     assertNotNull(dto);
     verify(eventPublisher).publishEvent(any(NadaConstaEmitidoEvent.class));
@@ -417,9 +432,10 @@ class NadaConstaServiceImplTest {
             .build();
     NadaConsta nadaConsta =
         NadaConsta.builder().id(10L).usuario(usuario).status(NadaConstaStatus.COMPLETED).build();
-    when(nadaConstaRepository.findById(10L)).thenReturn(java.util.Optional.of(nadaConsta));
+    when(nadaConstaRepository.findById(10L)).thenReturn(Optional.of(nadaConsta));
     when(nadaConstaRepository.save(any())).thenReturn(nadaConsta);
-    when(usuarioService.save(any(Usuario.class))).thenReturn(usuario);
+    when(usuarioService.save(any(Usuario.class)))
+        .thenReturn(usuarioFactory.criarUsuarioResponseDto(usuario));
     NadaConstaResponseDto dto = service.invalidarNadaConsta(10L);
     assertNotNull(dto);
     assertEquals(NadaConstaStatus.INVALIDATED, nadaConsta.getStatus());
