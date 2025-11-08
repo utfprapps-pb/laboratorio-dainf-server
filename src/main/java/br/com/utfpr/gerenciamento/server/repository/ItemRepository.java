@@ -25,7 +25,7 @@ public interface ItemRepository extends JpaRepository<Item, Long>, JpaSpecificat
   @Query("SELECT COUNT(i.id) FROM Item i WHERE i.saldo <= i.qtdeMinima")
   long countAllByQtdeMinimaIsLessThanSaldo();
 
-    /**
+  /**
    * Busca Item com quantidade emprestada calculada via agregação SQL.
    *
    * <p><b>Spring Data JPA Projection:</b> Retorna interface projection automaticamente mapeada
