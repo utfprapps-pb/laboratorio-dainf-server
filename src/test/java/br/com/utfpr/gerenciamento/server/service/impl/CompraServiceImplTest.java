@@ -189,8 +189,7 @@ class CompraServiceImplTest {
     // Given
     LocalDate data = LocalDate.of(2025, 5, 15);
 
-    DashboardItensAdquiridos item =
-        new DashboardItensAdquiridos(new BigDecimal("5"), "Webcam HD");
+    DashboardItensAdquiridos item = new DashboardItensAdquiridos(new BigDecimal("5"), "Webcam HD");
 
     when(compraRepository.findItensMaisAdquiridos(data, data))
         .thenReturn(Collections.singletonList(item));
@@ -214,8 +213,7 @@ class CompraServiceImplTest {
         new DashboardItensAdquiridos(new BigDecimal("100"), "Cabo HDMI");
     DashboardItensAdquiridos item2 =
         new DashboardItensAdquiridos(new BigDecimal("75"), "Adaptador USB");
-    DashboardItensAdquiridos item3 =
-        new DashboardItensAdquiridos(new BigDecimal("50"), "Hub USB");
+    DashboardItensAdquiridos item3 = new DashboardItensAdquiridos(new BigDecimal("50"), "Hub USB");
     DashboardItensAdquiridos item4 =
         new DashboardItensAdquiridos(new BigDecimal("25"), "Mouse Pad");
 

@@ -17,6 +17,7 @@ import lombok.*;
 @Builder
 public class CompraResponseDTO {
   private Long id;
+
   @JsonSerialize(using = LocalDateSerializer.class)
   @JsonDeserialize(using = LocalDateDeserializer.class)
   private LocalDate dataCompra;
