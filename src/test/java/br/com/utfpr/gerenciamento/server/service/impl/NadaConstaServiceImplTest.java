@@ -316,7 +316,7 @@ class NadaConstaServiceImplTest {
             .build();
     NadaConsta nadaConsta =
         NadaConsta.builder().id(11L).usuario(usuario).status(NadaConstaStatus.PENDING).build();
-    when(nadaConstaRepository.findById(11L)).thenReturn(java.util.Optional.of(nadaConsta));
+    when(nadaConstaRepository.findById(11L)).thenReturn(Optional.of(nadaConsta));
     assertThrows(NadaConstaException.class, () -> service.invalidarNadaConsta(11L));
   }
 
@@ -337,7 +337,7 @@ class NadaConstaServiceImplTest {
             .build();
     NadaConsta nadaConsta =
         NadaConsta.builder().id(12L).usuario(usuario).status(NadaConstaStatus.PENDING).build();
-    when(nadaConstaRepository.findById(12L)).thenReturn(java.util.Optional.of(nadaConsta));
+    when(nadaConstaRepository.findById(12L)).thenReturn(Optional.of(nadaConsta));
     when(emprestimoService.findAllEmprestimosAbertosByUsuario(usuario.getUsername()))
         .thenReturn(List.of());
     when(nadaConstaRepository.save(any())).thenReturn(nadaConsta);
@@ -358,7 +358,7 @@ class NadaConstaServiceImplTest {
             .build();
     NadaConsta nadaConsta =
         NadaConsta.builder().id(13L).usuario(usuario).status(NadaConstaStatus.COMPLETED).build();
-    when(nadaConstaRepository.findById(13L)).thenReturn(java.util.Optional.of(nadaConsta));
+    when(nadaConstaRepository.findById(13L)).thenReturn(Optional.of(nadaConsta));
     assertThrows(NadaConstaException.class, () -> service.verificarPendenciasNadaConsta(13L));
   }
 
