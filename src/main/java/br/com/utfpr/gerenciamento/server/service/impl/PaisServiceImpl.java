@@ -73,5 +73,4 @@ public class PaisServiceImpl extends CrudServiceImpl<Pais, Long, PaisResponseDto
     // Limpa cache ao deletar país
     super.delete(id);
   }
-
 }

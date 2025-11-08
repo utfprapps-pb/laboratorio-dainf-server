@@ -32,6 +32,5 @@ public interface ItemService extends CrudService<Item, Long, ItemResponseDto> {
 
   void copyImagesItem(List<ItemImage> itemImages, Long id);
 
-
   Item findOneWithDisponibilidade(Long id);
 }
