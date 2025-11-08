@@ -5,6 +5,8 @@ import br.com.utfpr.gerenciamento.server.event.emprestimo.EmprestimoFinalizadoEv
 import br.com.utfpr.gerenciamento.server.event.emprestimo.EmprestimoPrazoAlteradoEvent;
 import br.com.utfpr.gerenciamento.server.event.emprestimo.EmprestimoPrazoProximoEvent;
 import br.com.utfpr.gerenciamento.server.event.item.EstoqueMinNotificacaoEvent;
+import br.com.utfpr.gerenciamento.server.event.nadaConsta.NadaConstaEmitidoEvent;
+import br.com.utfpr.gerenciamento.server.event.nadaConsta.NadaConstaPendenciasEvent;
 import br.com.utfpr.gerenciamento.server.event.usuario.UsuarioCriadoEvent;
 import br.com.utfpr.gerenciamento.server.exception.EntityNotFoundException;
 import br.com.utfpr.gerenciamento.server.mapper.EmprestimoTemplateMapper;
@@ -125,43 +127,20 @@ public class EmailEventListener {
       propagation = org.springframework.transaction.annotation.Propagation.REQUIRES_NEW,
       timeout = EMAIL_TRANSACTION_TIMEOUT_SECONDS)
   public void handleEmailEvent(EmailEvent event) {
+    Object templateData = null;
     try {
-      log.info(
-          "Processando evento de email: {} para {}",
-          event.getClass().getSimpleName(),
-          EmailUtils.maskEmail(event.getRecipient()));
-
-      // Prepara dados do template (carrega entidades em nova transação)
-      Object templateData = prepareTemplateDataForEvent(event);
-
-      // Envia email
-      emailService.sendEmailWithTemplate(
-          templateData, event.getRecipient(), event.getSubject(), event.getTemplateName());
-
-      log.info(
-          "Email enviado com sucesso: {} para {}",
-          event.getSubject(),
-          EmailUtils.maskEmail(event.getRecipient()));
-
-    } catch (MailException e) {
-      // MailException é RETRYABLE - propaga para @Retryable funcionar
-      log.warn(
-          "Falha temporária ao enviar email {} para {} (tentará novamente): {}",
-          event.getSubject(),
-          EmailUtils.maskEmail(event.getRecipient()),
-          e.getMessage());
-      throw e; // CRITICAL: Rethrow para permitir retry automático
-
+      templateData = prepareTemplateDataForEvent(event);
     } catch (EntityNotFoundException | IllegalArgumentException e) {
-      // Exceções de negócio NÃO são retryable - loga e suprime
       log.error(
-          "Erro não-retryável ao processar email {} para {}: {}",
+          "Erro não-retryável ao preparar dados do template para email {}: {}",
           event.getSubject(),
           EmailUtils.maskEmail(event.getRecipient()),
           e.getMessage(),
           e);
-      // NÃO propaga - evita afetar transação original
+      return;
     }
+    processEmailWithTemplate(
+        templateData, event.getRecipient(), event.getSubject(), event.getTemplateName());
   }
 
   /**
@@ -192,53 +171,84 @@ public class EmailEventListener {
       timeout = EMAIL_TRANSACTION_TIMEOUT_SECONDS)
   public void handleEstoqueMinNotificacaoEvent(EstoqueMinNotificacaoEvent event) {
     try {
-      log.info(
-          "Processando evento de notificação de estoque mínimo para {}",
-          EmailUtils.maskEmail(event.getRecipient()));
-
-      // Gera relatório Jasper em PDF
       byte[] reportPdf =
           JasperExportManager.exportReportToPdf(
               relatorioService.generateReport(RELATORIO_ESTOQUE_MINIMO_ID, null));
-
-      // Constrói email com template FreeMarker
       String conteudo = emailService.buildTemplateEmail(null, event.getTemplateName());
-
-      // Monta email com anexo
       Email email =
           Email.builder()
-              .para(event.getRecipient()) // Usa recipient do evento (configurável por ambiente)
-              .de(emailFrom) // Usa conta SMTP autenticada (SPF/DMARC compliance)
+              .para(event.getRecipient())
+              .de(emailFrom)
               .titulo(event.getSubject())
               .conteudo(conteudo)
               .build();
-
-      // Adiciona PDF como anexo
       email.addFile("itensAtingiramEstoqueMin.pdf", reportPdf);
-
-      // Envia email
-      emailService.enviar(email);
-
-      log.info(
-          "Email de estoque mínimo enviado com sucesso para {}",
-          EmailUtils.maskEmail(event.getRecipient()));
-
+      processEmailWithAttachment(email, event.getRecipient(), event.getSubject());
     } catch (MailException e) {
-      // MailException é RETRYABLE - propaga para @Retryable funcionar
       log.warn(
           "Falha temporária ao enviar notificação de estoque mínimo para {} (tentará novamente): {}",
           EmailUtils.maskEmail(event.getRecipient()),
           e.getMessage());
-      throw e; // CRITICAL: Rethrow para permitir retry automático
-
+      throw e;
     } catch (Exception e) {
-      // Outras exceções (geração PDF, template, etc.) NÃO são retryable
       log.error(
           "Erro não-retryável ao processar notificação de estoque mínimo para {}: {}",
           EmailUtils.maskEmail(event.getRecipient()),
           e.getMessage(),
           e);
-      // NÃO propaga - evita afetar transação original
+    }
+  }
+
+  // REMOVIDOS: Handlers duplicados para NadaConstaEmitidoEvent e NadaConstaPendenciasEvent
+
+  /**
+   * Helper to process email sending with template and logging, with retryable exception
+   * propagation.
+   */
+  private void processEmailWithTemplate(
+      Object templateData, String recipient, String subject, String templateName) {
+    try {
+      log.info("Processando envio de email: {} para {}", subject, EmailUtils.maskEmail(recipient));
+      emailService.sendEmailWithTemplate(templateData, recipient, subject, templateName);
+      log.info("Email enviado com sucesso: {} para {}", subject, EmailUtils.maskEmail(recipient));
+    } catch (MailException e) {
+      log.warn(
+          "Falha temporária ao enviar email {} para {} (tentará novamente): {}",
+          subject,
+          EmailUtils.maskEmail(recipient),
+          e.getMessage());
+      throw e;
+    } catch (EntityNotFoundException | IllegalArgumentException e) {
+      log.error(
+          "Erro não-retryável ao processar email {} para {}: {}",
+          subject,
+          EmailUtils.maskEmail(recipient),
+          e.getMessage(),
+          e);
+    }
+  }
+
+  /**
+   * Helper to process email sending with Email object and logging, with retryable exception
+   * propagation.
+   */
+  private void processEmailWithAttachment(Email email, String recipient, String subject) {
+    try {
+      log.info("Processando envio de email com anexo para {}", EmailUtils.maskEmail(recipient));
+      emailService.enviar(email);
+      log.info("Email com anexo enviado com sucesso para {}", EmailUtils.maskEmail(recipient));
+    } catch (MailException e) {
+      log.warn(
+          "Falha temporária ao enviar email com anexo para {} (tentará novamente): {}",
+          EmailUtils.maskEmail(recipient),
+          e.getMessage());
+      throw e;
+    } catch (Exception e) {
+      log.error(
+          "Erro não-retryável ao processar email com anexo para {}: {}",
+          EmailUtils.maskEmail(recipient),
+          e.getMessage(),
+          e);
     }
   }
 
@@ -266,6 +276,10 @@ public class EmailEventListener {
       return null;
     } else if (event instanceof UsuarioCriadoEvent usuarioEvent) {
       return prepareUsuarioTemplateData(usuarioEvent);
+    } else if (event instanceof NadaConstaEmitidoEvent nadaConstaEmitidoEvent) {
+      return nadaConstaEmitidoEvent.getTemplateData();
+    } else if (event instanceof NadaConstaPendenciasEvent nadaConstaPendenciasEvent) {
+      return nadaConstaPendenciasEvent.getTemplateData();
     }
 
     // TODO: Adicionar outros tipos de eventos aqui (Reserva, etc.)

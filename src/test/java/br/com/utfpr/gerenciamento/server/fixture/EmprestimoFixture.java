@@ -82,7 +82,7 @@ public class EmprestimoFixture {
     emprestimo.setPrazoDevolucao(LocalDate.now().minusDays(3)); // VENCIDO
     emprestimo.setDataDevolucao(null); // NÃO DEVOLVIDO
     emprestimo.setObservacao("Empréstimo atrasado");
-    emprestimo.setEmprestimoItem(criarEmprestimoItem(emprestimo, item));
+    emprestimo.setEmprestimoItem(new HashSet<>(criarEmprestimoItem(emprestimo, item)));
     return emprestimo;
   }
 
@@ -106,7 +106,7 @@ public class EmprestimoFixture {
     emprestimo.setPrazoDevolucao(LocalDate.now().plusDays(5)); // VIGENTE
     emprestimo.setDataDevolucao(null); // EM ANDAMENTO
     emprestimo.setObservacao("Empréstimo em andamento");
-    emprestimo.setEmprestimoItem(criarEmprestimoItem(emprestimo, item));
+    emprestimo.setEmprestimoItem(new HashSet<>(criarEmprestimoItem(emprestimo, item)));
     return emprestimo;
   }
 
@@ -130,7 +130,7 @@ public class EmprestimoFixture {
     emprestimo.setPrazoDevolucao(LocalDate.now().minusDays(2));
     emprestimo.setDataDevolucao(LocalDate.now().minusDays(1)); // DEVOLVIDO
     emprestimo.setObservacao("Empréstimo finalizado");
-    emprestimo.setEmprestimoItem(criarEmprestimoItem(emprestimo, item));
+    emprestimo.setEmprestimoItem(new HashSet<>(criarEmprestimoItem(emprestimo, item)));
     return emprestimo;
   }
 
@@ -151,7 +151,7 @@ public class EmprestimoFixture {
     emprestimo.setDataEmprestimo(dataEmprestimo);
     emprestimo.setPrazoDevolucao(prazoDevolucao);
     emprestimo.setDataDevolucao(dataDevolucao);
-    emprestimo.setEmprestimoItem(criarEmprestimoItem(emprestimo, item));
+    emprestimo.setEmprestimoItem(new java.util.HashSet<>(criarEmprestimoItem(emprestimo, item)));
     return emprestimo;
   }
 

@@ -25,7 +25,10 @@ public class EmprestimoDevolvidoEvent extends EmailEvent {
    */
   public EmprestimoDevolvidoEvent(Object source, Long emprestimoId, String recipient) {
     super(
-        source, recipient, "Confirmação de Devolução do Empréstimo", "templateDevolucaoEmprestimo");
+        source,
+        recipient,
+        "Confirmação de Devolução do Empréstimo",
+        "templateDevolucaoEmprestimo.html");
     this.emprestimoId = emprestimoId;
   }
 }

@@ -38,6 +38,6 @@ public class EstoqueMinNotificacaoEvent extends EmailEvent {
         source,
         recipient,
         "Notificação: Itens que atingiram o estoque mínimo",
-        "templateNotificacaoEstoqueMinimo");
+        "templateNotificacaoEstoqueMinimo.html");
   }
 }
