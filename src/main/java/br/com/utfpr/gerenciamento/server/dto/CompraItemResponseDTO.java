@@ -1,7 +1,5 @@
 package br.com.utfpr.gerenciamento.server.dto;
 
-import br.com.utfpr.gerenciamento.server.model.Compra;
-import br.com.utfpr.gerenciamento.server.model.Item;
 import java.math.BigDecimal;
 import lombok.*;
 
@@ -19,7 +17,7 @@ public class CompraItemResponseDTO {
 
   private BigDecimal valor;
 
-  private Item item;
+  private ItemResponseDto item;
 
-  private Compra compra;
+  private Long compraId;
 }
