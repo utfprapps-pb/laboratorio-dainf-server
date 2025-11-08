@@ -1,6 +1,7 @@
 package br.com.utfpr.gerenciamento.server.repository;
 
 import br.com.utfpr.gerenciamento.server.model.Item;
+import br.com.utfpr.gerenciamento.server.repository.projection.ItemCompleteWithDisponibilidade;
 import br.com.utfpr.gerenciamento.server.repository.projection.ItemWithQtdeEmprestada;
 import java.math.BigDecimal;
 import java.util.List;
@@ -24,8 +25,6 @@ public interface ItemRepository extends JpaRepository<Item, Long>, JpaSpecificat
   @Query("SELECT COUNT(i.id) FROM Item i WHERE i.saldo <= i.qtdeMinima")
   long countAllByQtdeMinimaIsLessThanSaldo();
 
-  List<Item> findAllByOrderByNome();
-
   /**
    * Busca Item com quantidade emprestada calculada via agregação SQL.
    *
@@ -48,10 +47,78 @@ public interface ItemRepository extends JpaRepository<Item, Long>, JpaSpecificat
       """
       SELECT i as item, COALESCE(SUM(ei.qtde), 0) as qtdeEmprestada
       FROM Item i
-      LEFT JOIN EmprestimoItem ei ON ei.item.id = i.id
-      LEFT JOIN Emprestimo e ON ei.emprestimo.id = e.id AND e.dataDevolucao IS NULL
+      LEFT JOIN EmprestimoItem ei ON ei.item.id = i.id AND ei.emprestimo.dataDevolucao IS NULL
       WHERE i.id = :id
       GROUP BY i.id
       """)
   Optional<ItemWithQtdeEmprestada> findByIdWithQtdeEmprestada(@Param("id") Long id);
+
+  /**
+   * Busca itens para autocomplete com dados de disponibilidade calculados.
+   *
+   * <p><b>Lógica de Disponibilidade:</b>
+   *
+   * <ul>
+   *   <li>Itens PERMANENTES: disponibilidade = saldo - qtdeEmprestada
+   *   <li>Itens CONSUMÍVEIS: considerados disponíveis se saldo > 0
+   * </ul>
+   *
+   * @param query Texto para busca por nome (case insensitive)
+   * @return Lista de projeções com dados essenciais para autocomplete
+   */
+  @Query(
+      """
+      SELECT i.id as id,
+             i.nome as nome,
+             i.saldo as saldo,
+             i.tipoItem as tipoItem,
+             i.grupo as grupo,
+             COALESCE(SUM(ei.qtde), 0) as qtdeEmprestada
+      FROM Item i
+      LEFT JOIN EmprestimoItem ei ON ei.item.id = i.id AND ei.emprestimo.dataDevolucao IS NULL
+      WHERE (:query IS NULL OR :query = '' OR LOWER(i.nome) LIKE LOWER(CONCAT('%', :query, '%')))
+      GROUP BY i.id, i.nome, i.saldo, i.tipoItem, i.grupo
+      ORDER BY i.nome
+      """)
+  List<ItemCompleteWithDisponibilidade> findCompleteWithDisponibilidade(
+      @Param("query") String query);
+
+  /**
+   * Busca itens para autocomplete filtrando apenas disponíveis para empréstimo.
+   *
+   * <p><b>Lógica de Disponibilidade:</b>
+   *
+   * <ul>
+   *   <li>Itens PERMANENTES: disponibilidade = (saldo - qtdeEmprestada) > 0
+   *   <li>Itens CONSUMÍVEIS: saldo > 0
+   * </ul>
+   *
+   * @param query Texto para busca por nome (case insensitive)
+   * @return Lista de projeções com apenas itens disponíveis para empréstimo
+   */
+  @Query(
+      """
+      SELECT i.id as id,
+             i.nome as nome,
+             i.saldo as saldo,
+             i.tipoItem as tipoItem,
+             i.grupo as grupo,
+             COALESCE(SUM(ei.qtde), 0) as qtdeEmprestada
+      FROM Item i
+      LEFT JOIN EmprestimoItem ei ON ei.item.id = i.id AND ei.emprestimo.dataDevolucao IS NULL
+      WHERE (:query IS NULL OR :query = '' OR LOWER(i.nome) LIKE LOWER(CONCAT('%', :query, '%')))
+      AND (
+        (i.tipoItem = 'C' AND i.saldo > 0)
+        OR
+        i.tipoItem = 'P'
+      )
+      GROUP BY i.id, i.nome, i.saldo, i.tipoItem, i.grupo
+      HAVING (
+        (i.tipoItem = 'C' AND i.saldo > 0)
+        OR
+        (i.tipoItem = 'P' AND (i.saldo - COALESCE(SUM(ei.qtde), 0)) > 0)
+      )
+      ORDER BY i.nome
+      """)
+  List<ItemCompleteWithDisponibilidade> findCompleteAvailableForLoan(@Param("query") String query);
 }

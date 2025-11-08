@@ -2,6 +2,7 @@ package br.com.utfpr.gerenciamento.server.dto;
 
 import br.com.utfpr.gerenciamento.server.enumeration.TipoItem;
 import br.com.utfpr.gerenciamento.server.model.ItemImage;
+import com.fasterxml.jackson.annotation.JsonInclude;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.util.List;
@@ -16,6 +17,7 @@ import lombok.Data;
  * <p>Mantém a mesma estrutura JSON para compatibilidade com frontend.
  */
 @Data
+@JsonInclude(JsonInclude.Include.NON_NULL)
 public class ItemResponseDto {
   private Long id;
   private String nome;

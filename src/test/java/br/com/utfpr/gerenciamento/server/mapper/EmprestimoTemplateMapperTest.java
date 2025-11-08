@@ -1,13 +1,16 @@
 package br.com.utfpr.gerenciamento.server.mapper;
 
 import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.Mockito.*;
 
 import br.com.utfpr.gerenciamento.server.model.Emprestimo;
 import br.com.utfpr.gerenciamento.server.model.EmprestimoDevolucaoItem;
 import br.com.utfpr.gerenciamento.server.model.EmprestimoItem;
 import br.com.utfpr.gerenciamento.server.model.Usuario;
+import br.com.utfpr.gerenciamento.server.service.SystemConfigService;
 import java.time.LocalDate;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import org.junit.jupiter.api.BeforeEach;
@@ -19,10 +22,13 @@ class EmprestimoTemplateMapperTest {
   private Emprestimo emprestimo;
   private List<EmprestimoItem> emprestimoItems;
   private List<EmprestimoDevolucaoItem> devolucaoItems;
+  private SystemConfigService systemConfigService;
 
   @BeforeEach
   void setUp() {
-    mapper = new EmprestimoTemplateMapper();
+    systemConfigService = mock(SystemConfigService.class);
+    when(systemConfigService.getLogoUrl()).thenReturn("https://logo.test/logo.png");
+    mapper = new EmprestimoTemplateMapper(systemConfigService);
 
     // Configurar usuário do empréstimo
     Usuario usuarioEmprestimo = new Usuario();
@@ -42,7 +48,7 @@ class EmprestimoTemplateMapperTest {
     emprestimo.setUsuarioResponsavel(usuarioResponsavel);
     emprestimo.setDataEmprestimo(LocalDate.of(2025, 10, 15));
     emprestimo.setPrazoDevolucao(LocalDate.of(2025, 10, 20));
-    emprestimo.setEmprestimoItem(emprestimoItems);
+    emprestimo.setEmprestimoItem(new HashSet<>(emprestimoItems));
     emprestimo.setEmprestimoDevolucaoItem(devolucaoItems);
   }
 
@@ -58,7 +64,7 @@ class EmprestimoTemplateMapperTest {
     assertEquals("15/10/2025", result.get("dtEmprestimo"));
     assertEquals("20/10/2025", result.get("dtPrazoDevolucao"));
     assertNull(result.get("dtDevolucao"));
-    assertEquals(emprestimoItems, result.get("emprestimoItem"));
+    assertEquals(new HashSet<>(emprestimoItems), result.get("emprestimoItem"));
     assertEquals(devolucaoItems, result.get("emprestimoDevolucaoItem"));
   }
 
@@ -102,5 +108,12 @@ class EmprestimoTemplateMapperTest {
     // Then
     assertEquals("05/01/2025", result.get("dtEmprestimo"));
     assertEquals("25/12/2025", result.get("dtPrazoDevolucao"));
+  }
+
+  @Test
+  void deveIncluirLogoUrlNoTemplate() {
+    Map<String, Object> result = mapper.toTemplateData(emprestimo);
+    assertTrue(result.containsKey("logoUrl"));
+    assertEquals("https://logo.test/logo.png", result.get("logoUrl"));
   }
 }

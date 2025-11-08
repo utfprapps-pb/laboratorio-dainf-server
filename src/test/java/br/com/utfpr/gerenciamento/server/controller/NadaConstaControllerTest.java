@@ -91,4 +91,16 @@ class NadaConstaControllerTest {
                 .content(objectMapper.writeValueAsString(req)))
         .andExpect(status().isForbidden());
   }
+
+  @Test
+  void shouldRejectDeleteNadaConsta() throws Exception {
+    mockMvc
+        .perform(
+            org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete(
+                    "/nadaconsta/1")
+                .with(
+                    SecurityMockMvcRequestPostProcessors.user("admin")
+                        .authorities(new SimpleGrantedAuthority("ROLE_ADMINISTRADOR"))))
+        .andExpect(status().isMethodNotAllowed());
+  }
 }
