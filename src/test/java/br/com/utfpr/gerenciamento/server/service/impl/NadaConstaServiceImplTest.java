@@ -61,7 +61,7 @@ class NadaConstaServiceImplTest {
     emprestimoService = Mockito.mock(EmprestimoService.class);
     systemConfigService = Mockito.mock(SystemConfigService.class);
     modelMapper = Mockito.mock(ModelMapper.class);
-    eventPublisher = Mockito.spy(ApplicationEventPublisher.class);
+    eventPublisher = Mockito.mock(ApplicationEventPublisher.class);
     service =
         new NadaConstaServiceImpl(
             nadaConstaRepository,
