@@ -65,10 +65,10 @@ public class NadaConstaServiceImpl extends CrudServiceImpl<NadaConsta, Long, Nad
   }
 
   /**
-   * Busca todas as solicitações de Nada Consta pelo username do usuário.
+   * Converte uma entidade NadaConsta para um NadaConstaResponseDto.
    *
-   * @param entity Username do usuário
-   * @return Lista de NadaConstaResponseDto
+   * @param entity Entidade NadaConsta a ser convertida
+   * @return DTO correspondente à entidade NadaConsta
    */
   @Override
   public NadaConstaResponseDto toDto(NadaConsta entity) {
@@ -76,10 +76,10 @@ public class NadaConstaServiceImpl extends CrudServiceImpl<NadaConsta, Long, Nad
   }
 
   /**
-   * Converte uma entidade NadaConsta para o DTO de resposta.
+   * Converte um NadaConstaResponseDto para a entidade NadaConsta.
    *
-   * @param nadaConstaResponseDto Entidade NadaConsta
-   * @return NadaConstaResponseDto correspondente
+   * @param nadaConstaResponseDto DTO de resposta a ser convertido
+   * @return Entidade NadaConsta correspondente
    */
   @Override
   public NadaConsta toEntity(NadaConstaResponseDto nadaConstaResponseDto) {

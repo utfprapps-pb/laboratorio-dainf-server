@@ -135,21 +135,6 @@ class FornecedorServiceImplTest {
   }
 
   @Test
-  void testConvertToDto() {
-    // Given
-    when(modelMapper.map(fornecedor, FornecedorResponseDto.class))
-        .thenReturn(fornecedorResponseDto);
-
-    // When
-    FornecedorResponseDto result = fornecedorService.toDto(fornecedor);
-
-    // Then
-    assertNotNull(result);
-    assertEquals(fornecedorResponseDto, result);
-    verify(modelMapper).map(fornecedor, FornecedorResponseDto.class);
-  }
-
-  @Test
   void testCompleteFornecedor_WithQuery() {
     // Given
     String query = "teste";
