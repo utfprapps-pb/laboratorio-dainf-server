@@ -84,6 +84,4 @@ public class DashboardServiceImpl implements DashboardService {
         .map(m -> new DashboardItensSaidasResponseDto(m.qtde(), m.item()))
         .toList();
   }
-
-
 }

@@ -12,7 +12,4 @@ public class FornecedorResponseDto {
   private String nomeFantasia;
 
   private String cnpj;
-
-
-
 }
