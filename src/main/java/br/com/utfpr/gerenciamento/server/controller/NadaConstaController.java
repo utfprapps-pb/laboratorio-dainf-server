@@ -26,7 +26,7 @@ import org.springframework.web.server.ResponseStatusException;
  */
 @RestController
 @RequestMapping("/nadaconsta")
-public class NadaConstaController extends CrudController<NadaConsta, Long> {
+public class NadaConstaController extends CrudController<NadaConsta, Long, NadaConstaResponseDto> {
   /** Service para operações de Nada Consta. */
   private final NadaConstaService nadaConstaService;
 
@@ -41,7 +41,7 @@ public class NadaConstaController extends CrudController<NadaConsta, Long> {
 
   /** Retorna o service utilizado pelo controller. */
   @Override
-  protected CrudService<NadaConsta, Long> getService() {
+  protected CrudService<NadaConsta, Long, NadaConstaResponseDto> getService() {
     return nadaConstaService;
   }
 

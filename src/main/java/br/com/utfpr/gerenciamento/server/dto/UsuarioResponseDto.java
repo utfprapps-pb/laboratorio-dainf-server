@@ -1,6 +1,5 @@
 package br.com.utfpr.gerenciamento.server.dto;
 
-import br.com.utfpr.gerenciamento.server.model.Permissao;
 import java.util.Collection;
 import java.util.Set;
 import lombok.Data;
@@ -21,7 +20,7 @@ public class UsuarioResponseDto {
 
   private String telefone;
 
-  private Set<Permissao> permissoes;
+  private Set<PermissaoResponseDTO> permissoes;
 
   private String fotoUrl;
 

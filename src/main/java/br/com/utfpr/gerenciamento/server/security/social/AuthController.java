@@ -75,7 +75,8 @@ public class AuthController {
           }
 
           String username = payload.getEmail();
-          Usuario user = usuarioService.findByUsernameForAuthentication(username);
+          Usuario user =
+              usuarioService.toEntity(usuarioService.findByUsernameForAuthentication(username));
           if (user == null) {
             user = createOAuthUser(payload, isProfessor);
           } else {
@@ -138,7 +139,7 @@ public class AuthController {
     }
     user.setEmailVerificado(true); // OAuth emails são pré-verificados pelo Google
 
-    return usuarioService.save(user);
+    return usuarioService.toEntity(usuarioService.save(user));
   }
 
   /**

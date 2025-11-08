@@ -12,7 +12,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 @Service
-public class CidadeServiceImpl extends CrudServiceImpl<Cidade, Long> implements CidadeService {
+public class CidadeServiceImpl extends CrudServiceImpl<Cidade, Long, CidadeResponseDto>
+    implements CidadeService {
 
   private final CidadeRepository cidadeRepository;
 
@@ -29,13 +30,23 @@ public class CidadeServiceImpl extends CrudServiceImpl<Cidade, Long> implements 
   }
 
   @Override
+  public CidadeResponseDto toDto(Cidade entity) {
+    return modelMapper.map(entity, CidadeResponseDto.class);
+  }
+
+  @Override
+  public Cidade toEntity(CidadeResponseDto cidadeResponseDto) {
+    return modelMapper.map(cidadeResponseDto, Cidade.class);
+  }
+
+  @Override
   @Transactional(readOnly = true)
   public List<CidadeResponseDto> cidadeComplete(String query) {
     if (query == null || query.isBlank()) {
-      return this.cidadeRepository.findAll().stream().map(this::convertToDto).toList();
+      return this.cidadeRepository.findAll().stream().map(this::toDto).toList();
     } else {
       return this.cidadeRepository.findByNomeLikeIgnoreCase("%" + query + "%").stream()
-          .map(this::convertToDto)
+          .map(this::toDto)
           .toList();
     }
   }
@@ -46,20 +57,13 @@ public class CidadeServiceImpl extends CrudServiceImpl<Cidade, Long> implements 
     if (estado == null) return List.of();
 
     if (query == null || query.isBlank()) {
-      return this.cidadeRepository.findAllByEstado(estado).stream()
-          .map(this::convertToDto)
-          .toList();
+      return this.cidadeRepository.findAllByEstado(estado).stream().map(this::toDto).toList();
     } else {
       return this.cidadeRepository
           .findByNomeLikeIgnoreCaseAndEstado("%" + query + "%", estado)
           .stream()
-          .map(this::convertToDto)
+          .map(this::toDto)
           .toList();
     }
-  }
-
-  @Override
-  public CidadeResponseDto convertToDto(Cidade entity) {
-    return modelMapper.map(entity, CidadeResponseDto.class);
   }
 }

@@ -10,7 +10,7 @@ import java.util.List;
  * <p>Disponibiliza métodos para solicitação, verificação de pendências, invalidação e conversão de
  * entidades.
  */
-public interface NadaConstaService extends CrudService<NadaConsta, Long> {
+public interface NadaConstaService extends CrudService<NadaConsta, Long, NadaConstaResponseDto> {
   /**
    * Busca todas as solicitações de Nada Consta pelo username do usuário.
    *
