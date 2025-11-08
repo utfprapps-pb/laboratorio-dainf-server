@@ -66,7 +66,7 @@ class FornecedorControllerTest {
         // Given
         String query = "teste";
         when(fornecedorService.completeFornecedor(query)).thenReturn(fornecedores);
-        when(fornecedorService.convertToDto(any(Fornecedor.class)))
+        when(fornecedorService.toDto(any(Fornecedor.class)))
                 .thenReturn(fornecedorResponseDto)
                 .thenReturn(new FornecedorResponseDto());
 
@@ -77,7 +77,7 @@ class FornecedorControllerTest {
         assertNotNull(result);
         assertEquals(2, result.size());
         verify(fornecedorService).completeFornecedor(query);
-        verify(fornecedorService, times(2)).convertToDto(any(Fornecedor.class));
+        verify(fornecedorService, times(2)).toDto(any(Fornecedor.class));
     }
 
     @Test
@@ -85,7 +85,7 @@ class FornecedorControllerTest {
         // Given
         String query = "";
         when(fornecedorService.completeFornecedor(query)).thenReturn(fornecedores);
-        when(fornecedorService.convertToDto(any(Fornecedor.class)))
+        when(fornecedorService.toDto(any(Fornecedor.class)))
                 .thenReturn(fornecedorResponseDto)
                 .thenReturn(new FornecedorResponseDto());
 

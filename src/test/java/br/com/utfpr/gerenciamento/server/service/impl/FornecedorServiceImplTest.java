@@ -146,7 +146,7 @@ class FornecedorServiceImplTest {
                 .thenReturn(fornecedorResponseDto);
 
         // When
-        FornecedorResponseDto result = fornecedorService.convertToDto(fornecedor);
+        FornecedorResponseDto result = fornecedorService.toDto(fornecedor);
 
         // Then
         assertNotNull(result);
