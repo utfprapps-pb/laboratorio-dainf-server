@@ -56,13 +56,6 @@ public interface ItemRepository extends JpaRepository<Item, Long>, JpaSpecificat
   /**
    * Busca itens para autocomplete com dados de disponibilidade calculados.
    *
-   * <p><b>Filtros aplicados:</b>
-   *
-   * <ul>
-   *   <li>Se disponivelParaEmprestimo=true: retorna apenas itens com disponibilidade > 0
-   *   <li>Se disponivelParaEmprestimo=false: retorna todos itens (sem filtro de disponibilidade)
-   * </ul>
-   *
    * <p><b>Lógica de Disponibilidade:</b>
    *
    * <ul>
@@ -71,7 +64,6 @@ public interface ItemRepository extends JpaRepository<Item, Long>, JpaSpecificat
    * </ul>
    *
    * @param query Texto para busca por nome (case insensitive)
-   * @param disponivelParaEmprestimo Filtra apenas itens disponíveis para empréstimo
    * @return Lista de projeções com dados essenciais para autocomplete
    */
   @Query(

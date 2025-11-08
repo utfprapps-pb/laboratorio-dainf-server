@@ -86,13 +86,13 @@ class FornecedorServiceImplTest {
 
   // Método helper para criar Fornecedor simplificado
   private Fornecedor createFornecedor(Long id, String nomeFantasia) {
-    fornecedor = new Fornecedor();
-    fornecedor.setId(id);
-    fornecedor.setNomeFantasia(nomeFantasia);
-    fornecedor.setRazaoSocial("Razão Social " + nomeFantasia);
-    fornecedor.setCnpj("12345678000195");
-    fornecedor.setIe("1234567890");
-    return fornecedor;
+    Fornecedor f = new Fornecedor();
+    f.setId(id);
+    f.setNomeFantasia(nomeFantasia);
+    f.setRazaoSocial("Razão Social " + nomeFantasia);
+    f.setCnpj("12345678000195");
+    f.setIe("1234567890");
+    return f;
   }
 
   @Test
