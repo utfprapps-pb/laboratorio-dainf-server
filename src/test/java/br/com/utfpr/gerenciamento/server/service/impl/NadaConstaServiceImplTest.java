@@ -7,6 +7,7 @@ import br.com.utfpr.gerenciamento.server.dto.NadaConstaResponseDto;
 import br.com.utfpr.gerenciamento.server.enumeration.NadaConstaStatus;
 import br.com.utfpr.gerenciamento.server.event.nadaConsta.NadaConstaEmitidoEvent;
 import br.com.utfpr.gerenciamento.server.event.nadaConsta.NadaConstaPendenciasEvent;
+import br.com.utfpr.gerenciamento.server.exception.NadaConstaException;
 import br.com.utfpr.gerenciamento.server.model.Emprestimo;
 import br.com.utfpr.gerenciamento.server.model.EmprestimoItem;
 import br.com.utfpr.gerenciamento.server.model.Item;
@@ -48,7 +49,7 @@ class NadaConstaServiceImplTest {
     emprestimoService = Mockito.mock(EmprestimoService.class);
     systemConfigService = Mockito.mock(SystemConfigService.class);
     modelMapper = Mockito.mock(ModelMapper.class);
-    eventPublisher = Mockito.mock(ApplicationEventPublisher.class);
+    eventPublisher = Mockito.spy(ApplicationEventPublisher.class);
     service =
         new NadaConstaServiceImpl(
             nadaConstaRepository,
@@ -275,5 +276,90 @@ class NadaConstaServiceImplTest {
     assertNotNull(dto);
     verify(eventPublisher).publishEvent(any(NadaConstaEmitidoEvent.class));
     verify(usuarioService).save(any(Usuario.class));
+  }
+
+  @Test
+  void shouldInvalidateCompletedNadaConstaAndReactivateUser() {
+    Usuario usuario =
+        Usuario.builder()
+            .id(10L)
+            .documento("101010")
+            .email("user@utfpr.edu.br")
+            .ativo(false)
+            .build();
+    NadaConsta nadaConsta =
+        NadaConsta.builder().id(10L).usuario(usuario).status(NadaConstaStatus.COMPLETED).build();
+    when(nadaConstaRepository.findById(10L)).thenReturn(java.util.Optional.of(nadaConsta));
+    when(nadaConstaRepository.save(any())).thenReturn(nadaConsta);
+    when(usuarioService.save(any(Usuario.class))).thenReturn(usuario);
+    NadaConstaResponseDto dto = service.invalidarNadaConsta(10L);
+    assertNotNull(dto);
+    assertEquals(NadaConstaStatus.INVALIDATED, nadaConsta.getStatus());
+    assertTrue(usuario.isAtivo());
+    verify(nadaConstaRepository).save(nadaConsta);
+    verify(usuarioService).save(usuario);
+  }
+
+  @Test
+  void shouldThrowExceptionWhenInvalidatingNonCompletedNadaConsta() {
+    Usuario usuario =
+        Usuario.builder()
+            .id(11L)
+            .documento("111111")
+            .email("user@utfpr.edu.br")
+            .ativo(false)
+            .build();
+    NadaConsta nadaConsta =
+        NadaConsta.builder().id(11L).usuario(usuario).status(NadaConstaStatus.PENDING).build();
+    when(nadaConstaRepository.findById(11L)).thenReturn(java.util.Optional.of(nadaConsta));
+    assertThrows(NadaConstaException.class, () -> service.invalidarNadaConsta(11L));
+  }
+
+  @Test
+  void shouldThrowExceptionWhenInvalidatingNonexistentNadaConsta() {
+    when(nadaConstaRepository.findById(99L)).thenReturn(java.util.Optional.empty());
+    assertThrows(NadaConstaException.class, () -> service.invalidarNadaConsta(99L));
+  }
+
+  @Test
+  void shouldCompletePendingNadaConstaWhenNoPendingLoans() {
+    Usuario usuario =
+        Usuario.builder()
+            .id(12L)
+            .documento("121212")
+            .email("user@utfpr.edu.br")
+            .ativo(true)
+            .build();
+    NadaConsta nadaConsta =
+        NadaConsta.builder().id(12L).usuario(usuario).status(NadaConstaStatus.PENDING).build();
+    when(nadaConstaRepository.findById(12L)).thenReturn(java.util.Optional.of(nadaConsta));
+    when(emprestimoService.findAllEmprestimosAbertosByUsuario(usuario.getUsername()))
+        .thenReturn(List.of());
+    when(nadaConstaRepository.save(any())).thenReturn(nadaConsta);
+    NadaConstaResponseDto dto = service.verificarPendenciasNadaConsta(12L);
+    assertNotNull(dto);
+    assertEquals(NadaConstaStatus.COMPLETED, nadaConsta.getStatus());
+    verify(nadaConstaRepository).save(nadaConsta);
+  }
+
+  @Test
+  void shouldThrowExceptionWhenVerifyingNonPendingNadaConsta() {
+    Usuario usuario =
+        Usuario.builder()
+            .id(13L)
+            .documento("131313")
+            .email("user@utfpr.edu.br")
+            .ativo(true)
+            .build();
+    NadaConsta nadaConsta =
+        NadaConsta.builder().id(13L).usuario(usuario).status(NadaConstaStatus.COMPLETED).build();
+    when(nadaConstaRepository.findById(13L)).thenReturn(java.util.Optional.of(nadaConsta));
+    assertThrows(NadaConstaException.class, () -> service.verificarPendenciasNadaConsta(13L));
+  }
+
+  @Test
+  void shouldThrowExceptionWhenVerifyingNonexistentNadaConsta() {
+    when(nadaConstaRepository.findById(98L)).thenReturn(java.util.Optional.empty());
+    assertThrows(NadaConstaException.class, () -> service.verificarPendenciasNadaConsta(98L));
   }
 }
