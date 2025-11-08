@@ -19,7 +19,6 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
 import lombok.extern.slf4j.Slf4j;
 import org.modelmapper.ModelMapper;
 import org.springframework.context.ApplicationEventPublisher;
@@ -94,12 +93,12 @@ public class NadaConstaServiceImpl extends CrudServiceImpl<NadaConsta, Long, Nad
     List<Emprestimo> emprestimosAbertos =
         emprestimoService.findAllEmprestimosAbertosByUsuario(usuario.getUsername()).stream()
             .map(emprestimoService::toEntity)
-            .collect(Collectors.toList());
+            .toList();
     NadaConsta nadaConsta =
         NadaConsta.builder()
             .usuario(usuario)
             .status(
-                emprestimosAbertos == null || emprestimosAbertos.isEmpty()
+                emprestimosAbertos.isEmpty()
                     ? NadaConstaStatus.COMPLETED
                     : NadaConstaStatus.PENDING)
             .createdAt(LocalDateTime.now())
@@ -110,11 +109,11 @@ public class NadaConstaServiceImpl extends CrudServiceImpl<NadaConsta, Long, Nad
     usuario.setAtivo(false);
     usuarioService.save(usuario);
 
-    if (emprestimosAbertos == null || emprestimosAbertos.isEmpty()) {
+    if (emprestimosAbertos.isEmpty()) {
       String destinatario = systemConfigService.getEmailNadaConsta();
       if (!EmailUtils.isValidEmail(destinatario)) {
         log.warn("Email de Nada Consta não enviado - email do sistema inválido: {}", destinatario);
-        return convertToDto(nadaConsta);
+        return toDto(nadaConsta);
       }
       Map<String, Object> templateData = new HashMap<>();
       templateData.put("usuario", usuario);
@@ -126,7 +125,7 @@ public class NadaConstaServiceImpl extends CrudServiceImpl<NadaConsta, Long, Nad
         log.warn(
             "Email de pendências de Nada Consta não enviado - usuário sem email válido: {}",
             usuario.getNome());
-        return convertToDto(nadaConsta);
+        return toDto(nadaConsta);
       }
       Map<String, Object> templateData = new HashMap<>();
       templateData.put("usuario", usuario);
