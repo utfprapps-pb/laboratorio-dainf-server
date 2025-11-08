@@ -33,7 +33,8 @@ import org.springframework.web.multipart.MultipartHttpServletRequest;
 
 @Service
 @Slf4j
-public class ItemServiceImpl extends CrudServiceImpl<Item, Long> implements ItemService {
+public class ItemServiceImpl extends CrudServiceImpl<Item, Long, ItemResponseDto>
+    implements ItemService {
   public static final String ITEM_NAO_ENCONTRADO_COM_ID = "Item não encontrado com ID: ";
 
   /**
@@ -78,25 +79,35 @@ public class ItemServiceImpl extends CrudServiceImpl<Item, Long> implements Item
   }
 
   @Override
+  public ItemResponseDto toDto(Item entity) {
+    return modelMapper.map(entity, ItemResponseDto.class);
+  }
+
+  @Override
+  public Item toEntity(ItemResponseDto itemResponseDto) {
+    return modelMapper.map(itemResponseDto, Item.class);
+  }
+
+  @Override
   @Transactional
   public List<ItemResponseDto> itemComplete(String query, boolean hasEstoque) {
     BigDecimal zero = new BigDecimal(0);
     if ("".equalsIgnoreCase(query)) {
       if (hasEstoque)
         return itemRepository.findAllBySaldoIsGreaterThanOrderByNome(zero).stream()
-            .map(this::convertToDto)
+            .map(this::toDto)
             .toList();
-      else return itemRepository.findAllByOrderByNome().stream().map(this::convertToDto).toList();
+      else return itemRepository.findAllByOrderByNome().stream().map(this::toDto).toList();
     } else {
       if (hasEstoque)
         return itemRepository
             .findByNomeLikeIgnoreCaseAndSaldoIsGreaterThanOrderByNome("%" + query + "%", zero)
             .stream()
-            .map(this::convertToDto)
+            .map(this::toDto)
             .toList();
       else
         return itemRepository.findByNomeLikeIgnoreCaseOrderByNome("%" + query + "%").stream()
-            .map(this::convertToDto)
+            .map(this::toDto)
             .toList();
     }
   }
@@ -104,7 +115,7 @@ public class ItemServiceImpl extends CrudServiceImpl<Item, Long> implements Item
   @Override
   @Transactional(readOnly = true)
   public List<ItemResponseDto> findByGrupo(Long id) {
-    return itemRepository.findByGrupoIdOrderByNome(id).stream().map(this::convertToDto).toList();
+    return itemRepository.findByGrupoIdOrderByNome(id).stream().map(this::toDto).toList();
   }
 
   @Override
@@ -156,7 +167,7 @@ public class ItemServiceImpl extends CrudServiceImpl<Item, Long> implements Item
   @Transactional
   public void saveImages(
       MultipartHttpServletRequest files, HttpServletRequest request, Long idItem) {
-    Item item = self.findOne(idItem);
+    Item item = toEntity(self.findOne(idItem));
     var anexos = files.getFiles("anexos[]");
     List<ItemImage> list = new ArrayList<>();
     for (MultipartFile anexo : anexos) {
@@ -192,7 +203,7 @@ public class ItemServiceImpl extends CrudServiceImpl<Item, Long> implements Item
         log.error("Erro ao remover imagem do MinIO: {}", ex.getMessage());
       }
     }
-    Item i = self.findOne(idItem);
+    Item i = toEntity(self.findOne(idItem));
     i.getImageItem().removeIf(itemImage -> itemImage.getId().equals(image.getId()));
     self.save(i);
   }
@@ -239,7 +250,7 @@ public class ItemServiceImpl extends CrudServiceImpl<Item, Long> implements Item
   @Override
   @Transactional
   public void copyImagesItem(List<ItemImage> itemImages, Long id) {
-    var item = self.findOne(id);
+    var item = toEntity(self.findOne(id));
     List<ItemImage> toReturn = new ArrayList<>();
     itemImages.forEach(
         itemImage -> {
@@ -290,10 +301,5 @@ public class ItemServiceImpl extends CrudServiceImpl<Item, Long> implements Item
 
     item.setDisponivelEmprestimoCalculado(disponivel);
     return item;
-  }
-
-  @Override
-  public ItemResponseDto convertToDto(Item entity) {
-    return modelMapper.map(entity, ItemResponseDto.class);
   }
 }

@@ -46,7 +46,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 @Slf4j
 @Service
-public class UsuarioServiceImpl extends CrudServiceImpl<Usuario, Long>
+public class UsuarioServiceImpl extends CrudServiceImpl<Usuario, Long, UsuarioResponseDto>
     implements UsuarioService, UserDetailsService {
 
   public static final String EMAIL_SUBJECT_CONFIRMACAO =
@@ -95,9 +95,18 @@ public class UsuarioServiceImpl extends CrudServiceImpl<Usuario, Long>
   }
 
   @Override
+  public UsuarioResponseDto toDto(Usuario entity) {
+    return modelMapper.map(entity, UsuarioResponseDto.class);
+  }
+
+  @Override
+  public Usuario toEntity(UsuarioResponseDto usuarioResponseDto) {
+    return modelMapper.map(usuarioResponseDto, Usuario.class);
+  }
+
+  @Override
   @Transactional(readOnly = true)
   public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
-    // Normaliza e busca diretamente no repositório (evita bypass do proxy Spring)
     username = normalizeUsername(username);
     Usuario usuario = usuarioRepository.findWithPermissoesByUsernameOrEmail(username, username);
     if (usuario == null) {
@@ -118,23 +127,23 @@ public class UsuarioServiceImpl extends CrudServiceImpl<Usuario, Long>
     }
 
     // Usa @EntityGraph para evitar N+1 queries ao carregar permissoes
-    return usuarioRepository.findAll(spec, pageable).map(this::convertToDto);
+    return usuarioRepository.findAll(spec, pageable).map(this::toDto);
   }
 
   @Override
   @Transactional(readOnly = true)
-  public Usuario findByUsername(String username) {
+  public UsuarioResponseDto findByUsername(String username) {
     username = normalizeUsername(username);
     // Usa versão SEM permissoes (LAZY) - mais performática para uso geral
-    return usuarioRepository.findByUsernameOrEmail(username, username);
+    return toDto(usuarioRepository.findByUsernameOrEmail(username, username));
   }
 
   @Override
   @Transactional(readOnly = true)
-  public Usuario findByUsernameForAuthentication(String username) {
+  public UsuarioResponseDto findByUsernameForAuthentication(String username) {
     username = normalizeUsername(username);
     // Usa versão COM permissoes (@EntityGraph) - necessário para autenticação
-    return usuarioRepository.findWithPermissoesByUsernameOrEmail(username, username);
+    return toDto(usuarioRepository.findWithPermissoesByUsernameOrEmail(username, username));
   }
 
   /**
@@ -164,7 +173,7 @@ public class UsuarioServiceImpl extends CrudServiceImpl<Usuario, Long>
                 UsuarioSpecifications.searchByTextWithRoles(
                     query, UserRole.PROFESSOR, UserRole.ALUNO));
 
-    return usuarioRepository.findAll(spec, pageable).map(this::convertToDto);
+    return usuarioRepository.findAll(spec, pageable).map(this::toDto);
   }
 
   @Override
@@ -177,12 +186,12 @@ public class UsuarioServiceImpl extends CrudServiceImpl<Usuario, Long>
                 UsuarioSpecifications.searchByTextWithRoles(
                     query, UserRole.ADMINISTRADOR, UserRole.LABORATORISTA));
 
-    return usuarioRepository.findAll(spec, pageable).map(this::convertToDto);
+    return usuarioRepository.findAll(spec, pageable).map(this::toDto);
   }
 
   @Override
   @Transactional
-  public Usuario updateUsuario(Usuario usuario) {
+  public UsuarioResponseDto updateUsuario(Usuario usuario) {
     String usernameAutenticado = SecurityUtils.getAuthenticatedUsername();
     String usernameAlvo = normalizeUsername(usuario.getUsername());
 
@@ -202,16 +211,40 @@ public class UsuarioServiceImpl extends CrudServiceImpl<Usuario, Long>
     usuarioExistente.setTelefone(usuario.getTelefone());
     usuarioExistente.setDocumento(usuario.getDocumento());
 
-    return usuarioRepository.save(usuarioExistente);
+    return toDto(usuarioRepository.save(usuarioExistente));
   }
 
   @Override
   @Transactional
-  public Usuario save(Usuario usuario) {
-    if (usuario.getPassword() != null && !Util.isPasswordEncoded(usuario.getPassword()))
-      usuario.setPassword(passwordEncoder.encode(usuario.getPassword()));
+  public UsuarioResponseDto save(Usuario usuario) {
+    if (usuario.getId() != null) {
+      // Se for update, busca o usuário atual do banco
+      Usuario usuarioExistente =
+          usuarioRepository
+              .findById(usuario.getId())
+              .orElseThrow(
+                  () ->
+                      new EntityNotFoundException(
+                          "Usuário não encontrado com ID: " + usuario.getId()));
 
-    // Normaliza permissões para evitar NPE e usa batch fetching (1 query em vez de N)
+      // Se a nova senha é nula ou vazia, mantém a senha antiga
+      if (usuario.getPassword() == null || usuario.getPassword().isBlank()) {
+        usuario.setPassword(usuarioExistente.getPassword());
+      } else if (!Util.isPasswordEncoded(usuario.getPassword())) {
+        // Se veio uma nova senha não codificada, codifica
+        usuario.setPassword(passwordEncoder.encode(usuario.getPassword()));
+      }
+
+      // Preserva campos que não devem ser sobrescritos
+      usuario.setEmailVerificado(usuarioExistente.getEmailVerificado());
+    } else {
+      // Novo usuário → codifica a senha normalmente
+      if (usuario.getPassword() != null && !Util.isPasswordEncoded(usuario.getPassword())) {
+        usuario.setPassword(passwordEncoder.encode(usuario.getPassword()));
+      }
+    }
+
+    // Normaliza permissões para evitar NPE e usa batch fetching
     Set<Permissao> permissoesInput = usuario.getPermissoes();
     if (permissoesInput != null && !permissoesInput.isEmpty()) {
       Set<Long> permissaoIds =
@@ -222,7 +255,11 @@ public class UsuarioServiceImpl extends CrudServiceImpl<Usuario, Long>
               .collect(Collectors.toSet());
 
       if (!permissaoIds.isEmpty()) {
-        Set<Permissao> permissoes = new HashSet<>(permissaoService.findAllById(permissaoIds));
+        Set<Permissao> permissoes =
+            new HashSet<>(
+                permissaoService.findAllById(permissaoIds).stream()
+                    .map(permissaoService::toEntity)
+                    .collect(Collectors.toSet()));
         usuario.setPermissoes(permissoes);
       } else {
         usuario.setPermissoes(new HashSet<>());
@@ -231,19 +268,7 @@ public class UsuarioServiceImpl extends CrudServiceImpl<Usuario, Long>
       usuario.setPermissoes(new HashSet<>());
     }
 
-    if (usuario.getId() != null) {
-      Usuario usuarioTmp = usuarioRepository.findByUsername(usuario.getUsername());
-      usuario.setEmailVerificado(usuarioTmp.getEmailVerificado());
-    }
-    return super.save(usuario);
-  }
-
-  public UsuarioResponseDto convertToDto(Usuario entity) {
-    return modelMapper.map(entity, UsuarioResponseDto.class);
-  }
-
-  public Usuario convertToEntity(UsuarioResponseDto entityDto) {
-    return modelMapper.map(entityDto, Usuario.class);
+    return toDto(usuarioRepository.save(usuario));
   }
 
   @Override
@@ -387,7 +412,7 @@ public class UsuarioServiceImpl extends CrudServiceImpl<Usuario, Long>
 
   @Override
   @Transactional
-  public Usuario updatePassword(Usuario usuario, String senhaAtual) {
+  public UsuarioResponseDto updatePassword(Usuario usuario, String senhaAtual) {
     Usuario userTemp =
         usuarioRepository
             .findById(usuario.getId())
@@ -395,7 +420,7 @@ public class UsuarioServiceImpl extends CrudServiceImpl<Usuario, Long>
     usuario.setEmailVerificado(userTemp.getEmailVerificado());
     if (passwordEncoder.matches(senhaAtual, userTemp.getPassword())) {
       userTemp.setPassword(passwordEncoder.encode(usuario.getPassword()));
-      return usuarioRepository.save(userTemp);
+      return toDto(usuarioRepository.save(userTemp));
     }
     throw new InvalidPasswordException("Senha incorreta");
   }
@@ -419,10 +444,12 @@ public class UsuarioServiceImpl extends CrudServiceImpl<Usuario, Long>
    */
   @Override
   @Transactional
-  public Usuario saveNewUser(Usuario usuario) {
+  public UsuarioResponseDto saveNewUser(Usuario usuario) {
     try {
+      if (!Util.isPasswordEncoded(usuario.getPassword())) {
+        usuario.setPassword(passwordEncoder.encode(usuario.getPassword()));
+      }
       Usuario usuarioSalvo = prepareAndSaveNewUser(usuario);
-
       // Publica evento para envio de email APÓS commit da transação
       eventPublisher.publishEvent(
           new UsuarioCriadoEvent(
@@ -434,8 +461,7 @@ public class UsuarioServiceImpl extends CrudServiceImpl<Usuario, Long>
       log.info(
           "Novo usuário criado: {} (email de confirmação será enviado após commit)",
           usuarioSalvo.getEmail());
-      return usuarioSalvo;
-
+      return toDto(usuarioSalvo);
     } catch (Exception ex) {
       log.error("Erro ao criar novo usuário: email={}", usuario.getEmail(), ex);
       throw new IllegalStateException("Erro ao criar novo usuário. Tente novamente.", ex);
@@ -548,8 +574,8 @@ public class UsuarioServiceImpl extends CrudServiceImpl<Usuario, Long>
   }
 
   @Override
-  public Usuario findByDocumento(String documento) {
-    return usuarioRepository.findByDocumento(documento).orElse(null);
+  public UsuarioResponseDto findByDocumento(String documento) {
+    return toDto(usuarioRepository.findByDocumento(documento).orElse(null));
   }
 
   /** Verifica se o usuário possui solicitação de nada consta em aberto ou concluída. */

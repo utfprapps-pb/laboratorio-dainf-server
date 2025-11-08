@@ -1,7 +1,6 @@
 package br.com.utfpr.gerenciamento.server.controller;
 
 import br.com.utfpr.gerenciamento.server.dto.*;
-import br.com.utfpr.gerenciamento.server.model.Permissao;
 import br.com.utfpr.gerenciamento.server.model.Usuario;
 import br.com.utfpr.gerenciamento.server.service.PermissaoService;
 import br.com.utfpr.gerenciamento.server.service.UsuarioService;
@@ -32,12 +31,12 @@ public class UsuarioController {
 
   @GetMapping
   public List<UsuarioResponseDto> findAll() {
-    return usuarioService.findAll().stream().map(usuarioService::convertToDto).toList();
+    return usuarioService.findAll();
   }
 
   @GetMapping("{id}")
   public UsuarioResponseDto findOne(@PathVariable("id") Long id) {
-    return usuarioService.convertToDto(usuarioService.findOne(id));
+    return usuarioService.findOne(id);
   }
 
   @GetMapping("page")
@@ -52,30 +51,30 @@ public class UsuarioController {
       pageRequest =
           PageRequest.of(page, size, asc ? Sort.Direction.ASC : Sort.Direction.DESC, order);
     }
-    Page<Usuario> result;
+    Page<UsuarioResponseDto> result;
     if (filter != null && !filter.isEmpty()) {
       Specification<Usuario> spec = usuarioService.filterByAllFields(filter);
       result = usuarioService.findAllSpecification(spec, pageRequest);
     } else {
       result = usuarioService.findAll(pageRequest);
     }
-    return result.map(usuarioService::convertToDto);
+    return result;
   }
 
   @PostMapping
   public UsuarioResponseDto save(@RequestBody Usuario usuario) {
-    return usuarioService.convertToDto(usuarioService.save(usuario));
+    return usuarioService.save(usuario);
   }
 
   @GetMapping("permissao")
-  public List<Permissao> findAllPermissao() {
+  public List<PermissaoResponseDTO> findAllPermissao() {
     return permissaoService.findAll();
   }
 
   @PostMapping("change-senha")
   public UsuarioResponseDto redefinirSenha(
       @RequestBody Usuario usuario, @RequestParam("senhaAtual") String senhaAtual) {
-    return usuarioService.convertToDto(usuarioService.updatePassword(usuario, senhaAtual));
+    return usuarioService.updatePassword(usuario, senhaAtual);
   }
 
   @DeleteMapping("{id}")
@@ -112,7 +111,7 @@ public class UsuarioController {
 
   @GetMapping("/find-by-username")
   public UsuarioResponseDto findByUsername(@RequestParam("username") String username) {
-    return usuarioService.convertToDto(usuarioService.findByUsername(username));
+    return usuarioService.findByUsername(username);
   }
 
   @GetMapping("/user-info")
@@ -139,7 +138,7 @@ public class UsuarioController {
 
   @PostMapping("new-user")
   public UsuarioResponseDto saveNewUser(@RequestBody @Valid Usuario usuario) {
-    return usuarioService.convertToDto(usuarioService.saveNewUser(usuario));
+    return usuarioService.saveNewUser(usuario);
   }
 
   @PostMapping(path = "confirm-email")

@@ -9,7 +9,7 @@ import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("fornecedor")
-public class FornecedorController extends CrudController<Fornecedor, Long> {
+public class FornecedorController extends CrudController<Fornecedor, Long, FornecedorResponseDto> {
 
   private final FornecedorService fornecedorService;
 
@@ -18,14 +18,14 @@ public class FornecedorController extends CrudController<Fornecedor, Long> {
   }
 
   @Override
-  protected CrudService<Fornecedor, Long> getService() {
+  protected CrudService<Fornecedor, Long, FornecedorResponseDto> getService() {
     return fornecedorService;
   }
 
   @GetMapping("/complete")
   public List<FornecedorResponseDto> complete(@RequestParam("query") String query) {
     return fornecedorService.completeFornecedor(query).stream()
-        .map(fornecedorService::convertToDto)
+        .map(fornecedorService::toDto)
         .toList();
   }
 }
