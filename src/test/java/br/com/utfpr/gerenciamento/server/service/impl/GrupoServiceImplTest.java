@@ -4,9 +4,9 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
 import br.com.utfpr.gerenciamento.server.dto.GrupoResponseDto;
-import br.com.utfpr.gerenciamento.server.exception.EntityNotFoundException;
 import br.com.utfpr.gerenciamento.server.model.Grupo;
 import br.com.utfpr.gerenciamento.server.repository.GrupoRepository;
+import jakarta.persistence.EntityNotFoundException;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
@@ -144,7 +144,7 @@ class GrupoServiceImplTest {
     // Then
     assertNotNull(result);
     assertEquals(1, result.size());
-    assertEquals(grupoDto, result.getFirst());
+    assertEquals(grupoDto, result.get(0));
     verify(grupoRepository).findByDescricaoLikeIgnoreCase("%teste%");
     verify(modelMapper).map(grupo, GrupoResponseDto.class);
   }
@@ -278,7 +278,11 @@ class GrupoServiceImplTest {
     when(grupoRepository.findById(id)).thenReturn(Optional.empty());
 
     // When & Then
-    assertThrows(EntityNotFoundException.class, () -> service.findOne(id));
+    assertThrows(
+        EntityNotFoundException.class,
+        () -> {
+          service.findOne(id);
+        });
     verify(grupoRepository).findById(id);
     verify(modelMapper, never()).map(any(), eq(GrupoResponseDto.class));
   }

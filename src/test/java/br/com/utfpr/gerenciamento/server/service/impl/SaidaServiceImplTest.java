@@ -131,8 +131,7 @@ class SaidaServiceImplTest {
 
     DashboardItensSaidas item1 = new DashboardItensSaidas(new BigDecimal("50"), "Notebook Dell");
     DashboardItensSaidas item2 = new DashboardItensSaidas(new BigDecimal("30"), "Mouse Logitech");
-    DashboardItensSaidas item3 =
-        new DashboardItensSaidas(new BigDecimal("25"), "Teclado Mecânico");
+    DashboardItensSaidas item3 = new DashboardItensSaidas(new BigDecimal("25"), "Teclado Mecânico");
 
     List<DashboardItensSaidas> itensSaidas = Arrays.asList(item1, item2, item3);
     when(saidaRepository.findItensMaisSaidas(dtIni, dtFim)).thenReturn(itensSaidas);
@@ -179,12 +178,15 @@ class SaidaServiceImplTest {
     Item item1 = criarItem(1L, "Item 1");
     Item item2 = criarItem(2L, "Item 2");
 
-    EmprestimoDevolucaoItem devItem1 = criarEmprestimoDevolucaoItem(1L, emprestimo, item1, new BigDecimal("5"));
-    EmprestimoDevolucaoItem devItem2 = criarEmprestimoDevolucaoItem(2L, emprestimo, item2, new BigDecimal("3"));
+    EmprestimoDevolucaoItem devItem1 =
+        criarEmprestimoDevolucaoItem(1L, emprestimo, item1, new BigDecimal("5"));
+    EmprestimoDevolucaoItem devItem2 =
+        criarEmprestimoDevolucaoItem(2L, emprestimo, item2, new BigDecimal("3"));
 
     List<EmprestimoDevolucaoItem> devolucaoItens = Arrays.asList(devItem1, devItem2);
 
-    when(saidaRepository.save(any(Saida.class))).thenAnswer(invocation -> invocation.getArgument(0));
+    when(saidaRepository.save(any(Saida.class)))
+        .thenAnswer(invocation -> invocation.getArgument(0));
 
     // When
     saidaService.createSaidaByDevolucaoEmprestimo(devolucaoItens);
@@ -196,13 +198,16 @@ class SaidaServiceImplTest {
     assertNotNull(saidaCriada);
     assertThat(saidaCriada.getIdEmprestimo()).isEqualTo(emprestimoId);
     assertThat(saidaCriada.getDataSaida()).isEqualTo(LocalDate.now());
-    assertThat(saidaCriada.getObservacao()).contains("Saída originada do empréstimo: " + emprestimoId);
+    assertThat(saidaCriada.getObservacao())
+        .contains("Saída originada do empréstimo: " + emprestimoId);
     assertThat(saidaCriada.getUsuarioResponsavel()).isEqualTo(usuario);
     assertThat(saidaCriada.getSaidaItem()).hasSize(2);
     assertThat(saidaCriada.getSaidaItem().get(0).getItem()).isEqualTo(item1);
-    assertThat(saidaCriada.getSaidaItem().get(0).getQtde()).isEqualByComparingTo(new BigDecimal("5"));
+    assertThat(saidaCriada.getSaidaItem().get(0).getQtde())
+        .isEqualByComparingTo(new BigDecimal("5"));
     assertThat(saidaCriada.getSaidaItem().get(1).getItem()).isEqualTo(item2);
-    assertThat(saidaCriada.getSaidaItem().get(1).getQtde()).isEqualByComparingTo(new BigDecimal("3"));
+    assertThat(saidaCriada.getSaidaItem().get(1).getQtde())
+        .isEqualByComparingTo(new BigDecimal("3"));
   }
 
   @Test
@@ -219,7 +224,8 @@ class SaidaServiceImplTest {
 
     List<EmprestimoDevolucaoItem> devolucaoItens = Collections.singletonList(devItem);
 
-    when(saidaRepository.save(any(Saida.class))).thenAnswer(invocation -> invocation.getArgument(0));
+    when(saidaRepository.save(any(Saida.class)))
+        .thenAnswer(invocation -> invocation.getArgument(0));
 
     // When
     saidaService.createSaidaByDevolucaoEmprestimo(devolucaoItens);
@@ -232,7 +238,8 @@ class SaidaServiceImplTest {
     assertThat(saidaCriada.getIdEmprestimo()).isEqualTo(emprestimoId);
     assertThat(saidaCriada.getSaidaItem()).hasSize(1);
     assertThat(saidaCriada.getSaidaItem().get(0).getItem().getId()).isEqualTo(10L);
-    assertThat(saidaCriada.getSaidaItem().get(0).getQtde()).isEqualByComparingTo(new BigDecimal("2"));
+    assertThat(saidaCriada.getSaidaItem().get(0).getQtde())
+        .isEqualByComparingTo(new BigDecimal("2"));
   }
 
   @Test
@@ -249,7 +256,8 @@ class SaidaServiceImplTest {
 
     List<EmprestimoDevolucaoItem> devolucaoItens = Collections.singletonList(devItem);
 
-    when(saidaRepository.save(any(Saida.class))).thenAnswer(invocation -> invocation.getArgument(0));
+    when(saidaRepository.save(any(Saida.class)))
+        .thenAnswer(invocation -> invocation.getArgument(0));
 
     // When
     saidaService.createSaidaByDevolucaoEmprestimo(devolucaoItens);
@@ -259,9 +267,12 @@ class SaidaServiceImplTest {
     Saida saidaCriada = saidaCaptor.getValue();
 
     // Verifica que cada SaidaItem tem referência à Saida
-    saidaCriada.getSaidaItem().forEach(saidaItem -> {
-      assertThat(saidaItem.getSaida()).isEqualTo(saidaCriada);
-    });
+    saidaCriada
+        .getSaidaItem()
+        .forEach(
+            saidaItem -> {
+              assertThat(saidaItem.getSaida()).isEqualTo(saidaCriada);
+            });
   }
 
   @Test
@@ -355,7 +366,8 @@ class SaidaServiceImplTest {
 
     List<EmprestimoDevolucaoItem> devolucaoItens = Arrays.asList(dev1, dev2, dev3);
 
-    when(saidaRepository.save(any(Saida.class))).thenAnswer(invocation -> invocation.getArgument(0));
+    when(saidaRepository.save(any(Saida.class)))
+        .thenAnswer(invocation -> invocation.getArgument(0));
 
     // When
     saidaService.createSaidaByDevolucaoEmprestimo(devolucaoItens);
@@ -365,9 +377,12 @@ class SaidaServiceImplTest {
     Saida saidaCriada = saidaCaptor.getValue();
 
     assertThat(saidaCriada.getSaidaItem()).hasSize(3);
-    assertThat(saidaCriada.getSaidaItem().get(0).getQtde()).isEqualByComparingTo(new BigDecimal("10"));
-    assertThat(saidaCriada.getSaidaItem().get(1).getQtde()).isEqualByComparingTo(new BigDecimal("20"));
-    assertThat(saidaCriada.getSaidaItem().get(2).getQtde()).isEqualByComparingTo(new BigDecimal("30"));
+    assertThat(saidaCriada.getSaidaItem().get(0).getQtde())
+        .isEqualByComparingTo(new BigDecimal("10"));
+    assertThat(saidaCriada.getSaidaItem().get(1).getQtde())
+        .isEqualByComparingTo(new BigDecimal("20"));
+    assertThat(saidaCriada.getSaidaItem().get(2).getQtde())
+        .isEqualByComparingTo(new BigDecimal("30"));
   }
 
   // Métodos auxiliares para criar objetos de teste
