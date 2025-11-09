@@ -8,6 +8,7 @@ import br.com.utfpr.gerenciamento.server.dto.EmprestimoResponseDto;
 import br.com.utfpr.gerenciamento.server.dto.UsuarioResponseDto;
 import br.com.utfpr.gerenciamento.server.enumeration.StatusDevolucao;
 import br.com.utfpr.gerenciamento.server.enumeration.TipoItem;
+import br.com.utfpr.gerenciamento.server.exception.EntityNotFoundException;
 import br.com.utfpr.gerenciamento.server.model.Emprestimo;
 import br.com.utfpr.gerenciamento.server.model.EmprestimoDevolucaoItem;
 import br.com.utfpr.gerenciamento.server.model.EmprestimoItem;
@@ -17,13 +18,18 @@ import br.com.utfpr.gerenciamento.server.model.dashboards.DashboardEmprestimoDia
 import br.com.utfpr.gerenciamento.server.model.dashboards.DashboardItensEmprestados;
 import br.com.utfpr.gerenciamento.server.model.filter.EmprestimoFilter;
 import br.com.utfpr.gerenciamento.server.repository.EmprestimoRepository;
+import br.com.utfpr.gerenciamento.server.repository.UsuarioRepository;
+import br.com.utfpr.gerenciamento.server.service.EmprestimoService;
 import br.com.utfpr.gerenciamento.server.service.ItemService;
-import br.com.utfpr.gerenciamento.server.service.ReservaService;
 import br.com.utfpr.gerenciamento.server.service.SaidaService;
 import br.com.utfpr.gerenciamento.server.service.UsuarioService;
+import br.com.utfpr.gerenciamento.server.util.SecurityUtils;
+import java.lang.reflect.Field;
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
 import org.junit.jupiter.api.BeforeEach;
@@ -31,11 +37,12 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
+import org.mockito.MockedStatic;
 import org.mockito.Spy;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.modelmapper.ModelMapper;
 import org.springframework.context.ApplicationEventPublisher;
-import org.springframework.data.domain.Sort;
+import org.springframework.data.domain.*;
 import org.springframework.data.jpa.domain.Specification;
 
 @ExtendWith(MockitoExtension.class)
@@ -49,12 +56,10 @@ class EmprestimoServiceImplTest {
 
   @Mock private SaidaService saidaService;
 
-  @Mock private ReservaService reservaService;
-
   @Mock private ApplicationEventPublisher eventPublisher;
 
   @Mock private ModelMapper modelMapper;
-
+  @Mock private UsuarioRepository usuarioRepository;
   @Spy @InjectMocks private EmprestimoServiceImpl service;
 
   private Emprestimo emprestimo;
@@ -74,6 +79,19 @@ class EmprestimoServiceImplTest {
     usuarioResponsavel = new Usuario();
     usuarioResponsavel.setId(2L);
     usuarioResponsavel.setNome("Responsavel Teste");
+    emprestimo = new Emprestimo();
+    emprestimo.setUsuarioEmprestimo(usuarioEmprestimo);
+    emprestimo.setUsuarioResponsavel(usuarioResponsavel);
+    emprestimo.setPrazoDevolucao(LocalDate.now().plusDays(5));
+    emprestimo.setDataEmprestimo(LocalDate.now());
+    // Fix for self-injection (cast to EmprestimoService if needed)
+    try {
+      Field selfField = EmprestimoServiceImpl.class.getDeclaredField("self");
+      selfField.setAccessible(true);
+      selfField.set(service, (EmprestimoService) service);
+    } catch (Exception e) {
+      throw new RuntimeException(e);
+    }
     usuarioResponsavel.setEmail("responsavel@test.com");
 
     usuarioDto = new UsuarioResponseDto();
@@ -172,10 +190,10 @@ class EmprestimoServiceImplTest {
 
     // Then
     assertEquals(1, result.size());
-    assertEquals(StatusDevolucao.P, result.get(0).getStatusDevolucao());
-    assertEquals(itemModel, result.get(0).getItem());
-    assertEquals(BigDecimal.valueOf(2), result.get(0).getQtde());
-    assertEquals(emprestimo, result.get(0).getEmprestimo());
+    assertEquals(StatusDevolucao.P, result.getFirst().getStatusDevolucao());
+    assertEquals(itemModel, result.getFirst().getItem());
+    assertEquals(BigDecimal.valueOf(2), result.getFirst().getQtde());
+    assertEquals(emprestimo, result.getFirst().getEmprestimo());
   }
 
   @Test
@@ -214,7 +232,6 @@ class EmprestimoServiceImplTest {
     // Given
     EmprestimoFilter filter = new EmprestimoFilter();
     List<Emprestimo> emprestimos = Collections.singletonList(emprestimo);
-
     when(emprestimoRepository.findAll(any(Specification.class), any(Sort.class)))
         .thenReturn(emprestimos);
     doReturn(emprestimoDto).when(service).toDto(emprestimo);
@@ -396,7 +413,7 @@ class EmprestimoServiceImplTest {
   @Test
   void testToDto() {
     // Given
-    Emprestimo emprestimo = new Emprestimo();
+    emprestimo = new Emprestimo();
     EmprestimoResponseDto expectedDto = new EmprestimoResponseDto();
 
     when(modelMapper.map(emprestimo, EmprestimoResponseDto.class)).thenReturn(expectedDto);
@@ -439,7 +456,7 @@ class EmprestimoServiceImplTest {
     emprestimoItem.setItem(item);
     emprestimoItem.setQtde(BigDecimal.ONE);
 
-    novoEmprestimo.setEmprestimoItem(Collections.singletonList(emprestimoItem));
+    novoEmprestimo.setEmprestimoItem(Collections.singleton(emprestimoItem));
 
     // Mock do itemService para evitar NullPointerException
     when(itemService.getSaldoItem(1L)).thenReturn(BigDecimal.TEN);
@@ -487,5 +504,151 @@ class EmprestimoServiceImplTest {
 
     // Then - Deve ignorar itens null
     assertTrue(result.isEmpty());
+  }
+
+  @Test
+  void testSaveThrowsExceptionWhenUsuarioEmprestimoIsNull() {
+    emprestimo = new Emprestimo();
+    assertThrows(IllegalArgumentException.class, () -> service.save(emprestimo));
+  }
+
+  @Test
+  void testSaveThrowsExceptionWhenUsuarioEmprestimoIdIsNull() {
+    emprestimo = new Emprestimo();
+    Usuario usuario = new Usuario();
+    emprestimo.setUsuarioEmprestimo(usuario);
+    assertThrows(IllegalArgumentException.class, () -> service.save(emprestimo));
+  }
+
+  @Test
+  void testSaveThrowsEntityNotFoundExceptionWhenUsuarioEmprestimoNotFound() {
+    emprestimo = new Emprestimo();
+    usuarioEmprestimo = new Usuario();
+    usuarioEmprestimo.setId(1L);
+    emprestimo.setUsuarioEmprestimo(usuarioEmprestimo);
+    when(usuarioRepository.findById(1L)).thenReturn(Optional.empty());
+    assertThrows(EntityNotFoundException.class, () -> service.save(emprestimo));
+  }
+
+  @Test
+  void testDeleteByIdCallsSuperDelete() {
+    doNothing().when(emprestimoRepository).deleteById(anyLong());
+    service.delete(1L);
+    verify(emprestimoRepository).deleteById(1L);
+  }
+
+  @Test
+  void testDeleteByEntityCallsSuperDelete() {
+    emprestimo = new Emprestimo();
+    doNothing().when(emprestimoRepository).delete(emprestimo);
+    service.delete(emprestimo);
+    verify(emprestimoRepository).delete(emprestimo);
+  }
+
+  @Test
+  void testProcessEmprestimoCallsFinalizeEmprestimoAndConvertToDto() {
+    emprestimo = new Emprestimo();
+    emprestimo.setEmprestimoItem(new HashSet<>());
+    emprestimo.setEmprestimoDevolucaoItem(new ArrayList<>());
+    EmprestimoResponseDto dto = new EmprestimoResponseDto();
+    usuarioEmprestimo = new Usuario();
+    usuarioEmprestimo.setId(1L);
+    usuarioEmprestimo.setEmail("mail@test.com");
+    emprestimo.setUsuarioEmprestimo(usuarioEmprestimo);
+    usuarioResponsavel = new Usuario();
+    usuarioResponsavel.setId(2L);
+    usuarioResponsavel.setEmail("responsavel@test.com");
+    emprestimo.setUsuarioResponsavel(usuarioResponsavel);
+    doNothing().when(eventPublisher).publishEvent(any());
+    when(emprestimoRepository.save(any(Emprestimo.class)))
+        .thenAnswer(
+            invocation -> {
+              Emprestimo saved = invocation.getArgument(0);
+              saved.setId(1L);
+              return saved;
+            });
+    when(modelMapper.map(any(Emprestimo.class), eq(EmprestimoResponseDto.class))).thenReturn(dto);
+    when(modelMapper.map(any(EmprestimoResponseDto.class), eq(Emprestimo.class)))
+        .thenAnswer(
+            invocation -> {
+              EmprestimoResponseDto responseDto = invocation.getArgument(0);
+              Emprestimo entity = new Emprestimo();
+              entity.setId(responseDto.getId());
+              entity.setEmprestimoItem(new HashSet<>());
+              entity.setEmprestimoDevolucaoItem(new ArrayList<>());
+              entity.setUsuarioEmprestimo(usuarioEmprestimo);
+              entity.setUsuarioResponsavel(usuarioResponsavel);
+              return entity;
+            });
+    try (MockedStatic<SecurityUtils> mockedSecurity = mockStatic(SecurityUtils.class)) {
+      mockedSecurity.when(SecurityUtils::getAuthenticatedUsername).thenReturn("testuser");
+      EmprestimoResponseDto result = service.processEmprestimo(emprestimo, null);
+      assertEquals(dto, result);
+    }
+  }
+
+  @Test
+  @SuppressWarnings("unchecked")
+  void testFindAllPagedWithTextFilterCallsFindAllSpecification() {
+    Pageable pageable = PageRequest.of(0, 10);
+    Specification<Emprestimo> spec = (Specification<Emprestimo>) mock(Specification.class);
+    when(emprestimoRepository.findAll(any(Specification.class), eq(pageable)))
+        .thenReturn(new PageImpl<>(Collections.emptyList()));
+    // Testa apenas o resultado final esperado
+    Page<EmprestimoResponseDto> result = service.findAllSpecification(spec, pageable);
+    assertNotNull(result);
+  }
+
+  @Test
+  void testPrepareEmprestimoHandlesNulls() {
+    // Caso 1: Emprestimo novo, sem itens
+    Emprestimo emprestimoNovo = new Emprestimo();
+    service.prepareEmprestimo(emprestimoNovo);
+    assertNotNull(emprestimoNovo.getEmprestimoDevolucaoItem());
+    assertEquals(0, emprestimoNovo.getEmprestimoDevolucaoItem().size());
+
+    // Caso 2: Emprestimo com itens
+    Emprestimo emprestimoComItens = new Emprestimo();
+    Item itemModel = new Item();
+    itemModel.setId(10L);
+    itemModel.setTipoItem(TipoItem.C);
+    EmprestimoItem empItem = new EmprestimoItem();
+    empItem.setItem(itemModel);
+    empItem.setQtde(java.math.BigDecimal.ONE);
+    java.util.Set<EmprestimoItem> itensSet = new HashSet<>();
+    itensSet.add(empItem);
+    emprestimoComItens.setEmprestimoItem(itensSet);
+    when(itemService.saldoItemIsValid(any(), any())).thenReturn(true);
+    service.prepareEmprestimo(emprestimoComItens);
+    assertNotNull(emprestimoComItens.getEmprestimoDevolucaoItem());
+    assertFalse(emprestimoComItens.getEmprestimoDevolucaoItem().isEmpty());
+  }
+
+  @Test
+  void testFinalizeEmprestimoHandlesNulls() {
+    emprestimo = new Emprestimo();
+    // Inicializa o usuário do empréstimo para evitar NullPointerException
+    usuarioEmprestimo = new Usuario();
+    usuarioEmprestimo.setEmail("mail@test.com");
+    emprestimo.setUsuarioEmprestimo(usuarioEmprestimo);
+
+    // Test that the method completes without throwing an exception
+    assertDoesNotThrow(() -> service.finalizeEmprestimo(emprestimo));
+
+    // Verify that the event publisher was called (email should be sent)
+    verify(eventPublisher).publishEvent(any());
+  }
+
+  @Test
+  void testCleanupAfterDeleteHandlesNulls() {
+    emprestimo = new Emprestimo();
+    emprestimo.setId(1L);
+
+    // Test that the method completes without throwing an exception
+    assertDoesNotThrow(() -> service.cleanupAfterDelete(emprestimo));
+
+    // Verify that the saidaService.deleteSaidaByEmprestimo was called (this is what
+    // cleanupAfterDelete does)
+    verify(saidaService).deleteSaidaByEmprestimo(1L);
   }
 }

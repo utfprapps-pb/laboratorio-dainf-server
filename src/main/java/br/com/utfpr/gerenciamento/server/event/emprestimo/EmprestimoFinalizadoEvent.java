@@ -37,8 +37,8 @@ public class EmprestimoFinalizadoEvent extends EmailEvent {
         recipient,
         "Confirmação de Empréstimo",
         temItensDevolucao
-            ? "templateConfirmacaoEmprestimo"
-            : "templateConfirmacaoFinalizacaoEmprestimo");
+            ? "templateConfirmacaoEmprestimo.html"
+            : "templateConfirmacaoFinalizacaoEmprestimo.html");
     this.emprestimoId = emprestimoId;
     this.temItensDevolucao = temItensDevolucao;
   }

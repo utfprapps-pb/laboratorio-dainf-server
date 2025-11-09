@@ -28,7 +28,7 @@ public class EmprestimoPrazoProximoEvent extends EmailEvent {
         source,
         recipient,
         "Empréstimo próximo da data de devolução",
-        "templateProximoPrazoDevolucaoEmprestimo");
+        "templateProximoPrazoDevolucaoEmprestimo.html");
     this.emprestimoId = emprestimoId;
   }
 }

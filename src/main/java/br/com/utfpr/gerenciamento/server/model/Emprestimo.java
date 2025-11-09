@@ -10,6 +10,7 @@ import jakarta.validation.constraints.NotNull;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Objects;
+import java.util.Set;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -66,7 +67,7 @@ public class Emprestimo {
   @JsonManagedReference
   @BatchSize(size = 10)
   @Fetch(FetchMode.SUBSELECT)
-  private List<EmprestimoItem> emprestimoItem;
+  private Set<EmprestimoItem> emprestimoItem;
 
   @OneToMany(
       mappedBy = "emprestimo",
