@@ -36,13 +36,16 @@ class FornecedorControllerTest {
   @BeforeEach
   void setUp() {
     fornecedor = FornecedorFactory.createFornecedorPadrao();
+
     fornecedorResponseDto = FornecedorFactory.createFornecedorResponseDtoPadrao();
+
     fornecedores = FornecedorFactory.createListaFornecedores(2);
     fornecedoresDto = FornecedorFactory.createListaFornecedoresDto(2);
   }
 
   @Test
   void testGetService() {
+
     var service = fornecedorController.getService();
 
     assertNotNull(service);
@@ -51,6 +54,7 @@ class FornecedorControllerTest {
 
   @Test
   void testComplete() {
+
     String query = "teste";
     when(fornecedorService.completeFornecedor(query)).thenReturn(fornecedores);
     when(fornecedorService.toDto(any(Fornecedor.class)))
@@ -67,6 +71,7 @@ class FornecedorControllerTest {
 
   @Test
   void testCompleteWithEmptyQuery() {
+
     String query = "";
     when(fornecedorService.completeFornecedor(query)).thenReturn(fornecedores);
     when(fornecedorService.toDto(any(Fornecedor.class)))
@@ -82,6 +87,7 @@ class FornecedorControllerTest {
 
   @Test
   void testFindAll() {
+
     when(fornecedorService.findAll(any(Sort.class))).thenReturn(fornecedoresDto);
 
     List<FornecedorResponseDto> result = fornecedorController.findAll();
@@ -93,6 +99,7 @@ class FornecedorControllerTest {
 
   @Test
   void testSave() {
+
     when(fornecedorService.save(fornecedor)).thenReturn(fornecedorResponseDto);
 
     FornecedorResponseDto result = fornecedorController.save(fornecedor);
@@ -104,6 +111,7 @@ class FornecedorControllerTest {
 
   @Test
   void testFindOne() {
+
     Long id = 1L;
     when(fornecedorService.findOne(id)).thenReturn(fornecedorResponseDto);
 
@@ -116,6 +124,7 @@ class FornecedorControllerTest {
 
   @Test
   void testDelete() {
+
     Long id = 1L;
     when(fornecedorService.findOne(id)).thenReturn(fornecedorResponseDto);
     when(fornecedorService.toEntity(fornecedorResponseDto)).thenReturn(fornecedor);
@@ -130,6 +139,7 @@ class FornecedorControllerTest {
 
   @Test
   void testExists() {
+
     Long id = 1L;
     when(fornecedorService.exists(id)).thenReturn(true);
 
@@ -141,6 +151,7 @@ class FornecedorControllerTest {
 
   @Test
   void testCount() {
+
     when(fornecedorService.count()).thenReturn(10L);
 
     long result = fornecedorController.count();
@@ -151,6 +162,7 @@ class FornecedorControllerTest {
 
   @Test
   void testFindAllPagedWithFilterAndOrder() {
+
     int page = 0;
     int size = 10;
     String filter = "teste";
@@ -174,6 +186,7 @@ class FornecedorControllerTest {
 
   @Test
   void testFindAllPagedWithoutFilter() {
+
     int page = 0;
     int size = 10;
 
@@ -190,6 +203,7 @@ class FornecedorControllerTest {
 
   @Test
   void testFindAllPagedWithEmptyFilter() {
+
     int page = 0;
     int size = 10;
     String filter = "";
@@ -207,6 +221,7 @@ class FornecedorControllerTest {
 
   @Test
   void testFindAllPagedWithOrderButNoFilter() {
+
     int page = 0;
     int size = 10;
     String order = "nome";
@@ -225,16 +240,19 @@ class FornecedorControllerTest {
 
   @Test
   void testPreSave() {
+
     assertDoesNotThrow(() -> fornecedorController.preSave(fornecedor));
   }
 
   @Test
   void testPostSave() {
+
     assertDoesNotThrow(() -> fornecedorController.postSave(fornecedor));
   }
 
   @Test
   void testPostDelete() {
+
     assertDoesNotThrow(() -> fornecedorController.postDelete(fornecedor));
   }
 }
