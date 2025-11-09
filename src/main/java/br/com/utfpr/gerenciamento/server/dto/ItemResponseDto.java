@@ -25,6 +25,7 @@ public class ItemResponseDto {
   private BigDecimal qtdeMinima;
   private String localizacao;
   private TipoItem tipoItem;
+  private BigInteger siorg;
   private BigDecimal saldo;
   private BigDecimal valor;
   private GrupoResponseDto grupo;
