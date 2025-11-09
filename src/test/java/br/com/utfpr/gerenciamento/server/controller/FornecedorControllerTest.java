@@ -9,8 +9,6 @@ import br.com.utfpr.gerenciamento.server.factory.FornecedorFactory;
 import br.com.utfpr.gerenciamento.server.model.Fornecedor;
 import br.com.utfpr.gerenciamento.server.service.FornecedorService;
 import java.util.List;
-import java.util.Arrays;
-import java.util.List;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -50,7 +48,6 @@ class FornecedorControllerTest {
 
     var service = fornecedorController.getService();
 
-
     assertNotNull(service);
     assertEquals(fornecedorService, service);
   }
@@ -64,9 +61,7 @@ class FornecedorControllerTest {
         .thenReturn(fornecedorResponseDto)
         .thenReturn(FornecedorFactory.createFornecedorResponseDto(2L, "Fornecedor 2"));
 
-
     List<FornecedorResponseDto> result = fornecedorController.complete(query);
-
 
     assertNotNull(result);
     assertEquals(2, result.size());
@@ -83,9 +78,7 @@ class FornecedorControllerTest {
         .thenReturn(fornecedorResponseDto)
         .thenReturn(FornecedorFactory.createFornecedorResponseDto(2L, "Fornecedor 2"));
 
-
     List<FornecedorResponseDto> result = fornecedorController.complete(query);
-
 
     assertNotNull(result);
     assertEquals(2, result.size());
@@ -97,9 +90,7 @@ class FornecedorControllerTest {
 
     when(fornecedorService.findAll(any(Sort.class))).thenReturn(fornecedoresDto);
 
-
     List<FornecedorResponseDto> result = fornecedorController.findAll();
-
 
     assertNotNull(result);
     assertEquals(2, result.size());
@@ -111,9 +102,7 @@ class FornecedorControllerTest {
 
     when(fornecedorService.save(fornecedor)).thenReturn(fornecedorResponseDto);
 
-
     FornecedorResponseDto result = fornecedorController.save(fornecedor);
-
 
     assertNotNull(result);
     assertEquals(fornecedorResponseDto, result);
@@ -126,9 +115,7 @@ class FornecedorControllerTest {
     Long id = 1L;
     when(fornecedorService.findOne(id)).thenReturn(fornecedorResponseDto);
 
-
     FornecedorResponseDto result = fornecedorController.findone(id);
-
 
     assertNotNull(result);
     assertEquals(fornecedorResponseDto, result);
@@ -143,9 +130,7 @@ class FornecedorControllerTest {
     when(fornecedorService.toEntity(fornecedorResponseDto)).thenReturn(fornecedor);
     doNothing().when(fornecedorService).delete(id);
 
-
     fornecedorController.delete(id);
-
 
     verify(fornecedorService).findOne(id);
     verify(fornecedorService).toEntity(fornecedorResponseDto);
@@ -158,9 +143,7 @@ class FornecedorControllerTest {
     Long id = 1L;
     when(fornecedorService.exists(id)).thenReturn(true);
 
-
     boolean result = fornecedorController.exists(id);
-
 
     assertTrue(result);
     verify(fornecedorService).exists(id);
@@ -171,9 +154,7 @@ class FornecedorControllerTest {
 
     when(fornecedorService.count()).thenReturn(10L);
 
-
     long result = fornecedorController.count();
-
 
     assertEquals(10L, result);
     verify(fornecedorService).count();
@@ -193,10 +174,8 @@ class FornecedorControllerTest {
     when(fornecedorService.findAllSpecification(any(Specification.class), any(PageRequest.class)))
         .thenReturn(pageResult);
 
-
     Page<FornecedorResponseDto> result =
         fornecedorController.findAllPaged(page, size, filter, order, asc);
-
 
     assertNotNull(result);
     assertEquals(2, result.getContent().size());
@@ -214,10 +193,8 @@ class FornecedorControllerTest {
     Page<FornecedorResponseDto> pageResult = new PageImpl<>(fornecedoresDto);
     when(fornecedorService.findAll(any(PageRequest.class))).thenReturn(pageResult);
 
-
     Page<FornecedorResponseDto> result =
         fornecedorController.findAllPaged(page, size, null, null, null);
-
 
     assertNotNull(result);
     assertEquals(2, result.getContent().size());
@@ -234,10 +211,8 @@ class FornecedorControllerTest {
     Page<FornecedorResponseDto> pageResult = new PageImpl<>(fornecedoresDto);
     when(fornecedorService.findAll(any(PageRequest.class))).thenReturn(pageResult);
 
-
     Page<FornecedorResponseDto> result =
         fornecedorController.findAllPaged(page, size, filter, null, null);
-
 
     assertNotNull(result);
     assertEquals(2, result.getContent().size());
@@ -255,10 +230,8 @@ class FornecedorControllerTest {
     Page<FornecedorResponseDto> pageResult = new PageImpl<>(fornecedoresDto);
     when(fornecedorService.findAll(any(PageRequest.class))).thenReturn(pageResult);
 
-
     Page<FornecedorResponseDto> result =
         fornecedorController.findAllPaged(page, size, null, order, asc);
-
 
     assertNotNull(result);
     assertEquals(2, result.getContent().size());

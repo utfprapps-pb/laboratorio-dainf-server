@@ -11,9 +11,6 @@ import br.com.utfpr.gerenciamento.server.repository.FornecedorRepository;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Optional;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -287,10 +284,7 @@ class FornecedorServiceImplTest {
     when(fornecedorRepository.findById(id)).thenReturn(Optional.empty());
 
     // When & Then
-    assertThrows(
-        EntityNotFoundException.class,
-        () ->
-          fornecedorService.findOne(id));
+    assertThrows(EntityNotFoundException.class, () -> fornecedorService.findOne(id));
     verify(fornecedorRepository).findById(id);
     verify(modelMapper, never()).map(any(), eq(FornecedorResponseDto.class));
   }

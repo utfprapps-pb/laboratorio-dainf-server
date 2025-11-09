@@ -261,7 +261,6 @@ class GrupoControllerTest {
     String order = "nome";
     Boolean asc = true;
 
-
     Page<GrupoResponseDto> pageResult = new PageImpl<>(gruposDto);
 
     // Use a mock Specification<Grupo>

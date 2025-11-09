@@ -278,10 +278,7 @@ class GrupoServiceImplTest {
     when(grupoRepository.findById(id)).thenReturn(Optional.empty());
 
     // When & Then
-    assertThrows(
-        EntityNotFoundException.class,
-        () ->
-          service.findOne(id));
+    assertThrows(EntityNotFoundException.class, () -> service.findOne(id));
     verify(grupoRepository).findById(id);
     verify(modelMapper, never()).map(any(), eq(GrupoResponseDto.class));
   }
