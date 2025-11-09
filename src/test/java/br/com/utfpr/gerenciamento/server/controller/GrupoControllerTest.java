@@ -151,7 +151,7 @@ class GrupoControllerTest {
   void testFindItensVinculados_WithInvalidId() {
     // Given
     Long idGrupo = 999L;
-    when(itemService.findByGrupo(idGrupo)).thenReturn(Arrays.asList());
+    when(itemService.findByGrupo(idGrupo)).thenReturn(List.of());
 
     // When
     List<ItemResponseDto> result = grupoController.findItensVinculado(idGrupo);
@@ -168,7 +168,7 @@ class GrupoControllerTest {
     org.springframework.data.domain.Sort sort =
         org.springframework.data.domain.Sort.by(
             org.springframework.data.domain.Sort.Direction.ASC, "id");
-    when(grupoService.findAll(eq(sort))).thenReturn(gruposDto);
+    when(grupoService.findAll(sort)).thenReturn(gruposDto);
 
     // When
     List<GrupoResponseDto> result = grupoController.findAll();
@@ -176,7 +176,7 @@ class GrupoControllerTest {
     // Then
     assertNotNull(result);
     assertEquals(2, result.size());
-    verify(grupoService).findAll(eq(sort));
+    verify(grupoService).findAll(sort);
   }
 
   @Test
@@ -261,13 +261,13 @@ class GrupoControllerTest {
     String order = "nome";
     Boolean asc = true;
 
-    PageRequest pageRequest = PageRequest.of(page, size);
+
     Page<GrupoResponseDto> pageResult = new PageImpl<>(gruposDto);
 
     // Use a mock Specification<Grupo>
     org.springframework.data.jpa.domain.Specification<Grupo> specificationMock =
         mock(org.springframework.data.jpa.domain.Specification.class);
-    when(grupoService.filterByAllFields(eq(filter))).thenReturn(specificationMock);
+    when(grupoService.filterByAllFields(filter)).thenReturn(specificationMock);
     when(grupoService.findAllSpecification(any(), any())).thenReturn(pageResult);
 
     // When
@@ -276,7 +276,7 @@ class GrupoControllerTest {
     // Then
     assertNotNull(result);
     assertEquals(2, result.getContent().size());
-    verify(grupoService).filterByAllFields(eq(filter));
+    verify(grupoService).filterByAllFields(filter);
     // The controller creates a PageRequest with sorting if 'order' and 'asc' are provided
     PageRequest sortedPageRequest =
         PageRequest.of(
@@ -286,7 +286,7 @@ class GrupoControllerTest {
                 ? org.springframework.data.domain.Sort.Direction.ASC
                 : org.springframework.data.domain.Sort.Direction.DESC,
             order);
-    verify(grupoService).findAllSpecification(eq(specificationMock), eq(sortedPageRequest));
+    verify(grupoService).findAllSpecification(specificationMock, sortedPageRequest);
   }
 
   @Test
@@ -334,7 +334,7 @@ class GrupoControllerTest {
     PageRequest pageRequest = PageRequest.of(page, size);
     Page<GrupoResponseDto> pageResult = new PageImpl<>(gruposDto);
 
-    when(grupoService.findAll(eq(pageRequest))).thenReturn(pageResult);
+    when(grupoService.findAll(pageRequest)).thenReturn(pageResult);
 
     // When
     Page<GrupoResponseDto> result = grupoController.findAllPaged(page, size, null, null, null);
@@ -342,7 +342,7 @@ class GrupoControllerTest {
     // Then
     assertNotNull(result);
     assertEquals(2, result.getSize());
-    verify(grupoService).findAll(eq(pageRequest));
+    verify(grupoService).findAll(pageRequest);
   }
 
   @Test
