@@ -13,6 +13,7 @@ import br.com.utfpr.gerenciamento.server.model.Item;
 import br.com.utfpr.gerenciamento.server.model.ItemImage;
 import br.com.utfpr.gerenciamento.server.repository.ItemImageRepository;
 import br.com.utfpr.gerenciamento.server.repository.ItemRepository;
+import br.com.utfpr.gerenciamento.server.repository.projection.ItemCompleteWithDisponibilidade;
 import br.com.utfpr.gerenciamento.server.repository.projection.ItemWithQtdeEmprestada;
 import br.com.utfpr.gerenciamento.server.service.ItemService;
 import br.com.utfpr.gerenciamento.server.util.FileUtil;
@@ -83,6 +84,55 @@ public class ItemServiceImpl extends CrudServiceImpl<Item, Long, ItemResponseDto
     return modelMapper.map(entity, ItemResponseDto.class);
   }
 
+  /**
+   * Converte projeção ItemCompleteWithDisponibilidade para ItemResponseDto.
+   *
+   * <p>Este método mapeia apenas os campos essenciais do endpoint complete, calculando a
+   * disponibilidade conforme regras de negócio.
+   *
+   * @param projection Projeção com dados do item e quantidade emprestada
+   * @return DTO com dados essenciais e disponibilidade calculada
+   */
+  private ItemResponseDto toDtoFromProjection(ItemCompleteWithDisponibilidade projection) {
+    ItemResponseDto dto = new ItemResponseDto();
+
+    // Campos básicos da projeção
+    dto.setId(projection.getId());
+    dto.setNome(projection.getNome());
+    dto.setSaldo(projection.getSaldo());
+    dto.setTipoItem(projection.getTipoItem());
+    dto.setGrupo(
+        modelMapper.map(
+            projection.getGrupo(), br.com.utfpr.gerenciamento.server.dto.GrupoResponseDto.class));
+    dto.setQuantidadeEmprestada(
+        projection.getQtdeEmprestada() != null ? projection.getQtdeEmprestada() : BigDecimal.ZERO);
+
+    // Calcula disponibilidade apenas para itens permanentes
+    if (projection.getTipoItem() == TipoItem.P) {
+      BigDecimal saldo = projection.getSaldo() != null ? projection.getSaldo() : BigDecimal.ZERO;
+      BigDecimal qtdeEmprestada =
+          projection.getQtdeEmprestada() != null ? projection.getQtdeEmprestada() : BigDecimal.ZERO;
+      BigDecimal disponibilidade = saldo.subtract(qtdeEmprestada);
+
+      // RN-003: Nunca negativo
+      if (disponibilidade.compareTo(BigDecimal.ZERO) < 0) {
+        disponibilidade = BigDecimal.ZERO;
+        log.warn(
+            "Inconsistência detectada: Item {} (Saldo: {}, Emprestado: {}) resulta em disponibilidade negativa",
+            projection.getId(),
+            saldo,
+            qtdeEmprestada);
+      }
+
+      dto.setDisponivelEmprestimoCalculado(disponibilidade);
+    } else {
+      // RN-002: Itens consumíveis não têm disponibilidade calculada
+      dto.setDisponivelEmprestimoCalculado(null);
+    }
+
+    return dto;
+  }
+
   @Override
   public Item toEntity(ItemResponseDto itemResponseDto) {
     return modelMapper.map(itemResponseDto, Item.class);
@@ -90,26 +140,22 @@ public class ItemServiceImpl extends CrudServiceImpl<Item, Long, ItemResponseDto
 
   @Override
   @Transactional
-  public List<ItemResponseDto> itemComplete(String query, boolean hasEstoque) {
-    BigDecimal zero = new BigDecimal(0);
-    if ("".equalsIgnoreCase(query)) {
-      if (hasEstoque)
-        return itemRepository.findAllBySaldoIsGreaterThanOrderByNome(zero).stream()
-            .map(this::toDto)
-            .toList();
-      else return itemRepository.findAllByOrderByNome().stream().map(this::toDto).toList();
+  public List<ItemResponseDto> itemComplete(String query, boolean disponivelParaEmprestimo) {
+    // Normaliza query: null se for null, senão remove espaços em branco
+    String normalizedQuery = (query != null) ? query.trim() : null;
+
+    // Usa projeções otimizadas com dados de disponibilidade
+    List<ItemCompleteWithDisponibilidade> projections;
+    if (disponivelParaEmprestimo) {
+      // Filtra apenas itens disponíveis para empréstimo
+      projections = itemRepository.findCompleteAvailableForLoan(normalizedQuery);
     } else {
-      if (hasEstoque)
-        return itemRepository
-            .findByNomeLikeIgnoreCaseAndSaldoIsGreaterThanOrderByNome("%" + query + "%", zero)
-            .stream()
-            .map(this::toDto)
-            .toList();
-      else
-        return itemRepository.findByNomeLikeIgnoreCaseOrderByNome("%" + query + "%").stream()
-            .map(this::toDto)
-            .toList();
+      // Retorna todos itens (sem filtro de disponibilidade)
+      projections = itemRepository.findCompleteWithDisponibilidade(normalizedQuery);
     }
+
+    // Converte projeções para DTOs com dados de disponibilidade
+    return projections.stream().map(this::toDtoFromProjection).toList();
   }
 
   @Override

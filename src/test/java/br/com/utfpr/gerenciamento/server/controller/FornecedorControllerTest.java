@@ -1,8 +1,14 @@
 package br.com.utfpr.gerenciamento.server.controller;
 
+import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.*;
+import static org.mockito.Mockito.*;
+
 import br.com.utfpr.gerenciamento.server.dto.FornecedorResponseDto;
+import br.com.utfpr.gerenciamento.server.factory.FornecedorFactory;
 import br.com.utfpr.gerenciamento.server.model.Fornecedor;
 import br.com.utfpr.gerenciamento.server.service.FornecedorService;
+import java.util.List;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -15,281 +21,238 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
 
-import java.util.Arrays;
-import java.util.List;
-import java.util.Optional;
-
-import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.ArgumentMatchers.*;
-import static org.mockito.Mockito.*;
-
 @ExtendWith(MockitoExtension.class)
 class FornecedorControllerTest {
 
-    @Mock
-    private FornecedorService fornecedorService;
+  @Mock private FornecedorService fornecedorService;
 
-    @InjectMocks
-    private FornecedorController fornecedorController;
+  @InjectMocks private FornecedorController fornecedorController;
 
-    private Fornecedor fornecedor;
-    private FornecedorResponseDto fornecedorResponseDto;
-    private List<Fornecedor> fornecedores;
-    private List<FornecedorResponseDto> fornecedoresDto;
+  private Fornecedor fornecedor;
+  private FornecedorResponseDto fornecedorResponseDto;
+  private List<Fornecedor> fornecedores;
+  private List<FornecedorResponseDto> fornecedoresDto;
 
-    @BeforeEach
-    void setUp() {
-        fornecedor = new Fornecedor();
-        fornecedor.setId(1L);
-        fornecedor.setNomeFantasia("Fornecedor Teste");
+  @BeforeEach
+  void setUp() {
+    fornecedor = FornecedorFactory.createFornecedorPadrao();
 
-        fornecedorResponseDto = new FornecedorResponseDto();
-        fornecedorResponseDto.setId(1L);
-        fornecedorResponseDto.setNomeFantasia("Fornecedor Teste");
+    fornecedorResponseDto = FornecedorFactory.createFornecedorResponseDtoPadrao();
 
-        fornecedores = Arrays.asList(fornecedor, new Fornecedor());
-        fornecedoresDto = Arrays.asList(fornecedorResponseDto, new FornecedorResponseDto());
-    }
+    fornecedores = FornecedorFactory.createListaFornecedores(2);
+    fornecedoresDto = FornecedorFactory.createListaFornecedoresDto(2);
+  }
 
-    @Test
-    void testGetService() {
-        // When
-        var service = fornecedorController.getService();
+  @Test
+  void testGetService() {
 
-        // Then
-        assertNotNull(service);
-        assertEquals(fornecedorService, service);
-    }
+    var service = fornecedorController.getService();
 
-    @Test
-    void testComplete() {
-        // Given
-        String query = "teste";
-        when(fornecedorService.completeFornecedor(query)).thenReturn(fornecedores);
-        when(fornecedorService.toDto(any(Fornecedor.class)))
-                .thenReturn(fornecedorResponseDto)
-                .thenReturn(new FornecedorResponseDto());
+    assertNotNull(service);
+    assertEquals(fornecedorService, service);
+  }
 
-        // When
-        List<FornecedorResponseDto> result = fornecedorController.complete(query);
+  @Test
+  void testComplete() {
 
-        // Then
-        assertNotNull(result);
-        assertEquals(2, result.size());
-        verify(fornecedorService).completeFornecedor(query);
-        verify(fornecedorService, times(2)).toDto(any(Fornecedor.class));
-    }
+    String query = "teste";
+    when(fornecedorService.completeFornecedor(query)).thenReturn(fornecedores);
+    when(fornecedorService.toDto(any(Fornecedor.class)))
+        .thenReturn(fornecedorResponseDto)
+        .thenReturn(FornecedorFactory.createFornecedorResponseDto(2L, "Fornecedor 2"));
 
-    @Test
-    void testCompleteWithEmptyQuery() {
-        // Given
-        String query = "";
-        when(fornecedorService.completeFornecedor(query)).thenReturn(fornecedores);
-        when(fornecedorService.toDto(any(Fornecedor.class)))
-                .thenReturn(fornecedorResponseDto)
-                .thenReturn(new FornecedorResponseDto());
+    List<FornecedorResponseDto> result = fornecedorController.complete(query);
 
-        // When
-        List<FornecedorResponseDto> result = fornecedorController.complete(query);
+    assertNotNull(result);
+    assertEquals(2, result.size());
+    verify(fornecedorService).completeFornecedor(query);
+    verify(fornecedorService, times(2)).toDto(any(Fornecedor.class));
+  }
 
-        // Then
-        assertNotNull(result);
-        assertEquals(2, result.size());
-        verify(fornecedorService).completeFornecedor(query);
-    }
+  @Test
+  void testCompleteWithEmptyQuery() {
 
-    @Test
-    void testFindAll() {
-        // Given
-        when(fornecedorService.findAll(any(Sort.class))).thenReturn(fornecedoresDto);
+    String query = "";
+    when(fornecedorService.completeFornecedor(query)).thenReturn(fornecedores);
+    when(fornecedorService.toDto(any(Fornecedor.class)))
+        .thenReturn(fornecedorResponseDto)
+        .thenReturn(FornecedorFactory.createFornecedorResponseDto(2L, "Fornecedor 2"));
 
-        // When
-        List<FornecedorResponseDto> result = fornecedorController.findAll();
+    List<FornecedorResponseDto> result = fornecedorController.complete(query);
 
-        // Then
-        assertNotNull(result);
-        assertEquals(2, result.size());
-        verify(fornecedorService).findAll(Sort.by("id"));
-    }
+    assertNotNull(result);
+    assertEquals(2, result.size());
+    verify(fornecedorService).completeFornecedor(query);
+  }
 
-    @Test
-    void testSave() {
-        // Given
-        when(fornecedorService.save(fornecedor)).thenReturn(fornecedorResponseDto);
+  @Test
+  void testFindAll() {
 
-        // When
-        FornecedorResponseDto result = fornecedorController.save(fornecedor);
+    when(fornecedorService.findAll(any(Sort.class))).thenReturn(fornecedoresDto);
 
-        // Then
-        assertNotNull(result);
-        assertEquals(fornecedorResponseDto, result);
-        verify(fornecedorService).save(fornecedor);
-    }
+    List<FornecedorResponseDto> result = fornecedorController.findAll();
 
-    @Test
-    void testFindOne() {
-        // Given
-        Long id = 1L;
-        when(fornecedorService.findOne(id)).thenReturn(fornecedorResponseDto);
+    assertNotNull(result);
+    assertEquals(2, result.size());
+    verify(fornecedorService).findAll(Sort.by("id"));
+  }
 
-        // When
-        FornecedorResponseDto result = fornecedorController.findone(id);
+  @Test
+  void testSave() {
 
-        // Then
-        assertNotNull(result);
-        assertEquals(fornecedorResponseDto, result);
-        verify(fornecedorService).findOne(id);
-    }
+    when(fornecedorService.save(fornecedor)).thenReturn(fornecedorResponseDto);
 
-    @Test
-    void testDelete() {
-        // Given
-        Long id = 1L;
-        when(fornecedorService.findOne(id)).thenReturn(fornecedorResponseDto);
-        when(fornecedorService.toEntity(fornecedorResponseDto)).thenReturn(fornecedor);
-        doNothing().when(fornecedorService).delete(id);
+    FornecedorResponseDto result = fornecedorController.save(fornecedor);
 
-        // When
-        fornecedorController.delete(id);
+    assertNotNull(result);
+    assertEquals(fornecedorResponseDto, result);
+    verify(fornecedorService).save(fornecedor);
+  }
 
-        // Then
-        verify(fornecedorService).findOne(id);
-        verify(fornecedorService).toEntity(fornecedorResponseDto);
-        verify(fornecedorService).delete(id);
-    }
+  @Test
+  void testFindOne() {
 
-    @Test
-    void testExists() {
-        // Given
-        Long id = 1L;
-        when(fornecedorService.exists(id)).thenReturn(true);
+    Long id = 1L;
+    when(fornecedorService.findOne(id)).thenReturn(fornecedorResponseDto);
 
-        // When
-        boolean result = fornecedorController.exists(id);
+    FornecedorResponseDto result = fornecedorController.findone(id);
 
-        // Then
-        assertTrue(result);
-        verify(fornecedorService).exists(id);
-    }
+    assertNotNull(result);
+    assertEquals(fornecedorResponseDto, result);
+    verify(fornecedorService).findOne(id);
+  }
 
-    @Test
-    void testCount() {
-        // Given
-        when(fornecedorService.count()).thenReturn(10L);
+  @Test
+  void testDelete() {
 
-        // When
-        long result = fornecedorController.count();
+    Long id = 1L;
+    when(fornecedorService.findOne(id)).thenReturn(fornecedorResponseDto);
+    when(fornecedorService.toEntity(fornecedorResponseDto)).thenReturn(fornecedor);
+    doNothing().when(fornecedorService).delete(id);
 
-        // Then
-        assertEquals(10L, result);
-        verify(fornecedorService).count();
-    }
+    fornecedorController.delete(id);
 
-    @Test
-    void testFindAllPagedWithFilterAndOrder() {
-        // Given
-        int page = 0;
-        int size = 10;
-        String filter = "teste";
-        String order = "nome";
-        Boolean asc = true;
+    verify(fornecedorService).findOne(id);
+    verify(fornecedorService).toEntity(fornecedorResponseDto);
+    verify(fornecedorService).delete(id);
+  }
 
-        Page<FornecedorResponseDto> pageResult = new PageImpl<>(fornecedoresDto);
-        when(fornecedorService.filterByAllFields(filter)).thenReturn(mock(Specification.class));
-        when(fornecedorService.findAllSpecification(any(Specification.class), any(PageRequest.class)))
-                .thenReturn(pageResult);
+  @Test
+  void testExists() {
 
-        // When
-        Page<FornecedorResponseDto> result = fornecedorController.findAllPaged(page, size, filter, order, asc);
+    Long id = 1L;
+    when(fornecedorService.exists(id)).thenReturn(true);
 
-        // Then
-        assertNotNull(result);
-        assertEquals(2, result.getContent().size());
-        verify(fornecedorService).filterByAllFields(filter);
-        verify(fornecedorService).findAllSpecification(any(Specification.class), any(PageRequest.class));
-    }
+    boolean result = fornecedorController.exists(id);
 
-    @Test
-    void testFindAllPagedWithoutFilter() {
-        // Given
-        int page = 0;
-        int size = 10;
+    assertTrue(result);
+    verify(fornecedorService).exists(id);
+  }
 
-        Page<FornecedorResponseDto> pageResult = new PageImpl<>(fornecedoresDto);
-        when(fornecedorService.findAll(any(PageRequest.class))).thenReturn(pageResult);
+  @Test
+  void testCount() {
 
-        // When
-        Page<FornecedorResponseDto> result = fornecedorController.findAllPaged(page, size, null, null, null);
+    when(fornecedorService.count()).thenReturn(10L);
 
-        // Then
-        assertNotNull(result);
-        assertEquals(2, result.getContent().size());
-        verify(fornecedorService).findAll(any(PageRequest.class));
-    }
+    long result = fornecedorController.count();
 
-    @Test
-    void testFindAllPagedWithEmptyFilter() {
-        // Given
-        int page = 0;
-        int size = 10;
-        String filter = "";
+    assertEquals(10L, result);
+    verify(fornecedorService).count();
+  }
 
-        Page<FornecedorResponseDto> pageResult = new PageImpl<>(fornecedoresDto);
-        when(fornecedorService.findAll(any(PageRequest.class))).thenReturn(pageResult);
+  @Test
+  void testFindAllPagedWithFilterAndOrder() {
 
-        // When
-        Page<FornecedorResponseDto> result = fornecedorController.findAllPaged(page, size, filter, null, null);
+    int page = 0;
+    int size = 10;
+    String filter = "teste";
+    String order = "nome";
+    Boolean asc = true;
 
-        // Then
-        assertNotNull(result);
-        assertEquals(2, result.getContent().size());
-        verify(fornecedorService).findAll(any(PageRequest.class));
-    }
+    Page<FornecedorResponseDto> pageResult = new PageImpl<>(fornecedoresDto);
+    when(fornecedorService.filterByAllFields(filter)).thenReturn(mock(Specification.class));
+    when(fornecedorService.findAllSpecification(any(Specification.class), any(PageRequest.class)))
+        .thenReturn(pageResult);
 
-    @Test
-    void testFindAllPagedWithOrderButNoFilter() {
-        // Given
-        int page = 0;
-        int size = 10;
-        String order = "nome";
-        Boolean asc = false;
+    Page<FornecedorResponseDto> result =
+        fornecedorController.findAllPaged(page, size, filter, order, asc);
 
-        Page<FornecedorResponseDto> pageResult = new PageImpl<>(fornecedoresDto);
-        when(fornecedorService.findAll(any(PageRequest.class))).thenReturn(pageResult);
+    assertNotNull(result);
+    assertEquals(2, result.getContent().size());
+    verify(fornecedorService).filterByAllFields(filter);
+    verify(fornecedorService)
+        .findAllSpecification(any(Specification.class), any(PageRequest.class));
+  }
 
-        // When
-        Page<FornecedorResponseDto> result = fornecedorController.findAllPaged(page, size, null, order, asc);
+  @Test
+  void testFindAllPagedWithoutFilter() {
 
-        // Then
-        assertNotNull(result);
-        assertEquals(2, result.getContent().size());
-        verify(fornecedorService).findAll(any(PageRequest.class));
-    }
+    int page = 0;
+    int size = 10;
 
-    @Test
-    void testPreSave() {
-        // Given
-        Fornecedor object = new Fornecedor();
+    Page<FornecedorResponseDto> pageResult = new PageImpl<>(fornecedoresDto);
+    when(fornecedorService.findAll(any(PageRequest.class))).thenReturn(pageResult);
 
-        // When & Then - Não deve lançar exceção
-        assertDoesNotThrow(() -> fornecedorController.preSave(object));
-    }
+    Page<FornecedorResponseDto> result =
+        fornecedorController.findAllPaged(page, size, null, null, null);
 
-    @Test
-    void testPostSave() {
-        // Given
-        Fornecedor object = new Fornecedor();
+    assertNotNull(result);
+    assertEquals(2, result.getContent().size());
+    verify(fornecedorService).findAll(any(PageRequest.class));
+  }
 
-        // When & Then - Não deve lançar exceção
-        assertDoesNotThrow(() -> fornecedorController.postSave(object));
-    }
+  @Test
+  void testFindAllPagedWithEmptyFilter() {
 
-    @Test
-    void testPostDelete() {
-        // Given
-        Fornecedor object = new Fornecedor();
+    int page = 0;
+    int size = 10;
+    String filter = "";
 
-        // When & Then - Não deve lançar exceção
-        assertDoesNotThrow(() -> fornecedorController.postDelete(object));
-    }
+    Page<FornecedorResponseDto> pageResult = new PageImpl<>(fornecedoresDto);
+    when(fornecedorService.findAll(any(PageRequest.class))).thenReturn(pageResult);
+
+    Page<FornecedorResponseDto> result =
+        fornecedorController.findAllPaged(page, size, filter, null, null);
+
+    assertNotNull(result);
+    assertEquals(2, result.getContent().size());
+    verify(fornecedorService).findAll(any(PageRequest.class));
+  }
+
+  @Test
+  void testFindAllPagedWithOrderButNoFilter() {
+
+    int page = 0;
+    int size = 10;
+    String order = "nome";
+    Boolean asc = false;
+
+    Page<FornecedorResponseDto> pageResult = new PageImpl<>(fornecedoresDto);
+    when(fornecedorService.findAll(any(PageRequest.class))).thenReturn(pageResult);
+
+    Page<FornecedorResponseDto> result =
+        fornecedorController.findAllPaged(page, size, null, order, asc);
+
+    assertNotNull(result);
+    assertEquals(2, result.getContent().size());
+    verify(fornecedorService).findAll(any(PageRequest.class));
+  }
+
+  @Test
+  void testPreSave() {
+
+    assertDoesNotThrow(() -> fornecedorController.preSave(fornecedor));
+  }
+
+  @Test
+  void testPostSave() {
+
+    assertDoesNotThrow(() -> fornecedorController.postSave(fornecedor));
+  }
+
+  @Test
+  void testPostDelete() {
+
+    assertDoesNotThrow(() -> fornecedorController.postDelete(fornecedor));
+  }
 }
