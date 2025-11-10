@@ -652,4 +652,69 @@ class UsuarioServiceImplTest {
     Usuario capturedUsuario = usuarioCaptor.getValue();
     assertEquals("$2a$10$senhaCodificada", capturedUsuario.getPassword());
   }
+
+  @Test
+  void save_DeveLidarComPermissaoDetachedDoHibernate() {
+    // Given: Simular exatamente o cenário do frontend - Permissao detached como vem do JSON
+    Usuario novoUsuario = new Usuario();
+    novoUsuario.setId(null); // Usuário novo
+    novoUsuario.setNome("joão silva");
+    novoUsuario.setEmail("joao@utfpr.edu.br");
+    novoUsuario.setUsername("joaosilva");
+    novoUsuario.setTelefone("(99) 99999-9999");
+    novoUsuario.setPassword("123456");
+    novoUsuario.setDocumento("1234");
+
+    // Criar Permissao detached como se viesse do frontend (simulando JSON)
+    Permissao permissaoDetached = new Permissao();
+    permissaoDetached.setId(4L); // ID existe no banco
+    permissaoDetached.setNome("ROLE_ALUNO"); // Nome corresponde ao ID
+
+    Set<Permissao> permissoesDetached = new HashSet<>();
+    permissoesDetached.add(permissaoDetached);
+    novoUsuario.setPermissoes(permissoesDetached);
+
+    // Mock do PermissaoService para retornar a entidade gerenciada
+    br.com.utfpr.gerenciamento.server.dto.PermissaoResponseDTO permissaoDto =
+        new br.com.utfpr.gerenciamento.server.dto.PermissaoResponseDTO();
+    permissaoDto.setId(4L);
+    permissaoDto.setNome("ROLE_ALUNO");
+
+    when(permissaoService.findAllById(any())).thenReturn(Collections.singletonList(permissaoDto));
+    when(permissaoService.toEntity(permissaoDto)).thenReturn(permissaoDetached);
+
+    when(usuarioRepository.save(any(Usuario.class))).thenReturn(novoUsuario);
+    when(passwordEncoder.encode("123456")).thenReturn("$2a$10$encodedPassword");
+    when(modelMapper.map(any(Usuario.class), any()))
+        .thenReturn(new br.com.utfpr.gerenciamento.server.dto.UsuarioResponseDto());
+
+    // When: Este é o cenário que estava causando "detached entity passed to persist"
+    br.com.utfpr.gerenciamento.server.dto.UsuarioResponseDto resultado =
+        usuarioService.save(novoUsuario);
+
+    // Then: Não deve lançar exceção e deve resolver as permissões corretamente
+    assertNotNull(resultado, "Usuário deve ser criado com sucesso");
+
+    // Verifica que as permissões foram processadas
+    verify(permissaoService, times(1))
+        .findAllById(
+            argThat(
+                ids -> {
+                  List<Long> idList = new ArrayList<>();
+                  ids.forEach(idList::add);
+                  return idList.size() == 1 && idList.contains(4L);
+                }));
+
+    // Verifica que o usuário foi salvo
+    verify(usuarioRepository, times(1))
+        .save(
+            argThat(
+                usuarioSalvo ->
+                    usuarioSalvo.getPermissoes() != null
+                        && !usuarioSalvo.getPermissoes().isEmpty()
+                        && usuarioSalvo.getPermissoes().iterator().next().getId().equals(4L)));
+
+    // Verifica que a senha foi codificada
+    verify(passwordEncoder).encode("123456");
+  }
 }

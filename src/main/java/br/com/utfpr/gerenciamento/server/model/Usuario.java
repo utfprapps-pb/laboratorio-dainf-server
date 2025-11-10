@@ -51,7 +51,7 @@ public class Usuario implements Serializable, UserDetails {
   private String telefone;
 
   @ManyToMany(
-      cascade = {CascadeType.MERGE, CascadeType.PERSIST},
+      cascade = {},
       fetch = FetchType.LAZY) // LAZY é o padrão correto - use @EntityGraph quando precisar carregar
   private Set<Permissao> permissoes;
 
