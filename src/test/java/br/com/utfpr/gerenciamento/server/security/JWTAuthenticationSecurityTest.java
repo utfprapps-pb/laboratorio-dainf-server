@@ -73,8 +73,8 @@ class JWTAuthenticationSecurityTest {
       // Remove usuários de teste criados programaticamente
       stmt.executeUpdate(
           "DELETE FROM usuario_permissoes WHERE usuario_id IN "
-              + "(SELECT id FROM usuario WHERE username LIKE '%@security-teste.com')");
-      stmt.executeUpdate("DELETE FROM usuario WHERE username LIKE '%@security-teste.com'");
+              + "(SELECT id FROM usuario WHERE username LIKE '%@alunos.utfpr.edu.br')");
+      stmt.executeUpdate("DELETE FROM usuario WHERE username LIKE '%@alunos.utfpr.edu.br'");
     }
   }
 
@@ -92,7 +92,7 @@ class JWTAuthenticationSecurityTest {
           criarUsuario(
               conn,
               "Usuario Ativo Verificado Security",
-              "usuario_ativo@security-teste.com",
+              "usuario_ativo@alunos.utfpr.edu.br",
               senhaHash,
               "88888888801",
               "46888888001",
@@ -105,7 +105,7 @@ class JWTAuthenticationSecurityTest {
           criarUsuario(
               conn,
               "Usuario Inativo Verificado Security",
-              "usuario_inativo@security-teste.com",
+              "usuario_inativo@alunos.utfpr.edu.br",
               senhaHash,
               "88888888802",
               "46888888002",
@@ -118,7 +118,7 @@ class JWTAuthenticationSecurityTest {
           criarUsuario(
               conn,
               "Usuario Ativo Nao Verificado Security",
-              "usuario_ativo_naover@security-teste.com",
+              "usuario_ativo_naover@alunos.utfpr.edu.br",
               senhaHash,
               "88888888803",
               "46888888003",
@@ -131,7 +131,7 @@ class JWTAuthenticationSecurityTest {
           criarUsuario(
               conn,
               "Usuario Bloqueado Security",
-              "usuario_bloqueado@security-teste.com",
+              "usuario_bloqueado@alunos.utfpr.edu.br",
               senhaHash,
               "88888888804",
               "46888888004",
@@ -213,10 +213,10 @@ class JWTAuthenticationSecurityTest {
   @ParameterizedTest(
       name = "{index}: Login com usuário {0} (ativo={1}, verificado={2}) deve retornar {3}")
   @CsvSource({
-    "usuario_ativo@security-teste.com, true, true, 200",
-    "usuario_inativo@security-teste.com, false, true, 403",
-    "usuario_ativo_naover@security-teste.com, true, false, 403",
-    "usuario_bloqueado@security-teste.com, false, false, 403"
+    "usuario_ativo@alunos.utfpr.edu.br, true, true, 200",
+    "usuario_inativo@alunos.utfpr.edu.br, false, true, 403",
+    "usuario_ativo_naover@alunos.utfpr.edu.br, true, false, 403",
+    "usuario_bloqueado@alunos.utfpr.edu.br, false, false, 403"
   })
   @DisplayName("Deve validar autenticação baseada no status do usuário (ativo e email verificado)")
   void loginBaseadoNoStatusUsuario_DeveRetornarStatusEsperado(
@@ -253,8 +253,8 @@ class JWTAuthenticationSecurityTest {
   @ParameterizedTest(name = "{index}: Login com {0} deve retornar 401_UNAUTHORIZED")
   @CsvSource({
     "senha_incorreta",
-    "usuario_inexistente@security-teste.com",
-    "usuario_ativo@security-teste.com'; DROP TABLE usuario; --"
+    "usuario_inexistente@alunos.utfpr.edu.br",
+    "usuario_ativo@alunos.utfpr.edu.br'; DROP TABLE usuario; --"
   })
   @DisplayName(
       "Deve retornar 401 para credenciais inválidas (senha errada, usuário inexistente, SQL injection)")
@@ -265,7 +265,7 @@ class JWTAuthenticationSecurityTest {
     String username, password, descricao;
 
     if (tipoCredencialInvalida.equals("senha_incorreta")) {
-      username = "usuario_ativo@security-teste.com";
+      username = "usuario_ativo@alunos.utfpr.edu.br";
       password = "senha_errada";
       descricao = "senha incorreta";
     } else if (tipoCredencialInvalida.contains("DROP TABLE")) {
@@ -311,13 +311,13 @@ class JWTAuthenticationSecurityTest {
         break;
 
       case "sem_content_type":
-        loginRequest = Map.of("username", "usuario_ativo@security-teste.com", "password", "123");
+        loginRequest = Map.of("username", "usuario_ativo@alunos.utfpr.edu.br", "password", "123");
         request = new HttpEntity<>(loginRequest);
         break;
 
       case "com_content_type":
         headers.set("Content-Type", "application/json");
-        loginRequest = Map.of("username", "usuario_ativo@security-teste.com", "password", "123");
+        loginRequest = Map.of("username", "usuario_ativo@alunos.utfpr.edu.br", "password", "123");
         request = new HttpEntity<>(loginRequest, headers);
         break;
 
@@ -345,13 +345,13 @@ class JWTAuthenticationSecurityTest {
 
     // Testar diferentes variações de case para entender comportamento
     Map<String, String> loginRequestMaiusculas =
-        Map.of("username", "USUARIO_ATIVO@SECURITY-TESTE.COM", "password", "123");
+        Map.of("username", "USUARIO_ATIVO@ALUNOS.UTFPR.EDU.BR", "password", "123");
 
     Map<String, String> loginRequestMinusculas =
-        Map.of("username", "usuario_ativo@security-teste.com", "password", "123");
+        Map.of("username", "usuario_ativo@alunos.utfpr.edu.br", "password", "123");
 
     Map<String, String> loginRequestMisto =
-        Map.of("username", "Usuario_Ativo@Security-Teste.Com", "password", "123");
+        Map.of("username", "Usuario_Ativo@Alunos.Utfpr.Edu.Br", "password", "123");
 
     HttpEntity<Map<String, String>> requestMaiusculas =
         new HttpEntity<>(loginRequestMaiusculas, headers);
