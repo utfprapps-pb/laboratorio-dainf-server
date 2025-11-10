@@ -2,7 +2,6 @@ package br.com.utfpr.gerenciamento.server.security;
 
 import static br.com.utfpr.gerenciamento.server.security.SecurityConstants.*;
 
-import br.com.utfpr.gerenciamento.server.model.Usuario;
 import br.com.utfpr.gerenciamento.server.service.impl.UsuarioServiceImpl;
 import com.auth0.jwt.JWT;
 import com.auth0.jwt.algorithms.Algorithm;
@@ -15,6 +14,8 @@ import org.springframework.core.env.Environment;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.web.authentication.www.BasicAuthenticationFilter;
 
 public class JWTAuthorizationFilter extends BasicAuthenticationFilter {
@@ -56,14 +57,15 @@ public class JWTAuthorizationFilter extends BasicAuthenticationFilter {
               .verify(token.replace(TOKEN_PREFIX, ""))
               .getSubject();
       if (user != null) {
-        // IMPORTANTE: Usa método COM @EntityGraph porque getAuthorities() precisa das permissoes
-        var usuarioDto = usuarioService.findByUsernameForAuthentication(user);
-        if (usuarioDto == null) {
-          // Usuário inexistente ou desabilitado, interrompe autenticação
+        try {
+          // Usa UserDetailsService padrão - busca por username ou email COM permissoes via
+          // @EntityGraph
+          UserDetails userDetails = usuarioService.loadUserByUsername(user);
+          return new UsernamePasswordAuthenticationToken(user, null, userDetails.getAuthorities());
+        } catch (UsernameNotFoundException e) {
+          // Usuário não encontrado, interrompe autenticação
           return null;
         }
-        Usuario u = usuarioService.toEntity(usuarioDto);
-        return new UsernamePasswordAuthenticationToken(user, null, u.getAuthorities());
       }
       return null;
     }

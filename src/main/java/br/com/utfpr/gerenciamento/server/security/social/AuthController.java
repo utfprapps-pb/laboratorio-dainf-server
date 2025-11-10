@@ -1,5 +1,6 @@
 package br.com.utfpr.gerenciamento.server.security.social;
 
+import br.com.utfpr.gerenciamento.server.dto.UsuarioResponseDto;
 import br.com.utfpr.gerenciamento.server.enumeration.UserRole;
 import br.com.utfpr.gerenciamento.server.model.Usuario;
 import br.com.utfpr.gerenciamento.server.security.SecurityConstants;
@@ -15,6 +16,7 @@ import java.security.SecureRandom;
 import java.util.Base64;
 import java.util.Date;
 import java.util.HashSet;
+import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -25,6 +27,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 @RestController
 @RequestMapping("auth")
+@RequiredArgsConstructor
 public class AuthController {
 
   private static final String PICTURE = "picture";
@@ -38,17 +41,6 @@ public class AuthController {
 
   @Value("${utfpr.token.secret}")
   private String tokenSecret;
-
-  public AuthController(
-      GoogleTokenVerifier googleTokenVerifier,
-      UsuarioService usuarioService,
-      PermissaoService permissaoService,
-      PasswordEncoder passwordEncoder) {
-    this.googleTokenVerifier = googleTokenVerifier;
-    this.usuarioService = usuarioService;
-    this.permissaoService = permissaoService;
-    this.passwordEncoder = passwordEncoder;
-  }
 
   @PostMapping
   ResponseEntity<AuthenticationResponseDTO> auth(
@@ -75,8 +67,8 @@ public class AuthController {
           }
 
           String username = payload.getEmail();
-          Usuario user =
-              usuarioService.toEntity(usuarioService.findByUsernameForAuthentication(username));
+          UsuarioResponseDto userDto = usuarioService.findByUsernameForAuthentication(username);
+          Usuario user = userDto != null ? usuarioService.toEntity(userDto) : null;
           if (user == null) {
             user = createOAuthUser(payload, isProfessor);
           } else {

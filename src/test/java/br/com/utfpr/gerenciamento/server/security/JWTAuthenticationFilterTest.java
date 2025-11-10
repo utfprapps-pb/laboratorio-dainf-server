@@ -5,10 +5,9 @@ import static org.mockito.Mockito.*;
 
 import br.com.utfpr.gerenciamento.server.dto.UsuarioResponseDto;
 import br.com.utfpr.gerenciamento.server.model.Usuario;
+import br.com.utfpr.gerenciamento.server.repository.UsuarioRepository;
 import br.com.utfpr.gerenciamento.server.service.PermissaoService;
-import br.com.utfpr.gerenciamento.server.service.impl.PermissaoServiceImpl;
 import br.com.utfpr.gerenciamento.server.service.impl.UsuarioServiceImpl;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -17,50 +16,56 @@ import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.util.Collections;
-import java.util.stream.Collectors;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
+import org.mockito.junit.jupiter.MockitoSettings;
+import org.mockito.quality.Strictness;
+import org.springframework.core.env.Environment;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.AuthenticationException;
 
+@ExtendWith(MockitoExtension.class)
+@MockitoSettings(strictness = Strictness.LENIENT)
 class JWTAuthenticationFilterTest {
-  private AuthenticationManager authenticationManager;
-  private UsuarioServiceImpl usuarioService;
+
+  @Mock private AuthenticationManager authenticationManager;
+  @Mock private UsuarioServiceImpl usuarioService;
+  @Mock private UsuarioRepository usuarioRepository;
+  @Mock private Environment env;
+  @Mock private HttpServletRequest request;
+  @Mock private HttpServletResponse response;
+  @Mock private FilterChain chain;
+  @Mock private PermissaoService permissaoService;
+
   private JWTAuthenticationFilter filter;
-  private HttpServletRequest request;
-  private HttpServletResponse response;
-  private FilterChain chain;
-  private PermissaoService permissaoService;
 
   @BeforeEach
   void setUp() {
-    authenticationManager = mock(AuthenticationManager.class);
-    usuarioService = mock(UsuarioServiceImpl.class);
-    var env = mock(org.springframework.core.env.Environment.class);
     when(env.getProperty(anyString())).thenReturn("test-secret");
-    filter = new JWTAuthenticationFilter(authenticationManager, usuarioService, env);
-    request = mock(HttpServletRequest.class);
-    response = mock(HttpServletResponse.class);
-    chain = mock(FilterChain.class);
-    permissaoService = mock(PermissaoServiceImpl.class);
+    filter =
+        new JWTAuthenticationFilter(authenticationManager, usuarioService, usuarioRepository, env);
   }
 
   @Test
   void shouldReturn428IfNadaConstaSolicitacaoEmAberto() throws IOException {
+    // Criar JSON manualmente para evitar problemas de desserialização
+    String json = "{\"username\":\"user@utfpr.edu.br\",\"password\":\"pass\"}";
+
     Usuario usuario = new Usuario();
     usuario.setUsername("user@utfpr.edu.br");
     usuario.setPassword("pass");
     usuario.setPermissoes(new java.util.HashSet<>());
-    UsuarioResponseDto usuarioDto = new UsuarioResponseDto();
-    usuarioDto.setUsername(usuario.getUsername());
-    usuarioDto.setPermissoes(new java.util.HashSet<>());
-    when(request.getInputStream())
-        .thenReturn(
-            new DelegatingServletInputStream(new ObjectMapper().writeValueAsBytes(usuario)));
-    when(usuarioService.findByUsernameForAuthentication(anyString())).thenReturn(usuarioDto);
-    doAnswer(invocation -> usuario).when(usuarioService).toEntity(any());
+
+    when(request.getInputStream()).thenReturn(new DelegatingServletInputStream(json.getBytes()));
+    // Mock ambos os métodos do repository usados no fluxo
+    when(usuarioRepository.findWithPermissoesByUsernameOrEmail(anyString(), anyString()))
+        .thenReturn(usuario);
+    when(usuarioRepository.findByUsernameOrEmail(anyString(), anyString())).thenReturn(usuario);
     when(usuarioService.hasSolicitacaoNadaConstaPendingOrCompleted(anyString())).thenReturn(true);
     assertThrows(
         PreconditionRequiredAuthenticationException.class,
@@ -87,18 +92,24 @@ class JWTAuthenticationFilterTest {
 
   @Test
   void testAttemptAuthentication_Success() throws Exception {
+    // Create JSON directly instead of serializing Usuario object
+    String json = "{\"username\":\"user@utfpr.edu.br\",\"password\":\"password\"}";
+    when(request.getInputStream()).thenReturn(new DelegatingServletInputStream(json.getBytes()));
+
+    // Mock the deserialization process
     Usuario usuario = new Usuario();
     usuario.setUsername("user@utfpr.edu.br");
     usuario.setPassword("password");
-    usuario.setPermissoes(new java.util.HashSet<>());
+    usuario.setEmailVerificado(true); // Set email as verified for test
+    usuario.setPermissoes(new java.util.HashSet<>()); // Initialize permissions
+
     UsuarioResponseDto usuarioDto = new UsuarioResponseDto();
     usuarioDto.setUsername(usuario.getUsername());
     usuarioDto.setPermissoes(new java.util.HashSet<>());
-    when(request.getInputStream())
-        .thenReturn(
-            new DelegatingServletInputStream(new ObjectMapper().writeValueAsBytes(usuario)));
-    when(usuarioService.findByUsernameForAuthentication(anyString())).thenReturn(usuarioDto);
-    doAnswer(invocation -> usuario).when(usuarioService).toEntity(any());
+
+    when(usuarioRepository.findWithPermissoesByUsernameOrEmail(anyString(), anyString()))
+        .thenReturn(usuario);
+    when(usuarioRepository.findByUsernameOrEmail(anyString(), anyString())).thenReturn(usuario);
     when(usuarioService.hasSolicitacaoNadaConstaPendingOrCompleted(anyString())).thenReturn(false);
     when(authenticationManager.authenticate(any(Authentication.class)))
         .thenReturn(
@@ -111,18 +122,19 @@ class JWTAuthenticationFilterTest {
 
   @Test
   void testAttemptAuthentication_PreconditionRequired() throws Exception {
+    // Criar JSON manualmente para evitar problemas de desserialização
+    String json = "{\"username\":\"user@utfpr.edu.br\",\"password\":\"password\"}";
+
     Usuario usuario = new Usuario();
     usuario.setUsername("user@utfpr.edu.br");
     usuario.setPassword("password");
     usuario.setPermissoes(new java.util.HashSet<>());
-    UsuarioResponseDto usuarioDto = new UsuarioResponseDto();
-    usuarioDto.setUsername(usuario.getUsername());
-    usuarioDto.setPermissoes(new java.util.HashSet<>());
-    when(request.getInputStream())
-        .thenReturn(
-            new DelegatingServletInputStream(new ObjectMapper().writeValueAsBytes(usuario)));
-    when(usuarioService.findByUsernameForAuthentication(anyString())).thenReturn(usuarioDto);
-    doAnswer(invocation -> usuario).when(usuarioService).toEntity(any());
+
+    when(request.getInputStream()).thenReturn(new DelegatingServletInputStream(json.getBytes()));
+    // Mock ambos os métodos do repository usados no fluxo
+    when(usuarioRepository.findWithPermissoesByUsernameOrEmail(anyString(), anyString()))
+        .thenReturn(usuario);
+    when(usuarioRepository.findByUsernameOrEmail(anyString(), anyString())).thenReturn(usuario);
     when(usuarioService.hasSolicitacaoNadaConstaPendingOrCompleted(anyString())).thenReturn(true);
     Exception exception =
         assertThrows(
@@ -137,14 +149,12 @@ class JWTAuthenticationFilterTest {
     usuario.setUsername("user@utfpr.edu.br");
     usuario.setPassword("wrong");
     usuario.setPermissoes(new java.util.HashSet<>());
-    UsuarioResponseDto usuarioDto = new UsuarioResponseDto();
-    usuarioDto.setUsername(usuario.getUsername());
-    usuarioDto.setPermissoes(new java.util.HashSet<>());
-    when(request.getInputStream())
-        .thenReturn(
-            new DelegatingServletInputStream(new ObjectMapper().writeValueAsBytes(usuario)));
-    when(usuarioService.findByUsernameForAuthentication(anyString())).thenReturn(usuarioDto);
-    doAnswer(invocation -> usuario).when(usuarioService).toEntity(any());
+
+    String json = "{\"username\":\"user@utfpr.edu.br\",\"password\":\"wrong\"}";
+    when(request.getInputStream()).thenReturn(new DelegatingServletInputStream(json.getBytes()));
+    when(usuarioRepository.findWithPermissoesByUsernameOrEmail(anyString(), anyString()))
+        .thenReturn(usuario);
+    when(usuarioRepository.findByUsernameOrEmail(anyString(), anyString())).thenReturn(usuario);
     when(usuarioService.hasSolicitacaoNadaConstaPendingOrCompleted(anyString())).thenReturn(false);
     when(authenticationManager.authenticate(any(Authentication.class)))
         .thenThrow(
@@ -156,19 +166,20 @@ class JWTAuthenticationFilterTest {
 
   @Test
   void testSuccessfulAuthentication_GeneratesToken() throws Exception {
-    HttpServletResponse mockResponse = mock(HttpServletResponse.class);
     StringWriter stringWriter = new StringWriter();
     PrintWriter writer = new PrintWriter(stringWriter);
-    when(mockResponse.getWriter()).thenReturn(writer);
+    when(response.getWriter()).thenReturn(writer);
+
     Authentication auth = mock(Authentication.class);
     when(auth.getName()).thenReturn("user@utfpr.edu.br");
-    filter.successfulAuthentication(request, mockResponse, chain, auth);
+
+    filter.successfulAuthentication(request, response, chain, auth);
     writer.flush();
     String token = stringWriter.toString();
     assertNotNull(token);
     assertFalse(token.isEmpty());
-    verify(mockResponse).setContentType("application/json");
-    verify(mockResponse)
+    verify(response).setContentType("application/json");
+    verify(response)
         .addHeader(
             br.com.utfpr.gerenciamento.server.security.SecurityConstants.HEADER_STRING,
             br.com.utfpr.gerenciamento.server.security.SecurityConstants.TOKEN_PREFIX
@@ -177,110 +188,107 @@ class JWTAuthenticationFilterTest {
 
   @Test
   void testUnsuccessfulAuthentication_PreconditionRequired() throws Exception {
-    HttpServletResponse mockResponse = mock(HttpServletResponse.class);
     StringWriter stringWriter = new StringWriter();
     PrintWriter writer = new PrintWriter(stringWriter);
-    when(mockResponse.getWriter()).thenReturn(writer);
+    when(response.getWriter()).thenReturn(writer);
+
     PreconditionRequiredAuthenticationException ex =
         new PreconditionRequiredAuthenticationException("Nada consta");
-    filter.unsuccessfulAuthentication(request, mockResponse, ex);
+    filter.unsuccessfulAuthentication(request, response, ex);
     writer.flush();
-    verify(mockResponse).setStatus(428);
+    verify(response).setStatus(428);
     String json = stringWriter.toString();
     assertTrue(json.contains("Nada consta"));
   }
 
   @Test
   void testUnsuccessfulAuthentication_Unauthorized() throws Exception {
-    HttpServletResponse mockResponse = mock(HttpServletResponse.class);
     StringWriter stringWriter = new StringWriter();
     PrintWriter writer = new PrintWriter(stringWriter);
-    when(mockResponse.getWriter()).thenReturn(writer);
+    when(response.getWriter()).thenReturn(writer);
+
     AuthenticationException ex =
         new org.springframework.security.core.AuthenticationException("Unauthorized") {};
-    filter.unsuccessfulAuthentication(request, mockResponse, ex);
+    filter.unsuccessfulAuthentication(request, response, ex);
     writer.flush();
-    verify(mockResponse).setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+    verify(response).setStatus(HttpServletResponse.SC_UNAUTHORIZED);
     String json = stringWriter.toString();
     assertTrue(json.contains("Unauthorized"));
   }
 
   @Test
-  void testAttemptAuthentication_UsernameProfessores() throws Exception {
+  void testAttemptAuthentication_UsernameProfessores_NoParsing() throws Exception {
+    // TESTE DE SEGURANÇA: Valida que email completo é usado sem parsing
+    // Antes: user@professores.utfpr.edu.br → user@utfpr.edu.br (VULNERABILIDADE)
+    // Agora: user@professores.utfpr.edu.br → user@professores.utfpr.edu.br (SEGURO)
+
+    // Criar JSON manualmente para evitar problemas de desserialização
+    String json =
+        String.format(
+            "{\"username\":\"%s\",\"password\":\"%s\"}",
+            "user@professores.utfpr.edu.br", "password");
+
     Usuario usuario = new Usuario();
     usuario.setUsername("user@professores.utfpr.edu.br");
     usuario.setPassword("password");
-    usuario.setPermissoes(new java.util.HashSet<>()); // Correção definitiva
-    UsuarioResponseDto usuarioDto = new UsuarioResponseDto();
-    usuarioDto.setUsername("user@utfpr.edu.br");
-    usuarioDto.setPermissoes(new java.util.HashSet<>());
-    when(request.getInputStream())
-        .thenReturn(
-            new DelegatingServletInputStream(new ObjectMapper().writeValueAsBytes(usuario)));
-    when(usuarioService.findByUsernameForAuthentication("user@utfpr.edu.br"))
-        .thenReturn(usuarioDto);
-    doAnswer(
-            invocation -> {
-              UsuarioResponseDto dto = (UsuarioResponseDto) invocation.getArgument(0);
-              Usuario mappedUsuario = new Usuario();
-              mappedUsuario.setUsername(dto.getUsername());
-              mappedUsuario.setPermissoes(
-                  dto.getPermissoes().stream()
-                      .map(permissaoService::toEntity)
-                      .collect(Collectors.toSet()));
-              // Adicione outros campos relevantes conforme necessário
-              return mappedUsuario;
-            })
-        .when(usuarioService)
-        .toEntity(any());
-    when(usuarioService.hasSolicitacaoNadaConstaPendingOrCompleted("user@utfpr.edu.br"))
+    usuario.setEmailVerificado(true); // Importante: usuário deve ter email verificado
+    usuario.setPermissoes(new java.util.HashSet<>());
+
+    when(request.getInputStream()).thenReturn(new DelegatingServletInputStream(json.getBytes()));
+    when(usuarioRepository.findWithPermissoesByUsernameOrEmail(
+            "user@professores.utfpr.edu.br", "user@professores.utfpr.edu.br"))
+        .thenReturn(usuario);
+    when(usuarioRepository.findByUsernameOrEmail(
+            "user@professores.utfpr.edu.br", "user@professores.utfpr.edu.br"))
+        .thenReturn(usuario);
+    when(usuarioService.hasSolicitacaoNadaConstaPendingOrCompleted("user@professores.utfpr.edu.br"))
         .thenReturn(false);
     when(authenticationManager.authenticate(any(Authentication.class)))
         .thenReturn(
             new UsernamePasswordAuthenticationToken(
-                "user@utfpr.edu.br", "password", Collections.emptyList()));
+                "user@professores.utfpr.edu.br", "password", Collections.emptyList()));
     Authentication auth = filter.attemptAuthentication(request, response);
     assertNotNull(auth);
-    assertEquals("user@utfpr.edu.br", auth.getPrincipal());
+    // SEGURANÇA: Confirma que email completo é mantido (sem parsing de domínio)
+    assertEquals("user@professores.utfpr.edu.br", auth.getPrincipal());
   }
 
   @Test
-  void testAttemptAuthentication_UsernameAdministrativo() throws Exception {
+  void testAttemptAuthentication_UsernameAdministrativo_NoParsing() throws Exception {
+    // TESTE DE SEGURANÇA: Valida que email completo é usado sem parsing
+    // Antes: user@administrativo.utfpr.edu.br → user@utfpr.edu.br (VULNERABILIDADE)
+    // Agora: user@administrativo.utfpr.edu.br → user@administrativo.utfpr.edu.br (SEGURO)
+
+    // Criar JSON manualmente para evitar problemas de desserialização
+    String json =
+        String.format(
+            "{\"username\":\"%s\",\"password\":\"%s\"}",
+            "user@administrativo.utfpr.edu.br", "password");
+
     Usuario usuario = new Usuario();
     usuario.setUsername("user@administrativo.utfpr.edu.br");
     usuario.setPassword("password");
-    usuario.setPermissoes(new java.util.HashSet<>()); // Correção definitiva
-    UsuarioResponseDto usuarioDto = new UsuarioResponseDto();
-    usuarioDto.setUsername("user@utfpr.edu.br");
-    usuarioDto.setPermissoes(new java.util.HashSet<>());
-    when(request.getInputStream())
-        .thenReturn(
-            new DelegatingServletInputStream(new ObjectMapper().writeValueAsBytes(usuario)));
-    when(usuarioService.findByUsernameForAuthentication("user@utfpr.edu.br"))
-        .thenReturn(usuarioDto);
-    doAnswer(
-            invocation -> {
-              UsuarioResponseDto dto = (UsuarioResponseDto) invocation.getArgument(0);
-              Usuario mappedUsuario = new Usuario();
-              mappedUsuario.setUsername(dto.getUsername());
-              mappedUsuario.setPermissoes(
-                  dto.getPermissoes().stream()
-                      .map(permissaoService::toEntity)
-                      .collect(Collectors.toSet()));
-              // Adicione outros campos relevantes conforme necessário
-              return mappedUsuario;
-            })
-        .when(usuarioService)
-        .toEntity(any());
-    when(usuarioService.hasSolicitacaoNadaConstaPendingOrCompleted("user@utfpr.edu.br"))
+    usuario.setEmailVerificado(true); // Importante: usuário deve ter email verificado
+    usuario.setPermissoes(new java.util.HashSet<>());
+
+    when(request.getInputStream()).thenReturn(new DelegatingServletInputStream(json.getBytes()));
+    when(usuarioRepository.findWithPermissoesByUsernameOrEmail(
+            "user@administrativo.utfpr.edu.br", "user@administrativo.utfpr.edu.br"))
+        .thenReturn(usuario);
+    when(usuarioRepository.findByUsernameOrEmail(
+            "user@administrativo.utfpr.edu.br", "user@administrativo.utfpr.edu.br"))
+        .thenReturn(usuario);
+    when(usuarioService.hasSolicitacaoNadaConstaPendingOrCompleted(
+            "user@administrativo.utfpr.edu.br"))
         .thenReturn(false);
     when(authenticationManager.authenticate(any(Authentication.class)))
         .thenReturn(
             new UsernamePasswordAuthenticationToken(
-                "user@utfpr.edu.br", "password", Collections.emptyList()));
+                "user@administrativo.utfpr.edu.br", "password", Collections.emptyList()));
     Authentication auth = filter.attemptAuthentication(request, response);
     assertNotNull(auth);
-    assertEquals("user@utfpr.edu.br", auth.getPrincipal());
+    // SEGURANÇA: Confirma que email completo é mantido (sem parsing de domínio)
+    assertEquals("user@administrativo.utfpr.edu.br", auth.getPrincipal());
   }
 
   // Helper for simulating ServletInputStream from byte[]
@@ -308,6 +316,8 @@ class JWTAuthenticationFilterTest {
     }
 
     @Override
-    public void setReadListener(jakarta.servlet.ReadListener readListener) {}
+    public void setReadListener(jakarta.servlet.ReadListener readListener) {
+      throw new UnsupportedOperationException("Implementar");
+    }
   }
 }

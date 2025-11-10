@@ -5,6 +5,7 @@ import static br.com.utfpr.gerenciamento.server.enumeration.UserRole.ROLE_LABORA
 import static br.com.utfpr.gerenciamento.server.security.ApiRoutes.*;
 import static br.com.utfpr.gerenciamento.server.security.ApiRoutes.NADACONSTA_SOLICITAR;
 
+import br.com.utfpr.gerenciamento.server.repository.UsuarioRepository;
 import br.com.utfpr.gerenciamento.server.service.impl.UsuarioServiceImpl;
 import java.util.List;
 import lombok.SneakyThrows;
@@ -28,10 +29,15 @@ import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 @Configuration
 public class WebSecurity {
   private final UsuarioServiceImpl usuarioService;
+  private final UsuarioRepository usuarioRepository;
   private final Environment env;
 
-  public WebSecurity(@Lazy UsuarioServiceImpl usuarioService, Environment env) {
+  public WebSecurity(
+      @Lazy UsuarioServiceImpl usuarioService,
+      UsuarioRepository usuarioRepository,
+      Environment env) {
     this.usuarioService = usuarioService;
+    this.usuarioRepository = usuarioRepository;
     this.env = env;
   }
 
@@ -71,6 +77,12 @@ public class WebSecurity {
                     .requestMatchers(HttpMethod.DELETE, ITEM)
                     .hasAnyRole(ROLE_LABORATORISTA_NAME, ROLE_ADMINISTRADOR_NAME)
 
+                    // Usuário - endpoints específicos devem vir PRIMEIRO (mais específicos)
+                    .requestMatchers(HttpMethod.GET, USUARIO_INFO, USUARIO_FIND_BY_USERNAME)
+                    .authenticated()
+                    .requestMatchers(HttpMethod.POST, USUARIO_UPDATE)
+                    .authenticated()
+
                     // Usuário - endpoints públicos de registro/recuperação
                     .requestMatchers(
                         HttpMethod.POST,
@@ -81,13 +93,10 @@ public class WebSecurity {
                         USUARIO_REQUEST_CODE_RESET)
                     .permitAll()
 
-                    // Usuário - endpoints autenticados
-                    .requestMatchers(HttpMethod.POST, USUARIO_UPDATE)
-                    .authenticated()
-                    .requestMatchers(HttpMethod.GET, USUARIO_INFO, USUARIO_FIND_BY_USERNAME)
-                    .authenticated()
-
-                    // Usuário - administração requer role ADMINISTRADOR
+                    // Usuário - administração requer role ADMINISTRADOR (REGRAS GENÉRICAS POR
+                    // ÚLTIMO)
+                    .requestMatchers(HttpMethod.GET, USUARIO)
+                    .hasRole(ROLE_ADMINISTRADOR_NAME)
                     .requestMatchers(HttpMethod.PUT, USUARIO)
                     .hasRole(ROLE_ADMINISTRADOR_NAME)
                     .requestMatchers(HttpMethod.PATCH, USUARIO)
@@ -110,6 +119,8 @@ public class WebSecurity {
                     // Endpoints públicos
                     .requestMatchers(HttpMethod.POST, AUTH)
                     .permitAll()
+                    .requestMatchers(HttpMethod.POST, "/login")
+                    .permitAll()
                     .requestMatchers(HttpMethod.GET, TEST)
                     .permitAll()
 
@@ -127,7 +138,9 @@ public class WebSecurity {
                     .anyRequest()
                     .authenticated())
         .authenticationManager(authenticationManager)
-        .addFilter(new JWTAuthenticationFilter(authenticationManager, usuarioService, env))
+        .addFilter(
+            new JWTAuthenticationFilter(
+                authenticationManager, usuarioService, usuarioRepository, env))
         .addFilter(new JWTAuthorizationFilter(authenticationManager, usuarioService, env))
         .sessionManagement(
             session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))

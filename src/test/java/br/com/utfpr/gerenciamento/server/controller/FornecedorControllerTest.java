@@ -1,11 +1,10 @@
 package br.com.utfpr.gerenciamento.server.controller;
 
 import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.any;
 
 import br.com.utfpr.gerenciamento.server.dto.FornecedorResponseDto;
-import br.com.utfpr.gerenciamento.server.factory.FornecedorFactory;
 import br.com.utfpr.gerenciamento.server.model.Fornecedor;
 import br.com.utfpr.gerenciamento.server.service.FornecedorService;
 import java.util.List;
@@ -35,10 +34,35 @@ class FornecedorControllerTest {
 
   @BeforeEach
   void setUp() {
-    fornecedor = FornecedorFactory.createFornecedorPadrao();
-    fornecedorResponseDto = FornecedorFactory.createFornecedorResponseDtoPadrao();
-    fornecedores = FornecedorFactory.createListaFornecedores(2);
-    fornecedoresDto = FornecedorFactory.createListaFornecedoresDto(2);
+    fornecedor = new Fornecedor();
+    fornecedor.setId(1L);
+    fornecedor.setNomeFantasia("Fornecedor Teste");
+    fornecedor.setRazaoSocial("Empresa Teste Ltda");
+    fornecedor.setCnpj("12345678901234");
+    fornecedor.setEmail("contato@teste.com");
+    fornecedor.setTelefone("1122334455");
+
+    fornecedorResponseDto = new FornecedorResponseDto();
+    fornecedorResponseDto.setId(1L);
+    fornecedorResponseDto.setNomeFantasia("Fornecedor Teste");
+    fornecedorResponseDto.setRazaoSocial("Empresa Teste Ltda");
+    fornecedorResponseDto.setCnpj("12345678901234");
+    fornecedorResponseDto.setEmail("contato@teste.com");
+    fornecedorResponseDto.setTelefone("1122334455");
+
+    // Criar lista com 2 fornecedores para testes
+    Fornecedor fornecedor2 = new Fornecedor();
+    fornecedor2.setId(2L);
+    fornecedor2.setNomeFantasia("Fornecedor Teste 2");
+    fornecedor2.setRazaoSocial("Empresa Teste 2 Ltda");
+    fornecedor2.setCnpj("98765432109876");
+    fornecedor2.setEmail("contato2@teste.com");
+    fornecedor2.setTelefone("9988776655");
+
+    FornecedorResponseDto fornecedorResponseDto2 = createFornecedorResponseDtoAlternativo();
+
+    fornecedores = List.of(fornecedor, fornecedor2);
+    fornecedoresDto = List.of(fornecedorResponseDto, fornecedorResponseDto2);
   }
 
   @Test
@@ -55,7 +79,7 @@ class FornecedorControllerTest {
     when(fornecedorService.completeFornecedor(query)).thenReturn(fornecedores);
     when(fornecedorService.toDto(any(Fornecedor.class)))
         .thenReturn(fornecedorResponseDto)
-        .thenReturn(FornecedorFactory.createFornecedorResponseDto(2L, "Fornecedor 2"));
+        .thenReturn(createFornecedorResponseDtoAlternativo());
 
     List<FornecedorResponseDto> result = fornecedorController.complete(query);
 
@@ -71,7 +95,7 @@ class FornecedorControllerTest {
     when(fornecedorService.completeFornecedor(query)).thenReturn(fornecedores);
     when(fornecedorService.toDto(any(Fornecedor.class)))
         .thenReturn(fornecedorResponseDto)
-        .thenReturn(FornecedorFactory.createFornecedorResponseDto(2L, "Fornecedor 2"));
+        .thenReturn(createFornecedorResponseDtoAlternativo());
 
     List<FornecedorResponseDto> result = fornecedorController.complete(query);
 
@@ -236,5 +260,16 @@ class FornecedorControllerTest {
   @Test
   void testPostDelete() {
     assertDoesNotThrow(() -> fornecedorController.postDelete(fornecedor));
+  }
+
+  private FornecedorResponseDto createFornecedorResponseDtoAlternativo() {
+    FornecedorResponseDto dto = new FornecedorResponseDto();
+    dto.setId(2L);
+    dto.setNomeFantasia("Fornecedor 2");
+    dto.setRazaoSocial("Empresa Teste 2 Ltda");
+    dto.setCnpj("98765432109876");
+    dto.setEmail("contato2@teste.com");
+    dto.setTelefone("9988776655");
+    return dto;
   }
 }
