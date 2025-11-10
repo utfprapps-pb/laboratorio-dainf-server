@@ -420,7 +420,8 @@ class JWTAuthenticationSecurityTest {
     HttpEntity<String> request = new HttpEntity<>("", headers);
 
     ResponseEntity<String> response =
-        restTemplate.exchange(baseUrl + "/usuario/user-info", HttpMethod.GET, request, String.class);
+        restTemplate.exchange(
+            baseUrl + "/usuario/user-info", HttpMethod.GET, request, String.class);
 
     assertEquals(
         HttpStatus.FORBIDDEN,
