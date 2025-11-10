@@ -20,6 +20,7 @@ import org.springframework.boot.test.web.client.TestRestTemplate;
 import org.springframework.boot.test.web.server.LocalServerPort;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.test.annotation.DirtiesContext;
@@ -419,7 +420,7 @@ class JWTAuthenticationSecurityTest {
     HttpEntity<String> request = new HttpEntity<>("", headers);
 
     ResponseEntity<String> response =
-        restTemplate.postForEntity(baseUrl + "/usuario/user-info", request, String.class);
+        restTemplate.exchange(baseUrl + "/usuario/user-info", HttpMethod.GET, request, String.class);
 
     assertEquals(
         HttpStatus.FORBIDDEN,
