@@ -9,7 +9,6 @@ import br.com.utfpr.gerenciamento.server.repository.UsuarioRepository;
 import br.com.utfpr.gerenciamento.server.service.PermissaoService;
 import br.com.utfpr.gerenciamento.server.service.impl.UsuarioServiceImpl;
 import jakarta.servlet.FilterChain;
-import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
@@ -25,6 +24,7 @@ import org.mockito.junit.jupiter.MockitoSettings;
 import org.mockito.quality.Strictness;
 import org.springframework.core.env.Environment;
 import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.AuthenticationException;
@@ -73,8 +73,7 @@ class JWTAuthenticationFilterTest {
   }
 
   @Test
-  void unsuccessfulAuthenticationShouldReturnJsonAnd428ForNadaConsta()
-      throws IOException, ServletException {
+  void unsuccessfulAuthenticationShouldReturnJsonAnd428ForNadaConsta() throws IOException {
     StringWriter sw = new StringWriter();
     PrintWriter pw = new PrintWriter(sw);
     when(response.getWriter()).thenReturn(pw);
@@ -289,6 +288,80 @@ class JWTAuthenticationFilterTest {
     assertNotNull(auth);
     // SEGURANÇA: Confirma que email completo é mantido (sem parsing de domínio)
     assertEquals("user@administrativo.utfpr.edu.br", auth.getPrincipal());
+  }
+
+  @Test
+  void testAttemptAuthentication_UserEnumerationSecurity_ValidPasswordSpecificFeedback()
+      throws Exception {
+    // TESTE DE SEGURANÇA CRÍTICO: Valida que senhas corretas recebem feedback específico,
+    // mas inválidas recebem mensagem genérica para prevenir user enumeration
+
+    // Cenário 1: Usuário existe com senha correta mas tem nada consta pendente
+    String jsonValidPassword =
+        "{\"username\":\"user@utfpr.edu.br\",\"password\":\"correctPassword\"}";
+    Usuario usuarioExistente = new Usuario();
+    usuarioExistente.setUsername("user@utfpr.edu.br");
+    usuarioExistente.setPassword("correctPassword");
+    usuarioExistente.setEmailVerificado(true);
+    usuarioExistente.setPermissoes(new java.util.HashSet<>());
+
+    when(request.getInputStream())
+        .thenReturn(new DelegatingServletInputStream(jsonValidPassword.getBytes()));
+    when(usuarioRepository.findWithPermissoesByUsernameOrEmail(
+            "user@utfpr.edu.br", "user@utfpr.edu.br"))
+        .thenReturn(usuarioExistente);
+    when(usuarioRepository.findByUsernameOrEmail("user@utfpr.edu.br", "user@utfpr.edu.br"))
+        .thenReturn(usuarioExistente);
+    when(usuarioService.hasSolicitacaoNadaConstaPendingOrCompleted("user@utfpr.edu.br"))
+        .thenReturn(true);
+
+    // Mock autenticação bem-sucedida (senha correta)
+    when(authenticationManager.authenticate(any(Authentication.class)))
+        .thenReturn(
+            new UsernamePasswordAuthenticationToken(
+                "user@utfpr.edu.br", "correctPassword", Collections.emptyList()));
+
+    // Usuário com senha correta deve receber 428 (nada consta)
+    Exception exceptionNadaConsta =
+        assertThrows(
+            PreconditionRequiredAuthenticationException.class,
+            () -> filter.attemptAuthentication(request, response));
+    assertTrue(exceptionNadaConsta.getMessage().contains("nada consta"));
+
+    // Cenário 2: Usuário existe com senha errada recebe mensagem genérica
+    String jsonWrongPassword =
+        "{\"username\":\"user@utfpr.edu.br\",\"password\":\"wrongPassword\"}";
+    when(request.getInputStream())
+        .thenReturn(new DelegatingServletInputStream(jsonWrongPassword.getBytes()));
+
+    // Mock autenticação falha (senha errada)
+    when(authenticationManager.authenticate(any(Authentication.class)))
+        .thenThrow(new BadCredentialsException("Credenciais inválidas"));
+
+    // Usuário com senha errada deve receber BadCredentialsException genérica
+    Exception exceptionWrongPassword =
+        assertThrows(
+            BadCredentialsException.class, () -> filter.attemptAuthentication(request, response));
+    assertEquals("Credenciais inválidas", exceptionWrongPassword.getMessage());
+
+    // Cenário 3: Usuário não existe recebe mensagem genérica (para comparação)
+    String jsonNonExistentUser =
+        "{\"username\":\"nonexistent@utfpr.edu.br\",\"password\":\"anyPassword\"}";
+    when(request.getInputStream())
+        .thenReturn(new DelegatingServletInputStream(jsonNonExistentUser.getBytes()));
+    when(usuarioRepository.findWithPermissoesByUsernameOrEmail(
+            "nonexistent@utfpr.edu.br", "nonexistent@utfpr.edu.br"))
+        .thenReturn(null);
+
+    // Usuário não existente deve receber BadCredentialsException genérica
+    Exception exceptionNonExistent =
+        assertThrows(
+            BadCredentialsException.class, () -> filter.attemptAuthentication(request, response));
+    assertEquals("Credenciais inválidas", exceptionNonExistent.getMessage());
+
+    // SEGURANÇA: Ambos os cenários (senha errada e usuário não existe) retornam a mesma mensagem
+    // genérica
+    assertEquals(exceptionWrongPassword.getMessage(), exceptionNonExistent.getMessage());
   }
 
   // Helper for simulating ServletInputStream from byte[]

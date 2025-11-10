@@ -293,7 +293,7 @@ class JWTAuthenticationSecurityTest {
   }
 
   @ParameterizedTest(name = "{index}: Requisição {0} deve retornar {1}")
-  @CsvSource({"sem_username, 400", "sem_content_type, 200", "com_content_type, 200"})
+  @CsvSource({"sem_username, 401", "sem_content_type, 200", "com_content_type, 200"})
   @DisplayName("Deve validar diferentes formatos de requisição")
   void loginFormatoRequisicao_DeveRetornarStatusEsperado(
       String tipoRequisicao, int statusCodeEsperado) {

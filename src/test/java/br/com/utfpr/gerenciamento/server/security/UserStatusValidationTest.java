@@ -127,7 +127,8 @@ class UserStatusValidationTest {
   }
 
   @Test
-  @DisplayName("Tentativa de login com campos vazios deve retornar erro")
+  @DisplayName(
+      "Tentativa de login com campos vazios deve retornar erro 401 (segurança anti-enumeration)")
   void loginComCamposVazios_DeveRetornarErro() {
     HttpHeaders headers = new HttpHeaders();
     headers.set("Content-Type", "application/json");
@@ -143,8 +144,15 @@ class UserStatusValidationTest {
         restTemplate.postForEntity(baseUrl + "/login", request, String.class);
 
     assertEquals(
-        HttpStatus.BAD_REQUEST,
+        HttpStatus.UNAUTHORIZED,
         response.getStatusCode(),
-        "Campos vazios devem resultar em erro 400");
+        "Campos vazios devem resultar em erro 401 para prevenir user enumeration");
+
+    // Verifica se a mensagem de erro é genérica (não revela informações específicas)
+    assertNotNull(response.getBody());
+    String responseBody = response.getBody();
+    assertTrue(
+        responseBody.contains("Credenciais inválidas") || responseBody.contains("error"),
+        "Deve retornar mensagem genérica de credenciais inválidas");
   }
 }
