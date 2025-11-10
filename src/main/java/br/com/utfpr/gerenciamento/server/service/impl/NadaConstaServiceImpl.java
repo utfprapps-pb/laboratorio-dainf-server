@@ -26,6 +26,12 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+/**
+ * Implementação do serviço de operações relacionadas ao Nada Consta.
+ *
+ * <p>Responsável por gerenciar solicitações, verificação de pendências, invalidação e conversão de
+ * entidades Nada Consta.
+ */
 @Slf4j
 @Service
 public class NadaConstaServiceImpl extends CrudServiceImpl<NadaConsta, Long, NadaConstaResponseDto>
@@ -58,11 +64,23 @@ public class NadaConstaServiceImpl extends CrudServiceImpl<NadaConsta, Long, Nad
     return nadaConstaRepository;
   }
 
+  /**
+   * Converte uma entidade NadaConsta para um NadaConstaResponseDto.
+   *
+   * @param entity Entidade NadaConsta a ser convertida
+   * @return DTO correspondente à entidade NadaConsta
+   */
   @Override
   public NadaConstaResponseDto toDto(NadaConsta entity) {
     return modelMapper.map(entity, NadaConstaResponseDto.class);
   }
 
+  /**
+   * Converte um NadaConstaResponseDto para a entidade NadaConsta.
+   *
+   * @param nadaConstaResponseDto DTO de resposta a ser convertido
+   * @return Entidade NadaConsta correspondente
+   */
   @Override
   public NadaConsta toEntity(NadaConstaResponseDto nadaConstaResponseDto) {
     return modelMapper.map(nadaConstaResponseDto, NadaConsta.class);
@@ -78,6 +96,12 @@ public class NadaConstaServiceImpl extends CrudServiceImpl<NadaConsta, Long, Nad
     return nadaConstaRepository.findAllByUsuario(usuario).stream().map(this::toDto).toList();
   }
 
+  /**
+   * Solicita uma declaração de Nada Consta para o usuário informado.
+   *
+   * @param documento Documento do usuário
+   * @return Dados da solicitação de Nada Consta
+   */
   @Override
   @Transactional
   public NadaConstaResponseDto solicitarNadaConsta(String documento) {
@@ -147,5 +171,77 @@ public class NadaConstaServiceImpl extends CrudServiceImpl<NadaConsta, Long, Nad
       eventPublisher.publishEvent(new NadaConstaPendenciasEvent(this, destinatario, templateData));
     }
     return toDto(nadaConsta);
+  }
+
+  /**
+   * Verifica se as pendências do usuário foram resolvidas e atualiza o status da solicitação.
+   * Dispara evento de conclusão caso não haja pendências.
+   *
+   * @param id Identificador da solicitação de Nada Consta
+   * @return Dados atualizados da solicitação
+   */
+  @Override
+  @Transactional
+  public NadaConstaResponseDto verificarPendenciasNadaConsta(Long id) {
+    NadaConsta nadaConsta =
+        nadaConstaRepository
+            .findById(id)
+            .orElseThrow(() -> new NadaConstaException("Nada Consta não encontrado."));
+    if (nadaConsta.getStatus() != NadaConstaStatus.PENDING) {
+      throw new NadaConstaException("Nada Consta não está com status PENDING.");
+    }
+    Usuario usuario = nadaConsta.getUsuario();
+    List<Emprestimo> emprestimosAbertos =
+        emprestimoService.findAllEmprestimosAbertosByUsuario(usuario.getUsername()).stream()
+            .map(emprestimoService::toEntity)
+            .toList();
+    if (emprestimosAbertos.isEmpty()) {
+      nadaConsta.setStatus(NadaConstaStatus.COMPLETED);
+      nadaConstaRepository.save(nadaConsta);
+      // Dispara evento de conclusão
+      String destinatario = systemConfigService.getEmailNadaConsta();
+      if (EmailUtils.isValidEmail(destinatario)) {
+        Map<String, Object> templateData = new HashMap<>();
+        templateData.put("usuario", usuario);
+        templateData.put("nadaConsta", nadaConsta);
+        eventPublisher.publishEvent(new NadaConstaEmitidoEvent(this, destinatario, templateData));
+      } else {
+        log.warn("Email de Nada Consta não enviado - email do sistema inválido: {}", destinatario);
+      }
+    }
+    return convertToDto(nadaConsta);
+  }
+
+  /**
+   * Invalida uma declaração de Nada Consta emitida. Atualiza o status para INVALIDATED e reativa o
+   * usuário vinculado. Interpreta que o aluno retornou para estudo na universidade.
+   *
+   * @param id Identificador da solicitação de Nada Consta
+   * @return Dados atualizados da solicitação
+   */
+  @Override
+  @Transactional
+  public NadaConstaResponseDto invalidarNadaConsta(Long id) {
+    NadaConsta nadaConsta =
+        nadaConstaRepository
+            .findById(id)
+            .orElseThrow(() -> new NadaConstaException("Nada Consta não encontrado."));
+    if (nadaConsta.getStatus() != NadaConstaStatus.COMPLETED) {
+      throw new NadaConstaException(
+          "Só é possível invalidar Nada Consta emitido (status COMPLETED).");
+    }
+    nadaConsta.setStatus(NadaConstaStatus.INVALIDATED);
+    nadaConstaRepository.save(nadaConsta);
+    // Reativa o usuário vinculado
+    Usuario usuario = nadaConsta.getUsuario();
+    usuario.setAtivo(true);
+    usuarioService.save(usuario);
+    log.info("Nada Consta id={} invalidado (status INVALIDATED) e usuário reativado.", id);
+    return convertToDto(nadaConsta);
+  }
+
+  @Override
+  public NadaConstaResponseDto convertToDto(NadaConsta entity) {
+    return modelMapper.map(entity, NadaConstaResponseDto.class);
   }
 }
