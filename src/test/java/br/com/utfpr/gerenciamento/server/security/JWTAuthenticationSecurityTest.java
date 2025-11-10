@@ -26,7 +26,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.annotation.DirtiesContext.ClassMode;
 import org.springframework.test.context.ActiveProfiles;
-import org.springframework.transaction.annotation.Transactional;
 
 /**
  * Testes de segurança críticos para autenticação JWT.
@@ -72,7 +71,6 @@ class JWTAuthenticationSecurityTest {
     criarUsuariosTeste();
   }
 
-  @Transactional
   protected void limparDadosTeste() {
     for (String username : USUARIOS_TESTE) {
       br.com.utfpr.gerenciamento.server.model.Usuario usuario =
