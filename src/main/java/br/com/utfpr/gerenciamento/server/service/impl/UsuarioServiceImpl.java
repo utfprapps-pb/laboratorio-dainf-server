@@ -96,18 +96,24 @@ public class UsuarioServiceImpl extends CrudServiceImpl<Usuario, Long, UsuarioRe
 
   @Override
   public UsuarioResponseDto toDto(Usuario entity) {
+    if (entity == null) {
+      return null;
+    }
     return modelMapper.map(entity, UsuarioResponseDto.class);
   }
 
   @Override
   public Usuario toEntity(UsuarioResponseDto usuarioResponseDto) {
+    if (usuarioResponseDto == null) {
+      return null;
+    }
     return modelMapper.map(usuarioResponseDto, Usuario.class);
   }
 
   @Override
   @Transactional(readOnly = true)
   public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
-    username = normalizeUsername(username);
+    // SEGURANÇA: Removida normalização - agora usa username/email completo
     Usuario usuario = usuarioRepository.findWithPermissoesByUsernameOrEmail(username, username);
     if (usuario == null) {
       throw new UsernameNotFoundException("Usuário não encontrado");
@@ -133,7 +139,7 @@ public class UsuarioServiceImpl extends CrudServiceImpl<Usuario, Long, UsuarioRe
   @Override
   @Transactional(readOnly = true)
   public UsuarioResponseDto findByUsername(String username) {
-    username = normalizeUsername(username);
+    // SEGURANÇA: Removida normalização - agora usa username/email completo
     // Usa versão SEM permissoes (LAZY) - mais performática para uso geral
     return toDto(usuarioRepository.findByUsernameOrEmail(username, username));
   }
@@ -141,25 +147,9 @@ public class UsuarioServiceImpl extends CrudServiceImpl<Usuario, Long, UsuarioRe
   @Override
   @Transactional(readOnly = true)
   public UsuarioResponseDto findByUsernameForAuthentication(String username) {
-    username = normalizeUsername(username);
+    // SEGURANÇA: Removida normalização - agora usa username/email completo
     // Usa versão COM permissoes (@EntityGraph) - necessário para autenticação
     return toDto(usuarioRepository.findWithPermissoesByUsernameOrEmail(username, username));
-  }
-
-  /**
-   * Normaliza username removendo subdomínios institucionais da UTFPR.
-   * Converte @professores.utfpr.edu.br e @administrativo.utfpr.edu.br para @utfpr.edu.br.
-   *
-   * @param username username original (pode conter subdomínios)
-   * @return username normalizado
-   */
-  private String normalizeUsername(String username) {
-    if (username.contains("@professores.utfpr.edu.br")) {
-      return username.replace("professores.", "");
-    } else if (username.contains("@administrativo.utfpr.edu.br")) {
-      return username.replace("administrativo.", "");
-    }
-    return username;
   }
 
   @Override
@@ -193,9 +183,10 @@ public class UsuarioServiceImpl extends CrudServiceImpl<Usuario, Long, UsuarioRe
   @Transactional
   public UsuarioResponseDto updateUsuario(Usuario usuario) {
     String usernameAutenticado = SecurityUtils.getAuthenticatedUsername();
-    String usernameAlvo = normalizeUsername(usuario.getUsername());
+    // SEGURANÇA: Removida normalização - comparação direta de usernames completos
+    String usernameAlvo = usuario.getUsername();
 
-    if (!usernameAlvo.equals(normalizeUsername(usernameAutenticado))) {
+    if (!usernameAlvo.equals(usernameAutenticado)) {
       log.warn(
           "Tentativa de atualização não autorizada: usuário {} tentou modificar {}",
           usernameAutenticado,
@@ -256,10 +247,9 @@ public class UsuarioServiceImpl extends CrudServiceImpl<Usuario, Long, UsuarioRe
 
       if (!permissaoIds.isEmpty()) {
         Set<Permissao> permissoes =
-            new HashSet<>(
-                permissaoService.findAllById(permissaoIds).stream()
-                    .map(permissaoService::toEntity)
-                    .collect(Collectors.toSet()));
+            permissaoService.findAllById(permissaoIds).stream()
+                .map(permissaoService::toEntity)
+                .collect(Collectors.toSet());
         usuario.setPermissoes(permissoes);
       } else {
         usuario.setPermissoes(new HashSet<>());
@@ -582,8 +572,8 @@ public class UsuarioServiceImpl extends CrudServiceImpl<Usuario, Long, UsuarioRe
   @Transactional
   @Override
   public boolean hasSolicitacaoNadaConstaPendingOrCompleted(String username) {
-    // Normaliza e busca diretamente no repositório (evita bypass do proxy Spring)
-    username = normalizeUsername(username);
+    // SEGURANÇA: Removida normalização - usa username/email completo
+    // Busca diretamente no repositório (evita bypass do proxy Spring)
     Usuario usuario = usuarioRepository.findByUsernameOrEmail(username, username);
     if (usuario == null) return false;
     return nadaConstaRepository.existsByUsuarioAndStatusIn(

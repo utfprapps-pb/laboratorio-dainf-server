@@ -4,9 +4,9 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
 import br.com.utfpr.gerenciamento.server.enumeration.TipoItem;
-import br.com.utfpr.gerenciamento.server.factory.ItemFactory;
 import br.com.utfpr.gerenciamento.server.minio.config.MinioConfig;
 import br.com.utfpr.gerenciamento.server.minio.service.MinioService;
+import br.com.utfpr.gerenciamento.server.model.Grupo;
 import br.com.utfpr.gerenciamento.server.model.Item;
 import br.com.utfpr.gerenciamento.server.repository.EmprestimoItemRepository;
 import br.com.utfpr.gerenciamento.server.repository.ItemImageRepository;
@@ -49,7 +49,7 @@ class ItemServiceImplTest {
 
   @BeforeEach
   void setUp() {
-    item = ItemFactory.createItemPadrao();
+    item = createItemPadrao();
   }
 
   @ParameterizedTest(name = "{index}: Saldo={0}, Emprestado={1} -> Disponibilidade={2} ({3})")
@@ -67,7 +67,7 @@ class ItemServiceImplTest {
     item.setSaldo(new BigDecimal(saldo));
 
     ItemWithQtdeEmprestada projection =
-        ItemFactory.createItemWithQtdeEmprestada(item, new BigDecimal(qtdeEmprestada));
+        createItemWithQtdeEmprestada(item, new BigDecimal(qtdeEmprestada));
     when(itemRepository.findByIdWithQtdeEmprestada(1L)).thenReturn(Optional.of(projection));
 
     // Act
@@ -102,7 +102,7 @@ class ItemServiceImplTest {
     item.setSaldo(new BigDecimal(saldo));
 
     ItemWithQtdeEmprestada projection =
-        ItemFactory.createItemWithQtdeEmprestada(item, new BigDecimal(qtdeEmprestada));
+        createItemWithQtdeEmprestada(item, new BigDecimal(qtdeEmprestada));
     when(itemRepository.findByIdWithQtdeEmprestada(1L)).thenReturn(Optional.of(projection));
 
     // Act
@@ -135,7 +135,7 @@ class ItemServiceImplTest {
     item.setTipoItem(TipoItem.P);
     item.setSaldo(new BigDecimal("10.00"));
 
-    ItemWithQtdeEmprestada projection = ItemFactory.createItemWithQtdeEmprestada(item, null);
+    ItemWithQtdeEmprestada projection = createItemWithQtdeEmprestada(item, null);
     when(itemRepository.findByIdWithQtdeEmprestada(1L)).thenReturn(Optional.of(projection));
 
     Item resultItem = service.findOneWithDisponibilidade(1L);
@@ -180,10 +180,10 @@ class ItemServiceImplTest {
     boolean disponivelParaEmprestimo = false;
 
     ItemCompleteWithDisponibilidade projection1 =
-        ItemFactory.createItemCompleteWithDisponibilidade(
+        createItemCompleteWithDisponibilidade(
             1L, "Item A", TipoItem.C, new BigDecimal("10"), BigDecimal.ZERO);
     ItemCompleteWithDisponibilidade projection2 =
-        ItemFactory.createItemCompleteWithDisponibilidade(
+        createItemCompleteWithDisponibilidade(
             2L, "Item B", TipoItem.P, new BigDecimal("5"), new BigDecimal("2"));
 
     List<ItemCompleteWithDisponibilidade> projections = List.of(projection1, projection2);
@@ -216,10 +216,10 @@ class ItemServiceImplTest {
     boolean disponivelParaEmprestimo = true;
 
     ItemCompleteWithDisponibilidade projection1 =
-        ItemFactory.createItemCompleteAvailable(
+        createItemCompleteAvailable(
             1L, "Item Disponível", TipoItem.C, new BigDecimal("10"), BigDecimal.ZERO);
     ItemCompleteWithDisponibilidade projection2 =
-        ItemFactory.createItemCompleteAvailable(
+        createItemCompleteAvailable(
             2L, "Item Permanente", TipoItem.P, new BigDecimal("8"), new BigDecimal("3"));
 
     List<ItemCompleteWithDisponibilidade> projections = List.of(projection1, projection2);
@@ -253,7 +253,7 @@ class ItemServiceImplTest {
     boolean disponivelParaEmprestimo = true;
 
     ItemCompleteWithDisponibilidade projection =
-        ItemFactory.createItemCompleteAvailable(
+        createItemCompleteAvailable(
             1L, "Notebook Dell", TipoItem.P, new BigDecimal("5"), new BigDecimal("2"));
 
     List<ItemCompleteWithDisponibilidade> projections = List.of(projection);
@@ -277,7 +277,7 @@ class ItemServiceImplTest {
     boolean disponivelParaEmprestimo = false;
 
     ItemCompleteWithDisponibilidade projection =
-        ItemFactory.createItemCompleteWithDisponibilidade(
+        createItemCompleteWithDisponibilidade(
             1L, "Item Zerado", TipoItem.P, BigDecimal.ZERO, new BigDecimal("1"));
 
     List<ItemCompleteWithDisponibilidade> projections = List.of(projection);
@@ -301,7 +301,7 @@ class ItemServiceImplTest {
     boolean disponivelParaEmprestimo = false;
 
     ItemCompleteWithDisponibilidade projection =
-        ItemFactory.createItemCompleteWithDisponibilidade(
+        createItemCompleteWithDisponibilidade(
             1L, "Item Sem Emprestimo", TipoItem.P, new BigDecimal("10"), null);
 
     List<ItemCompleteWithDisponibilidade> projections = List.of(projection);
@@ -326,7 +326,7 @@ class ItemServiceImplTest {
     boolean disponivelParaEmprestimo = false;
 
     ItemCompleteWithDisponibilidade projection =
-        ItemFactory.createItemCompleteWithDisponibilidade(
+        createItemCompleteWithDisponibilidade(
             1L, "Item Consumível", TipoItem.C, new BigDecimal("15"), new BigDecimal("5"));
 
     List<ItemCompleteWithDisponibilidade> projections = List.of(projection);
@@ -344,5 +344,76 @@ class ItemServiceImplTest {
     assertNull(itemResponse.getDisponivelEmprestimoCalculado());
 
     verify(itemRepository, times(1)).findCompleteWithDisponibilidade(query);
+  }
+
+  // Métodos auxiliares para criar dados de teste
+  private Item createItemPadrao() {
+    Item i = new Item();
+    i.setId(1L);
+    i.setNome("Notebook Dell");
+    i.setDescricao("Notebook Dell 15 polegadas");
+    i.setTipoItem(TipoItem.P);
+    i.setSaldo(new BigDecimal("10.00"));
+    i.setQtdeMinima(new BigDecimal("1.00"));
+    return i;
+  }
+
+  private ItemWithQtdeEmprestada createItemWithQtdeEmprestada(
+      Item item, BigDecimal qtdeEmprestada) {
+    return new ItemWithQtdeEmprestada() {
+      @Override
+      public Item getItem() {
+        return item;
+      }
+
+      @Override
+      public BigDecimal getQtdeEmprestada() {
+        return qtdeEmprestada;
+      }
+    };
+  }
+
+  private ItemCompleteWithDisponibilidade createItemCompleteWithDisponibilidade(
+      Long id, String nome, TipoItem tipoItem, BigDecimal saldo, BigDecimal qtdeEmprestada) {
+    return new ItemCompleteWithDisponibilidade() {
+      @Override
+      public Long getId() {
+        return id;
+      }
+
+      @Override
+      public String getNome() {
+        return nome;
+      }
+
+      @Override
+      public BigDecimal getSaldo() {
+        return saldo;
+      }
+
+      @Override
+      public TipoItem getTipoItem() {
+        return tipoItem;
+      }
+
+      @Override
+      public BigDecimal getQtdeEmprestada() {
+        return qtdeEmprestada;
+      }
+
+      @Override
+      public Grupo getGrupo() {
+        return createGrupo();
+      }
+    };
+  }
+
+  private ItemCompleteWithDisponibilidade createItemCompleteAvailable(
+      Long id, String nome, TipoItem tipoItem, BigDecimal saldo, BigDecimal qtdeEmprestada) {
+    return createItemCompleteWithDisponibilidade(id, nome, tipoItem, saldo, qtdeEmprestada);
+  }
+
+  private Grupo createGrupo() {
+    return new Grupo(1L, "Grupo Teste");
   }
 }

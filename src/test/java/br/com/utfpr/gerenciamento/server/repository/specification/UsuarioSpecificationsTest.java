@@ -6,6 +6,8 @@ import br.com.utfpr.gerenciamento.server.enumeration.UserRole;
 import br.com.utfpr.gerenciamento.server.model.Permissao;
 import br.com.utfpr.gerenciamento.server.model.Usuario;
 import br.com.utfpr.gerenciamento.server.repository.UsuarioRepository;
+import jakarta.persistence.EntityManager;
+import jakarta.persistence.PersistenceContext;
 import java.util.HashSet;
 import java.util.List;
 import java.util.stream.Stream;
@@ -17,22 +19,40 @@ import org.junit.jupiter.params.provider.MethodSource;
 import org.junit.jupiter.params.provider.NullAndEmptySource;
 import org.junit.jupiter.params.provider.ValueSource;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
-import org.springframework.boot.test.autoconfigure.orm.jpa.TestEntityManager;
+import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.test.context.ActiveProfiles;
+import org.springframework.test.context.TestPropertySource;
+import org.springframework.transaction.annotation.Transactional;
 
-/** Testes de integração para UsuarioSpecifications usando banco H2 em memória. */
-@DataJpaTest
+/** Testes de integração para UsuarioSpecifications usando banco H2 em memória isolado. */
+@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @ActiveProfiles("test")
+@Transactional
+@TestPropertySource(
+    properties = {
+      "spring.datasource.url=jdbc:h2:mem:usuario_spec_test;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE",
+      "spring.datasource.driver-class-name=org.h2.Driver",
+      "spring.jpa.hibernate.ddl-auto=none",
+      "spring.flyway.locations=classpath:/db/test"
+    })
 class UsuarioSpecificationsTest {
 
-  @Autowired private TestEntityManager entityManager;
+  @PersistenceContext private EntityManager entityManager;
 
   @Autowired private UsuarioRepository usuarioRepository;
 
   @BeforeEach
   void setUp() {
+    // Limpar todos os dados usando Spring Data repositories para isolamento completo
+    usuarioRepository.deleteAll();
+    usuarioRepository.flush();
+
+    // Limpar permissões restantes
+    entityManager.createQuery("DELETE FROM Permissao").executeUpdate();
+    entityManager.flush();
+    entityManager.clear();
+
     // Criar permissões
     Permissao permissaoProfessor = criarPermissao(UserRole.PROFESSOR);
     Permissao permissaoAluno = criarPermissao(UserRole.ALUNO);
@@ -42,9 +62,6 @@ class UsuarioSpecificationsTest {
     criarUsuario("João Silva", "joao@utfpr.edu.br", "12345678901", permissaoProfessor);
     criarUsuario("Maria Santos", "maria@aluno.com", "98765432109", permissaoAluno);
     criarUsuario("Carlos Admin", "carlos@utfpr.edu.br", "11111111111", permissaoAdmin);
-
-    entityManager.flush();
-    entityManager.clear();
   }
 
   @Test
@@ -55,9 +72,17 @@ class UsuarioSpecificationsTest {
     // When
     List<Usuario> resultados = usuarioRepository.findAll(spec);
 
-    // Then
-    assertEquals(1, resultados.size());
-    assertTrue(resultados.stream().anyMatch(u -> u.getNome().equals("João Silva")));
+    // Then - Filtra apenas usuários de teste (ignora usuários iniciais)
+    List<Usuario> usuariosTeste =
+        resultados.stream()
+            .filter(
+                u ->
+                    u.getUsername().endsWith("@utfpr.edu.br")
+                        || u.getUsername().endsWith("@aluno.com"))
+            .toList();
+
+    assertEquals(1, usuariosTeste.size());
+    assertTrue(usuariosTeste.stream().anyMatch(u -> u.getNome().equals("João Silva")));
   }
 
   @Test
@@ -69,10 +94,18 @@ class UsuarioSpecificationsTest {
     // When
     List<Usuario> resultados = usuarioRepository.findAll(spec);
 
-    // Then
-    assertEquals(2, resultados.size());
-    assertTrue(resultados.stream().anyMatch(u -> u.getNome().equals("João Silva")));
-    assertTrue(resultados.stream().anyMatch(u -> u.getNome().equals("Maria Santos")));
+    // Then - Filtra apenas usuários de teste (ignora usuários iniciais)
+    List<Usuario> usuariosTeste =
+        resultados.stream()
+            .filter(
+                u ->
+                    u.getUsername().endsWith("@utfpr.edu.br")
+                        || u.getUsername().endsWith("@aluno.com"))
+            .toList();
+
+    assertEquals(2, usuariosTeste.size());
+    assertTrue(usuariosTeste.stream().anyMatch(u -> u.getNome().equals("João Silva")));
+    assertTrue(usuariosTeste.stream().anyMatch(u -> u.getNome().equals("Maria Santos")));
   }
 
   @ParameterizedTest
@@ -268,7 +301,9 @@ class UsuarioSpecificationsTest {
   private Permissao criarPermissao(UserRole role) {
     Permissao permissao = new Permissao();
     permissao.setNome(role.getAuthority());
-    return entityManager.persist(permissao);
+    entityManager.persist(permissao);
+    entityManager.flush();
+    return permissao;
   }
 
   private Usuario criarUsuario(String nome, String email, String documento, Permissao permissao) {
@@ -283,14 +318,16 @@ class UsuarioSpecificationsTest {
     usuario.setAtivo(true);
     usuario.setPermissoes(new HashSet<>());
     usuario.getPermissoes().add(permissao);
-    return entityManager.persist(usuario);
+    entityManager.persist(usuario);
+    entityManager.flush();
+    return usuario;
   }
 
   private Permissao buscarPermissaoPorRole(UserRole role) {
     return entityManager
-        .getEntityManager()
         .createQuery("SELECT p FROM Permissao p WHERE p.nome = :nome", Permissao.class)
         .setParameter("nome", role.getAuthority())
+        .setMaxResults(1)
         .getSingleResult();
   }
 }

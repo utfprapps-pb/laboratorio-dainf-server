@@ -4,8 +4,6 @@ CREATE TABLE IF NOT EXISTS system_config (
     is_active BOOLEAN NOT NULL DEFAULT FALSE
     );
 
--- Garante que só pode haver uma configuração ativa
-CREATE UNIQUE INDEX IF NOT EXISTS unique_active_config ON system_config (is_active) WHERE is_active = TRUE;
 
 -- Insere uma linha padrão ativa, se necessário
 INSERT INTO system_config (id, nada_consta_email, is_active)

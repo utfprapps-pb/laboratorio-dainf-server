@@ -25,7 +25,6 @@ class NadaConstaRepositoryTest {
   @Autowired private TestEntityManager entityManager;
 
   private Usuario usuario;
-  private Usuario usuario2;
 
   @BeforeEach
   void setUp() {
@@ -39,7 +38,7 @@ class NadaConstaRepositoryTest {
             .build();
     usuario = entityManager.persist(usuario);
 
-    usuario2 =
+    Usuario usuario2 =
         Usuario.builder()
             .nome("Maria Teste")
             .username("mariateste")
@@ -49,7 +48,15 @@ class NadaConstaRepositoryTest {
             .build();
     usuario2 = entityManager.persist(usuario2);
 
-    NadaConsta nc1 = NadaConsta.builder().usuario(usuario).status(NadaConstaStatus.PENDING).build();
+    NadaConsta nc1 =
+        NadaConsta.builder()
+            .usuario(usuario)
+            .status(NadaConstaStatus.PENDING)
+            .createdAt(LocalDateTime.now())
+            .updatedAt(LocalDateTime.now())
+            .createdBy("test")
+            .updatedBy("test")
+            .build();
     entityManager.persist(nc1);
 
     NadaConsta nc2 =
@@ -57,10 +64,22 @@ class NadaConstaRepositoryTest {
             .usuario(usuario)
             .status(NadaConstaStatus.COMPLETED)
             .sendAt(LocalDateTime.now())
+            .createdAt(LocalDateTime.now())
+            .updatedAt(LocalDateTime.now())
+            .createdBy("test")
+            .updatedBy("test")
             .build();
     entityManager.persist(nc2);
 
-    NadaConsta nc3 = NadaConsta.builder().usuario(usuario2).status(NadaConstaStatus.FAILED).build();
+    NadaConsta nc3 =
+        NadaConsta.builder()
+            .usuario(usuario2)
+            .status(NadaConstaStatus.FAILED)
+            .createdAt(LocalDateTime.now())
+            .updatedAt(LocalDateTime.now())
+            .createdBy("test")
+            .updatedBy("test")
+            .build();
     entityManager.persist(nc3);
 
     entityManager.flush();
@@ -69,7 +88,15 @@ class NadaConstaRepositoryTest {
 
   @Test
   void persistirNadaConsta_DeveSalvarCamposObrigatorios() {
-    NadaConsta nc = NadaConsta.builder().usuario(usuario).status(NadaConstaStatus.PENDING).build();
+    NadaConsta nc =
+        NadaConsta.builder()
+            .usuario(usuario)
+            .status(NadaConstaStatus.PENDING)
+            .createdAt(LocalDateTime.now())
+            .updatedAt(LocalDateTime.now())
+            .createdBy("test")
+            .updatedBy("test")
+            .build();
     NadaConsta salvo = nadaConstaRepository.save(nc);
     assertNotNull(salvo.getId());
     assertEquals(NadaConstaStatus.PENDING, salvo.getStatus());
@@ -123,7 +150,15 @@ class NadaConstaRepositoryTest {
   @Test
   void podePersistirComSendAtENull() {
     NadaConsta nc =
-        NadaConsta.builder().usuario(usuario).status(NadaConstaStatus.PENDING).sendAt(null).build();
+        NadaConsta.builder()
+            .usuario(usuario)
+            .status(NadaConstaStatus.PENDING)
+            .sendAt(null)
+            .createdAt(LocalDateTime.now())
+            .updatedAt(LocalDateTime.now())
+            .createdBy("test")
+            .updatedBy("test")
+            .build();
     NadaConsta salvo = nadaConstaRepository.save(nc);
     assertNull(salvo.getSendAt());
   }
