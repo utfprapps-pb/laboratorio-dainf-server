@@ -403,7 +403,7 @@ class ItemServiceImplTest {
 
       @Override
       public Grupo getGrupo() {
-        return null; // Não utilizado nos testes atuais
+        return createGrupo();
       }
     };
   }
@@ -411,5 +411,9 @@ class ItemServiceImplTest {
   private ItemCompleteWithDisponibilidade createItemCompleteAvailable(
       Long id, String nome, TipoItem tipoItem, BigDecimal saldo, BigDecimal qtdeEmprestada) {
     return createItemCompleteWithDisponibilidade(id, nome, tipoItem, saldo, qtdeEmprestada);
+  }
+
+  private Grupo createGrupo() {
+    return new Grupo(1L, "Grupo Teste");
   }
 }

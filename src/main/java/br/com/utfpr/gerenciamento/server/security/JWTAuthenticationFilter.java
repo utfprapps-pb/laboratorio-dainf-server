@@ -14,6 +14,7 @@ import java.io.IOException;
 import java.time.Instant;
 import org.springframework.core.env.Environment;
 import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.DisabledException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
@@ -58,7 +59,7 @@ public class JWTAuthenticationFilter extends UsernamePasswordAuthenticationFilte
       Usuario user =
           usuarioRepository.findWithPermissoesByUsernameOrEmail(loginIdentifier, loginIdentifier);
       if (user == null) {
-        throw new AuthenticationException("Usuário não encontrado") {};
+        throw new BadCredentialsException("Credenciais inválidas");
       }
       if (usuarioService.hasSolicitacaoNadaConstaPendingOrCompleted(loginIdentifier)) {
         throw new PreconditionRequiredAuthenticationException(

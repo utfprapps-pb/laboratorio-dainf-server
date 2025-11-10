@@ -265,7 +265,7 @@ class FornecedorControllerTest {
   private FornecedorResponseDto createFornecedorResponseDtoAlternativo() {
     FornecedorResponseDto dto = new FornecedorResponseDto();
     dto.setId(2L);
-    dto.setNomeFantasia("Fornecedor 2");
+    dto.setNomeFantasia("Fornecedor Teste 2");
     dto.setRazaoSocial("Empresa Teste 2 Ltda");
     dto.setCnpj("98765432109876");
     dto.setEmail("contato2@teste.com");

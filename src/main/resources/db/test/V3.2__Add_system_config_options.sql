@@ -4,9 +4,6 @@ CREATE TABLE IF NOT EXISTS system_config (
     is_active BOOLEAN NOT NULL DEFAULT FALSE
     );
 
--- Garante que só pode haver uma configuração ativa
--- Note: H2 não suporta WHERE em CREATE INDEX, então criamos índice simples
-CREATE UNIQUE INDEX IF NOT EXISTS unique_active_config ON system_config (is_active);
 
 -- Insere uma linha padrão ativa, se necessário
 INSERT INTO system_config (id, nada_consta_email, is_active)
