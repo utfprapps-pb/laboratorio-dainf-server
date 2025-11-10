@@ -25,6 +25,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.annotation.DirtiesContext.ClassMode;
 import org.springframework.test.context.ActiveProfiles;
+import org.springframework.transaction.annotation.Transactional;
 
 /**
  * Testes de segurança críticos para autenticação JWT.
@@ -44,6 +45,9 @@ class JWTAuthenticationSecurityTest {
 
   @Autowired private DataSource dataSource;
 
+  @Autowired
+  private br.com.utfpr.gerenciamento.server.repository.UsuarioRepository usuarioRepository;
+
   private String baseUrl;
 
   // IDs dos usuários de teste criados
@@ -52,29 +56,31 @@ class JWTAuthenticationSecurityTest {
   private Long usuarioAtivoNaoVerificadoId;
   private Long usuarioBloqueadoId;
 
+  private static final String[] USUARIOS_TESTE = {
+    "usuario_ativo@alunos.utfpr.edu.br",
+    "usuario_inativo@alunos.utfpr.edu.br",
+    "usuario_ativo_naover@alunos.utfpr.edu.br",
+    "usuario_bloqueado@alunos.utfpr.edu.br"
+  };
+
   @BeforeEach
   void setUp() throws SQLException {
     baseUrl = "http://localhost:" + port;
 
-    // Limpa dados de testes anteriores
     limparDadosTeste();
-
-    // Cria usuários de teste com diferentes status
     criarUsuariosTeste();
   }
 
-  private void limparDadosTeste() throws SQLException {
-    try (Connection conn = dataSource.getConnection();
-        Statement stmt = conn.createStatement()) {
-
-      // Limpa tabela nada_consta
-      stmt.executeUpdate("DELETE FROM nada_consta");
-
-      // Remove usuários de teste criados programaticamente
-      stmt.executeUpdate(
-          "DELETE FROM usuario_permissoes WHERE usuario_id IN "
-              + "(SELECT id FROM usuario WHERE username LIKE '%@alunos.utfpr.edu.br')");
-      stmt.executeUpdate("DELETE FROM usuario WHERE username LIKE '%@alunos.utfpr.edu.br'");
+  @Transactional
+  protected void limparDadosTeste() {
+    for (String username : USUARIOS_TESTE) {
+      br.com.utfpr.gerenciamento.server.model.Usuario usuario =
+          usuarioRepository.findWithPermissoesByUsernameOrEmail(username, username);
+      if (usuario != null) {
+        usuario.getPermissoes().clear();
+        usuarioRepository.save(usuario);
+        usuarioRepository.delete(usuario);
+      }
     }
   }
 
