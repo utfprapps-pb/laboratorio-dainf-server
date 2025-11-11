@@ -80,6 +80,24 @@ class NomeCompletoValidatorTest {
   }
 
   @Test
+  @DisplayName("Deve aceitar abreviações válidas em português")
+  void deveAceitarAbreviacoesValidas() {
+    assertTrue(validator.isValid("João A. Silva", context));
+    assertTrue(validator.isValid("Pedro Silva Jr.", context));
+    assertTrue(validator.isValid("Maria C. de Oliveira", context));
+    assertTrue(validator.isValid("Carlos Alberto M. Filho", context));
+    assertTrue(validator.isValid("Ana P. da Costa", context));
+  }
+
+  @Test
+  @DisplayName("Deve aceitar nomes com hífens e apóstrofos")
+  void deveAceitarNomesComHifensEApostrofos() {
+    assertTrue(validator.isValid("João-Carlos Silva", context));
+    assertTrue(validator.isValid("Maria D'Ávila", context));
+    assertTrue(validator.isValid("Pedro d'Souza", context));
+  }
+
+  @Test
   @DisplayName("Deve rejeitar nomes com partes vazias")
   void deveRejeitarNomesComPartesVazias() {
     assertFalse(validator.isValid("João ", context));
