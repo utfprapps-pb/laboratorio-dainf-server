@@ -114,7 +114,7 @@ class NadaConstaRepositoryTest {
   void findAllByUsuario_DeveRetornarVazioParaUsuarioSemNadaConsta() {
     Usuario novo =
         Usuario.builder()
-            .nome("Novo")
+            .nome("Novo Usuário")
             .username("novo")
             .email("novo@nada.com")
             .password("senha123")
