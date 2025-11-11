@@ -32,12 +32,8 @@ public class NomeCompletoValidator implements ConstraintValidator<NomeCompleto, 
     }
 
     // Verificação segura contra StringIndexOutOfBoundsException e espaços inadequados
+    // Esta verificação também cobre strings que consistem apenas de espaços
     if (nome.isEmpty() || nome.charAt(0) == ' ' || nome.charAt(nome.length() - 1) == ' ') {
-      return false;
-    }
-
-    // Verificação de string vazia após trim (evita chamada duplicada)
-    if (nome.trim().isEmpty()) {
       return false;
     }
 
@@ -68,8 +64,8 @@ public class NomeCompletoValidator implements ConstraintValidator<NomeCompleto, 
   }
 
   /**
-   * Verificação direta de caracteres para evitar complexidade de regex. Performance O(1) por
-   * caractere, sem backtracking.
+   * Verificação otimizada de caracteres usando Character.isLetter() para suporte Unicode completo.
+   * Performance O(1) por caractere, sem backtracking.
    */
   private boolean isCaractereInvalido(char c) {
     // Números
@@ -82,39 +78,9 @@ public class NomeCompletoValidator implements ConstraintValidator<NomeCompleto, 
       return false;
     }
 
-    // Letras (incluindo caracteres acentuados)
-    if ((c >= 'A' && c <= 'Z') || (c >= 'a' && c <= 'z')) {
-      return false;
-    }
+    // Letras Unicode (incluindo caracteres acentuados portugueses)
+      return !Character.isLetter(c);
 
-    // Caracteres especiais inválidos
-    return switch (c) {
-      case '@',
-          '#',
-          '$',
-          '%',
-          '^',
-          '&',
-          '*',
-          '(',
-          ')',
-          '_',
-          '+',
-          '=',
-          '[',
-          ']',
-          '{',
-          '}',
-          ';',
-          ':',
-          '"',
-          '<',
-          '>',
-          '?',
-          '/',
-          '\\' ->
-          true;
-      default -> false;
-    };
+    // Qualquer outro caractere é inválido
   }
 }
