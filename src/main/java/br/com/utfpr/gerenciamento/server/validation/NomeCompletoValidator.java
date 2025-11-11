@@ -22,7 +22,7 @@ public class NomeCompletoValidator implements ConstraintValidator<NomeCompleto, 
 
   @Override
   public boolean isValid(String nome, ConstraintValidatorContext context) {
-    if (nome == null || nome.trim().isEmpty()) {
+    if (nome == null) {
       return false;
     }
 
@@ -33,6 +33,11 @@ public class NomeCompletoValidator implements ConstraintValidator<NomeCompleto, 
 
     // Verificação segura contra StringIndexOutOfBoundsException e espaços inadequados
     if (nome.isEmpty() || nome.charAt(0) == ' ' || nome.charAt(nome.length() - 1) == ' ') {
+      return false;
+    }
+
+    // Verificação de string vazia após trim (evita chamada duplicada)
+    if (nome.trim().isEmpty()) {
       return false;
     }
 
