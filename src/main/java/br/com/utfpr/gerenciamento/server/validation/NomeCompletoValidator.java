@@ -79,7 +79,7 @@ public class NomeCompletoValidator implements ConstraintValidator<NomeCompleto, 
     }
 
     // Letras Unicode (incluindo caracteres acentuados portugueses)
-      return !Character.isLetter(c);
+    return !Character.isLetter(c);
 
     // Qualquer outro caractere é inválido
   }
