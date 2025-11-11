@@ -1,10 +1,13 @@
 package br.com.utfpr.gerenciamento.server.model;
 
 import br.com.utfpr.gerenciamento.server.config.CustomAuthorityDeserializer;
+import br.com.utfpr.gerenciamento.server.validation.NomeCompleto;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import jakarta.persistence.*;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Size;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -31,7 +34,8 @@ public class Usuario implements Serializable, UserDetails {
   @Column(name = "id")
   private Long id;
 
-  @Column(name = "nome", length = 255, nullable = false)
+  @NotBlank(message = "Nome é obrigatório") @Size(min = 2, max = 255, message = "Nome deve ter entre 2 e 255 caracteres") @NomeCompleto
+  @Column(name = "nome", nullable = false)
   private String nome;
 
   @Column(name = "username", length = 100, nullable = false, unique = true)
