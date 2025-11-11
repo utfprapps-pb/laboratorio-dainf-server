@@ -26,16 +26,13 @@ public class NomeCompletoValidator implements ConstraintValidator<NomeCompleto, 
       return false;
     }
 
-    // Utiliza nome sem espaços em branco no início e fim para validações consistentes
-    String nomeTrimmed = nome.trim();
-
     // Proteção contra DoS - limita comprimento máximo
-    if (nomeTrimmed.length() > MAX_LENGTH) {
+    if (nome.length() > MAX_LENGTH) {
       return false;
     }
 
-    // Verificação segura contra StringIndexOutOfBoundsException
-    if (nomeTrimmed.isEmpty()) {
+    // Verificação segura contra StringIndexOutOfBoundsException e espaços inadequados
+    if (nome.isEmpty() || nome.charAt(0) == ' ' || nome.charAt(nome.length() - 1) == ' ') {
       return false;
     }
 
@@ -43,8 +40,8 @@ public class NomeCompletoValidator implements ConstraintValidator<NomeCompleto, 
     int countEspacos = 0;
 
     // Verificação rápida de caracteres inválidos e espaços duplos em um único loop
-    for (int i = 0; i < nomeTrimmed.length(); i++) {
-      char c = nomeTrimmed.charAt(i);
+    for (int i = 0; i < nome.length(); i++) {
+      char c = nome.charAt(i);
 
       if (isCaractereInvalido(c)) {
         return false;
