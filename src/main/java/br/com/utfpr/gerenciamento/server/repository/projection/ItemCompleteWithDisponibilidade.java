@@ -74,6 +74,8 @@ public interface ItemCompleteWithDisponibilidade {
    */
   BigDecimal getQtdeEmprestada();
 
+  BigDecimal getValor();
+
   /**
    * Grupo do item.
    *

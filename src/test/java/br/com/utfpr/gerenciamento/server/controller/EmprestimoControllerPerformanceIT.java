@@ -75,21 +75,42 @@ class EmprestimoControllerPerformanceIT {
 
   // Limpa dados de testes anteriores respeitando FKs
   private void limparDadosH2() {
+    // 1. Remover relacionamentos de empréstimo
     entityManager.createQuery("DELETE FROM EmprestimoItem").executeUpdate();
     entityManager.createQuery("DELETE FROM Emprestimo").executeUpdate();
+    entityManager.flush();
+
+    // 2. Remover itens
     entityManager.createQuery("DELETE FROM Item").executeUpdate();
+    entityManager.flush();
+
+    // 3. Remover usuários (cascade irá remover relacionamentos em usuario_permissoes
+    // automaticamente)
     entityManager
         .createQuery(
             "DELETE FROM Usuario u WHERE u.username IN ('aluno@teste.com', 'professor@teste.com')")
         .executeUpdate();
-    entityManager.createQuery("DELETE FROM Permissao WHERE nome = 'ROLE_ALUNO'").executeUpdate();
     entityManager.flush();
+
+    // Nota: Não removemos a permissão ROLE_ALUNO pois ela pode estar sendo usada
+    // por outros usuários no banco de teste. O próximo teste irá reutilizá-la ou criar nova.
   }
 
   // Cria 50 empréstimos no H2 para simular volume realista
   private void criarDadosH2ParaTestes() {
-    Permissao permissaoAluno = fixture.criarPermissao("ROLE_ALUNO");
-    entityManager.persist(permissaoAluno);
+    // Busca ou cria a permissão ROLE_ALUNO
+    Permissao permissaoAluno =
+        entityManager
+            .createQuery("SELECT p FROM Permissao p WHERE p.nome = 'ROLE_ALUNO'", Permissao.class)
+            .getResultStream()
+            .findFirst()
+            .orElseGet(
+                () -> {
+                  Permissao novaPerm = fixture.criarPermissao("ROLE_ALUNO");
+                  entityManager.persist(novaPerm);
+                  entityManager.flush();
+                  return novaPerm;
+                });
 
     Usuario usuarioEmprestimo =
         fixture.criarUsuario("aluno@teste.com", "Aluno Teste", permissaoAluno);

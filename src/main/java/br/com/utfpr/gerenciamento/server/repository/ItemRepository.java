@@ -71,6 +71,7 @@ public interface ItemRepository extends JpaRepository<Item, Long>, JpaSpecificat
       SELECT i.id as id,
              i.nome as nome,
              i.saldo as saldo,
+             i.valor as valor,
              i.tipoItem as tipoItem,
              i.grupo as grupo,
              COALESCE(SUM(ei.qtde), 0) as qtdeEmprestada
@@ -101,6 +102,7 @@ public interface ItemRepository extends JpaRepository<Item, Long>, JpaSpecificat
       SELECT i.id as id,
              i.nome as nome,
              i.saldo as saldo,
+             i.valor as valor,
              i.tipoItem as tipoItem,
              i.grupo as grupo,
              COALESCE(SUM(ei.qtde), 0) as qtdeEmprestada

@@ -101,6 +101,7 @@ public class ItemServiceImpl extends CrudServiceImpl<Item, Long, ItemResponseDto
     dto.setNome(projection.getNome());
     dto.setSaldo(projection.getSaldo());
     dto.setTipoItem(projection.getTipoItem());
+    dto.setValor(projection.getValor());
     dto.setGrupo(
         modelMapper.map(
             projection.getGrupo(), br.com.utfpr.gerenciamento.server.dto.GrupoResponseDto.class));
