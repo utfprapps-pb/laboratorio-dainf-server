@@ -9,9 +9,9 @@
 
 -- Atualizar telefones do fornecedor removendo caracteres não-numéricos
 UPDATE fornecedor
-SET telefone = REGEXP_REPLACE(telefone, '[^0-9]', '', 'g')
+SET telefone = REGEXP_REPLACE(telefone, '[^0-9]', '')
 WHERE telefone IS NOT NULL
-  AND telefone ~ '[^0-9]'; -- Apenas atualiza se contiver caracteres não-numéricos
+  AND REGEXP_LIKE(telefone, '[^0-9]'); -- Apenas atualiza se contiver caracteres não-numéricos
 
 -- Comentário: Esta migração garante que todos os telefones sejam armazenados
 -- em formato numérico puro, facilitando validações e formatações no frontend.
