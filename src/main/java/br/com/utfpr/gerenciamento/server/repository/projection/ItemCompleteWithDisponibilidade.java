@@ -74,6 +74,11 @@ public interface ItemCompleteWithDisponibilidade {
    */
   BigDecimal getQtdeEmprestada();
 
+  /**
+   * Valor unitário do item.
+   *
+   * @return valor do item
+   */
   BigDecimal getValor();
 
   /**
