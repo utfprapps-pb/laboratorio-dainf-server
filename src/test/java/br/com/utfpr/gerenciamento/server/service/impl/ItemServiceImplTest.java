@@ -181,10 +181,10 @@ class ItemServiceImplTest {
 
     ItemCompleteWithDisponibilidade projection1 =
         createItemCompleteWithDisponibilidade(
-            1L, "Item A", TipoItem.C, new BigDecimal("10"), BigDecimal.ZERO);
+            1L, "Item A", TipoItem.C, new BigDecimal("10"), BigDecimal.ZERO, BigDecimal.ZERO);
     ItemCompleteWithDisponibilidade projection2 =
         createItemCompleteWithDisponibilidade(
-            2L, "Item B", TipoItem.P, new BigDecimal("5"), new BigDecimal("2"));
+            2L, "Item B", TipoItem.P, new BigDecimal("5"), new BigDecimal("2"), BigDecimal.ZERO);
 
     List<ItemCompleteWithDisponibilidade> projections = List.of(projection1, projection2);
     when(itemRepository.findCompleteWithDisponibilidade(query)).thenReturn(projections);
@@ -278,7 +278,7 @@ class ItemServiceImplTest {
 
     ItemCompleteWithDisponibilidade projection =
         createItemCompleteWithDisponibilidade(
-            1L, "Item Zerado", TipoItem.P, BigDecimal.ZERO, new BigDecimal("1"));
+            1L, "Item Zerado", TipoItem.P, BigDecimal.ZERO, new BigDecimal("1"), BigDecimal.ZERO);
 
     List<ItemCompleteWithDisponibilidade> projections = List.of(projection);
     when(itemRepository.findCompleteWithDisponibilidade(query)).thenReturn(projections);
@@ -302,7 +302,7 @@ class ItemServiceImplTest {
 
     ItemCompleteWithDisponibilidade projection =
         createItemCompleteWithDisponibilidade(
-            1L, "Item Sem Emprestimo", TipoItem.P, new BigDecimal("10"), null);
+            1L, "Item Sem Emprestimo", TipoItem.P, new BigDecimal("10"), null, BigDecimal.ZERO);
 
     List<ItemCompleteWithDisponibilidade> projections = List.of(projection);
     when(itemRepository.findCompleteWithDisponibilidade(query)).thenReturn(projections);
@@ -327,7 +327,12 @@ class ItemServiceImplTest {
 
     ItemCompleteWithDisponibilidade projection =
         createItemCompleteWithDisponibilidade(
-            1L, "Item Consumível", TipoItem.C, new BigDecimal("15"), new BigDecimal("5"));
+            1L,
+            "Item Consumível",
+            TipoItem.C,
+            new BigDecimal("15"),
+            new BigDecimal("5"),
+            BigDecimal.ZERO);
 
     List<ItemCompleteWithDisponibilidade> projections = List.of(projection);
     when(itemRepository.findCompleteWithDisponibilidade(query)).thenReturn(projections);
@@ -374,7 +379,12 @@ class ItemServiceImplTest {
   }
 
   private ItemCompleteWithDisponibilidade createItemCompleteWithDisponibilidade(
-      Long id, String nome, TipoItem tipoItem, BigDecimal saldo, BigDecimal qtdeEmprestada) {
+      Long id,
+      String nome,
+      TipoItem tipoItem,
+      BigDecimal saldo,
+      BigDecimal qtdeEmprestada,
+      BigDecimal valor) {
     return new ItemCompleteWithDisponibilidade() {
       @Override
       public Long getId() {
@@ -402,6 +412,11 @@ class ItemServiceImplTest {
       }
 
       @Override
+      public BigDecimal getValor() {
+        return valor;
+      }
+
+      @Override
       public Grupo getGrupo() {
         return createGrupo();
       }
@@ -410,7 +425,8 @@ class ItemServiceImplTest {
 
   private ItemCompleteWithDisponibilidade createItemCompleteAvailable(
       Long id, String nome, TipoItem tipoItem, BigDecimal saldo, BigDecimal qtdeEmprestada) {
-    return createItemCompleteWithDisponibilidade(id, nome, tipoItem, saldo, qtdeEmprestada);
+    return createItemCompleteWithDisponibilidade(
+        id, nome, tipoItem, saldo, qtdeEmprestada, BigDecimal.ZERO);
   }
 
   private Grupo createGrupo() {

@@ -71,13 +71,14 @@ public interface ItemRepository extends JpaRepository<Item, Long>, JpaSpecificat
       SELECT i.id as id,
              i.nome as nome,
              i.saldo as saldo,
+             i.valor as valor,
              i.tipoItem as tipoItem,
              i.grupo as grupo,
              COALESCE(SUM(ei.qtde), 0) as qtdeEmprestada
       FROM Item i
       LEFT JOIN EmprestimoItem ei ON ei.item.id = i.id AND ei.emprestimo.dataDevolucao IS NULL
       WHERE (:query IS NULL OR :query = '' OR LOWER(i.nome) LIKE LOWER(CONCAT('%', :query, '%')))
-      GROUP BY i.id, i.nome, i.saldo, i.tipoItem, i.grupo
+      GROUP BY i.id, i.nome, i.saldo, i.valor, i.tipoItem, i.grupo
       ORDER BY i.nome
       """)
   List<ItemCompleteWithDisponibilidade> findCompleteWithDisponibilidade(
@@ -101,6 +102,7 @@ public interface ItemRepository extends JpaRepository<Item, Long>, JpaSpecificat
       SELECT i.id as id,
              i.nome as nome,
              i.saldo as saldo,
+             i.valor as valor,
              i.tipoItem as tipoItem,
              i.grupo as grupo,
              COALESCE(SUM(ei.qtde), 0) as qtdeEmprestada
@@ -112,7 +114,7 @@ public interface ItemRepository extends JpaRepository<Item, Long>, JpaSpecificat
         OR
         i.tipoItem = 'P'
       )
-      GROUP BY i.id, i.nome, i.saldo, i.tipoItem, i.grupo
+      GROUP BY i.id, i.nome, i.saldo, i.valor, i.tipoItem, i.grupo
       HAVING (
         (i.tipoItem = 'C' AND i.saldo > 0)
         OR
