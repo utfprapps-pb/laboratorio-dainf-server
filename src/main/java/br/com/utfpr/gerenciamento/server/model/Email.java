@@ -17,6 +17,7 @@ public class Email {
 
   private String de;
   private String para;
+  private String cc;
   private String titulo;
   private String conteudo;
   @Builder.Default private Map<String, byte[]> fileMap = new HashMap<>();

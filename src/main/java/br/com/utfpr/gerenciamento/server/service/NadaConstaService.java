@@ -50,4 +50,12 @@ public interface NadaConstaService extends CrudService<NadaConsta, Long, NadaCon
    * @return Dados atualizados da solicitação
    */
   NadaConstaResponseDto verificarPendenciasNadaConsta(Long id);
+
+  /**
+   * Reenvia o email de Nada Consta utilizando os dados originais de emissão.
+   *
+   * @param id Identificador da solicitação de Nada Consta
+   * @return true se o reenvio foi realizado com sucesso
+   */
+  boolean reenviarNadaConsta(Long id);
 }

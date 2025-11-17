@@ -101,4 +101,20 @@ public class NadaConstaController extends CrudController<NadaConsta, Long, NadaC
       return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(null);
     }
   }
+
+  /**
+   * Reenvia o email de Nada Consta utilizando os dados originais de emissão.
+   *
+   * @param id Identificador da solicitação de Nada Consta
+   * @return ResponseEntity com status de sucesso ou erro
+   */
+  @PostMapping("/{id}/reenvio")
+  public ResponseEntity<Void> reenviarNadaConsta(@PathVariable("id") Long id) {
+    boolean enviado = nadaConstaService.reenviarNadaConsta(id);
+    if (enviado) {
+      return ResponseEntity.ok().build();
+    } else {
+      return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
+    }
+  }
 }

@@ -14,10 +14,13 @@ import br.com.utfpr.gerenciamento.server.service.NadaConstaService;
 import br.com.utfpr.gerenciamento.server.service.SystemConfigService;
 import br.com.utfpr.gerenciamento.server.service.UsuarioService;
 import br.com.utfpr.gerenciamento.server.util.EmailUtils;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import lombok.extern.slf4j.Slf4j;
 import org.modelmapper.ModelMapper;
@@ -142,7 +145,13 @@ public class NadaConstaServiceImpl extends CrudServiceImpl<NadaConsta, Long, Nad
       Map<String, Object> templateData = new HashMap<>();
       templateData.put("usuario", usuario);
       templateData.put("nadaConsta", nadaConsta);
-      eventPublisher.publishEvent(new NadaConstaEmitidoEvent(this, destinatario, templateData));
+      templateData.put("nomeAluno", usuario.getNome());
+      templateData.put("registroAcademico", usuario.getDocumento());
+      DateTimeFormatter formatter =
+          DateTimeFormatter.ofPattern("dd 'de' MMMM 'de' yyyy", Locale.forLanguageTag("pt-BR"));
+      templateData.put("dataFormatada", LocalDate.now().format(formatter));
+      eventPublisher.publishEvent(
+          new NadaConstaEmitidoEvent(this, destinatario, templateData, usuario.getEmail()));
     } else {
       String destinatario = usuario.getEmail();
       if (!EmailUtils.isValidEmail(destinatario)) {
@@ -153,6 +162,11 @@ public class NadaConstaServiceImpl extends CrudServiceImpl<NadaConsta, Long, Nad
       }
       Map<String, Object> templateData = new HashMap<>();
       templateData.put("usuario", usuario);
+      templateData.put("nomeAluno", usuario.getNome());
+      templateData.put("registroAcademico", usuario.getDocumento());
+      DateTimeFormatter formatter =
+          DateTimeFormatter.ofPattern("dd 'de' MMMM 'de' yyyy", Locale.forLanguageTag("pt-BR"));
+      templateData.put("dataFormatada", LocalDate.now().format(formatter));
       templateData.put(
           "emprestimos",
           emprestimosAbertos.stream()
@@ -238,6 +252,39 @@ public class NadaConstaServiceImpl extends CrudServiceImpl<NadaConsta, Long, Nad
     usuarioService.save(usuario);
     log.info("Nada Consta id={} invalidado (status INVALIDATED) e usuário reativado.", id);
     return convertToDto(nadaConsta);
+  }
+
+  /**
+   * Reenvia uma declaração de Nada Consta já emitida para o email do usuário.
+   *
+   * @param id Identificador da solicitação de Nada Consta
+   * @return true se o reenvio foi bem-sucedido, false caso contrário
+   */
+  @Override
+  @Transactional
+  public boolean reenviarNadaConsta(Long id) {
+    NadaConsta nadaConsta = nadaConstaRepository.findById(id).orElse(null);
+    if (nadaConsta == null) {
+      return false;
+    }
+    Usuario usuario = nadaConsta.getUsuario();
+    String destinatario = systemConfigService.getEmailNadaConsta();
+    if (!EmailUtils.isValidEmail(destinatario)) {
+      log.warn(
+          "Reenvio de Nada Consta não realizado - email do sistema inválido: {}", destinatario);
+      return false;
+    }
+    Map<String, Object> templateData = new HashMap<>();
+    templateData.put("usuario", usuario);
+    templateData.put("nadaConsta", nadaConsta);
+    templateData.put("nomeAluno", usuario.getNome());
+    templateData.put("registroAcademico", usuario.getDocumento());
+    DateTimeFormatter formatter =
+        DateTimeFormatter.ofPattern("dd 'de' MMMM 'de' yyyy", Locale.forLanguageTag("pt-BR"));
+    templateData.put("dataFormatada", nadaConsta.getCreatedAt().toLocalDate().format(formatter));
+    eventPublisher.publishEvent(
+        new NadaConstaEmitidoEvent(this, destinatario, templateData, usuario.getEmail()));
+    return true;
   }
 
   @Override

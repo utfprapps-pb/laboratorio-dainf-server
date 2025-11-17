@@ -139,8 +139,17 @@ public class EmailEventListener {
           e);
       return;
     }
-    processEmailWithTemplate(
-        templateData, event.getRecipient(), event.getSubject(), event.getTemplateName());
+    if (event instanceof NadaConstaEmitidoEvent nadaConstaEmitidoEvent) {
+      processEmailWithTemplate(
+          templateData,
+          event.getRecipient(),
+          event.getSubject(),
+          event.getTemplateName(),
+          nadaConstaEmitidoEvent.getCc());
+    } else {
+      processEmailWithTemplate(
+          templateData, event.getRecipient(), event.getSubject(), event.getTemplateName());
+    }
   }
 
   /**
@@ -211,6 +220,37 @@ public class EmailEventListener {
       log.info("Processando envio de email: {} para {}", subject, EmailUtils.maskEmail(recipient));
       emailService.sendEmailWithTemplate(templateData, recipient, subject, templateName);
       log.info("Email enviado com sucesso: {} para {}", subject, EmailUtils.maskEmail(recipient));
+    } catch (MailException e) {
+      log.warn(
+          "Falha temporária ao enviar email {} para {} (tentará novamente): {}",
+          subject,
+          EmailUtils.maskEmail(recipient),
+          e.getMessage());
+      throw e;
+    } catch (EntityNotFoundException | IllegalArgumentException e) {
+      log.error(
+          "Erro não-retryável ao processar email {} para {}: {}",
+          subject,
+          EmailUtils.maskEmail(recipient),
+          e.getMessage(),
+          e);
+    }
+  }
+
+  private void processEmailWithTemplate(
+      Object templateData, String recipient, String subject, String templateName, String cc) {
+    try {
+      log.info(
+          "Processando envio de email: {} para {} (CC: {})",
+          subject,
+          EmailUtils.maskEmail(recipient),
+          cc);
+      emailService.sendEmailWithTemplate(templateData, recipient, subject, templateName, cc);
+      log.info(
+          "Email enviado com sucesso: {} para {} (CC: {})",
+          subject,
+          EmailUtils.maskEmail(recipient),
+          cc);
     } catch (MailException e) {
       log.warn(
           "Falha temporária ao enviar email {} para {} (tentará novamente): {}",

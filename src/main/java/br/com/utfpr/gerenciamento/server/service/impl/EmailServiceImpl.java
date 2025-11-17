@@ -56,6 +56,10 @@ public class EmailServiceImpl implements EmailService {
         throw new IllegalArgumentException("Nenhum email encontrado para envio.");
       }
 
+      if (email.getCc() != null && !email.getCc().isEmpty()) {
+        helper.setCc(email.getCc());
+      }
+
       helper.setSubject(email.getTitulo());
       String conteudo = email.getConteudo() != null ? email.getConteudo() : "";
       helper.setText(conteudo, true);
@@ -90,7 +94,7 @@ public class EmailServiceImpl implements EmailService {
 
   @Override
   public void sendEmailWithTemplate(
-      Object objectTemplate, String to, String titleEmail, String nameTemplate) {
+      Object objectTemplate, String to, String titleEmail, String nameTemplate, String cc) {
     String conteudo;
     if (nameTemplate.endsWith(".html")) {
       // Thymeleaf: remove a extensão para o processador
@@ -123,13 +127,25 @@ public class EmailServiceImpl implements EmailService {
           "Erro ao gerar o conteúdo do e-mail a partir do template '" + nameTemplate + "'.");
     }
     Email email =
-        Email.builder().para(to).de(emailAddress).titulo(titleEmail).conteudo(conteudo).build();
+        Email.builder()
+            .para(to)
+            .de(emailAddress)
+            .titulo(titleEmail)
+            .conteudo(conteudo)
+            .cc(cc)
+            .build();
     try {
       this.enviar(email);
     } catch (Exception ex) {
       log.error("Erro ao enviar email para {}: {}", to, ex.getMessage(), ex);
       throw new EmailException("Falha ao enviar email", ex);
     }
+  }
+
+  @Override
+  public void sendEmailWithTemplate(
+      Object objectTemplate, String to, String titleEmail, String nameTemplate) {
+    sendEmailWithTemplate(objectTemplate, to, titleEmail, nameTemplate, null);
   }
 
   public String buildThymeleafTemplateEmail(Map<String, Object> variables, String templateName) {

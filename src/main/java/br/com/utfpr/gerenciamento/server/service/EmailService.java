@@ -10,4 +10,7 @@ public interface EmailService {
 
   void sendEmailWithTemplate(
       Object objectTemplate, String to, String titleEmail, String nameTemplate);
+
+  void sendEmailWithTemplate(
+      Object objectTemplate, String to, String titleEmail, String nameTemplate, String cc);
 }

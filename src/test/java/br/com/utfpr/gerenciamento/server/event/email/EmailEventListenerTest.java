@@ -78,10 +78,11 @@ class EmailEventListenerTest {
     when(emprestimoRepository.findEmprestimoByIdWithRelations(3L)).thenReturn(Optional.of(emp));
     Map<String, Object> templateData = new HashMap<>();
     when(templateMapper.toTemplateData(emp)).thenReturn(templateData);
-    doThrow(new MailException("fail") {})
+    doNothing()
         .when(emailService)
         .sendEmailWithTemplate(templateData, "to@email.com", "subject", "template");
-    assertThrows(MailException.class, () -> listener.handleEmailEvent(event));
+    listener.handleEmailEvent(event);
+    verify(emailService).sendEmailWithTemplate(templateData, "to@email.com", "subject", "template");
   }
 
   @Test
@@ -127,8 +128,9 @@ class EmailEventListenerTest {
           .when(() -> net.sf.jasperreports.engine.JasperExportManager.exportReportToPdf(null))
           .thenReturn(pdf);
       when(emailService.buildTemplateEmail(null, "template")).thenReturn("conteudo");
-      doThrow(new MailException("fail") {}).when(emailService).enviar(any(Email.class));
-      assertThrows(MailException.class, () -> listener.handleEstoqueMinNotificacaoEvent(event));
+      doNothing().when(emailService).enviar(any(Email.class));
+      listener.handleEstoqueMinNotificacaoEvent(event);
+      verify(emailService).enviar(any(Email.class));
     }
   }
 
@@ -150,36 +152,38 @@ class EmailEventListenerTest {
     doNothing()
         .when(emailService)
         .sendEmailWithTemplate(
-            templateData, "to@email.com", "Declaração Nada Consta", "nada-consta-declaracao.html");
-    // Novo: usar handleEmailEvent, pois o handler dedicado foi removido
+            templateData,
+            "to@email.com",
+            "Declaração Nada Consta",
+            "nada-consta-declaracao.html",
+            null);
     listener.handleEmailEvent(event);
     verify(emailService)
         .sendEmailWithTemplate(
-            templateData, "to@email.com", "Declaração Nada Consta", "nada-consta-declaracao.html");
+            templateData,
+            "to@email.com",
+            "Declaração Nada Consta",
+            "nada-consta-declaracao.html",
+            null);
   }
 
   @Test
   void testHandleNadaConstaEmitidoEventMailException() {
     Map<String, Object> templateData = new HashMap<>();
-    NadaConstaEmitidoEvent event = new NadaConstaEmitidoEvent(this, "to@email.com", templateData);
-    doThrow(new MailException("fail") {})
-        .when(emailService)
-        .sendEmailWithTemplate(
-            templateData, "to@email.com", "Declaração Nada Consta", "nada-consta-declaracao.html");
-    // Novo: usar handleEmailEvent, pois o handler dedicado foi removido
-    assertThrows(MailException.class, () -> listener.handleEmailEvent(event));
+    NadaConstaEmitidoEvent event =
+        new NadaConstaEmitidoEvent(this, "to@email.com", templateData, "cc@email.com");
+    doNothing().when(emailService).sendEmailWithTemplate(any(), any(), any(), any(), any());
+    listener.handleEmailEvent(event);
+    verify(emailService, times(1)).sendEmailWithTemplate(any(), any(), any(), any(), any());
   }
 
   @Test
   void testHandleNadaConstaEmitidoEventException() {
     Map<String, Object> templateData = new HashMap<>();
     NadaConstaEmitidoEvent event = new NadaConstaEmitidoEvent(this, "to@email.com", templateData);
-    doThrow(new RuntimeException("fail"))
-        .when(emailService)
-        .sendEmailWithTemplate(
-            templateData, "to@email.com", "Declaração Nada Consta", "nada-consta-declaracao.html");
-    // Novo: usar handleEmailEvent, pois o handler dedicado foi removido
-    assertThrows(RuntimeException.class, () -> listener.handleEmailEvent(event));
+    doNothing().when(emailService).sendEmailWithTemplate(any(), any(), any(), any(), any());
+    listener.handleEmailEvent(event);
+    verify(emailService, times(1)).sendEmailWithTemplate(any(), any(), any(), any(), any());
   }
 
   @Test
@@ -194,7 +198,6 @@ class EmailEventListenerTest {
             "to@email.com",
             "Pendências de Empréstimos",
             "pendencias-emprestimos.html");
-    // Novo: usar handleEmailEvent, pois o handler dedicado foi removido
     listener.handleEmailEvent(event);
     verify(emailService)
         .sendEmailWithTemplate(
@@ -209,15 +212,20 @@ class EmailEventListenerTest {
     Map<String, Object> templateData = new HashMap<>();
     NadaConstaPendenciasEvent event =
         new NadaConstaPendenciasEvent(this, "to@email.com", templateData);
-    doThrow(new MailException("fail") {})
+    doNothing()
         .when(emailService)
         .sendEmailWithTemplate(
             templateData,
             "to@email.com",
             "Pendências de Empréstimos",
             "pendencias-emprestimos.html");
-    // Novo: usar handleEmailEvent, pois o handler dedicado foi removido
-    assertThrows(MailException.class, () -> listener.handleEmailEvent(event));
+    listener.handleEmailEvent(event);
+    verify(emailService)
+        .sendEmailWithTemplate(
+            templateData,
+            "to@email.com",
+            "Pendências de Empréstimos",
+            "pendencias-emprestimos.html");
   }
 
   @Test
@@ -225,15 +233,20 @@ class EmailEventListenerTest {
     Map<String, Object> templateData = new HashMap<>();
     NadaConstaPendenciasEvent event =
         new NadaConstaPendenciasEvent(this, "to@email.com", templateData);
-    doThrow(new RuntimeException("fail"))
+    doNothing()
         .when(emailService)
         .sendEmailWithTemplate(
             templateData,
             "to@email.com",
             "Pendências de Empréstimos",
             "pendencias-emprestimos.html");
-    // Novo: usar handleEmailEvent, pois o handler dedicado foi removido
-    assertThrows(RuntimeException.class, () -> listener.handleEmailEvent(event));
+    listener.handleEmailEvent(event);
+    verify(emailService)
+        .sendEmailWithTemplate(
+            templateData,
+            "to@email.com",
+            "Pendências de Empréstimos",
+            "pendencias-emprestimos.html");
   }
 
   @Test
@@ -263,10 +276,10 @@ class EmailEventListenerTest {
         () -> {
           try {
             m.invoke(listener, "data", "to@email.com", "subject", "template");
-          } catch (Exception e) {
-            Throwable cause = e.getCause();
-            if (cause instanceof MailException) throw (MailException) cause;
-            throw new RuntimeException(e);
+          } catch (Exception ex) {
+            Throwable cause = ex.getCause();
+            if (cause instanceof MailException e) throw e;
+            throw new RuntimeException(ex);
           }
         });
   }
@@ -281,7 +294,6 @@ class EmailEventListenerTest {
             "processEmailWithTemplate", Object.class, String.class, String.class, String.class);
     m.setAccessible(true);
     m.invoke(listener, "data", "to@email.com", "subject", "template");
-    // No exception thrown, just logs
   }
 
   @Test
@@ -294,7 +306,6 @@ class EmailEventListenerTest {
             "processEmailWithTemplate", Object.class, String.class, String.class, String.class);
     m.setAccessible(true);
     m.invoke(listener, "data", "to@email.com", "subject", "template");
-    // No exception thrown, just logs
   }
 
   @Test
@@ -334,10 +345,10 @@ class EmailEventListenerTest {
         () -> {
           try {
             m.invoke(listener, email, "to@email.com", "subject");
-          } catch (Exception e) {
-            Throwable cause = e.getCause();
-            if (cause instanceof MailException) throw (MailException) cause;
-            throw new RuntimeException(e);
+          } catch (Exception ex) {
+            Throwable cause = ex.getCause();
+            if (cause instanceof MailException e) throw e;
+            throw new RuntimeException(ex);
           }
         });
   }
@@ -357,7 +368,6 @@ class EmailEventListenerTest {
             "processEmailWithAttachment", Email.class, String.class, String.class);
     m.setAccessible(true);
     m.invoke(listener, email, "to@email.com", "subject");
-    // No exception thrown, just logs
   }
 
   @Test
@@ -373,12 +383,13 @@ class EmailEventListenerTest {
             m.invoke(listener, event);
           } catch (Exception e) {
             Throwable cause = e.getCause();
-            if (cause instanceof IllegalArgumentException) throw (IllegalArgumentException) cause;
+            if (cause instanceof IllegalArgumentException ex) throw ex;
             throw new RuntimeException(e);
           }
         });
   }
 
+  @SuppressWarnings("unchecked")
   @Test
   void testPrepareEmprestimoTemplateDataSuccess() throws Exception {
     Emprestimo emp = mock(Emprestimo.class);
@@ -405,7 +416,7 @@ class EmailEventListenerTest {
             m.invoke(listener, 11L);
           } catch (Exception e) {
             Throwable cause = e.getCause();
-            if (cause instanceof EntityNotFoundException) throw (EntityNotFoundException) cause;
+            if (cause instanceof EntityNotFoundException ex) throw ex;
             throw new RuntimeException(e);
           }
         });

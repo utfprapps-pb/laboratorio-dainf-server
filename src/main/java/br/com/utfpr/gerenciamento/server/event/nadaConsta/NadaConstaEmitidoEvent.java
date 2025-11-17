@@ -8,9 +8,17 @@ import lombok.Getter;
 @Getter
 public class NadaConstaEmitidoEvent extends EmailEvent {
   private final transient Map<String, Object> templateData;
+  private final String cc;
 
-  public NadaConstaEmitidoEvent(Object source, String recipient, Map<String, Object> templateData) {
+  public NadaConstaEmitidoEvent(
+      Object source, String recipient, Map<String, Object> templateData, String cc) {
     super(source, recipient, "Declaração Nada Consta", "nada-consta-declaracao.html");
     this.templateData = templateData;
+    this.cc = cc;
+  }
+
+  // Mantém construtor antigo para compatibilidade
+  public NadaConstaEmitidoEvent(Object source, String recipient, Map<String, Object> templateData) {
+    this(source, recipient, templateData, null);
   }
 }
