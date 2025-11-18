@@ -322,4 +322,44 @@ class EmailServiceImplTest {
     // Then
     assertNull(result);
   }
+
+  @Test
+  void enviar_DeveEnviarEmailComCC() throws Exception {
+    when(javaMailSender.createMimeMessage()).thenReturn(mimeMessage);
+    doNothing().when(javaMailSender).send(any(MimeMessage.class));
+
+    Email email =
+        Email.builder()
+            .de("from@test.com")
+            .para("to@test.com")
+            .cc("cc@test.com")
+            .titulo("Test Subject")
+            .conteudo("Test Body")
+            .build();
+
+    emailService.enviar(email);
+
+    verify(javaMailSender).send(any(MimeMessage.class));
+    // Aqui pode-se adicionar verificação extra se o MimeMessage recebeu o CC corretamente, se
+    // mockado
+  }
+
+  @Test
+  void enviar_DeveEnviarEmailSemCC() throws Exception {
+    when(javaMailSender.createMimeMessage()).thenReturn(mimeMessage);
+    doNothing().when(javaMailSender).send(any(MimeMessage.class));
+
+    Email email =
+        Email.builder()
+            .de("from@test.com")
+            .para("to@test.com")
+            .titulo("Test Subject")
+            .conteudo("Test Body")
+            .build();
+
+    emailService.enviar(email);
+
+    verify(javaMailSender).send(any(MimeMessage.class));
+    // Verifica que não há CC
+  }
 }

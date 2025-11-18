@@ -132,24 +132,23 @@ public class EmailEventListener {
       templateData = prepareTemplateDataForEvent(event);
     } catch (EntityNotFoundException | IllegalArgumentException e) {
       log.error(
-          "Erro não-retryável ao preparar dados do template para email {}: {}",
+          "Erro não-retryável ao preparar dados do template para email {} para {}: {}",
           event.getSubject(),
           EmailUtils.maskEmail(event.getRecipient()),
           e.getMessage(),
           e);
       return;
     }
+    String cc = null;
     if (event instanceof NadaConstaEmitidoEvent nadaConstaEmitidoEvent) {
-      processEmailWithTemplate(
-          templateData,
-          event.getRecipient(),
-          event.getSubject(),
-          event.getTemplateName(),
-          nadaConstaEmitidoEvent.getCc());
-    } else {
-      processEmailWithTemplate(
-          templateData, event.getRecipient(), event.getSubject(), event.getTemplateName());
+      cc = nadaConstaEmitidoEvent.getCc();
     }
+    processEmailWithTemplate(
+        templateData,
+        event.getRecipient(),
+        event.getSubject(),
+        event.getTemplateName(),
+        cc);
   }
 
   /**
@@ -215,42 +214,25 @@ public class EmailEventListener {
    * propagation.
    */
   private void processEmailWithTemplate(
-      Object templateData, String recipient, String subject, String templateName) {
-    try {
-      log.info("Processando envio de email: {} para {}", subject, EmailUtils.maskEmail(recipient));
-      emailService.sendEmailWithTemplate(templateData, recipient, subject, templateName);
-      log.info("Email enviado com sucesso: {} para {}", subject, EmailUtils.maskEmail(recipient));
-    } catch (MailException e) {
-      log.warn(
-          "Falha temporária ao enviar email {} para {} (tentará novamente): {}",
-          subject,
-          EmailUtils.maskEmail(recipient),
-          e.getMessage());
-      throw e;
-    } catch (EntityNotFoundException | IllegalArgumentException e) {
-      log.error(
-          "Erro não-retryável ao processar email {} para {}: {}",
-          subject,
-          EmailUtils.maskEmail(recipient),
-          e.getMessage(),
-          e);
-    }
-  }
-
-  private void processEmailWithTemplate(
       Object templateData, String recipient, String subject, String templateName, String cc) {
     try {
-      log.info(
-          "Processando envio de email: {} para {} (CC: {})",
-          subject,
-          EmailUtils.maskEmail(recipient),
-          cc);
-      emailService.sendEmailWithTemplate(templateData, recipient, subject, templateName, cc);
-      log.info(
-          "Email enviado com sucesso: {} para {} (CC: {})",
-          subject,
-          EmailUtils.maskEmail(recipient),
-          cc);
+      if (cc != null) {
+        log.info(
+            "Processando envio de email: {} para {} (CC: {})",
+            subject,
+            EmailUtils.maskEmail(recipient),
+            EmailUtils.maskEmail(cc));
+        emailService.sendEmailWithTemplate(templateData, recipient, subject, templateName, cc);
+        log.info(
+            "Email enviado com sucesso: {} para {} (CC: {})",
+            subject,
+            EmailUtils.maskEmail(recipient),
+            EmailUtils.maskEmail(cc));
+      } else {
+        log.info("Processando envio de email: {} para {}", subject, EmailUtils.maskEmail(recipient));
+        emailService.sendEmailWithTemplate(templateData, recipient, subject, templateName);
+        log.info("Email enviado com sucesso: {} para {}", subject, EmailUtils.maskEmail(recipient));
+      }
     } catch (MailException e) {
       log.warn(
           "Falha temporária ao enviar email {} para {} (tentará novamente): {}",

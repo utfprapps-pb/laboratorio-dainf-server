@@ -162,4 +162,30 @@ class NadaConstaControllerTest {
                         .authorities(new SimpleGrantedAuthority("ROLE_ADMINISTRADOR"))))
         .andExpect(status().isInternalServerError());
   }
+
+  @Test
+  void shouldReturnOkWhenReenviarNadaConstaSuccess() throws Exception {
+    Long id = 1L;
+    Mockito.when(nadaConstaService.reenviarNadaConsta(id)).thenReturn(true);
+    mockMvc
+        .perform(
+            post("/nadaconsta/{id}/reenvio", id)
+                .with(
+                    SecurityMockMvcRequestPostProcessors.user("admin")
+                        .authorities(new SimpleGrantedAuthority("ROLE_ADMINISTRADOR"))))
+        .andExpect(status().isOk());
+  }
+
+  @Test
+  void shouldReturnNotFoundWhenReenviarNadaConstaFails() throws Exception {
+    Long id = 2L;
+    Mockito.when(nadaConstaService.reenviarNadaConsta(id)).thenReturn(false);
+    mockMvc
+        .perform(
+            post("/nadaconsta/{id}/reenvio", id)
+                .with(
+                    SecurityMockMvcRequestPostProcessors.user("admin")
+                        .authorities(new SimpleGrantedAuthority("ROLE_ADMINISTRADOR"))))
+        .andExpect(status().isNotFound());
+  }
 }

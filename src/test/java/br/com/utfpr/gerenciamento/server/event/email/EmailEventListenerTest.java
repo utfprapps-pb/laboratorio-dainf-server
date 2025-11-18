@@ -170,20 +170,31 @@ class EmailEventListenerTest {
   @Test
   void testHandleNadaConstaEmitidoEventMailException() {
     Map<String, Object> templateData = new HashMap<>();
+    String expectedCc = "cc@email.com";
     NadaConstaEmitidoEvent event =
-        new NadaConstaEmitidoEvent(this, "to@email.com", templateData, "cc@email.com");
-    doNothing().when(emailService).sendEmailWithTemplate(any(), any(), any(), any(), any());
-    listener.handleEmailEvent(event);
-    verify(emailService, times(1)).sendEmailWithTemplate(any(), any(), any(), any(), any());
+        new NadaConstaEmitidoEvent(this, "to@email.com", templateData, expectedCc);
+    doThrow(new MailException("Falha SMTP") {
+      @Override
+      public String getMessage() {
+        return "Falha SMTP";
+      }
+    }).when(emailService).sendEmailWithTemplate(
+        eq(templateData), eq("to@email.com"), eq("Declaração Nada Consta"), eq("nada-consta-declaracao.html"), eq(expectedCc));
+    assertThrows(MailException.class, () -> listener.handleEmailEvent(event));
+    verify(emailService, times(1)).sendEmailWithTemplate(
+        eq(templateData), eq("to@email.com"), eq("Declaração Nada Consta"), eq("nada-consta-declaracao.html"), eq(expectedCc));
   }
 
   @Test
   void testHandleNadaConstaEmitidoEventException() {
     Map<String, Object> templateData = new HashMap<>();
+    String expectedCc = null;
     NadaConstaEmitidoEvent event = new NadaConstaEmitidoEvent(this, "to@email.com", templateData);
-    doNothing().when(emailService).sendEmailWithTemplate(any(), any(), any(), any(), any());
-    listener.handleEmailEvent(event);
-    verify(emailService, times(1)).sendEmailWithTemplate(any(), any(), any(), any(), any());
+    doThrow(new RuntimeException("Erro genérico")).when(emailService).sendEmailWithTemplate(
+        eq(templateData), eq("to@email.com"), eq("Declaração Nada Consta"), eq("nada-consta-declaracao.html"), eq(expectedCc));
+    assertThrows(RuntimeException.class, () -> listener.handleEmailEvent(event));
+    verify(emailService, times(1)).sendEmailWithTemplate(
+        eq(templateData), eq("to@email.com"), eq("Declaração Nada Consta"), eq("nada-consta-declaracao.html"), eq(expectedCc));
   }
 
   @Test
@@ -420,5 +431,53 @@ class EmailEventListenerTest {
             throw new RuntimeException(e);
           }
         });
+  }
+
+  @Test
+  void testHandleEmprestimoFinalizadoEventComCC() {
+    Emprestimo emp = mock(Emprestimo.class);
+    when(emprestimoRepository.findEmprestimoByIdWithRelations(10L)).thenReturn(Optional.of(emp));
+    Map<String, Object> templateData = new HashMap<>();
+    when(templateMapper.toTemplateData(emp)).thenReturn(templateData);
+    EmprestimoFinalizadoEvent event =
+        new EmprestimoFinalizadoEvent(this, 10L, "to@email.com", true);
+    doNothing()
+        .when(emailService)
+        .sendEmailWithTemplate(
+            templateData,
+            "to@email.com",
+            "Confirmação de Empréstimo",
+            "templateConfirmacaoEmprestimo.html");
+    listener.handleEmailEvent(event);
+    verify(emailService)
+        .sendEmailWithTemplate(
+            templateData,
+            "to@email.com",
+            "Confirmação de Empréstimo",
+            "templateConfirmacaoEmprestimo.html");
+  }
+
+  @Test
+  void testHandleEmprestimoFinalizadoEventSemCC() {
+    Emprestimo emp = mock(Emprestimo.class);
+    when(emprestimoRepository.findEmprestimoByIdWithRelations(11L)).thenReturn(Optional.of(emp));
+    Map<String, Object> templateData = new HashMap<>();
+    when(templateMapper.toTemplateData(emp)).thenReturn(templateData);
+    EmprestimoFinalizadoEvent event =
+        new EmprestimoFinalizadoEvent(this, 11L, "to@email.com", false);
+    doNothing()
+        .when(emailService)
+        .sendEmailWithTemplate(
+            templateData,
+            "to@email.com",
+            "Confirmação de Empréstimo",
+            "templateConfirmacaoFinalizacaoEmprestimo.html");
+    listener.handleEmailEvent(event);
+    verify(emailService)
+        .sendEmailWithTemplate(
+            templateData,
+            "to@email.com",
+            "Confirmação de Empréstimo",
+            "templateConfirmacaoFinalizacaoEmprestimo.html");
   }
 }
