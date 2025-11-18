@@ -40,6 +40,28 @@ import org.springframework.transaction.annotation.Transactional;
 public class NadaConstaServiceImpl extends CrudServiceImpl<NadaConsta, Long, NadaConstaResponseDto>
     implements NadaConstaService {
 
+  // Constantes extraídas das strings duplicadas
+  private static final String USUARIO_NAO_ENCONTRADO =
+      "Usuário não encontrado para o documento informado.";
+  private static final String SOLICITACAO_EXISTENTE =
+      "Já existe uma solicitação de Nada Consta em aberto ou concluída para este usuário.";
+  private static final String EMAIL_NADA_CONSTA_INVALIDO =
+      "Email de Nada Consta não enviado - email do sistema inválido: {}";
+  private static final String EMAIL_PENDENCIAS_INVALIDO =
+      "Email de pendências de Nada Consta não enviado - usuário sem email válido: {}";
+  private static final String FORMAT_PT_BR = "dd 'de' MMMM 'de' yyyy";
+  private static final String LOCALE_PT_BR = "pt-BR";
+  private static final String NADA_CONSTA_NAO_ENCONTRADO = "Nada Consta não encontrado.";
+  private static final String NADA_CONSTA_STATUS_PENDING =
+      "Nada Consta não está com status PENDING.";
+  private static final String USUARIO = "usuario";
+  private static final String NADA_CONSTA = "nadaConsta";
+  private static final String NOME_ALUNO = "nomeAluno";
+  private static final String REGISTRO_ACADEMICO = "registroAcademico";
+  private static final String DATA_FORMATADA = "dataFormatada";
+  private static final String EMPRESTIMOS = "emprestimos";
+  private static final String ITEM_NOME = "itemNome";
+
   private final NadaConstaRepository nadaConstaRepository;
   private final UsuarioService usuarioService;
   private final ModelMapper modelMapper;
@@ -110,12 +132,11 @@ public class NadaConstaServiceImpl extends CrudServiceImpl<NadaConsta, Long, Nad
   public NadaConstaResponseDto solicitarNadaConsta(String documento) {
     Usuario usuario = usuarioService.toEntity(usuarioService.findByDocumento(documento));
     if (usuario == null) {
-      throw new RuntimeException("Usuário não encontrado para o documento informado.");
+      throw new RuntimeException(USUARIO_NAO_ENCONTRADO);
     }
     // Pre-check for open Nada Consta solicitation
     if (usuarioService.hasSolicitacaoNadaConstaPendingOrCompleted(usuario.getUsername())) {
-      throw new NadaConstaException(
-          "Já existe uma solicitação de Nada Consta em aberto ou concluída para este usuário.");
+      throw new NadaConstaException(SOLICITACAO_EXISTENTE);
     }
     List<Emprestimo> emprestimosAbertos =
         emprestimoService.findAllEmprestimosAbertosByUsuario(usuario.getUsername()).stream()
@@ -139,36 +160,34 @@ public class NadaConstaServiceImpl extends CrudServiceImpl<NadaConsta, Long, Nad
     if (emprestimosAbertos.isEmpty()) {
       String destinatario = systemConfigService.getEmailNadaConsta();
       if (!EmailUtils.isValidEmail(destinatario)) {
-        log.warn("Email de Nada Consta não enviado - email do sistema inválido: {}", destinatario);
+        log.warn(EMAIL_NADA_CONSTA_INVALIDO, destinatario);
         return toDto(nadaConsta);
       }
       Map<String, Object> templateData = new HashMap<>();
-      templateData.put("usuario", usuario);
-      templateData.put("nadaConsta", nadaConsta);
-      templateData.put("nomeAluno", usuario.getNome());
-      templateData.put("registroAcademico", usuario.getDocumento());
+      templateData.put(USUARIO, usuario);
+      templateData.put(NADA_CONSTA, nadaConsta);
+      templateData.put(NOME_ALUNO, usuario.getNome());
+      templateData.put(REGISTRO_ACADEMICO, usuario.getDocumento());
       DateTimeFormatter formatter =
-          DateTimeFormatter.ofPattern("dd 'de' MMMM 'de' yyyy", Locale.forLanguageTag("pt-BR"));
-      templateData.put("dataFormatada", LocalDate.now().format(formatter));
+          DateTimeFormatter.ofPattern(FORMAT_PT_BR, Locale.forLanguageTag(LOCALE_PT_BR));
+      templateData.put(DATA_FORMATADA, LocalDate.now().format(formatter));
       eventPublisher.publishEvent(
           new NadaConstaEmitidoEvent(this, destinatario, templateData, usuario.getEmail()));
     } else {
       String destinatario = usuario.getEmail();
       if (!EmailUtils.isValidEmail(destinatario)) {
-        log.warn(
-            "Email de pendências de Nada Consta não enviado - usuário sem email válido: {}",
-            usuario.getNome());
+        log.warn(EMAIL_PENDENCIAS_INVALIDO, usuario.getNome());
         return toDto(nadaConsta);
       }
       Map<String, Object> templateData = new HashMap<>();
-      templateData.put("usuario", usuario);
-      templateData.put("nomeAluno", usuario.getNome());
-      templateData.put("registroAcademico", usuario.getDocumento());
+      templateData.put(USUARIO, usuario);
+      templateData.put(NOME_ALUNO, usuario.getNome());
+      templateData.put(REGISTRO_ACADEMICO, usuario.getDocumento());
       DateTimeFormatter formatter =
-          DateTimeFormatter.ofPattern("dd 'de' MMMM 'de' yyyy", Locale.forLanguageTag("pt-BR"));
-      templateData.put("dataFormatada", LocalDate.now().format(formatter));
+          DateTimeFormatter.ofPattern(FORMAT_PT_BR, Locale.forLanguageTag(LOCALE_PT_BR));
+      templateData.put(DATA_FORMATADA, LocalDate.now().format(formatter));
       templateData.put(
-          "emprestimos",
+          EMPRESTIMOS,
           emprestimosAbertos.stream()
               .flatMap(
                   e ->
@@ -178,7 +197,7 @@ public class NadaConstaServiceImpl extends CrudServiceImpl<NadaConsta, Long, Nad
               .map(
                   item -> {
                     Map<String, Object> map = new HashMap<>();
-                    map.put("itemNome", item.getItem() != null ? item.getItem().getNome() : null);
+                    map.put(ITEM_NOME, item.getItem() != null ? item.getItem().getNome() : null);
                     return map;
                   })
               .toList());
@@ -200,9 +219,9 @@ public class NadaConstaServiceImpl extends CrudServiceImpl<NadaConsta, Long, Nad
     NadaConsta nadaConsta =
         nadaConstaRepository
             .findById(id)
-            .orElseThrow(() -> new NadaConstaException("Nada Consta não encontrado."));
+            .orElseThrow(() -> new NadaConstaException(NADA_CONSTA_NAO_ENCONTRADO));
     if (nadaConsta.getStatus() != NadaConstaStatus.PENDING) {
-      throw new NadaConstaException("Nada Consta não está com status PENDING.");
+      throw new NadaConstaException(NADA_CONSTA_STATUS_PENDING);
     }
     Usuario usuario = nadaConsta.getUsuario();
     List<Emprestimo> emprestimosAbertos =
@@ -216,11 +235,11 @@ public class NadaConstaServiceImpl extends CrudServiceImpl<NadaConsta, Long, Nad
       String destinatario = systemConfigService.getEmailNadaConsta();
       if (EmailUtils.isValidEmail(destinatario)) {
         Map<String, Object> templateData = new HashMap<>();
-        templateData.put("usuario", usuario);
-        templateData.put("nadaConsta", nadaConsta);
+        templateData.put(USUARIO, usuario);
+        templateData.put(NADA_CONSTA, nadaConsta);
         eventPublisher.publishEvent(new NadaConstaEmitidoEvent(this, destinatario, templateData));
       } else {
-        log.warn("Email de Nada Consta não enviado - email do sistema inválido: {}", destinatario);
+        log.warn(EMAIL_NADA_CONSTA_INVALIDO, destinatario);
       }
     }
     return convertToDto(nadaConsta);
@@ -239,7 +258,7 @@ public class NadaConstaServiceImpl extends CrudServiceImpl<NadaConsta, Long, Nad
     NadaConsta nadaConsta =
         nadaConstaRepository
             .findById(id)
-            .orElseThrow(() -> new NadaConstaException("Nada Consta não encontrado."));
+            .orElseThrow(() -> new NadaConstaException(NADA_CONSTA_NAO_ENCONTRADO));
     if (nadaConsta.getStatus() != NadaConstaStatus.COMPLETED) {
       throw new NadaConstaException(
           "Só é possível invalidar Nada Consta emitido (status COMPLETED).");
@@ -275,13 +294,13 @@ public class NadaConstaServiceImpl extends CrudServiceImpl<NadaConsta, Long, Nad
       return false;
     }
     Map<String, Object> templateData = new HashMap<>();
-    templateData.put("usuario", usuario);
-    templateData.put("nadaConsta", nadaConsta);
-    templateData.put("nomeAluno", usuario.getNome());
-    templateData.put("registroAcademico", usuario.getDocumento());
+    templateData.put(USUARIO, usuario);
+    templateData.put(NADA_CONSTA, nadaConsta);
+    templateData.put(NOME_ALUNO, usuario.getNome());
+    templateData.put(REGISTRO_ACADEMICO, usuario.getDocumento());
     DateTimeFormatter formatter =
-        DateTimeFormatter.ofPattern("dd 'de' MMMM 'de' yyyy", Locale.forLanguageTag("pt-BR"));
-    templateData.put("dataFormatada", nadaConsta.getCreatedAt().toLocalDate().format(formatter));
+        DateTimeFormatter.ofPattern(FORMAT_PT_BR, Locale.forLanguageTag(LOCALE_PT_BR));
+    templateData.put(DATA_FORMATADA, nadaConsta.getCreatedAt().toLocalDate().format(formatter));
     eventPublisher.publishEvent(
         new NadaConstaEmitidoEvent(this, destinatario, templateData, usuario.getEmail()));
     return true;

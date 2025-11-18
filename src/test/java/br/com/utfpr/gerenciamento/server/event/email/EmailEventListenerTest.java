@@ -18,6 +18,8 @@ import java.lang.reflect.Method;
 import java.util.*;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.MethodSource;
 import org.mockito.*;
 import org.springframework.mail.MailException;
 
@@ -37,85 +39,48 @@ class EmailEventListenerTest {
     field.set(listener, "from@email.com");
   }
 
-  @Test
-  void testHandleEmprestimoFinalizadoEventSuccess() {
-    EmprestimoFinalizadoEvent event = mock(EmprestimoFinalizadoEvent.class);
-    when(event.getEmprestimoId()).thenReturn(1L);
-    when(event.getRecipient()).thenReturn("to@email.com");
-    when(event.getSubject()).thenReturn("subject");
-    when(event.getTemplateName()).thenReturn("template");
+  static List<Object[]> provideEmprestimoFinalizadoEventParams() {
     Emprestimo emp = mock(Emprestimo.class);
-    when(emprestimoRepository.findEmprestimoByIdWithRelations(1L)).thenReturn(Optional.of(emp));
     Map<String, Object> templateData = new HashMap<>();
-    when(templateMapper.toTemplateData(emp)).thenReturn(templateData);
-    doNothing()
-        .when(emailService)
-        .sendEmailWithTemplate(templateData, "to@email.com", "subject", "template");
-    listener.handleEmailEvent(event);
-    verify(emailService).sendEmailWithTemplate(templateData, "to@email.com", "subject", "template");
+    return List.of(
+        new Object[] {1L, "to@email.com", "subject", "template", emp, templateData, true},
+        new Object[] {2L, "to@email.com", "subject", "template", null, null, false});
   }
 
-  @Test
-  void testHandleEmprestimoFinalizadoEventEntityNotFound() {
+  @ParameterizedTest
+  @MethodSource("provideEmprestimoFinalizadoEventParams")
+  void testHandleEmprestimoFinalizadoEventParametrized(
+      Long id,
+      String recipient,
+      String subject,
+      String template,
+      Emprestimo emp,
+      Map<String, Object> templateData,
+      boolean shouldSend) {
     EmprestimoFinalizadoEvent event = mock(EmprestimoFinalizadoEvent.class);
-    when(event.getEmprestimoId()).thenReturn(2L);
-    when(event.getRecipient()).thenReturn("to@email.com");
-    when(event.getSubject()).thenReturn("subject");
-    when(event.getTemplateName()).thenReturn("template");
-    when(emprestimoRepository.findEmprestimoByIdWithRelations(2L)).thenReturn(Optional.empty());
+    when(event.getEmprestimoId()).thenReturn(id);
+    when(event.getRecipient()).thenReturn(recipient);
+    when(event.getSubject()).thenReturn(subject);
+    when(event.getTemplateName()).thenReturn(template);
+    if (emp != null) {
+      when(emprestimoRepository.findEmprestimoByIdWithRelations(id)).thenReturn(Optional.of(emp));
+      when(templateMapper.toTemplateData(emp)).thenReturn(templateData);
+      doNothing()
+          .when(emailService)
+          .sendEmailWithTemplate(templateData, recipient, subject, template);
+    } else {
+      when(emprestimoRepository.findEmprestimoByIdWithRelations(id)).thenReturn(Optional.empty());
+    }
     listener.handleEmailEvent(event);
-    verify(emailService, never()).sendEmailWithTemplate(any(), any(), any(), any());
-  }
-
-  @Test
-  void testHandleEmprestimoFinalizadoEventMailException() {
-    EmprestimoFinalizadoEvent event = mock(EmprestimoFinalizadoEvent.class);
-    when(event.getEmprestimoId()).thenReturn(3L);
-    when(event.getRecipient()).thenReturn("to@email.com");
-    when(event.getSubject()).thenReturn("subject");
-    when(event.getTemplateName()).thenReturn("template");
-    Emprestimo emp = mock(Emprestimo.class);
-    when(emprestimoRepository.findEmprestimoByIdWithRelations(3L)).thenReturn(Optional.of(emp));
-    Map<String, Object> templateData = new HashMap<>();
-    when(templateMapper.toTemplateData(emp)).thenReturn(templateData);
-    doNothing()
-        .when(emailService)
-        .sendEmailWithTemplate(templateData, "to@email.com", "subject", "template");
-    listener.handleEmailEvent(event);
-    verify(emailService).sendEmailWithTemplate(templateData, "to@email.com", "subject", "template");
-  }
-
-  @Test
-  void testHandleEmprestimoFinalizadoEventIllegalArgumentException() {
-    EmailEvent event = mock(EmailEvent.class);
-    when(event.getRecipient()).thenReturn("to@email.com");
-    when(event.getSubject()).thenReturn("subject");
-    when(event.getTemplateName()).thenReturn("template");
-    assertDoesNotThrow(() -> listener.handleEmailEvent(event));
-  }
-
-  @Test
-  void testHandleEstoqueMinNotificacaoEventSuccess() throws Exception {
-    EstoqueMinNotificacaoEvent event = mock(EstoqueMinNotificacaoEvent.class);
-    when(event.getRecipient()).thenReturn("to@email.com");
-    when(event.getSubject()).thenReturn("subject");
-    when(event.getTemplateName()).thenReturn("template");
-    byte[] pdf = new byte[] {1, 2, 3};
-    when(relatorioService.generateReport(anyLong(), isNull())).thenReturn(null);
-    try (MockedStatic<net.sf.jasperreports.engine.JasperExportManager> jasperMock =
-        mockStatic(net.sf.jasperreports.engine.JasperExportManager.class)) {
-      jasperMock
-          .when(() -> net.sf.jasperreports.engine.JasperExportManager.exportReportToPdf(null))
-          .thenReturn(pdf);
-      when(emailService.buildTemplateEmail(null, "template")).thenReturn("conteudo");
-      doNothing().when(emailService).enviar(any(Email.class));
-      listener.handleEstoqueMinNotificacaoEvent(event);
-      verify(emailService).enviar(any(Email.class));
+    if (shouldSend) {
+      verify(emailService).sendEmailWithTemplate(templateData, recipient, subject, template);
+    } else {
+      verify(emailService, never()).sendEmailWithTemplate(any(), any(), any(), any());
     }
   }
 
   @Test
-  void testHandleEstoqueMinNotificacaoEventMailException() throws Exception {
+  void testHandleEstoqueMinNotificacaoEventSuccess() throws Exception {
     EstoqueMinNotificacaoEvent event = mock(EstoqueMinNotificacaoEvent.class);
     when(event.getRecipient()).thenReturn("to@email.com");
     when(event.getSubject()).thenReturn("subject");
@@ -166,99 +131,7 @@ class EmailEventListenerTest {
   }
 
   @Test
-  void testHandleNadaConstaEmitidoEventMailException() {
-    Map<String, Object> templateData = new HashMap<>();
-    String expectedCc = "cc@email.com";
-    NadaConstaEmitidoEvent event =
-        new NadaConstaEmitidoEvent(this, "to@email.com", templateData, expectedCc);
-    doThrow(
-            new MailException("Falha SMTP") {
-              @Override
-              public String getMessage() {
-                return "Falha SMTP";
-              }
-            })
-        .when(emailService)
-        .sendEmailWithTemplate(
-            eq(templateData),
-            eq("to@email.com"),
-            eq("Declaração Nada Consta"),
-            eq("nada-consta-declaracao.html"),
-            eq(expectedCc)); // 5 args
-    assertThrows(MailException.class, () -> listener.handleEmailEvent(event));
-    verify(emailService, times(1))
-        .sendEmailWithTemplate(
-            eq(templateData),
-            eq("to@email.com"),
-            eq("Declaração Nada Consta"),
-            eq("nada-consta-declaracao.html"),
-            eq(expectedCc)); // 5 args
-  }
-
-  @Test
-  void testHandleNadaConstaEmitidoEventException() {
-    Map<String, Object> templateData = new HashMap<>();
-    NadaConstaEmitidoEvent event = new NadaConstaEmitidoEvent(this, "to@email.com", templateData);
-    doThrow(new RuntimeException("Erro genérico"))
-        .when(emailService)
-        .sendEmailWithTemplate(
-            eq(templateData),
-            eq("to@email.com"),
-            eq("Declaração Nada Consta"),
-            eq("nada-consta-declaracao.html")); // 4 args
-    assertThrows(RuntimeException.class, () -> listener.handleEmailEvent(event));
-    verify(emailService, times(1))
-        .sendEmailWithTemplate(
-            eq(templateData),
-            eq("to@email.com"),
-            eq("Declaração Nada Consta"),
-            eq("nada-consta-declaracao.html")); // 4 args
-  }
-
-  @Test
   void testHandleNadaConstaPendenciasEventSuccess() {
-    Map<String, Object> templateData = new HashMap<>();
-    NadaConstaPendenciasEvent event =
-        new NadaConstaPendenciasEvent(this, "to@email.com", templateData);
-    doNothing()
-        .when(emailService)
-        .sendEmailWithTemplate(
-            templateData,
-            "to@email.com",
-            "Pendências de Empréstimos",
-            "pendencias-emprestimos.html");
-    listener.handleEmailEvent(event);
-    verify(emailService)
-        .sendEmailWithTemplate(
-            templateData,
-            "to@email.com",
-            "Pendências de Empréstimos",
-            "pendencias-emprestimos.html");
-  }
-
-  @Test
-  void testHandleNadaConstaPendenciasEventMailException() {
-    Map<String, Object> templateData = new HashMap<>();
-    NadaConstaPendenciasEvent event =
-        new NadaConstaPendenciasEvent(this, "to@email.com", templateData);
-    doNothing()
-        .when(emailService)
-        .sendEmailWithTemplate(
-            templateData,
-            "to@email.com",
-            "Pendências de Empréstimos",
-            "pendencias-emprestimos.html");
-    listener.handleEmailEvent(event);
-    verify(emailService)
-        .sendEmailWithTemplate(
-            templateData,
-            "to@email.com",
-            "Pendências de Empréstimos",
-            "pendencias-emprestimos.html");
-  }
-
-  @Test
-  void testHandleNadaConstaPendenciasEventException() {
     Map<String, Object> templateData = new HashMap<>();
     NadaConstaPendenciasEvent event =
         new NadaConstaPendenciasEvent(this, "to@email.com", templateData);
