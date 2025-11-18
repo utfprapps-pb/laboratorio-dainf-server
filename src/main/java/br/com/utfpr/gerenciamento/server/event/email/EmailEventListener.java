@@ -144,11 +144,7 @@ public class EmailEventListener {
       cc = nadaConstaEmitidoEvent.getCc();
     }
     processEmailWithTemplate(
-        templateData,
-        event.getRecipient(),
-        event.getSubject(),
-        event.getTemplateName(),
-        cc);
+        templateData, event.getRecipient(), event.getSubject(), event.getTemplateName(), cc);
   }
 
   /**
@@ -229,7 +225,8 @@ public class EmailEventListener {
             EmailUtils.maskEmail(recipient),
             EmailUtils.maskEmail(cc));
       } else {
-        log.info("Processando envio de email: {} para {}", subject, EmailUtils.maskEmail(recipient));
+        log.info(
+            "Processando envio de email: {} para {}", subject, EmailUtils.maskEmail(recipient));
         emailService.sendEmailWithTemplate(templateData, recipient, subject, templateName);
         log.info("Email enviado com sucesso: {} para {}", subject, EmailUtils.maskEmail(recipient));
       }

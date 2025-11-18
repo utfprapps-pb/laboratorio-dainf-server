@@ -155,16 +155,14 @@ class EmailEventListenerTest {
             templateData,
             "to@email.com",
             "Declaração Nada Consta",
-            "nada-consta-declaracao.html",
-            null);
+            "nada-consta-declaracao.html"); // 4 args
     listener.handleEmailEvent(event);
     verify(emailService)
         .sendEmailWithTemplate(
             templateData,
             "to@email.com",
             "Declaração Nada Consta",
-            "nada-consta-declaracao.html",
-            null);
+            "nada-consta-declaracao.html"); // 4 args
   }
 
   @Test
@@ -173,28 +171,48 @@ class EmailEventListenerTest {
     String expectedCc = "cc@email.com";
     NadaConstaEmitidoEvent event =
         new NadaConstaEmitidoEvent(this, "to@email.com", templateData, expectedCc);
-    doThrow(new MailException("Falha SMTP") {
-      @Override
-      public String getMessage() {
-        return "Falha SMTP";
-      }
-    }).when(emailService).sendEmailWithTemplate(
-        eq(templateData), eq("to@email.com"), eq("Declaração Nada Consta"), eq("nada-consta-declaracao.html"), eq(expectedCc));
+    doThrow(
+            new MailException("Falha SMTP") {
+              @Override
+              public String getMessage() {
+                return "Falha SMTP";
+              }
+            })
+        .when(emailService)
+        .sendEmailWithTemplate(
+            eq(templateData),
+            eq("to@email.com"),
+            eq("Declaração Nada Consta"),
+            eq("nada-consta-declaracao.html"),
+            eq(expectedCc)); // 5 args
     assertThrows(MailException.class, () -> listener.handleEmailEvent(event));
-    verify(emailService, times(1)).sendEmailWithTemplate(
-        eq(templateData), eq("to@email.com"), eq("Declaração Nada Consta"), eq("nada-consta-declaracao.html"), eq(expectedCc));
+    verify(emailService, times(1))
+        .sendEmailWithTemplate(
+            eq(templateData),
+            eq("to@email.com"),
+            eq("Declaração Nada Consta"),
+            eq("nada-consta-declaracao.html"),
+            eq(expectedCc)); // 5 args
   }
 
   @Test
   void testHandleNadaConstaEmitidoEventException() {
     Map<String, Object> templateData = new HashMap<>();
-    String expectedCc = null;
     NadaConstaEmitidoEvent event = new NadaConstaEmitidoEvent(this, "to@email.com", templateData);
-    doThrow(new RuntimeException("Erro genérico")).when(emailService).sendEmailWithTemplate(
-        eq(templateData), eq("to@email.com"), eq("Declaração Nada Consta"), eq("nada-consta-declaracao.html"), eq(expectedCc));
+    doThrow(new RuntimeException("Erro genérico"))
+        .when(emailService)
+        .sendEmailWithTemplate(
+            eq(templateData),
+            eq("to@email.com"),
+            eq("Declaração Nada Consta"),
+            eq("nada-consta-declaracao.html")); // 4 args
     assertThrows(RuntimeException.class, () -> listener.handleEmailEvent(event));
-    verify(emailService, times(1)).sendEmailWithTemplate(
-        eq(templateData), eq("to@email.com"), eq("Declaração Nada Consta"), eq("nada-consta-declaracao.html"), eq(expectedCc));
+    verify(emailService, times(1))
+        .sendEmailWithTemplate(
+            eq(templateData),
+            eq("to@email.com"),
+            eq("Declaração Nada Consta"),
+            eq("nada-consta-declaracao.html")); // 4 args
   }
 
   @Test
@@ -267,9 +285,14 @@ class EmailEventListenerTest {
         .sendEmailWithTemplate("data", "to@email.com", "subject", "template");
     Method m =
         EmailEventListener.class.getDeclaredMethod(
-            "processEmailWithTemplate", Object.class, String.class, String.class, String.class);
+            "processEmailWithTemplate",
+            Object.class,
+            String.class,
+            String.class,
+            String.class,
+            String.class);
     m.setAccessible(true);
-    m.invoke(listener, "data", "to@email.com", "subject", "template");
+    m.invoke(listener, "data", "to@email.com", "subject", "template", null);
     verify(emailService).sendEmailWithTemplate("data", "to@email.com", "subject", "template");
   }
 
@@ -280,13 +303,18 @@ class EmailEventListenerTest {
         .sendEmailWithTemplate(any(), any(), any(), any());
     Method m =
         EmailEventListener.class.getDeclaredMethod(
-            "processEmailWithTemplate", Object.class, String.class, String.class, String.class);
+            "processEmailWithTemplate",
+            Object.class,
+            String.class,
+            String.class,
+            String.class,
+            String.class);
     m.setAccessible(true);
     assertThrows(
         MailException.class,
         () -> {
           try {
-            m.invoke(listener, "data", "to@email.com", "subject", "template");
+            m.invoke(listener, "data", "to@email.com", "subject", "template", null);
           } catch (Exception ex) {
             Throwable cause = ex.getCause();
             if (cause instanceof MailException e) throw e;
@@ -302,9 +330,14 @@ class EmailEventListenerTest {
         .sendEmailWithTemplate(any(), any(), any(), any());
     Method m =
         EmailEventListener.class.getDeclaredMethod(
-            "processEmailWithTemplate", Object.class, String.class, String.class, String.class);
+            "processEmailWithTemplate",
+            Object.class,
+            String.class,
+            String.class,
+            String.class,
+            String.class);
     m.setAccessible(true);
-    m.invoke(listener, "data", "to@email.com", "subject", "template");
+    m.invoke(listener, "data", "to@email.com", "subject", "template", null);
   }
 
   @Test
@@ -314,9 +347,14 @@ class EmailEventListenerTest {
         .sendEmailWithTemplate(any(), any(), any(), any());
     Method m =
         EmailEventListener.class.getDeclaredMethod(
-            "processEmailWithTemplate", Object.class, String.class, String.class, String.class);
+            "processEmailWithTemplate",
+            Object.class,
+            String.class,
+            String.class,
+            String.class,
+            String.class);
     m.setAccessible(true);
-    m.invoke(listener, "data", "to@email.com", "subject", "template");
+    m.invoke(listener, "data", "to@email.com", "subject", "template", null);
   }
 
   @Test
