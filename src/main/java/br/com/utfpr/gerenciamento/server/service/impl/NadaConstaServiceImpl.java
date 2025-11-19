@@ -132,7 +132,7 @@ public class NadaConstaServiceImpl extends CrudServiceImpl<NadaConsta, Long, Nad
   public NadaConstaResponseDto solicitarNadaConsta(String documento) {
     Usuario usuario = usuarioService.toEntity(usuarioService.findByDocumento(documento));
     if (usuario == null) {
-      throw new RuntimeException(USUARIO_NAO_ENCONTRADO);
+      throw new NadaConstaException(USUARIO_NAO_ENCONTRADO);
     }
     // Pre-check for open Nada Consta solicitation
     if (usuarioService.hasSolicitacaoNadaConstaPendingOrCompleted(usuario.getUsername())) {
