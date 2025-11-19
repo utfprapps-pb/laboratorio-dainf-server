@@ -374,27 +374,25 @@ class EmailEventListenerTest {
     when(emprestimoRepository.findEmprestimoByIdWithRelations(10L)).thenReturn(Optional.of(emp));
     Map<String, Object> templateData = new HashMap<>();
     when(templateMapper.toTemplateData(emp)).thenReturn(templateData);
+    String cc = "cc@email.com";
     EmprestimoFinalizadoEvent event =
-        new EmprestimoFinalizadoEvent(this, 10L, "to@email.com", true);
-    // Não há suporte a CC para EmprestimoFinalizadoEvent, então só verifica 4 argumentos
+        new EmprestimoFinalizadoEvent(this, 10L, "to@email.com", true, cc);
     doNothing()
         .when(emailService)
         .sendEmailWithTemplate(
-            eq(templateData),
-            eq("to@email.com"),
-            eq("Confirmação de Empréstimo"),
-            eq("templateConfirmacaoEmprestimo.html"));
+            templateData,
+            "to@email.com",
+            "Confirmação de Empréstimo",
+            "templateConfirmacaoEmprestimo.html",
+            cc);
     listener.handleEmailEvent(event);
     verify(emailService)
         .sendEmailWithTemplate(
-            eq(templateData),
-            eq("to@email.com"),
-            eq("Confirmação de Empréstimo"),
-            eq("templateConfirmacaoEmprestimo.html"));
-    // Garante que o metodo de 5 argumentos NÃO é chamado
-    verify(emailService, never())
-        .sendEmailWithTemplate(
-            eq(templateData), eq("to@email.com"), anyString(), anyString(), any());
+            templateData,
+            "to@email.com",
+            "Confirmação de Empréstimo",
+            "templateConfirmacaoEmprestimo.html",
+            cc);
   }
 
   @Test
@@ -405,25 +403,19 @@ class EmailEventListenerTest {
     when(templateMapper.toTemplateData(emp)).thenReturn(templateData);
     EmprestimoFinalizadoEvent event =
         new EmprestimoFinalizadoEvent(this, 11L, "to@email.com", false);
-    // Stub 4-arg overload
     doNothing()
         .when(emailService)
         .sendEmailWithTemplate(
-            eq(templateData),
-            eq("to@email.com"),
-            eq("Confirmação de Empréstimo"),
-            eq("templateConfirmacaoFinalizacaoEmprestimo.html"));
+            templateData,
+            "to@email.com",
+            "Confirmação de Empréstimo",
+            "templateConfirmacaoFinalizacaoEmprestimo.html");
     listener.handleEmailEvent(event);
-    // Verify 4-arg overload called
     verify(emailService)
         .sendEmailWithTemplate(
-            eq(templateData),
-            eq("to@email.com"),
-            eq("Confirmação de Empréstimo"),
-            eq("templateConfirmacaoFinalizacaoEmprestimo.html"));
-    // Ensure 5-arg overload is NOT called
-    verify(emailService, never())
-        .sendEmailWithTemplate(
-            eq(templateData), eq("to@email.com"), anyString(), anyString(), any());
+            templateData,
+            "to@email.com",
+            "Confirmação de Empréstimo",
+            "templateConfirmacaoFinalizacaoEmprestimo.html");
   }
 }

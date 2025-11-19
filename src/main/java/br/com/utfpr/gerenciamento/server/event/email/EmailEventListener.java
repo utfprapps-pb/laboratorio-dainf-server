@@ -142,6 +142,8 @@ public class EmailEventListener {
     String cc = null;
     if (event instanceof NadaConstaEmitidoEvent nadaConstaEmitidoEvent) {
       cc = nadaConstaEmitidoEvent.getCc();
+    } else if (event instanceof EmprestimoFinalizadoEvent emprestimoFinalizadoEvent) {
+      cc = emprestimoFinalizadoEvent.getCc();
     }
     processEmailWithTemplate(
         templateData, event.getRecipient(), event.getSubject(), event.getTemplateName(), cc);

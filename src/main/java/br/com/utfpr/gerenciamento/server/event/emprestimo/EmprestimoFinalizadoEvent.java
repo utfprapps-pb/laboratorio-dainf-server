@@ -21,6 +21,7 @@ public class EmprestimoFinalizadoEvent extends EmailEvent {
 
   private final Long emprestimoId;
   private final boolean temItensDevolucao;
+  private final String cc;
 
   /**
    * Cria evento de empréstimo finalizado.
@@ -32,6 +33,11 @@ public class EmprestimoFinalizadoEvent extends EmailEvent {
    */
   public EmprestimoFinalizadoEvent(
       Object source, Long emprestimoId, String recipient, boolean temItensDevolucao) {
+    this(source, emprestimoId, recipient, temItensDevolucao, null);
+  }
+
+  public EmprestimoFinalizadoEvent(
+      Object source, Long emprestimoId, String recipient, boolean temItensDevolucao, String cc) {
     super(
         source,
         recipient,
@@ -41,5 +47,6 @@ public class EmprestimoFinalizadoEvent extends EmailEvent {
             : "templateConfirmacaoFinalizacaoEmprestimo.html");
     this.emprestimoId = emprestimoId;
     this.temItensDevolucao = temItensDevolucao;
+    this.cc = cc;
   }
 }
