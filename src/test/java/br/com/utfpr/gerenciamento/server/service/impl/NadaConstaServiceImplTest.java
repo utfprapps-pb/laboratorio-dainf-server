@@ -371,9 +371,14 @@ class NadaConstaServiceImplTest {
   @Test
   void shouldReturnTrueWhenReenviarNadaConstaIsSuccessful() {
     Long id = 100L;
-    Usuario usuario = Usuario.builder().id(200L).nome("Teste").build();
+    Usuario usuario = Usuario.builder().id(200L).nome("Teste").email("valid@email.com").build();
     NadaConsta nadaConsta =
-        NadaConsta.builder().id(id).usuario(usuario).createdAt(LocalDateTime.now()).build();
+        NadaConsta.builder()
+            .id(id)
+            .usuario(usuario)
+            .createdAt(LocalDateTime.now())
+            .status(NadaConstaStatus.COMPLETED)
+            .build();
     when(nadaConstaRepository.findById(id)).thenReturn(Optional.of(nadaConsta));
     when(systemConfigService.getEmailNadaConsta()).thenReturn("valid@email.com");
     try (org.mockito.MockedStatic<br.com.utfpr.gerenciamento.server.util.EmailUtils>

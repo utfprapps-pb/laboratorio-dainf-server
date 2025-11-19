@@ -134,7 +134,8 @@ class EmailEventListenerTest {
   void testHandleNadaConstaEmitidoEventComCC() {
     Map<String, Object> templateData = new HashMap<>();
     String cc = "cc@email.com";
-    NadaConstaEmitidoEvent event = new NadaConstaEmitidoEvent(this, "to@email.com", templateData, cc);
+    NadaConstaEmitidoEvent event =
+        new NadaConstaEmitidoEvent(this, "to@email.com", templateData, cc);
     doNothing()
         .when(emailService)
         .sendEmailWithTemplate(
@@ -375,30 +376,25 @@ class EmailEventListenerTest {
     when(templateMapper.toTemplateData(emp)).thenReturn(templateData);
     EmprestimoFinalizadoEvent event =
         new EmprestimoFinalizadoEvent(this, 10L, "to@email.com", true);
-    String cc = "cc@email.com";
-    // Stub 5-arg overload
+    // Não há suporte a CC para EmprestimoFinalizadoEvent, então só verifica 4 argumentos
     doNothing()
         .when(emailService)
         .sendEmailWithTemplate(
             eq(templateData),
             eq("to@email.com"),
             eq("Confirmação de Empréstimo"),
-            eq("templateConfirmacaoEmprestimo.html"),
-            eq(cc));
+            eq("templateConfirmacaoEmprestimo.html"));
     listener.handleEmailEvent(event);
-    // Capture and verify CC argument
-    ArgumentCaptor<String> ccCaptor = ArgumentCaptor.forClass(String.class);
     verify(emailService)
         .sendEmailWithTemplate(
             eq(templateData),
             eq("to@email.com"),
             eq("Confirmação de Empréstimo"),
-            eq("templateConfirmacaoEmprestimo.html"),
-            ccCaptor.capture());
-    assertEquals(cc, ccCaptor.getValue());
-    // Ensure 4-arg overload is NOT called
+            eq("templateConfirmacaoEmprestimo.html"));
+    // Garante que o metodo de 5 argumentos NÃO é chamado
     verify(emailService, never())
-        .sendEmailWithTemplate(eq(templateData), eq("to@email.com"), anyString(), anyString());
+        .sendEmailWithTemplate(
+            eq(templateData), eq("to@email.com"), anyString(), anyString(), any());
   }
 
   @Test
@@ -427,6 +423,7 @@ class EmailEventListenerTest {
             eq("templateConfirmacaoFinalizacaoEmprestimo.html"));
     // Ensure 5-arg overload is NOT called
     verify(emailService, never())
-        .sendEmailWithTemplate(eq(templateData), eq("to@email.com"), anyString(), anyString(), any());
+        .sendEmailWithTemplate(
+            eq(templateData), eq("to@email.com"), anyString(), anyString(), any());
   }
 }
