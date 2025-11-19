@@ -131,6 +131,29 @@ class EmailEventListenerTest {
   }
 
   @Test
+  void testHandleNadaConstaEmitidoEventComCC() {
+    Map<String, Object> templateData = new HashMap<>();
+    String cc = "cc@email.com";
+    NadaConstaEmitidoEvent event = new NadaConstaEmitidoEvent(this, "to@email.com", templateData, cc);
+    doNothing()
+        .when(emailService)
+        .sendEmailWithTemplate(
+            templateData,
+            "to@email.com",
+            "Declaração Nada Consta",
+            "nada-consta-declaracao.html",
+            cc);
+    listener.handleEmailEvent(event);
+    verify(emailService)
+        .sendEmailWithTemplate(
+            templateData,
+            "to@email.com",
+            "Declaração Nada Consta",
+            "nada-consta-declaracao.html",
+            cc);
+  }
+
+  @Test
   void testHandleNadaConstaPendenciasEventSuccess() {
     Map<String, Object> templateData = new HashMap<>();
     NadaConstaPendenciasEvent event =
@@ -352,20 +375,30 @@ class EmailEventListenerTest {
     when(templateMapper.toTemplateData(emp)).thenReturn(templateData);
     EmprestimoFinalizadoEvent event =
         new EmprestimoFinalizadoEvent(this, 10L, "to@email.com", true);
+    String cc = "cc@email.com";
+    // Stub 5-arg overload
     doNothing()
         .when(emailService)
         .sendEmailWithTemplate(
-            templateData,
-            "to@email.com",
-            "Confirmação de Empréstimo",
-            "templateConfirmacaoEmprestimo.html");
+            eq(templateData),
+            eq("to@email.com"),
+            eq("Confirmação de Empréstimo"),
+            eq("templateConfirmacaoEmprestimo.html"),
+            eq(cc));
     listener.handleEmailEvent(event);
+    // Capture and verify CC argument
+    ArgumentCaptor<String> ccCaptor = ArgumentCaptor.forClass(String.class);
     verify(emailService)
         .sendEmailWithTemplate(
-            templateData,
-            "to@email.com",
-            "Confirmação de Empréstimo",
-            "templateConfirmacaoEmprestimo.html");
+            eq(templateData),
+            eq("to@email.com"),
+            eq("Confirmação de Empréstimo"),
+            eq("templateConfirmacaoEmprestimo.html"),
+            ccCaptor.capture());
+    assertEquals(cc, ccCaptor.getValue());
+    // Ensure 4-arg overload is NOT called
+    verify(emailService, never())
+        .sendEmailWithTemplate(eq(templateData), eq("to@email.com"), anyString(), anyString());
   }
 
   @Test
@@ -376,19 +409,24 @@ class EmailEventListenerTest {
     when(templateMapper.toTemplateData(emp)).thenReturn(templateData);
     EmprestimoFinalizadoEvent event =
         new EmprestimoFinalizadoEvent(this, 11L, "to@email.com", false);
+    // Stub 4-arg overload
     doNothing()
         .when(emailService)
         .sendEmailWithTemplate(
-            templateData,
-            "to@email.com",
-            "Confirmação de Empréstimo",
-            "templateConfirmacaoFinalizacaoEmprestimo.html");
+            eq(templateData),
+            eq("to@email.com"),
+            eq("Confirmação de Empréstimo"),
+            eq("templateConfirmacaoFinalizacaoEmprestimo.html"));
     listener.handleEmailEvent(event);
+    // Verify 4-arg overload called
     verify(emailService)
         .sendEmailWithTemplate(
-            templateData,
-            "to@email.com",
-            "Confirmação de Empréstimo",
-            "templateConfirmacaoFinalizacaoEmprestimo.html");
+            eq(templateData),
+            eq("to@email.com"),
+            eq("Confirmação de Empréstimo"),
+            eq("templateConfirmacaoFinalizacaoEmprestimo.html"));
+    // Ensure 5-arg overload is NOT called
+    verify(emailService, never())
+        .sendEmailWithTemplate(eq(templateData), eq("to@email.com"), anyString(), anyString(), any());
   }
 }

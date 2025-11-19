@@ -160,7 +160,7 @@ public class NadaConstaServiceImpl extends CrudServiceImpl<NadaConsta, Long, Nad
     if (emprestimosAbertos.isEmpty()) {
       String destinatario = systemConfigService.getEmailNadaConsta();
       if (!EmailUtils.isValidEmail(destinatario)) {
-        log.warn(EMAIL_NADA_CONSTA_INVALIDO, destinatario);
+        log.warn(EMAIL_NADA_CONSTA_INVALIDO, EmailUtils.maskEmail(destinatario));
         return toDto(nadaConsta);
       }
       Map<String, Object> templateData = new HashMap<>();
@@ -239,7 +239,7 @@ public class NadaConstaServiceImpl extends CrudServiceImpl<NadaConsta, Long, Nad
         templateData.put(NADA_CONSTA, nadaConsta);
         eventPublisher.publishEvent(new NadaConstaEmitidoEvent(this, destinatario, templateData));
       } else {
-        log.warn(EMAIL_NADA_CONSTA_INVALIDO, destinatario);
+        log.warn(EMAIL_NADA_CONSTA_INVALIDO, EmailUtils.maskEmail(destinatario));
       }
     }
     return convertToDto(nadaConsta);
@@ -286,12 +286,23 @@ public class NadaConstaServiceImpl extends CrudServiceImpl<NadaConsta, Long, Nad
     if (nadaConsta == null) {
       return false;
     }
+    // Verifica se o status é COMPLETED
+    if (nadaConsta.getStatus() != NadaConstaStatus.COMPLETED) {
+      log.warn("Reenvio de Nada Consta não realizado - status inválido: {}", nadaConsta.getStatus());
+      return false;
+    }
     Usuario usuario = nadaConsta.getUsuario();
     String destinatario = systemConfigService.getEmailNadaConsta();
     if (!EmailUtils.isValidEmail(destinatario)) {
       log.warn(
-          "Reenvio de Nada Consta não realizado - email do sistema inválido: {}", destinatario);
+          "Reenvio de Nada Consta não realizado - email do sistema inválido: {}", EmailUtils.maskEmail(destinatario));
       return false;
+    }
+    String cc = null;
+    if (EmailUtils.isValidEmail(usuario.getEmail())) {
+      cc = usuario.getEmail();
+    } else {
+      log.warn("Reenvio de Nada Consta não realizado - email do usuário inválido: {}", EmailUtils.maskEmail(usuario.getEmail()));
     }
     Map<String, Object> templateData = new HashMap<>();
     templateData.put(USUARIO, usuario);
@@ -302,7 +313,7 @@ public class NadaConstaServiceImpl extends CrudServiceImpl<NadaConsta, Long, Nad
         DateTimeFormatter.ofPattern(FORMAT_PT_BR, Locale.forLanguageTag(LOCALE_PT_BR));
     templateData.put(DATA_FORMATADA, nadaConsta.getCreatedAt().toLocalDate().format(formatter));
     eventPublisher.publishEvent(
-        new NadaConstaEmitidoEvent(this, destinatario, templateData, usuario.getEmail()));
+        new NadaConstaEmitidoEvent(this, destinatario, templateData, cc));
     return true;
   }
 
