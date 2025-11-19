@@ -367,4 +367,60 @@ class NadaConstaServiceImplTest {
     when(nadaConstaRepository.findById(98L)).thenReturn(java.util.Optional.empty());
     assertThrows(NadaConstaException.class, () -> service.verificarPendenciasNadaConsta(98L));
   }
+
+  @Test
+  void shouldReturnTrueWhenReenviarNadaConstaIsSuccessful() {
+    Long id = 100L;
+    Usuario usuario = Usuario.builder().id(200L).nome("Teste").email("valid@email.com").build();
+    NadaConsta nadaConsta =
+        NadaConsta.builder()
+            .id(id)
+            .usuario(usuario)
+            .createdAt(LocalDateTime.now())
+            .status(NadaConstaStatus.COMPLETED)
+            .build();
+    when(nadaConstaRepository.findById(id)).thenReturn(Optional.of(nadaConsta));
+    when(systemConfigService.getEmailNadaConsta()).thenReturn("valid@email.com");
+    try (org.mockito.MockedStatic<br.com.utfpr.gerenciamento.server.util.EmailUtils>
+        emailUtilsMock =
+            org.mockito.Mockito.mockStatic(
+                br.com.utfpr.gerenciamento.server.util.EmailUtils.class)) {
+      emailUtilsMock
+          .when(
+              () ->
+                  br.com.utfpr.gerenciamento.server.util.EmailUtils.isValidEmail("valid@email.com"))
+          .thenReturn(true);
+      boolean result = service.reenviarNadaConsta(id);
+      assertTrue(result);
+    }
+  }
+
+  @Test
+  void shouldReturnFalseWhenNadaConstaNotFoundForReenvio() {
+    Long id = 101L;
+    when(nadaConstaRepository.findById(id)).thenReturn(Optional.empty());
+    boolean result = service.reenviarNadaConsta(id);
+    assertFalse(result);
+  }
+
+  @Test
+  void shouldReturnFalseWhenEmailIsInvalidForReenvio() {
+    Long id = 102L;
+    Usuario usuario = Usuario.builder().id(201L).nome("Teste").build();
+    NadaConsta nadaConsta =
+        NadaConsta.builder().id(id).usuario(usuario).createdAt(LocalDateTime.now()).build();
+    when(nadaConstaRepository.findById(id)).thenReturn(Optional.of(nadaConsta));
+    when(systemConfigService.getEmailNadaConsta()).thenReturn("invalid-email");
+    try (org.mockito.MockedStatic<br.com.utfpr.gerenciamento.server.util.EmailUtils>
+        emailUtilsMock =
+            org.mockito.Mockito.mockStatic(
+                br.com.utfpr.gerenciamento.server.util.EmailUtils.class)) {
+      emailUtilsMock
+          .when(
+              () -> br.com.utfpr.gerenciamento.server.util.EmailUtils.isValidEmail("invalid-email"))
+          .thenReturn(false);
+      boolean result = service.reenviarNadaConsta(id);
+      assertFalse(result);
+    }
+  }
 }

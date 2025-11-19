@@ -12,6 +12,7 @@ import jakarta.mail.internet.MimeMessage;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.stream.Stream;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -42,40 +43,46 @@ class EmailServiceImplTest {
     ReflectionTestUtils.setField(emailService, "emailAddress", "test@utfpr.edu.br");
   }
 
-  @Test
-  void enviar_DeveEnviarEmailComDestinatarioUnico() throws Exception {
-    // Given
-    when(javaMailSender.createMimeMessage()).thenReturn(mimeMessage);
-    doNothing().when(javaMailSender).send(any(MimeMessage.class));
-
-    Email email =
+  // Testes de envio de email com destinatário único, lista, CC e sem CC são duplicados e podem ser
+  // parametrizados
+  static Stream<Email> provideEmailParams() {
+    Map<String, byte[]> fileMap = new HashMap<>();
+    fileMap.put("file.txt", "test content".getBytes());
+    return Stream.of(
         Email.builder()
             .de("from@test.com")
             .para("to@test.com")
             .titulo("Test Subject")
             .conteudo("Test Body")
-            .build();
-
-    // When
-    emailService.enviar(email);
-
-    // Then
-    verify(javaMailSender).send(any(MimeMessage.class));
-  }
-
-  @Test
-  void enviar_DeveEnviarEmailComListaDeDestinatarios() throws Exception {
-    // Given
-    when(javaMailSender.createMimeMessage()).thenReturn(mimeMessage);
-    doNothing().when(javaMailSender).send(any(MimeMessage.class));
-
-    Email email =
+            .build(),
         Email.builder()
             .de("from@test.com")
             .paraList(Collections.singletonList("to@test.com"))
             .titulo("Test Subject")
             .conteudo("Test Body")
-            .build();
+            .build(),
+        Email.builder()
+            .de("from@test.com")
+            .para("to@test.com")
+            .cc("cc@test.com")
+            .titulo("Test Subject")
+            .conteudo("Test Body")
+            .build(),
+        Email.builder()
+            .de("from@test.com")
+            .para("to@test.com")
+            .titulo("Test Subject")
+            .conteudo("Test Body")
+            .fileMap(fileMap)
+            .build());
+  }
+
+  @org.junit.jupiter.params.ParameterizedTest
+  @org.junit.jupiter.params.provider.MethodSource("provideEmailParams")
+  void enviar_DeveEnviarEmailComVariacoes(Email email) throws Exception {
+    // Given
+    when(javaMailSender.createMimeMessage()).thenReturn(mimeMessage);
+    doNothing().when(javaMailSender).send(any(MimeMessage.class));
 
     // When
     emailService.enviar(email);
@@ -97,31 +104,6 @@ class EmailServiceImplTest {
         IllegalArgumentException.class,
         () -> emailService.enviar(email),
         "Nenhum email encontrado para envio.");
-  }
-
-  @Test
-  void enviar_DeveEnviarEmailComAnexo() throws Exception {
-    // Given
-    when(javaMailSender.createMimeMessage()).thenReturn(mimeMessage);
-    doNothing().when(javaMailSender).send(any(MimeMessage.class));
-
-    Map<String, byte[]> fileMap = new HashMap<>();
-    fileMap.put("file.txt", "test content".getBytes());
-
-    Email email =
-        Email.builder()
-            .de("from@test.com")
-            .para("to@test.com")
-            .titulo("Test Subject")
-            .conteudo("Test Body")
-            .fileMap(fileMap)
-            .build();
-
-    // When
-    emailService.enviar(email);
-
-    // Then
-    verify(javaMailSender).send(any(MimeMessage.class));
   }
 
   @Test
