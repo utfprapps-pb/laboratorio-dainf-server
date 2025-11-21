@@ -68,6 +68,7 @@ public class NadaConstaServiceImpl extends CrudServiceImpl<NadaConsta, Long, Nad
   private static final String DATA_FORMATADA = "dataFormatada";
   private static final String EMPRESTIMOS = "emprestimos";
   private static final String ITEM_NOME = "itemNome";
+  private static final String FONT_FAMILY_HELVETICA = "font-family: Helvetica, Arial, sans-serif;";
 
   private final NadaConstaRepository nadaConstaRepository;
   private final UsuarioService usuarioService;
@@ -359,30 +360,26 @@ public class NadaConstaServiceImpl extends CrudServiceImpl<NadaConsta, Long, Nad
     try {
       // Usa o Thymeleaf configurado pelo Spring
       Context context = new Context();
-      context.setVariable("nomeAluno", nomeAluno);
-      context.setVariable("registroAcademico", registroAcademico);
-      context.setVariable("dataFormatada", dataFormatada);
+      context.setVariable(NOME_ALUNO, nomeAluno);
+      context.setVariable(REGISTRO_ACADEMICO, registroAcademico);
+      context.setVariable(DATA_FORMATADA, dataFormatada);
       context.setVariable("logoUrl", logoUrl);
       String html = templateEngine.process("nada-consta-declaracao", context);
       // Salva o HTML gerado em um arquivo temporário para debug
-      try {
-        Files.write(Paths.get("temp-nada-consta.html"), html.getBytes(StandardCharsets.UTF_8));
-      } catch (Exception e) {
-        log.warn("Não foi possível salvar o HTML temporário: {}", e.getMessage());
-      }
+      salvarHtmlTemporario(html);
       // Remove qualquer referência a fontes exóticas
       html =
           html.replace(
               "font-family: Arial, Helvetica, sans-serif;",
-              "font-family: Helvetica, Arial, sans-serif;");
+              FONT_FAMILY_HELVETICA);
       html =
           html.replace(
               "font-family: 'Montserrat', Arial, sans-serif;",
-              "font-family: Helvetica, Arial, sans-serif;");
+              FONT_FAMILY_HELVETICA);
       html =
           html.replace(
               "font-family: 'STSong-Light,BoldItalic';",
-              "font-family: Helvetica, Arial, sans-serif;");
+              FONT_FAMILY_HELVETICA);
       html =
           html.replace(
               "<style>", "<style> * { font-family: Helvetica, Arial, sans-serif !important; } ");
@@ -395,6 +392,17 @@ public class NadaConstaServiceImpl extends CrudServiceImpl<NadaConsta, Long, Nad
       }
     } catch (Exception e) {
       throw new NadaConstaException("Erro ao gerar PDF: " + e.getMessage());
+    }
+  }
+
+  /**
+   * Salva o HTML gerado em um arquivo temporário para debug.
+   */
+  private void salvarHtmlTemporario(String html) {
+    try {
+      Files.writeString(Paths.get("temp-nada-consta.html"), html, StandardCharsets.UTF_8);
+    } catch (Exception e) {
+      log.warn("Não foi possível salvar o HTML temporário: {}", e.getMessage());
     }
   }
 }
