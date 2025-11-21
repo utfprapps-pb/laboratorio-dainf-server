@@ -21,7 +21,7 @@ import org.springframework.context.ApplicationEventPublisher;
 import org.thymeleaf.TemplateEngine;
 
 @ExtendWith(MockitoExtension.class)
-public class NadaConstaServiceImplTest {
+class NadaConstaServiceImplTest {
   @Mock private NadaConstaRepository nadaConstaRepository;
   @Mock private UsuarioService usuarioService;
   @Mock private ModelMapper modelMapper;
