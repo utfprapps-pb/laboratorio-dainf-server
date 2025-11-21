@@ -117,4 +117,22 @@ public class NadaConstaController extends CrudController<NadaConsta, Long, NadaC
       return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
     }
   }
+
+  /**
+   * Retorna o PDF da declaração Nada Consta emitida.
+   *
+   * @param id Identificador da solicitação de Nada Consta
+   * @return PDF em bytes
+   */
+  @GetMapping(value = "/{id}/pdf", produces = "application/pdf")
+  public ResponseEntity<byte[]> getNadaConstaPdf(@PathVariable("id") Long id) {
+    try {
+      byte[] pdf = nadaConstaService.gerarNadaConstaPdf(id);
+      return ResponseEntity.ok()
+          .header("Content-Disposition", "attachment; filename=nada-consta.pdf")
+          .body(pdf);
+    } catch (Exception e) {
+      return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
+    }
+  }
 }

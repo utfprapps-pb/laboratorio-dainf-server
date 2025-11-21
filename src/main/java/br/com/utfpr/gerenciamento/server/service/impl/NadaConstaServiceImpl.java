@@ -14,6 +14,11 @@ import br.com.utfpr.gerenciamento.server.service.NadaConstaService;
 import br.com.utfpr.gerenciamento.server.service.SystemConfigService;
 import br.com.utfpr.gerenciamento.server.service.UsuarioService;
 import br.com.utfpr.gerenciamento.server.util.EmailUtils;
+import com.openhtmltopdf.pdfboxout.PdfRendererBuilder;
+import java.io.ByteArrayOutputStream;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
@@ -28,6 +33,8 @@ import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.thymeleaf.TemplateEngine;
+import org.thymeleaf.context.Context;
 
 /**
  * Implementação do serviço de operações relacionadas ao Nada Consta.
@@ -68,6 +75,7 @@ public class NadaConstaServiceImpl extends CrudServiceImpl<NadaConsta, Long, Nad
   private final EmprestimoService emprestimoService;
   private final SystemConfigService systemConfigService;
   private final ApplicationEventPublisher eventPublisher;
+  private final TemplateEngine templateEngine;
 
   public NadaConstaServiceImpl(
       NadaConstaRepository nadaConstaRepository,
@@ -75,13 +83,15 @@ public class NadaConstaServiceImpl extends CrudServiceImpl<NadaConsta, Long, Nad
       ModelMapper modelMapper,
       EmprestimoService emprestimoService,
       SystemConfigService systemConfigService,
-      ApplicationEventPublisher eventPublisher) {
+      ApplicationEventPublisher eventPublisher,
+      TemplateEngine templateEngine) {
     this.nadaConstaRepository = nadaConstaRepository;
     this.usuarioService = usuarioService;
     this.modelMapper = modelMapper;
     this.emprestimoService = emprestimoService;
     this.systemConfigService = systemConfigService;
     this.eventPublisher = eventPublisher;
+    this.templateEngine = templateEngine;
   }
 
   @Override
@@ -327,5 +337,64 @@ public class NadaConstaServiceImpl extends CrudServiceImpl<NadaConsta, Long, Nad
   @Override
   public NadaConstaResponseDto convertToDto(NadaConsta entity) {
     return modelMapper.map(entity, NadaConstaResponseDto.class);
+  }
+
+  @Override
+  public byte[] gerarNadaConstaPdf(Long id) {
+    NadaConsta nadaConsta = nadaConstaRepository.findById(id).orElse(null);
+    if (nadaConsta == null || nadaConsta.getStatus() != NadaConstaStatus.COMPLETED) {
+      throw new NadaConstaException("Nada Consta não encontrado ou não emitido");
+    }
+    Usuario usuario = nadaConsta.getUsuario();
+    DateTimeFormatter formatter =
+        DateTimeFormatter.ofPattern(FORMAT_PT_BR, Locale.forLanguageTag(LOCALE_PT_BR));
+    LocalDate createdDate =
+        nadaConsta.getCreatedAt() != null
+            ? nadaConsta.getCreatedAt().toLocalDate()
+            : LocalDate.now();
+    String nomeAluno = usuario.getNome();
+    String registroAcademico = usuario.getDocumento();
+    String dataFormatada = createdDate.format(formatter);
+    String logoUrl = "file:src/main/resources/static/logo-fallback.png";
+    try {
+      // Usa o Thymeleaf configurado pelo Spring
+      Context context = new Context();
+      context.setVariable("nomeAluno", nomeAluno);
+      context.setVariable("registroAcademico", registroAcademico);
+      context.setVariable("dataFormatada", dataFormatada);
+      context.setVariable("logoUrl", logoUrl);
+      String html = templateEngine.process("nada-consta-declaracao", context);
+      // Salva o HTML gerado em um arquivo temporário para debug
+      try {
+        Files.write(Paths.get("temp-nada-consta.html"), html.getBytes(StandardCharsets.UTF_8));
+      } catch (Exception e) {
+        log.warn("Não foi possível salvar o HTML temporário: {}", e.getMessage());
+      }
+      // Remove qualquer referência a fontes exóticas
+      html =
+          html.replace(
+              "font-family: Arial, Helvetica, sans-serif;",
+              "font-family: Helvetica, Arial, sans-serif;");
+      html =
+          html.replace(
+              "font-family: 'Montserrat', Arial, sans-serif;",
+              "font-family: Helvetica, Arial, sans-serif;");
+      html =
+          html.replace(
+              "font-family: 'STSong-Light,BoldItalic';",
+              "font-family: Helvetica, Arial, sans-serif;");
+      html =
+          html.replace(
+              "<style>", "<style> * { font-family: Helvetica, Arial, sans-serif !important; } ");
+      try (java.io.ByteArrayOutputStream baos = new ByteArrayOutputStream()) {
+        PdfRendererBuilder builder = new PdfRendererBuilder();
+        builder.withHtmlContent(html, null);
+        builder.toStream(baos);
+        builder.run();
+        return baos.toByteArray();
+      }
+    } catch (Exception e) {
+      throw new NadaConstaException("Erro ao gerar PDF: " + e.getMessage());
+    }
   }
 }
