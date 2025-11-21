@@ -17,7 +17,7 @@ import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 
 @ExtendWith(MockitoExtension.class)
 @AutoConfigureMockMvc
-public class NadaConstaControllerTest {
+class NadaConstaControllerTest {
   private MockMvc mockMvc;
   @Mock private br.com.utfpr.gerenciamento.server.service.NadaConstaService nadaConstaService;
   @InjectMocks private NadaConstaController nadaConstaController;
@@ -41,7 +41,11 @@ public class NadaConstaControllerTest {
 
   @Test
   void testGetNadaConstaPdf_NotFound() throws Exception {
-    when(nadaConstaService.gerarNadaConstaPdf(99L)).thenThrow(new RuntimeException());
+    // Simula a exception de domínio para 404
+    when(nadaConstaService.gerarNadaConstaPdf(99L))
+        .thenThrow(
+            new br.com.utfpr.gerenciamento.server.exception.NadaConstaException(
+                "Nada Consta não encontrado"));
     mockMvc.perform(get("/nadaconsta/99/pdf")).andExpect(status().isNotFound());
   }
 }

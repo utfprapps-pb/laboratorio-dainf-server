@@ -368,18 +368,9 @@ public class NadaConstaServiceImpl extends CrudServiceImpl<NadaConsta, Long, Nad
       // Salva o HTML gerado em um arquivo temporário para debug
       salvarHtmlTemporario(html);
       // Remove qualquer referência a fontes exóticas
-      html =
-          html.replace(
-              "font-family: Arial, Helvetica, sans-serif;",
-              FONT_FAMILY_HELVETICA);
-      html =
-          html.replace(
-              "font-family: 'Montserrat', Arial, sans-serif;",
-              FONT_FAMILY_HELVETICA);
-      html =
-          html.replace(
-              "font-family: 'STSong-Light,BoldItalic';",
-              FONT_FAMILY_HELVETICA);
+      html = html.replace("font-family: Arial, Helvetica, sans-serif;", FONT_FAMILY_HELVETICA);
+      html = html.replace("font-family: 'Montserrat', Arial, sans-serif;", FONT_FAMILY_HELVETICA);
+      html = html.replace("font-family: 'STSong-Light,BoldItalic';", FONT_FAMILY_HELVETICA);
       html =
           html.replace(
               "<style>", "<style> * { font-family: Helvetica, Arial, sans-serif !important; } ");
@@ -395,9 +386,7 @@ public class NadaConstaServiceImpl extends CrudServiceImpl<NadaConsta, Long, Nad
     }
   }
 
-  /**
-   * Salva o HTML gerado em um arquivo temporário para debug.
-   */
+  /** Salva o HTML gerado em um arquivo temporário para debug. */
   private void salvarHtmlTemporario(String html) {
     try {
       Files.writeString(Paths.get("temp-nada-consta.html"), html, StandardCharsets.UTF_8);
