@@ -18,6 +18,7 @@ import com.openhtmltopdf.pdfboxout.PdfRendererBuilder;
 import java.io.ByteArrayOutputStream;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -365,21 +366,19 @@ public class NadaConstaServiceImpl extends CrudServiceImpl<NadaConsta, Long, Nad
       context.setVariable(DATA_FORMATADA, dataFormatada);
       context.setVariable("logoUrl", logoUrl);
       String html = templateEngine.process("nada-consta-declaracao", context);
-      // Salva o HTML gerado em um arquivo temporário para debug
-      salvarHtmlTemporario(html);
-      // Remove qualquer referência a fontes exóticas
-      html = html.replace("font-family: Arial, Helvetica, sans-serif;", FONT_FAMILY_HELVETICA);
-      html = html.replace("font-family: 'Montserrat', Arial, sans-serif;", FONT_FAMILY_HELVETICA);
-      html = html.replace("font-family: 'STSong-Light,BoldItalic';", FONT_FAMILY_HELVETICA);
-      html =
-          html.replace(
-              "<style>", "<style> * { font-family: Helvetica, Arial, sans-serif !important; } ");
-      try (java.io.ByteArrayOutputStream baos = new ByteArrayOutputStream()) {
+      // Salva o HTML gerado em um arquivo temporário
+      Path tempHtmlPath = Files.createTempFile("nada-consta", ".html");
+      Files.writeString(tempHtmlPath, html, StandardCharsets.UTF_8);
+      String htmlFileUri = tempHtmlPath.toUri().toString();
+      try (ByteArrayOutputStream baos = new ByteArrayOutputStream()) {
         PdfRendererBuilder builder = new PdfRendererBuilder();
-        builder.withHtmlContent(html, null);
+        builder.withUri(htmlFileUri);
         builder.toStream(baos);
         builder.run();
         return baos.toByteArray();
+      } finally {
+        // Remove o arquivo temporário
+        java.nio.file.Files.deleteIfExists(tempHtmlPath);
       }
     } catch (Exception e) {
       throw new NadaConstaException("Erro ao gerar PDF: " + e.getMessage());
