@@ -477,11 +477,16 @@ public class EmprestimoServiceImpl extends CrudServiceImpl<Emprestimo, Long, Emp
 
   @Override
   public void finalizeEmprestimo(Emprestimo emprestimo) {
-    // Baixa saldo dos itens emprestados
+    // Baixa saldo dos itens emprestados (apenas consumíveis)
     // Null-safe: verifica se lista de itens não é null antes de iterar
     if (emprestimo.getEmprestimoItem() != null) {
       emprestimo.getEmprestimoItem().stream()
-          .filter(empItem -> empItem != null && empItem.getItem() != null)
+          .filter(
+              empItem ->
+                  empItem != null
+                      && empItem.getItem() != null
+                      && empItem.getItem().getTipoItem() != null
+                      && empItem.getItem().getTipoItem().equals(TipoItem.C))
           .forEach(
               empItem ->
                   itemService.diminuiSaldoItem(empItem.getItem().getId(), empItem.getQtde(), true));

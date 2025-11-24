@@ -640,6 +640,76 @@ class EmprestimoServiceImplTest {
   }
 
   @Test
+  void testFinalizeEmprestimo_ApenasItensConsumiveisDiminuemSaldo() {
+    // Given - Empréstimo com itens consumíveis e permanentes
+    emprestimo = new Emprestimo();
+    usuarioEmprestimo = new Usuario();
+    usuarioEmprestimo.setEmail("mail@test.com");
+    emprestimo.setUsuarioEmprestimo(usuarioEmprestimo);
+
+    // Item Consumível (C)
+    Item itemConsumivel = new Item();
+    itemConsumivel.setId(1L);
+    itemConsumivel.setTipoItem(TipoItem.C);
+
+    EmprestimoItem emprestimoItemConsumivel = new EmprestimoItem();
+    emprestimoItemConsumivel.setItem(itemConsumivel);
+    emprestimoItemConsumivel.setQtde(BigDecimal.valueOf(5));
+    emprestimoItemConsumivel.setEmprestimo(emprestimo);
+
+    // Item Permanente (P)
+    Item itemPermanente = new Item();
+    itemPermanente.setId(2L);
+    itemPermanente.setTipoItem(TipoItem.P);
+
+    EmprestimoItem emprestimoItemPermanente = new EmprestimoItem();
+    emprestimoItemPermanente.setItem(itemPermanente);
+    emprestimoItemPermanente.setQtde(BigDecimal.valueOf(3));
+    emprestimoItemPermanente.setEmprestimo(emprestimo);
+
+    // Adiciona ambos os itens ao empréstimo
+    java.util.Set<EmprestimoItem> itens = new HashSet<>();
+    itens.add(emprestimoItemConsumivel);
+    itens.add(emprestimoItemPermanente);
+    emprestimo.setEmprestimoItem(itens);
+
+    // When
+    service.finalizeEmprestimo(emprestimo);
+
+    // Then - Apenas o item consumível deve ter saldo diminuído
+    verify(itemService).diminuiSaldoItem(1L, BigDecimal.valueOf(5), true);
+    verify(itemService, never()).diminuiSaldoItem(eq(2L), any(), anyBoolean());
+    verify(eventPublisher).publishEvent(any());
+  }
+
+  @Test
+  void testFinalizeEmprestimo_SomenteItensPermanentes_NaoDiminuiSaldo() {
+    // Given - Empréstimo apenas com itens permanentes
+    emprestimo = new Emprestimo();
+    usuarioEmprestimo = new Usuario();
+    usuarioEmprestimo.setEmail("mail@test.com");
+    emprestimo.setUsuarioEmprestimo(usuarioEmprestimo);
+
+    Item itemPermanente = new Item();
+    itemPermanente.setId(1L);
+    itemPermanente.setTipoItem(TipoItem.P);
+
+    EmprestimoItem emprestimoItem = new EmprestimoItem();
+    emprestimoItem.setItem(itemPermanente);
+    emprestimoItem.setQtde(BigDecimal.valueOf(2));
+    emprestimoItem.setEmprestimo(emprestimo);
+
+    emprestimo.setEmprestimoItem(Collections.singleton(emprestimoItem));
+
+    // When
+    service.finalizeEmprestimo(emprestimo);
+
+    // Then - Nenhum item deve ter saldo diminuído
+    verify(itemService, never()).diminuiSaldoItem(any(), any(), anyBoolean());
+    verify(eventPublisher).publishEvent(any());
+  }
+
+  @Test
   void testCleanupAfterDeleteHandlesNulls() {
     emprestimo = new Emprestimo();
     emprestimo.setId(1L);
