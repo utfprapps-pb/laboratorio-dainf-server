@@ -485,6 +485,7 @@ public class EmprestimoServiceImpl extends CrudServiceImpl<Emprestimo, Long, Emp
               empItem ->
                   empItem != null
                       && empItem.getItem() != null
+                      && empItem.getItem().getTipoItem() != null
                       && empItem.getItem().getTipoItem().equals(TipoItem.C))
           .forEach(
               empItem ->
