@@ -153,7 +153,7 @@ class FornecedorServiceImplTest {
   void testCompleteFornecedor_WithQuery() {
     // Given
     String query = "teste";
-    when(fornecedorRepository.findByNomeFantasiaLikeIgnoreCase("%" + query + "%"))
+    when(fornecedorRepository.findByNomeFantasiaLikeIgnoreCaseOrRazaoSocialLikeIgnoreCase("%" + query + "%"))
         .thenReturn(fornecedores);
 
     // When
@@ -162,7 +162,7 @@ class FornecedorServiceImplTest {
     // Then
     assertNotNull(result);
     assertEquals(2, result.size());
-    verify(fornecedorRepository).findByNomeFantasiaLikeIgnoreCase("%" + query + "%");
+    verify(fornecedorRepository).findByNomeFantasiaLikeIgnoreCaseOrRazaoSocialLikeIgnoreCase("%" + query + "%");
     verify(fornecedorRepository, never()).findAll();
   }
 
@@ -179,7 +179,7 @@ class FornecedorServiceImplTest {
     assertNotNull(result);
     assertEquals(2, result.size());
     verify(fornecedorRepository).findAll();
-    verify(fornecedorRepository, never()).findByNomeFantasiaLikeIgnoreCase(anyString());
+    verify(fornecedorRepository, never()).findByNomeFantasiaLikeIgnoreCaseOrRazaoSocialLikeIgnoreCase(anyString());
   }
 
   @Test
