@@ -1,17 +1,22 @@
 package br.com.utfpr.gerenciamento.server.security;
 
+import static br.com.utfpr.gerenciamento.server.enumeration.UserRole.ROLE_ADMINISTRADOR_NAME;
+import static br.com.utfpr.gerenciamento.server.enumeration.UserRole.ROLE_LABORATORISTA_NAME;
+import static br.com.utfpr.gerenciamento.server.security.ApiRoutes.*;
+import static br.com.utfpr.gerenciamento.server.security.ApiRoutes.NADACONSTA_SOLICITAR;
+
+import br.com.utfpr.gerenciamento.server.repository.UsuarioRepository;
 import br.com.utfpr.gerenciamento.server.service.impl.UsuarioServiceImpl;
+import java.util.List;
 import lombok.SneakyThrows;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.core.env.Environment;
 import org.springframework.http.HttpMethod;
-import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
-import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -20,106 +25,170 @@ import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
-import java.util.List;
-
 @EnableWebSecurity
 @Configuration
 public class WebSecurity {
-    private final UsuarioServiceImpl usuarioService;
-    private final Environment env;
+  private final UsuarioServiceImpl usuarioService;
+  private final UsuarioRepository usuarioRepository;
+  private final Environment env;
 
-    public WebSecurity(@Lazy UsuarioServiceImpl usuarioService, Environment env) {
-        this.usuarioService = usuarioService;
-        this.env = env;
-    }
+  public WebSecurity(
+      @Lazy UsuarioServiceImpl usuarioService,
+      UsuarioRepository usuarioRepository,
+      Environment env) {
+    this.usuarioService = usuarioService;
+    this.usuarioRepository = usuarioRepository;
+    this.env = env;
+  }
 
-    @Bean
-    @SneakyThrows
-    public SecurityFilterChain filterChain(HttpSecurity http) {
-        AuthenticationManagerBuilder authenticationManagerBuilder =
-                http.getSharedObject(AuthenticationManagerBuilder.class);
-        authenticationManagerBuilder.userDetailsService(usuarioService)
-                .passwordEncoder(passwordEncoder());
-        AuthenticationManager authenticationManager = authenticationManagerBuilder.build();
+  /**
+   * Configura a cadeia de segurança HTTP aplicando autenticação JWT, autorização por papéis, CORS e
+   * políticas de sessão.
+   *
+   * <p>Configura o AuthenticationManager com o serviço de usuários e codificador de senha,
+   * desabilita CSRF para todas as rotas, habilita CORS com a fonte definida em
+   * corsConfigurationSource(), registra filtros JWT de autenticação e autorização, define regras de
+   * acesso por papel para endpoints específicos e usa sessão no modo stateless.
+   *
+   * @return o SecurityFilterChain configurado para a aplicação
+   */
+  @Bean
+  @SneakyThrows
+  public SecurityFilterChain filterChain(HttpSecurity http) {
+    var authenticationManagerBuilder = http.getSharedObject(AuthenticationManagerBuilder.class);
+    authenticationManagerBuilder
+        .userDetailsService(usuarioService)
+        .passwordEncoder(passwordEncoder());
+    var authenticationManager = authenticationManagerBuilder.build();
 
-        http.csrf(AbstractHttpConfigurer::disable);
-        http.cors(cors -> corsConfigurationSource());
+    return http.csrf(csrf -> csrf.ignoringRequestMatchers("/**"))
+        .cors(cors -> cors.configurationSource(corsConfigurationSource()))
+        .authorizeHttpRequests(
+            authorize ->
+                authorize
+                    // Endpoints administrativos - requerem LABORATORISTA ou ADMINISTRADOR
+                    .requestMatchers(
+                        CIDADE, ESTADO, PAIS, RELATORIO, FORNECEDOR, COMPRA, ENTRADA, GRUPO, SAIDA)
+                    .hasAnyRole(ROLE_LABORATORISTA_NAME, ROLE_ADMINISTRADOR_NAME)
 
-        http.authorizeHttpRequests((authorize) -> authorize
-                .requestMatchers("/cidade/**",
-                        "/estado/**",
-                        "/pais/**",
-                        "/relatorio/**",
-                        "/fornecedor/**",
-                        "/compra/**",
-                        "/entrada/**",
-                        "/grupo/**",
-                        "/saida/**").hasAnyRole("LABORATORISTA", "ADMINISTRADOR")
-                .requestMatchers(HttpMethod.POST, "/item/**").hasAnyRole("LABORATORISTA", "ADMINISTRADOR")
-                .requestMatchers(HttpMethod.DELETE, "/item/**").hasAnyRole("LABORATORISTA", "ADMINISTRADOR")
+                    // Item - POST/DELETE requerem LABORATORISTA ou ADMINISTRADOR
+                    .requestMatchers(HttpMethod.POST, ITEM)
+                    .hasAnyRole(ROLE_LABORATORISTA_NAME, ROLE_ADMINISTRADOR_NAME)
+                    .requestMatchers(HttpMethod.DELETE, ITEM)
+                    .hasAnyRole(ROLE_LABORATORISTA_NAME, ROLE_ADMINISTRADOR_NAME)
 
-                .requestMatchers(HttpMethod.POST, "/usuario/new-user/**").permitAll()
-                .requestMatchers(HttpMethod.POST, "/usuario/resend-confirm-email/**").permitAll()
-                .requestMatchers(HttpMethod.POST, "/usuario/confirm-email/**").permitAll()
-                .requestMatchers(HttpMethod.POST, "/usuario/reset-password/**").permitAll()
-                .requestMatchers(HttpMethod.POST, "/usuario/request-code-reset-password/**").permitAll()
+                    // Usuário - endpoints específicos devem vir PRIMEIRO (mais específicos)
+                    .requestMatchers(HttpMethod.GET, USUARIO_INFO, USUARIO_FIND_BY_USERNAME)
+                    .authenticated()
+                    .requestMatchers(HttpMethod.POST, USUARIO_UPDATE)
+                    .authenticated()
 
-                .requestMatchers(HttpMethod.POST, "/usuario/update-user").authenticated()
+                    // Usuário - endpoints públicos de registro/recuperação
+                    .requestMatchers(
+                        HttpMethod.POST,
+                        USUARIO_NEW_USER,
+                        USUARIO_RESEND_CONFIRM,
+                        USUARIO_CONFIRM_EMAIL,
+                        USUARIO_RESET_PASSWORD,
+                        USUARIO_REQUEST_CODE_RESET)
+                    .permitAll()
 
-                .requestMatchers(HttpMethod.POST, "/emprestimo/save-emprestimo", "/emprestimo/save-devolucao").hasAnyRole("LABORATORISTA", "ADMINISTRADOR")
-                .requestMatchers(HttpMethod.DELETE, "/emprestimo/**").hasAnyRole("LABORATORISTA", "ADMINISTRADOR")
+                    // Usuário - administração requer role ADMINISTRADOR (REGRAS GENÉRICAS POR
+                    // ÚLTIMO)
+                    .requestMatchers(HttpMethod.GET, USUARIO)
+                    .hasRole(ROLE_ADMINISTRADOR_NAME)
+                    .requestMatchers(HttpMethod.PUT, USUARIO)
+                    .hasRole(ROLE_ADMINISTRADOR_NAME)
+                    .requestMatchers(HttpMethod.PATCH, USUARIO)
+                    .hasRole(ROLE_ADMINISTRADOR_NAME)
+                    .requestMatchers(HttpMethod.POST, USUARIO)
+                    .hasRole(ROLE_ADMINISTRADOR_NAME)
+                    .requestMatchers(HttpMethod.DELETE, USUARIO)
+                    .hasRole(ROLE_ADMINISTRADOR_NAME)
 
-                .requestMatchers(HttpMethod.GET, "/usuario/user-info").authenticated()
-                .requestMatchers(HttpMethod.GET, "/usuario/find-by-username/**").authenticated()
+                    // Empréstimo - POST/DELETE requerem LABORATORISTA ou ADMINISTRADOR
+                    .requestMatchers(HttpMethod.POST, EMPRESTIMO_SAVE, EMPRESTIMO_DEVOLUCAO)
+                    .hasAnyRole(ROLE_LABORATORISTA_NAME, ROLE_ADMINISTRADOR_NAME)
+                    .requestMatchers(HttpMethod.DELETE, EMPRESTIMO)
+                    .hasAnyRole(ROLE_LABORATORISTA_NAME, ROLE_ADMINISTRADOR_NAME)
 
-                // .requestMatchers(HttpMethod.GET, "/usuario/**").hasRole("ADMINISTRADOR")
-                .requestMatchers(HttpMethod.PUT, "/usuario/**").hasRole("ADMINISTRADOR")
-                .requestMatchers(HttpMethod.PATCH, "/usuario/**").hasRole("ADMINISTRADOR")
-                .requestMatchers(HttpMethod.POST, "/usuario/**").hasRole("ADMINISTRADOR")
-                .requestMatchers(HttpMethod.DELETE, "/usuario/**").hasRole("ADMINISTRADOR")
+                    // Nada Consta - solicitar requer LABORATORISTA ou ADMINISTRADOR
+                    .requestMatchers(HttpMethod.POST, NADACONSTA_SOLICITAR)
+                    .hasAnyRole(ROLE_LABORATORISTA_NAME, ROLE_ADMINISTRADOR_NAME)
 
+                    // Endpoints públicos
+                    .requestMatchers(HttpMethod.POST, AUTH)
+                    .permitAll()
+                    .requestMatchers(HttpMethod.POST, "/login")
+                    .permitAll()
+                    .requestMatchers(HttpMethod.GET, TEST)
+                    .permitAll()
 
-                .requestMatchers(HttpMethod.POST, "/auth").permitAll()
-                .requestMatchers(HttpMethod.GET, "/test").permitAll()
-                .anyRequest().authenticated()
-        );
+                    // Actuator endpoints - requerem ADMINISTRADOR
+                    .requestMatchers(ACTUATOR)
+                    .hasRole(ROLE_ADMINISTRADOR_NAME)
 
-        http.authenticationManager(authenticationManager)
-                .addFilter(
-                        new JWTAuthenticationFilter(authenticationManager, usuarioService, env)
-                )
-                .addFilter(
-                        new JWTAuthorizationFilter(authenticationManager, usuarioService, env)
-                )
-                .sessionManagement(sessionManagement ->
-                        sessionManagement.sessionCreationPolicy(
-                                SessionCreationPolicy.STATELESS)
-                );
+                    // Config endpoints - restricted to administrators
+                    .requestMatchers(HttpMethod.GET, CONFIG)
+                    .hasRole(ROLE_ADMINISTRADOR_NAME)
+                    .requestMatchers(HttpMethod.POST, CONFIG)
+                    .hasRole(ROLE_ADMINISTRADOR_NAME)
 
+                    // Demais endpoints requerem autenticação
+                    .anyRequest()
+                    .authenticated())
+        .authenticationManager(authenticationManager)
+        .addFilter(
+            new JWTAuthenticationFilter(
+                authenticationManager, usuarioService, usuarioRepository, env))
+        .addFilter(new JWTAuthorizationFilter(authenticationManager, usuarioService, env))
+        .sessionManagement(
+            session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+        .build();
+  }
 
-        return http.build();
-    }
+  @Bean
+  protected PasswordEncoder passwordEncoder() {
+    return new BCryptPasswordEncoder();
+  }
 
-    @Bean
-    protected PasswordEncoder passwordEncoder() {
-        return new BCryptPasswordEncoder();
-    }
+  /**
+   * Cria um CorsConfigurationSource configurado com origens, métodos e cabeçalhos permitidos para
+   * CORS.
+   *
+   * <p>As origens são lidas da propriedade de ambiente "utfpr.front.url" (valores separados por
+   * vírgula); se ausente, usa "http://localhost:4200". Permite os métodos HTTP GET, POST, PUT,
+   * PATCH, DELETE, OPTIONS e HEAD, e cabeçalhos comuns de autenticação e conteúdo (por exemplo
+   * Authorization, Content-Type, Origin).
+   *
+   * @return uma UrlBasedCorsConfigurationSource com a configuração CORS registrada para todas as
+   *     rotas (/**)
+   */
+  @Bean
+  CorsConfigurationSource corsConfigurationSource() {
+    var frontendUrls = env.getProperty("utfpr.front.url", "http://localhost:4200");
+    var origins = java.util.Arrays.stream(frontendUrls.split(",")).map(String::trim).toList();
 
-    @Bean
-    CorsConfigurationSource corsConfigurationSource() {
-        CorsConfiguration configuration = new CorsConfiguration();
-        configuration.setAllowedOrigins(List.of("*"));
+    var configuration = new CorsConfiguration();
+    configuration.setAllowedOriginPatterns(origins);
 
-        configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS", "HEAD", "TRACE", "CONNECT"));
+    configuration.setAllowedMethods(
+        List.of("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS", "HEAD"));
 
-        configuration.setAllowedHeaders(List.of("Authorization", "x-xsrf-token",
-                "Access-Control-Allow-Headers", "Origin",
-                "Accept", "X-Requested-With", "Content-Type",
-                "Access-Control-Request-Method",
-                "Access-Control-Request-Headers", "Auth-Id-Token"));
-        UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
-        source.registerCorsConfiguration("/**", configuration);
-        return source;
-    }
-
+    configuration.setAllowedHeaders(
+        List.of(
+            "Authorization",
+            "x-xsrf-token",
+            "Access-Control-Allow-Headers",
+            "Origin",
+            "Accept",
+            "X-Requested-With",
+            "Content-Type",
+            "Access-Control-Request-Method",
+            "Access-Control-Request-Headers",
+            "Auth-Id-Token"));
+    UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
+    source.registerCorsConfiguration("/**", configuration);
+    return source;
+  }
 }

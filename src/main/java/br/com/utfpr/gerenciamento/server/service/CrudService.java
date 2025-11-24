@@ -1,40 +1,49 @@
 package br.com.utfpr.gerenciamento.server.service;
 
+import java.io.Serializable;
+import java.util.List;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
+import org.springframework.data.jpa.domain.Specification;
 
-import java.io.Serializable;
-import java.util.List;
+public interface CrudService<T, ID extends Serializable, DTO> {
 
-public interface CrudService<T, ID extends Serializable> {
+  List<DTO> findAll();
 
-    List<T> findAll();
+  List<DTO> findAll(Sort sort);
 
-    List<T> findAll(Sort sort);
+  Page<DTO> findAll(Pageable pageable);
 
-    Page<T> findAll(Pageable pageable);
+  Page<DTO> findAllSpecification(Specification<T> specification, Pageable pageable);
 
-    T save(T entity);
+  DTO save(T entity);
 
-    T saveAndFlush(T entity);
+  DTO saveAndFlush(T entity);
 
-    Iterable<T> save(Iterable<T> iterable);
+  Iterable<DTO> save(Iterable<T> iterable);
 
-    void flush();
+  void flush();
 
-    T findOne(ID id);
+  DTO findOne(ID id);
 
-    boolean exists(ID id);
+  List<DTO> findAllById(Iterable<ID> ids);
 
-    long count();
+  boolean exists(ID id);
 
-    void delete(ID id);
+  long count();
 
-    void delete(T entity);
+  void delete(ID id);
 
-    void delete(Iterable<T> iterable);
+  void delete(T entity);
 
-    void deleteAll();
+  void delete(Iterable<T> iterable);
 
+  Specification<T> filterByAllFields(String filter);
+
+  void deleteAll();
+
+  DTO toDto(T entity);
+
+  T toEntity(DTO dto);
 }

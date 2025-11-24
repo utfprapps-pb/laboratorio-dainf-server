@@ -32,3 +32,8 @@ build/
 
 ### VS Code ###
 .vscode/
+/.claude/
+/.serena/
+/claudedocs/
+CLAUDE.md
+nul

@@ -1,66 +1,74 @@
 package br.com.utfpr.gerenciamento.server.security;
 
-import br.com.utfpr.gerenciamento.server.model.Usuario;
+import static br.com.utfpr.gerenciamento.server.security.SecurityConstants.*;
+
 import br.com.utfpr.gerenciamento.server.service.impl.UsuarioServiceImpl;
 import com.auth0.jwt.JWT;
 import com.auth0.jwt.algorithms.Algorithm;
-import org.springframework.core.env.Environment;
-import org.springframework.security.authentication.AuthenticationManager;
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.security.web.authentication.www.BasicAuthenticationFilter;
-
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
-
-import static br.com.utfpr.gerenciamento.server.security.SecurityConstants.*;
+import org.springframework.core.env.Environment;
+import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
+import org.springframework.security.web.authentication.www.BasicAuthenticationFilter;
 
 public class JWTAuthorizationFilter extends BasicAuthenticationFilter {
 
-    private final UsuarioServiceImpl usuarioService;
-    private final String tokenSecret;
+  private final UsuarioServiceImpl usuarioService;
+  private final String tokenSecret;
 
+  public JWTAuthorizationFilter(
+      AuthenticationManager authenticationManager,
+      UsuarioServiceImpl usuarioService,
+      Environment env) {
+    super(authenticationManager);
+    this.usuarioService = usuarioService;
+    this.tokenSecret = env.getProperty("utfpr.token.secret");
+  }
 
-    public JWTAuthorizationFilter(AuthenticationManager authenticationManager,
-                                  UsuarioServiceImpl usuarioService,
-                                  Environment env) {
-        super(authenticationManager);
-        this.usuarioService = usuarioService;
-        this.tokenSecret = env.getProperty("utfpr.token.secret");
+  @Override
+  protected void doFilterInternal(
+      HttpServletRequest req, HttpServletResponse res, FilterChain chain)
+      throws IOException, ServletException {
+    String header = req.getHeader(HEADER_STRING);
+
+    if (header == null || !header.startsWith(TOKEN_PREFIX)) {
+      chain.doFilter(req, res);
+      return;
     }
 
-    @Override
-    protected void doFilterInternal(HttpServletRequest req,
-                                    HttpServletResponse res,
-                                    FilterChain chain) throws IOException, ServletException {
-        String header = req.getHeader(HEADER_STRING);
+    UsernamePasswordAuthenticationToken authentication = getAuthentication(req);
+    SecurityContextHolder.getContext().setAuthentication(authentication);
+    chain.doFilter(req, res);
+  }
 
-        if (header == null || !header.startsWith(TOKEN_PREFIX)) {
-            chain.doFilter(req, res);
-            return;
+  private UsernamePasswordAuthenticationToken getAuthentication(HttpServletRequest request) {
+    String token = request.getHeader(HEADER_STRING);
+    if (token != null) {
+      String user =
+          JWT.require(Algorithm.HMAC512(tokenSecret))
+              .build()
+              .verify(token.replace(TOKEN_PREFIX, ""))
+              .getSubject();
+      if (user != null) {
+        try {
+          // Usa UserDetailsService padrão - busca por username ou email COM permissoes via
+          // @EntityGraph
+          UserDetails userDetails = usuarioService.loadUserByUsername(user);
+          return new UsernamePasswordAuthenticationToken(user, null, userDetails.getAuthorities());
+        } catch (UsernameNotFoundException e) {
+          // Usuário não encontrado, interrompe autenticação
+          return null;
         }
-
-        UsernamePasswordAuthenticationToken authentication = getAuthentication(req);
-        SecurityContextHolder.getContext().setAuthentication(authentication);
-        chain.doFilter(req, res);
+      }
+      return null;
     }
-
-    private UsernamePasswordAuthenticationToken getAuthentication(HttpServletRequest request) {
-        String token = request.getHeader(HEADER_STRING);
-        if (token != null) {
-            String user = JWT.require(Algorithm.HMAC512(tokenSecret))
-                    .build()
-                    .verify(token.replace(TOKEN_PREFIX, ""))
-                    .getSubject();
-            if (user != null) {
-                Usuario u = usuarioService.findByUsername(user);
-                return new UsernamePasswordAuthenticationToken(user, null, u.getAuthorities());
-            }
-            return null;
-        }
-        return null;
-    }
+    return null;
+  }
 }

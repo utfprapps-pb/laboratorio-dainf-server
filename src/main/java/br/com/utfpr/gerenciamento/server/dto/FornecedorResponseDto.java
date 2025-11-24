@@ -1,0 +1,22 @@
+package br.com.utfpr.gerenciamento.server.dto;
+
+import lombok.Data;
+
+@Data
+public class FornecedorResponseDto {
+
+  Long id;
+
+  private String razaoSocial;
+
+  private String nomeFantasia;
+
+  private String cnpj;
+  private String ie;
+  private String endereco;
+  private String observacao;
+  private String email;
+  private String telefone;
+  private CidadeResponseDto cidade;
+  private EstadoResponseDto estado;
+}

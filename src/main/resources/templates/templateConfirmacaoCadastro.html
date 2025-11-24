@@ -1,82 +1,38 @@
 <!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org">
+<html xmlns:th="http://www.thymeleaf.org" lang="pt-BR">
 <head>
-    <meta charset="UTF-8"/>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Confirmação de Cadastro</title>
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            font-family: sans-serif;
-        }
-
-        body {
-            margin: 10px;
-        }
-
-        .header {
-            width: 100%;
-            height: 50px;
-            background: linear-gradient(to right, #5180d6, #094288);
-            border-radius: 5px 5px 0 0;
-        }
-
-        .headerTitulo {
-            font-weight: bold;
-            padding: 20px;
-            color: #FFF;
-        }
-
-        .article {
-            padding: 30px;
-            background-color: #f5f5f5;
-            color: #333;
-        }
-
-        .footer {
-            padding: 5px;
-            border-radius: 0 0 5px 5px;
-            background: linear-gradient(to right, #5180d6, #094288);
-        }
-
-        .footerP {
-            font-size: 12px;
-            font-family: sans-serif;
-            color: #ffffff;
-            text-align: center;
-        }
-
-        .text-center {
-            text-align: center;
-        }
-
-        .text-left {
-            text-align: left;
-        }
+        body { font-family: 'Montserrat', Arial, sans-serif; background-color: #f5f5f5; }
+        .container { background: #fff; border-radius: 12px; max-width: 600px; margin: 0 auto; box-shadow: 0 4px 15px rgba(0,0,0,0.08); }
+        .header { text-align: center; padding: 30px 20px 10px 20px; }
+        .header img { width: 120px; }
+        .body { padding: 20px 30px; text-align: center; }
+        .body h2 { color: #E6A74A; margin-bottom: 10px; }
+        .body p { color: #333; font-size: 16px; margin-bottom: 20px; }
+        .footer { background: #E6A74A; color: #fff; text-align: center; padding: 15px 10px; border-bottom-left-radius: 12px; border-bottom-right-radius: 12px; }
+        .footer strong { font-size: 16px; }
     </style>
-    <title>Laboratório DAINF-PB da UTFPR Campus Pato Branco</title>
 </head>
 <body>
+<div class="container">
     <div class="header">
-        <p class="headerTitulo">Confirmação de cadastro</p>
+        <img th:src="${logoUrl}" src="/static/logo-fallback.png" alt="Logo UTFPR" width="120"/>
     </div>
-    <div>
-        <div class="article">
-            <p th:utext="'Olá ' + ${usuario} + ','"></p>
-            <br/><br/>
-            <p th:utext="'Para confirmar o seu cadastro acesse clique em:'"></p>
-            <a th:href="${url}" th:text="'Confirmar Cadastro'"></a>
-            <br/>
-            <p th:utext="'Ou copie e cole o endereço a seguir no seu navegador:' + ${url}"></p>
-            <br/>
-            <p th:text="'Qualquer dúvida, entrar em contato conosco na sala de apoio do bloco V.'"></p>
-            <br/><br/>
-            <p th:text="'Atenciosamente,'"></p>
-            <p th:text="'Equipe do laboratório do DAINF-PB'"></p>
-        </div>
+    <div class="body">
+        <h2>Confirmação de Cadastro</h2>
+        <p>Olá <strong th:text="${usuario}">USUÁRIO</strong>,</p>
+        <p>Para confirmar seu cadastro, clique em: <a th:href="${url}">Confirmar Cadastro</a></p>
+        <p>Ou copie e cole o endereço a seguir no seu navegador: <span th:text="${url}">URL</span></p>
+        <p>Qualquer dúvida, entrar em contato conosco na sala de apoio do bloco V.</p>
+        <p style="font-size: 12px; color: #aaaaaa; line-height: 1.5;">Esta é uma mensagem automática. Por favor, não responda a este email.</p>
     </div>
-
-    <footer class="footer">
-        <p class="footerP" th:text="'Laboratório de Informática - UTFPR-PB'"></p>
-    </footer>
+    <div class="footer">
+        Sistema de Gestão de Laboratórios<br/>
+        <strong>UTFPR - Campus Pato Branco</strong>
+    </div>
+</div>
 </body>
 </html>

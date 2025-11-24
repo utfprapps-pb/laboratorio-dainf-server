@@ -1,87 +1,108 @@
 package br.com.utfpr.gerenciamento.server.service.impl;
 
+import br.com.utfpr.gerenciamento.server.dto.ReservaResponseDto;
 import br.com.utfpr.gerenciamento.server.model.Reserva;
+import br.com.utfpr.gerenciamento.server.model.Usuario;
 import br.com.utfpr.gerenciamento.server.model.modelTemplateEmail.ReservaTemplate;
 import br.com.utfpr.gerenciamento.server.repository.ReservaRepository;
 import br.com.utfpr.gerenciamento.server.service.EmailService;
 import br.com.utfpr.gerenciamento.server.service.ReservaService;
 import br.com.utfpr.gerenciamento.server.service.UsuarioService;
 import br.com.utfpr.gerenciamento.server.util.DateUtil;
+import br.com.utfpr.gerenciamento.server.util.SecurityUtils;
+import java.util.List;
+import org.modelmapper.ModelMapper;
 import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.List;
-
 @Service
-public class ReservaServiceImpl extends CrudServiceImpl<Reserva, Long> implements ReservaService {
+public class ReservaServiceImpl extends CrudServiceImpl<Reserva, Long, ReservaResponseDto>
+    implements ReservaService {
 
-    private final ReservaRepository reservaRepository;
-    private final UsuarioService usuarioService;
-    private final EmailService emailService;
+  private final ReservaRepository reservaRepository;
+  private final UsuarioService usuarioService;
+  private final EmailService emailService;
 
-    public ReservaServiceImpl(ReservaRepository reservaRepository, UsuarioService usuarioService, EmailService emailService) {
-        this.reservaRepository = reservaRepository;
-        this.usuarioService = usuarioService;
-        this.emailService = emailService;
-    }
+  private final ModelMapper modelMapper;
 
-    @Override
-    protected JpaRepository<Reserva, Long> getRepository() {
-        return reservaRepository;
-    }
+  public ReservaServiceImpl(
+      ReservaRepository reservaRepository,
+      UsuarioService usuarioService,
+      EmailService emailService,
+      ModelMapper modelMapper) {
+    this.reservaRepository = reservaRepository;
+    this.usuarioService = usuarioService;
+    this.emailService = emailService;
+    this.modelMapper = modelMapper;
+  }
 
-    @Override
-    @Transactional
-    public Reserva save(Reserva reserva) {
-        reserva.setUsuario(usuarioService.findByUsername((String) SecurityContextHolder.getContext().getAuthentication().getPrincipal()));
-        return super.save(reserva);
-    }
+  @Override
+  protected JpaRepository<Reserva, Long> getRepository() {
+    return reservaRepository;
+  }
 
-    @Override
-    @Transactional(readOnly = true)
-    public List<Reserva> findAllByUsername(String username) {
-        var usuario = usuarioService.findByUsername((String) SecurityContextHolder.getContext().getAuthentication().getPrincipal());
-        return reservaRepository.findAllByUsuario(usuario);
-    }
+  @Override
+  public ReservaResponseDto toDto(Reserva entity) {
+    return modelMapper.map(entity, ReservaResponseDto.class);
+  }
 
-    @Override
-    @Transactional(readOnly = true)
-    public List<Reserva> findAllByIdItem(Long idItem) {
-        return reservaRepository.findReservaByIdItem(idItem);
-    }
+  @Override
+  public Reserva toEntity(ReservaResponseDto reservaResponseDto) {
+    return modelMapper.map(reservaResponseDto, Reserva.class);
+  }
 
-    @Override
-    @Transactional
-    public void finalizarReserva(Long idReserva) {
-        var reserva = this.findOne(idReserva);
-        emailService.sendEmailWithTemplate(
-                converterObjectToTemplateEmail(reserva),
-                reserva.getUsuario().getEmail(),
-                "Reserva Finalizada",
-                "templateFinalizacaoReserva"
-        );
-        this.delete(idReserva);
-    }
+  @Override
+  @Transactional
+  public ReservaResponseDto save(Reserva reserva) {
+    // Extrai username de forma segura do Authentication (evita ClassCastException)
+    String username = SecurityUtils.getAuthenticatedUsername();
+    reserva.setUsuario(usuarioService.toEntity(usuarioService.findByUsername(username)));
+    return super.save(reserva);
+  }
 
-    @Override
-    public void sendEmailConfirmacaoReserva(Reserva reserva) {
-        emailService.sendEmailWithTemplate(
-                converterObjectToTemplateEmail(reserva),
-                reserva.getUsuario().getEmail(),
-                "Confirmação de Reserva de Materiais",
-                "templateConfirmacaoReserva"
-        );
-    }
+  @Override
+  @Transactional(readOnly = true)
+  public List<ReservaResponseDto> findAllByAuthenticatedUser() {
+    // Extrai username de forma segura do Authentication (evita ClassCastException)
+    String username = SecurityUtils.getAuthenticatedUsername();
+    Usuario usuario = usuarioService.toEntity(usuarioService.findByUsername(username));
+    return reservaRepository.findAllByUsuario(usuario).stream().map(this::toDto).toList();
+  }
 
-    public ReservaTemplate converterObjectToTemplateEmail(Reserva reserva) {
-        ReservaTemplate toReturn = new ReservaTemplate();
-        toReturn.setUsuario(reserva.getUsuario().getNome());
-        toReturn.setDtReserva(DateUtil.parseLocalDateToString(reserva.getDataReserva()));
-        toReturn.setDtRetirada(DateUtil.parseLocalDateToString(reserva.getDataRetirada()));
-        toReturn.setReservaItem(reserva.getReservaItem());
-        return toReturn;
-    }
+  @Override
+  @Transactional(readOnly = true)
+  public List<ReservaResponseDto> findAllByIdItem(Long idItem) {
+    return reservaRepository.findReservaByIdItem(idItem).stream().map(this::toDto).toList();
+  }
+
+  @Override
+  @Transactional
+  public void finalizarReserva(Long idReserva) {
+    Reserva reserva = toEntity(this.findOne(idReserva));
+    emailService.sendEmailWithTemplate(
+        converterObjectToTemplateEmail(reserva),
+        reserva.getUsuario().getEmail(),
+        "Reserva Finalizada",
+        "templateFinalizacaoReserva");
+    this.delete(idReserva);
+  }
+
+  @Override
+  public void sendEmailConfirmacaoReserva(Reserva reserva) {
+    emailService.sendEmailWithTemplate(
+        converterObjectToTemplateEmail(reserva),
+        reserva.getUsuario().getEmail(),
+        "Confirmação de Reserva de Materiais",
+        "templateConfirmacaoReserva");
+  }
+
+  public ReservaTemplate converterObjectToTemplateEmail(Reserva reserva) {
+    ReservaTemplate toReturn = new ReservaTemplate();
+    toReturn.setUsuario(reserva.getUsuario().getNome());
+    toReturn.setDtReserva(DateUtil.parseLocalDateToString(reserva.getDataReserva()));
+    toReturn.setDtRetirada(DateUtil.parseLocalDateToString(reserva.getDataRetirada()));
+    toReturn.setReservaItem(reserva.getReservaItem());
+    return toReturn;
+  }
 }

@@ -1,378 +1,444 @@
-CREATE TABLE master_pais
-(
-    id    bigint,
-    nome  varchar(30) not null,
-    sigla varchar(2)  not null,
-    PRIMARY KEY (id)
+CREATE TABLE cidade (
+    id bigint NOT NULL,
+    nome character varying(60) NOT NULL,
+    estado_id bigint
 );
-
-CREATE SEQUENCE master_pais_seq
-    INCREMENT 1
-    MINVALUE 1
-    MAXVALUE 9223372036854775807
-    START 1
+CREATE SEQUENCE cidade_id_seq
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
     CACHE 1;
 
-CREATE TABLE master_estado
-(
-    id             bigint,
-    master_pais_id bigint,
-    nome           varchar(30) not null,
-    sigla          varchar(2)  not null,
-    PRIMARY KEY (id),
-    CONSTRAINT master_estado_master_pais_id_fk FOREIGN KEY (master_pais_id)
-        REFERENCES master_pais (id) MATCH SIMPLE
-        ON UPDATE NO ACTION
-        ON DELETE NO ACTION
+CREATE TABLE compra (
+                               id bigint NOT NULL,
+                               data_compra date NOT NULL,
+                               fornecedor_id bigint NOT NULL,
+                               usuario_id bigint
 );
-
-CREATE SEQUENCE master_estado_seq
-    INCREMENT 1
-    MINVALUE 1
-    MAXVALUE 9223372036854775807
-    START 1
+CREATE SEQUENCE compra_id_seq
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
     CACHE 1;
 
-CREATE TABLE master_cidade
-(
-    id               bigint,
-    master_estado_id bigint,
-    nome             varchar(560) not null,
-    PRIMARY KEY (id),
-    CONSTRAINT master_cidade_master_estado_id_fk FOREIGN KEY (master_estado_id)
-        REFERENCES master_estado (id) MATCH SIMPLE
-        ON UPDATE NO ACTION
-        ON DELETE NO ACTION
+
+CREATE TABLE compra_item (
+                                    id bigint NOT NULL,
+                                    qtde numeric(19,2) NOT NULL,
+                                    valor numeric(19,2) NOT NULL,
+                                    compra_id bigint,
+                                    item_id bigint NOT NULL
 );
-
-CREATE TABLE master_plano
-(
-    id             bigint  NOT NULL,
-    titulo         character varying(30),
-    descricao      character varying(500),
-    valor_plano    numeric(10, 2),
-    observacao     character varying(1000),
-    ativo          boolean NOT NULL,
-    paypal_plan_id character varying(100),
-    licencas       bigint  NOT NULL,
-    CONSTRAINT master_plano_pkey PRIMARY KEY (id)
-);
-
-
-CREATE TABLE master_plano_detalhe
-(
-    id              bigint NOT NULL,
-    descricao       character varying(80),
-    master_plano_id bigint,
-    CONSTRAINT master_plano_detalhe_pkey PRIMARY KEY (id),
-    CONSTRAINT master_plano_detalhe_master_plano_id_fk FOREIGN KEY (master_plano_id)
-        REFERENCES master_plano (id) MATCH SIMPLE
-        ON UPDATE NO ACTION ON DELETE NO ACTION
-);
-
-
-CREATE SEQUENCE master_tenant_seq
-    INCREMENT 1
-    MINVALUE 1
-    MAXVALUE 9223372036854775807
-    START 1
+CREATE SEQUENCE compra_item_id_seq
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
     CACHE 1;
 
-CREATE TABLE master_tenant
-(
-    id                      bigint  NOT NULL DEFAULT nextval('master_tenant_seq'::regclass),
-    password                character varying(30),
-    tenant_id               character varying(30),
-    url                     character varying(256),
-    username                character varying(30),
-    version                 integer NOT NULL,
-    subscribe_id            character varying(150),
-    master_plano_id         bigint,
-    nome_razao              character varying(100),
-    cpf_cnpj                character varying(18),
-    rg_ie                   character varying(15),
-    celular                 character varying(20),
-    telefone                character varying(25),
-    email                   character varying(50),
-    quantidade_licencas     integer          default 0,
-    logo_nome               character varying(100),
-    logo_arquivo            oid,
-    data_inicio_subscribe   date,
-    data_atualizao_status   date,
-    subscribe_status        character varying(50),
-    ativo                   boolean          default true,
-    trial                   boolean          default true,
-    bairro                  character varying(50),
-    cep                     character varying(15),
-    complemento             character varying(100),
-    numero                  character varying(9),
-    rua                     character varying(50),
-    nome_exibicao_relatorio character varying(100),
-    master_cidade_id        bigint,
-    token_confirmacao       character varying(255),
-    registro_confirmado     boolean NOT NULL default false,
-    CONSTRAINT master_tenant_pkey PRIMARY KEY (id)
+CREATE TABLE emprestimo (
+                                   id bigint NOT NULL,
+                                   data_devolucao date,
+                                   data_emprestimo date NOT NULL,
+                                   observacao character varying(255),
+                                   prazo_devolucao date,
+                                   usuario_emprestimo_id bigint,
+                                   usuario_responsavel_id bigint
+);
+CREATE SEQUENCE emprestimo_id_seq
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+CREATE TABLE emprestimo_devolucao_item (
+                                                  id bigint NOT NULL,
+                                                  qtde numeric(19,2) NOT NULL,
+                                                  status character varying(1),
+                                                  emprestimo_id bigint,
+                                                  item_id bigint NOT NULL
+);
+CREATE SEQUENCE emprestimo_devolucao_item_id_seq
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+CREATE TABLE emprestimo_item (
+                                        id bigint NOT NULL,
+                                        qtde numeric(19,2) NOT NULL,
+                                        emprestimo_id bigint,
+                                        item_id bigint NOT NULL
+);
+CREATE SEQUENCE emprestimo_item_id_seq
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+CREATE TABLE estado (
+                               id bigint NOT NULL,
+                               nome character varying(255),
+                               uf character varying(2),
+                               pais_id bigint
+);
+CREATE SEQUENCE estado_id_seq
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+CREATE TABLE fornecedor (
+                                   id bigint NOT NULL,
+                                   cnpj character varying(14) NOT NULL,
+                                   email character varying(255),
+                                   endereco character varying(100),
+                                   ie character varying(14) NOT NULL,
+                                   nome_fantasia character varying(80) NOT NULL,
+                                   observacao character varying(2000),
+                                   razao_social character varying(80) NOT NULL,
+                                   telefone character varying(15),
+                                   cidade_id bigint NOT NULL,
+                                   estado_id bigint NOT NULL
+);
+CREATE SEQUENCE fornecedor_id_seq
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+CREATE TABLE grupo (
+                              id bigint NOT NULL,
+                              descricao character varying(50) NOT NULL
+);
+CREATE SEQUENCE grupo_id_seq
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+CREATE TABLE item (
+                             id bigint NOT NULL,
+                             descricao character varying(4000),
+                             localizacao character varying(255),
+                             nome character varying(50) NOT NULL,
+                             patrimonio numeric(19,2),
+                             qtde_minima numeric(19,2) NOT NULL,
+                             saldo numeric(19,2),
+                             siorg numeric(19,2),
+                             tipo_item character varying(1),
+                             valor numeric(19,2) DEFAULT 0.00,
+                             grupo_id bigint
+);
+CREATE SEQUENCE item_id_seq
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+CREATE TABLE item_image (
+                                   id bigint NOT NULL,
+                                   caminho_image character varying(255),
+                                   name_image character varying(255),
+                                   item_id bigint
+);
+CREATE SEQUENCE item_image_id_seq
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+CREATE TABLE pais (
+                             id bigint NOT NULL,
+                             nome character varying(50) NOT NULL,
+                             sigla character varying(3) NOT NULL
+);
+CREATE SEQUENCE pais_id_seq
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+CREATE TABLE permissao (
+                                  id bigint NOT NULL,
+                                  nome character varying(20) NOT NULL
 );
 
-CREATE TABLE master_tabela_indice
-(
-    id               bigint                      NOT NULL,
-    ano              integer                     NOT NULL,
-    data_modificacao timestamp without time zone NOT NULL,
-    data_cadastro    date                        NOT NULL,
-    mes              integer                     NOT NULL,
-    valor            numeric(15, 2)              NOT NULL,
-    master_indice_id bigint,
-    CONSTRAINT master_tabela_indice_pk PRIMARY KEY (id),
-    CONSTRAINT unqmesanoindiceid UNIQUE (mes, ano, master_indice_id)
+CREATE SEQUENCE permissao_id_seq
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+CREATE TABLE relatorio (
+                                  id bigint NOT NULL,
+                                  name_report character varying(255),
+                                  nome character varying(255) NOT NULL
 );
-
-CREATE SEQUENCE master_cidade_seq
-    INCREMENT 1
-    MINVALUE 1
-    MAXVALUE 9223372036854775807
-    START 1
+CREATE SEQUENCE relatorio_id_seq
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
     CACHE 1;
 
-CREATE SEQUENCE master_error_log_seq
-    INCREMENT 1
-    MINVALUE 1
-    MAXVALUE 9223372036854775807
-    START 1
-    CACHE 1;
-ALTER TABLE master_error_log_seq
-    OWNER TO postgres;
-
-CREATE SEQUENCE master_plano_seq
-    INCREMENT 1
-    MINVALUE 1
-    MAXVALUE 9223372036854775807
-    START 1
-    CACHE 1;
-ALTER TABLE master_plano_seq
-    OWNER TO postgres;
-
-
-CREATE SEQUENCE master_plano_detalhe_seq
-    INCREMENT 1
-    MINVALUE 1
-    MAXVALUE 9223372036854775807
-    START 1
-    CACHE 1;
-ALTER TABLE master_plano_detalhe_seq
-    OWNER TO postgres;
-
-
-
-ALTER TABLE master_tenant
-    ADD CONSTRAINT master_tenant_master_plano_id_fk FOREIGN KEY (master_plano_id) REFERENCES master_plano (id) ON UPDATE NO ACTION ON DELETE NO ACTION;
-ALTER TABLE master_tenant
-    ADD CONSTRAINT master_tenant_cidade_id_fk FOREIGN KEY (master_cidade_id) REFERENCES master_cidade (id) ON UPDATE NO ACTION ON DELETE NO ACTION;
-
-
-
---- **************************************************************
---- CREATE TENANT DB TRIGGER
---- **************************************************************
-CREATE EXTENSION dblink; -- install the extension dblink to be able to perform create databe, because postgres don't allow to execute a create a database inside a transaction.
-
--- function to create a database
-CREATE OR REPLACE FUNCTION new_tenant_function()
-    RETURNS trigger AS
-$BODY$
-DECLARE
-    db_name varchar;
-BEGIN
-    db_name = concat('eightc_', new.id);
-    IF EXISTS(SELECT 1 FROM pg_database WHERE datname = db_name) THEN -- verify if the database exists
-        RAISE NOTICE 'Database already exists';
-    ELSE
-        PERFORM dblink_connect('conn', 'host=127.0.0.1 port=5432 dbname=postgres user=postgres password=' ||
-                                       quote_ident(new.password)); -- perform the connection
-        PERFORM dblink_exec('conn', 'CREATE DATABASE ' || quote_ident(db_name)); -- create the database
-        PERFORM dblink_disconnect('conn');
-    END IF;
-    RETURN NEW;
-END;
-$BODY$
-    LANGUAGE plpgsql
-    VOLATILE -- Says the function is implemented in the plpgsql language; VOLATILE says the function has side effects.
-    COST 100; -- Estimated execution cost of the function.
-
--- trigger to call a function to create the database
-CREATE TRIGGER new_tenant_trigger
-    AFTER INSERT
-    ON master_tenant
-    FOR EACH ROW
-EXECUTE PROCEDURE new_tenant_function();
---- **************************************************************
---- FIM CREATE TENANT DB TRIGGER
---- **************************************************************
-
-
---- **************************************************************
---- 					PLANS PAYPAL TEST
---- ***************************************************************
-
---- INSERT INTO master_plano(id, titulo, descricao, valor_plano, observacao, ativo, paypal_plan_id, licencas)
---- VALUES (1, 'Personal', 'Para indivíduos e equipes pequenas. Você pode atualizar o plano quando quiser!', 39.90, '',
----         true, 'P-25V23996MU8760215LYQ7QUY', 1);
---- INSERT INTO master_plano(id, titulo, descricao, valor_plano, observacao, ativo, paypal_plan_id, licencas)
---- VALUES (2, 'Business',
----         'Para empresas que desejam permanecer competitivas no mercado e crescer com a ajuda da tecnologia!', 59.90, '',
----         true, 'P-1WX24143F39760906LYQ7RKQ', 3);
---- INSERT INTO master_plano(id, titulo, descricao, valor_plano, observacao, ativo, paypal_plan_id, licencas)
---- VALUES (3, 'Enterprise',
----         'Tudo o que você pode obter de uma solução profissional para manter seus negócios a caminho do sucesso!', 99.90,
----         '', true, 'P-6N8460311T524783SLYQ7RVI', 10);
-        
---- **************************************************************
-
---- **************************************************************
---- 					PLANS PAYPAL PRODUCTION
---- ***************************************************************
- 
-INSERT INTO master_plano(id, titulo, descricao, valor_plano, observacao, ativo, paypal_plan_id, licencas)
-VALUES (1, 'Personal', 'Para indivíduos e equipes pequenas. Você pode atualizar o plano quando quiser!', 39.90, '',
-        true, 'P-2CK60235N34033948L4CQBSA', 1);
-INSERT INTO master_plano(id, titulo, descricao, valor_plano, observacao, ativo, paypal_plan_id, licencas)
-VALUES (2, 'Business',
-        'Para empresas que desejam permanecer competitivas no mercado e crescer com a ajuda da tecnologia!', 59.90, '',
-        true, 'P-6XV659425E5764640L4CQB5I', 3);
-INSERT INTO master_plano(id, titulo, descricao, valor_plano, observacao, ativo, paypal_plan_id, licencas)
-VALUES (3, 'Enterprise',
-        'Tudo o que você pode obter de uma solução profissional para manter seus negócios a caminho do sucesso!', 99.90,
-        '', true, 'P-89T321951U497023CL4CQCHI', 10);
-INSERT INTO master_plano(id, titulo, descricao, valor_plano, observacao, ativo, licencas)
-VALUES (4, 'Teste', 'Para teste da ferramenta, com possibilidade de apenas 1 (um) cálculo!', 00.00, '', true, 1);
-INSERT INTO master_plano(id, titulo, descricao, valor_plano, observacao, ativo, licencas)
-VALUES (5, 'Personalizado 15', 'Plano personalizado com 15 licenças de uso!', 00.00, '', false, 15);
-INSERT INTO master_plano(id, titulo, descricao, valor_plano, observacao, ativo, licencas)
-VALUES (6, 'Personalizado 20', 'Plano personalizado com 20 licenças de uso!', 00.00, '', false, 20);
-INSERT INTO master_plano(id, titulo, descricao, valor_plano, observacao, ativo, licencas)
-VALUES (7, 'Personalizado 30', 'Plano personalizado com 30 licenças de uso!', 00.00, '', false, 30);
-
-INSERT INTO master_plano_detalhe(id, descricao, master_plano_id)
-VALUES (1, 'Cálculos ilimitados', 1);
-INSERT INTO master_plano_detalhe(id, descricao, master_plano_id)
-VALUES (2, 'Cálculos de juros moratórios', 1);
-INSERT INTO master_plano_detalhe(id, descricao, master_plano_id)
-VALUES (3, 'Cálculos de juros compensatórios', 1);
-INSERT INTO master_plano_detalhe(id, descricao, master_plano_id)
-VALUES (4, 'Cálculo de multa', 1);
-INSERT INTO master_plano_detalhe(id, descricao, master_plano_id)
-VALUES (5, '1 usuário', 1);
-
-INSERT INTO master_plano_detalhe(id, descricao, master_plano_id)
-VALUES (6, 'Cálculos ilimitados', 2);
-INSERT INTO master_plano_detalhe(id, descricao, master_plano_id)
-VALUES (7, 'Cálculos de juros moratórios', 2);
-INSERT INTO master_plano_detalhe(id, descricao, master_plano_id)
-VALUES (8, 'Cálculos de juros compensatórios', 2);
-INSERT INTO master_plano_detalhe(id, descricao, master_plano_id)
-VALUES (9, 'Cálculo de multa', 2);
-INSERT INTO master_plano_detalhe(id, descricao, master_plano_id)
-VALUES (10, '3 usuários', 2);
-
-INSERT INTO master_plano_detalhe(id, descricao, master_plano_id)
-VALUES (11, 'Cálculos ilimitados', 3);
-INSERT INTO master_plano_detalhe(id, descricao, master_plano_id)
-VALUES (12, 'Cálculos de juros moratórios', 3);
-INSERT INTO master_plano_detalhe(id, descricao, master_plano_id)
-VALUES (13, 'Cálculos de juros compensatórios', 3);
-INSERT INTO master_plano_detalhe(id, descricao, master_plano_id)
-VALUES (14, 'Cálculo de multa', 3);
-INSERT INTO master_plano_detalhe(id, descricao, master_plano_id)
-VALUES (15, '10 Usuários', 3);
-
-INSERT INTO master_plano_detalhe(id, descricao, master_plano_id)
-VALUES (16, 'Apenas 1 (um) cálculo', 4);
-INSERT INTO master_plano_detalhe(id, descricao, master_plano_id)
-VALUES (17, 'Cálculos de juros moratórios', 4);
-INSERT INTO master_plano_detalhe(id, descricao, master_plano_id)
-VALUES (18, 'Cálculos de juros compensatórios', 4);
-INSERT INTO master_plano_detalhe(id, descricao, master_plano_id)
-VALUES (19, 'Cálculo de multa', 4);
-INSERT INTO master_plano_detalhe(id, descricao, master_plano_id)
-VALUES (20, '1 Usuário teste.', 4);
-
-CREATE TABLE master_error_log
-(
-    id               bigint                      NOT NULL,
-    erro             text,
-    data_cadastro    timestamp without time zone NOT NULL,
-    data_modificacao timestamp without time zone NOT NULL,
-    master_tenant_id bigint,
-    CONSTRAINT fk_master_error_log_master_tenant_id FOREIGN KEY (master_tenant_id)
-        REFERENCES master_tenant (id) MATCH SIMPLE
-        ON UPDATE NO ACTION ON DELETE NO ACTION,
-    CONSTRAINT master_error_log_pkey PRIMARY KEY (id)
+CREATE TABLE relatorio_params (
+                                         id bigint NOT NULL,
+                                         alias_param character varying(50) NOT NULL,
+                                         name_param character varying(30) NOT NULL,
+                                         tipo_param character varying(1) NOT NULL,
+                                         relatorio_id bigint
 );
+CREATE SEQUENCE relatorio_params_id_seq
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
 
-CREATE TABLE master_indice
-(
-    id    bigint  NOT NULL,
-    ativo boolean NOT NULL,
-    nome  character varying(255),
-    CONSTRAINT master_indice_pkey PRIMARY KEY (id)
+CREATE TABLE reserva (
+                                id bigint NOT NULL,
+                                data_reserva date,
+                                data_retirada date,
+                                descricao character varying(255),
+                                observacao character varying(255),
+                                usuario_id bigint
 );
-
-CREATE SEQUENCE master_indice_seq
-    INCREMENT 1
-    MINVALUE 1
-    MAXVALUE 9223372036854775807
-    START 1
+CREATE SEQUENCE reserva_id_seq
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
     CACHE 1;
-ALTER TABLE master_indice_seq
-    OWNER TO postgres;
 
-
-CREATE SEQUENCE master_tabela_indice_seq
-    INCREMENT 1
-    MINVALUE 1
-    MAXVALUE 9223372036854775807
-    START 1
-    CACHE 1;
-ALTER TABLE master_tabela_indice_seq
-    OWNER TO postgres;
-
-CREATE SEQUENCE master_motivo_cancelamento_seq
-    INCREMENT 1
-    MINVALUE 1
-    MAXVALUE 9223372036854775807
-    START 1
-    CACHE 1;
-ALTER TABLE master_motivo_cancelamento_seq
-    OWNER TO postgres;
-
-CREATE TABLE master_motivo_cancelamento
-(
-    id        bigint NOT NULL,
-    descricao character varying(80),
-    CONSTRAINT master_motivo_cancelamento_pk PRIMARY KEY (id)
+CREATE TABLE reserva_item (
+                                     id bigint NOT NULL,
+                                     qtde numeric(19,2) NOT NULL,
+                                     item_id bigint,
+                                     reserva_id bigint,
+                                     CONSTRAINT reserva_item_qtde_check CHECK ((qtde >= (1)::numeric))
 );
-
-CREATE SEQUENCE master_cancelamento_seq
-    INCREMENT 1
-    MINVALUE 1
-    MAXVALUE 9223372036854775807
-    START 1
+CREATE SEQUENCE reserva_item_id_seq
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
     CACHE 1;
-ALTER TABLE master_cancelamento_seq
-    OWNER TO postgres;
 
-CREATE TABLE master_cancelamento
-(
-    id                bigint NOT NULL,
-    master_motivo_id  bigint,
-    observacao        character varying(1000),
-    master_tenant_id  bigint,
-    data_cancelamento date,
-    CONSTRAINT master_cancelamento_pk PRIMARY KEY (id),
-    CONSTRAINT fk_master_cancelamento_motivo FOREIGN KEY (master_motivo_id)
-        REFERENCES master_motivo_cancelamento (id) MATCH SIMPLE
-        ON UPDATE NO ACTION ON DELETE NO ACTION,
-    CONSTRAINT fk_master_cancelamento_master_tenant FOREIGN KEY (master_tenant_id)
-        REFERENCES master_tenant (id) MATCH SIMPLE
-        ON UPDATE NO ACTION ON DELETE NO ACTION
+CREATE TABLE saida (
+                              id bigint NOT NULL,
+                              data_saida date,
+                              emprestimo_id bigint,
+                              observacao character varying(255),
+                              usuario_id bigint
 );
+CREATE SEQUENCE saida_id_seq
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+CREATE TABLE saida_item (
+                                   id bigint NOT NULL,
+                                   qtde numeric(19,2) NOT NULL,
+                                   item_id bigint NOT NULL,
+                                   saida_id bigint
+);
+CREATE SEQUENCE saida_item_id_seq
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+CREATE TABLE solicitacao (
+                                    id bigint NOT NULL,
+                                    data_solicitacao date NOT NULL,
+                                    descricao character varying(255) NOT NULL,
+                                    observacao character varying(255),
+                                    usuario_id bigint
+);
+CREATE SEQUENCE solicitacao_id_seq
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+CREATE TABLE solicitacao_item (
+                                         id bigint NOT NULL,
+                                         qtde numeric(19,2) NOT NULL,
+                                         item_id bigint,
+                                         solicitacao_id bigint,
+                                         CONSTRAINT solicitacao_item_qtde_check CHECK ((qtde >= (1)::numeric))
+);
+CREATE SEQUENCE solicitacao_item_id_seq
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+CREATE TABLE usuario (
+                                id bigint NOT NULL,
+                                documento character varying(25),
+                                email character varying(100) NOT NULL,
+                                nome character varying(255) NOT NULL,
+                                password character varying(255) NOT NULL,
+                                telefone character varying(15) NOT NULL,
+                                username character varying(100) NOT NULL,
+                                codigo_verificacao character varying(512),
+                                email_verificado boolean NOT NULL DEFAULT FALSE
+);
+CREATE SEQUENCE usuario_id_seq
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+CREATE TABLE usuario_permissoes (
+                                           usuario_id bigint NOT NULL,
+                                           permissoes_id bigint NOT NULL
+);
+ALTER TABLE cidade ALTER COLUMN id SET DEFAULT nextval('cidade_id_seq');
+ALTER TABLE compra ALTER COLUMN id SET DEFAULT nextval('compra_id_seq');
+ALTER TABLE compra_item ALTER COLUMN id SET DEFAULT nextval('compra_item_id_seq');
+ALTER TABLE emprestimo ALTER COLUMN id SET DEFAULT nextval('emprestimo_id_seq');
+ALTER TABLE emprestimo_devolucao_item ALTER COLUMN id SET DEFAULT nextval('emprestimo_devolucao_item_id_seq');
+ALTER TABLE emprestimo_item ALTER COLUMN id SET DEFAULT nextval('emprestimo_item_id_seq');
+ALTER TABLE estado ALTER COLUMN id SET DEFAULT nextval('estado_id_seq');
+ALTER TABLE fornecedor ALTER COLUMN id SET DEFAULT nextval('fornecedor_id_seq');
+ALTER TABLE grupo ALTER COLUMN id SET DEFAULT nextval('grupo_id_seq');
+ALTER TABLE item ALTER COLUMN id SET DEFAULT nextval('item_id_seq');
+ALTER TABLE item_image ALTER COLUMN id SET DEFAULT nextval('item_image_id_seq');
+ALTER TABLE pais ALTER COLUMN id SET DEFAULT nextval('pais_id_seq');
+ALTER TABLE permissao ALTER COLUMN id SET DEFAULT nextval('permissao_id_seq');
+ALTER TABLE relatorio ALTER COLUMN id SET DEFAULT nextval('relatorio_id_seq');
+ALTER TABLE relatorio_params ALTER COLUMN id SET DEFAULT nextval('relatorio_params_id_seq');
+ALTER TABLE reserva ALTER COLUMN id SET DEFAULT nextval('reserva_id_seq');
+ALTER TABLE reserva_item ALTER COLUMN id SET DEFAULT nextval('reserva_item_id_seq');
+ALTER TABLE saida ALTER COLUMN id SET DEFAULT nextval('saida_id_seq');
+ALTER TABLE saida_item ALTER COLUMN id SET DEFAULT nextval('saida_item_id_seq');
+ALTER TABLE solicitacao ALTER COLUMN id SET DEFAULT nextval('solicitacao_id_seq');
+ALTER TABLE solicitacao_item ALTER COLUMN id SET DEFAULT nextval('solicitacao_item_id_seq');
+ALTER TABLE usuario ALTER COLUMN id SET DEFAULT nextval('usuario_id_seq');
+
+ALTER TABLE cidade
+    ADD CONSTRAINT cidade_pkey PRIMARY KEY (id);
+ALTER TABLE compra_item
+    ADD CONSTRAINT compra_item_pkey PRIMARY KEY (id);
+ALTER TABLE compra
+    ADD CONSTRAINT compra_pkey PRIMARY KEY (id);
+ALTER TABLE emprestimo_devolucao_item
+    ADD CONSTRAINT emprestimo_devolucao_item_pkey PRIMARY KEY (id);
+ALTER TABLE emprestimo_item
+    ADD CONSTRAINT emprestimo_item_pkey PRIMARY KEY (id);
+ALTER TABLE emprestimo
+    ADD CONSTRAINT emprestimo_pkey PRIMARY KEY (id);
+ALTER TABLE estado
+    ADD CONSTRAINT estado_pkey PRIMARY KEY (id);
+ALTER TABLE fornecedor
+    ADD CONSTRAINT fornecedor_pkey PRIMARY KEY (id);
+ALTER TABLE grupo
+    ADD CONSTRAINT grupo_pkey PRIMARY KEY (id);
+ALTER TABLE item_image
+    ADD CONSTRAINT item_image_pkey PRIMARY KEY (id);
+ALTER TABLE item
+    ADD CONSTRAINT item_pkey PRIMARY KEY (id);
+ALTER TABLE pais
+    ADD CONSTRAINT pais_pkey PRIMARY KEY (id);
+ALTER TABLE permissao
+    ADD CONSTRAINT permissao_pkey PRIMARY KEY (id);
+ALTER TABLE relatorio_params
+    ADD CONSTRAINT relatorio_params_pkey PRIMARY KEY (id);
+ALTER TABLE relatorio
+    ADD CONSTRAINT relatorio_pkey PRIMARY KEY (id);
+ALTER TABLE reserva_item
+    ADD CONSTRAINT reserva_item_pkey PRIMARY KEY (id);
+ALTER TABLE reserva
+    ADD CONSTRAINT reserva_pkey PRIMARY KEY (id);
+ALTER TABLE saida_item
+    ADD CONSTRAINT saida_item_pkey PRIMARY KEY (id);
+ALTER TABLE saida
+    ADD CONSTRAINT saida_pkey PRIMARY KEY (id);
+ALTER TABLE solicitacao_item
+    ADD CONSTRAINT solicitacao_item_pkey PRIMARY KEY (id);
+ALTER TABLE solicitacao
+    ADD CONSTRAINT solicitacao_pkey PRIMARY KEY (id);
+ALTER TABLE usuario
+    ADD CONSTRAINT uk_username UNIQUE (username);
+ALTER TABLE usuario_permissoes
+    ADD CONSTRAINT usuario_permissoes_pkey PRIMARY KEY (usuario_id, permissoes_id);
+ALTER TABLE usuario
+    ADD CONSTRAINT usuario_pkey PRIMARY KEY (id);
+ALTER TABLE reserva_item
+    ADD CONSTRAINT fk_reserva_item_item FOREIGN KEY (item_id) REFERENCES item(id);
+ALTER TABLE compra
+    ADD CONSTRAINT fk_fornecedor FOREIGN KEY (fornecedor_id) REFERENCES fornecedor(id);
+ALTER TABLE emprestimo
+    ADD CONSTRAINT fk_usuario_responsavel FOREIGN KEY (usuario_responsavel_id) REFERENCES usuario(id);
+ALTER TABLE solicitacao_item
+    ADD CONSTRAINT fk_solicitacao_item_item FOREIGN KEY (item_id) REFERENCES item(id);
+ALTER TABLE solicitacao_item
+    ADD CONSTRAINT fk_solicitacao FOREIGN KEY (solicitacao_id) REFERENCES solicitacao(id);
+ALTER TABLE saida_item
+    ADD CONSTRAINT fk_saida FOREIGN KEY (saida_id) REFERENCES saida(id);
+ALTER TABLE emprestimo_devolucao_item
+    ADD CONSTRAINT fk_emprestimo_devolucao_item_item FOREIGN KEY (item_id) REFERENCES item(id);
+ALTER TABLE fornecedor
+    ADD CONSTRAINT fk_fornecedor_estado FOREIGN KEY (estado_id) REFERENCES estado(id);
+ALTER TABLE saida
+    ADD CONSTRAINT fk_saida_usuario FOREIGN KEY (usuario_id) REFERENCES usuario(id);
+ALTER TABLE usuario_permissoes
+    ADD CONSTRAINT fk_usuario_permissoes_usuario FOREIGN KEY (usuario_id) REFERENCES usuario(id);
+ALTER TABLE reserva_item
+    ADD CONSTRAINT fk_reserva FOREIGN KEY (reserva_id) REFERENCES reserva(id);
+ALTER TABLE emprestimo_devolucao_item
+    ADD CONSTRAINT fk_emprestimo_devolucao_item_emprestimo FOREIGN KEY (emprestimo_id) REFERENCES emprestimo(id);
+ALTER TABLE solicitacao
+    ADD CONSTRAINT fk_solicitacao_usuario FOREIGN KEY (usuario_id) REFERENCES usuario(id);
+ALTER TABLE emprestimo_item
+    ADD CONSTRAINT fk_emprestimo_item_item FOREIGN KEY (item_id) REFERENCES item(id);
+ALTER TABLE emprestimo
+    ADD CONSTRAINT fk_emprestimo_usuario_emprestimo FOREIGN KEY (usuario_emprestimo_id) REFERENCES usuario(id);
+ALTER TABLE reserva
+    ADD CONSTRAINT fk_reserva_usuario FOREIGN KEY (usuario_id) REFERENCES usuario(id);
+ALTER TABLE item
+    ADD CONSTRAINT fk_grupo FOREIGN KEY (grupo_id) REFERENCES grupo(id);
+ALTER TABLE compra
+    ADD CONSTRAINT fk_compra_usuario FOREIGN KEY (usuario_id) REFERENCES usuario(id);
+ALTER TABLE cidade
+    ADD CONSTRAINT fk_cidade_estado FOREIGN KEY (estado_id) REFERENCES estado(id);
+ALTER TABLE usuario_permissoes
+    ADD CONSTRAINT fk_permissao FOREIGN KEY (permissoes_id) REFERENCES permissao(id);
+ALTER TABLE compra_item
+    ADD CONSTRAINT fk_compra FOREIGN KEY (compra_id) REFERENCES compra(id);
+ALTER TABLE estado
+    ADD CONSTRAINT fk_pais FOREIGN KEY (pais_id) REFERENCES pais(id);
+ALTER TABLE fornecedor
+    ADD CONSTRAINT fk_cidade FOREIGN KEY (cidade_id) REFERENCES cidade(id);
+ALTER TABLE relatorio_params
+    ADD CONSTRAINT fk_relatorio FOREIGN KEY (relatorio_id) REFERENCES relatorio(id);
+ALTER TABLE emprestimo_item
+    ADD CONSTRAINT fk_emprestimo_item_emprestimo FOREIGN KEY (emprestimo_id) REFERENCES emprestimo(id);
+ALTER TABLE compra_item
+    ADD CONSTRAINT fk_compra_item_item FOREIGN KEY (item_id) REFERENCES item(id);
+ALTER TABLE item_image
+    ADD CONSTRAINT fk_item_image_item FOREIGN KEY (item_id) REFERENCES item(id);
+ALTER TABLE saida_item
+    ADD CONSTRAINT fk_saida_item_item FOREIGN KEY (item_id) REFERENCES item(id);

@@ -5,30 +5,44 @@ import br.com.utfpr.gerenciamento.server.dto.GenericResponse;
 import br.com.utfpr.gerenciamento.server.dto.RecoverPasswordRequestDto;
 import br.com.utfpr.gerenciamento.server.dto.UsuarioResponseDto;
 import br.com.utfpr.gerenciamento.server.model.Usuario;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 
-import java.util.List;
+public interface UsuarioService extends CrudService<Usuario, Long, UsuarioResponseDto> {
 
-public interface UsuarioService extends CrudService<Usuario, Long> {
+  Page<UsuarioResponseDto> usuarioComplete(String query, Pageable pageable);
 
-    List<Usuario> usuarioComplete(String query);
+  /**
+   * Busca usuario por username SEM carregar permissoes (LAZY). Use para operações normais que não
+   * precisam de permissões.
+   */
+  UsuarioResponseDto findByUsername(String username);
 
-    Usuario findByUsername(String username);
+  /**
+   * Busca usuario por username COM permissoes carregadas (para autenticação). Use SOMENTE nos
+   * fluxos de autenticação onde UserDetails.getAuthorities() será chamado.
+   */
+  UsuarioResponseDto findByUsernameForAuthentication(String username);
 
-    List<Usuario> usuarioCompleteByUserAndDocAndNome(String query);
+  Page<UsuarioResponseDto> usuarioCompleteByUserAndDocAndNome(String query, Pageable pageable);
 
-    List<Usuario> usuarioCompleteLab(String query);
+  Page<UsuarioResponseDto> usuarioCompleteLab(String query, Pageable pageable);
 
-    Usuario updateUsuario(Usuario usuario);
+  UsuarioResponseDto updateUsuario(Usuario usuario);
 
-    UsuarioResponseDto convertToDto(Usuario entity);
+  String resendEmail(ConfirmEmailRequestDto confirmEmailRequestDto);
 
-    Usuario convertToEntity(UsuarioResponseDto entityDto);
+  GenericResponse sendEmailCodeRecoverPassword(String email);
 
-    String resendEmail(ConfirmEmailRequestDto confirmEmailRequestDto);
+  GenericResponse confirmEmail(ConfirmEmailRequestDto confirmEmailRequestDto);
 
-    GenericResponse sendEmailCodeRecoverPassword(String email);
+  GenericResponse resetPassword(RecoverPasswordRequestDto recoverPasswordRequestDto);
 
-    GenericResponse confirmEmail(ConfirmEmailRequestDto confirmEmailRequestDto);
+  UsuarioResponseDto updatePassword(Usuario entity, String password);
 
-    GenericResponse resetPassword(RecoverPasswordRequestDto recoverPasswordRequestDto);
+  UsuarioResponseDto saveNewUser(Usuario entity);
+
+  UsuarioResponseDto findByDocumento(String documento);
+
+  boolean hasSolicitacaoNadaConstaPendingOrCompleted(String username);
 }

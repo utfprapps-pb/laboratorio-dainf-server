@@ -1,0 +1,191 @@
+package br.com.utfpr.gerenciamento.server.controller;
+
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+
+import br.com.utfpr.gerenciamento.server.dto.NadaConstaRequestDto;
+import br.com.utfpr.gerenciamento.server.dto.NadaConstaResponseDto;
+import br.com.utfpr.gerenciamento.server.service.NadaConstaService;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.mockito.Mockito;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.http.MediaType;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors;
+import org.springframework.security.test.web.servlet.setup.SecurityMockMvcConfigurers;
+import org.springframework.test.context.ActiveProfiles;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
+import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.test.web.servlet.setup.MockMvcBuilders;
+import org.springframework.web.context.WebApplicationContext;
+
+@SpringBootTest
+@ActiveProfiles("test")
+class NadaConstaControllerTest {
+  @Autowired private WebApplicationContext context;
+  @MockitoBean private NadaConstaService nadaConstaService;
+  @Autowired private ObjectMapper objectMapper;
+  private MockMvc mockMvc;
+
+  @BeforeEach
+  void setup() {
+    mockMvc =
+        MockMvcBuilders.webAppContextSetup(context)
+            .apply(SecurityMockMvcConfigurers.springSecurity())
+            .build();
+  }
+
+  @Test
+  void shouldAllowAdminToSolicitarNadaConsta() throws Exception {
+    NadaConstaRequestDto req = new NadaConstaRequestDto();
+    req.setDocumento("123456");
+    NadaConstaResponseDto resp = new NadaConstaResponseDto();
+    resp.setUsuarioUsername("aluno");
+    Mockito.when(nadaConstaService.solicitarNadaConsta("123456")).thenReturn(resp);
+    mockMvc
+        .perform(
+            post("/nadaconsta/solicitar")
+                .with(
+                    SecurityMockMvcRequestPostProcessors.user("admin")
+                        .authorities(new SimpleGrantedAuthority("ROLE_ADMINISTRADOR")))
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(req)))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.usuarioUsername").value("aluno"));
+  }
+
+  @Test
+  void shouldAllowLaboratoristaToSolicitarNadaConsta() throws Exception {
+    NadaConstaRequestDto req = new NadaConstaRequestDto();
+    req.setDocumento("123456");
+    NadaConstaResponseDto resp = new NadaConstaResponseDto();
+    resp.setUsuarioUsername("aluno");
+    Mockito.when(nadaConstaService.solicitarNadaConsta("123456")).thenReturn(resp);
+    mockMvc
+        .perform(
+            post("/nadaconsta/solicitar")
+                .with(
+                    SecurityMockMvcRequestPostProcessors.user("lab")
+                        .authorities(new SimpleGrantedAuthority("ROLE_LABORATORISTA")))
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(req)))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.usuarioUsername").value("aluno"));
+  }
+
+  @Test
+  void shouldRejectNonPermittedRoleSolicitarNadaConsta() throws Exception {
+    NadaConstaRequestDto req = new NadaConstaRequestDto();
+    req.setDocumento("123456");
+    mockMvc
+        .perform(
+            post("/nadaconsta/solicitar")
+                .with(
+                    SecurityMockMvcRequestPostProcessors.user("user")
+                        .authorities(new SimpleGrantedAuthority("ROLE_ALUNO")))
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(req)))
+        .andExpect(status().isForbidden());
+  }
+
+  @Test
+  void shouldRejectDeleteNadaConsta() throws Exception {
+    mockMvc
+        .perform(
+            org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete(
+                    "/nadaconsta/1")
+                .with(
+                    SecurityMockMvcRequestPostProcessors.user("admin")
+                        .authorities(new SimpleGrantedAuthority("ROLE_ADMINISTRADOR"))))
+        .andExpect(status().isMethodNotAllowed());
+  }
+
+  @Test
+  void shouldInvalidateNadaConstaAndReactivateUser() throws Exception {
+    NadaConstaResponseDto resp = new NadaConstaResponseDto();
+    resp.setUsuarioUsername("aluno");
+    Mockito.when(nadaConstaService.invalidarNadaConsta(10L)).thenReturn(resp);
+    mockMvc
+        .perform(
+            put("/nadaconsta/invalidar/10")
+                .with(
+                    SecurityMockMvcRequestPostProcessors.user("admin")
+                        .authorities(new SimpleGrantedAuthority("ROLE_ADMINISTRADOR"))))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.usuarioUsername").value("aluno"));
+  }
+
+  @Test
+  void shouldVerifyPendenciasAndCompleteNadaConsta() throws Exception {
+    NadaConstaResponseDto resp = new NadaConstaResponseDto();
+    resp.setUsuarioUsername("aluno");
+    Mockito.when(nadaConstaService.verificarPendenciasNadaConsta(12L)).thenReturn(resp);
+    mockMvc
+        .perform(
+            put("/nadaconsta/verificar-pendencias/12")
+                .with(
+                    SecurityMockMvcRequestPostProcessors.user("admin")
+                        .authorities(new SimpleGrantedAuthority("ROLE_ADMINISTRADOR"))))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.usuarioUsername").value("aluno"));
+  }
+
+  @Test
+  void shouldReturnErrorWhenInvalidarNadaConstaWithWrongStatus() throws Exception {
+    Mockito.when(nadaConstaService.invalidarNadaConsta(11L))
+        .thenThrow(
+            new RuntimeException(
+                "Só é possível invalidar Nada Consta emitido (status COMPLETED)."));
+    mockMvc
+        .perform(
+            put("/nadaconsta/invalidar/11")
+                .with(
+                    SecurityMockMvcRequestPostProcessors.user("admin")
+                        .authorities(new SimpleGrantedAuthority("ROLE_ADMINISTRADOR"))))
+        .andExpect(status().isInternalServerError());
+  }
+
+  @Test
+  void shouldReturnErrorWhenVerificarPendenciasWithWrongStatus() throws Exception {
+    Mockito.when(nadaConstaService.verificarPendenciasNadaConsta(13L))
+        .thenThrow(new RuntimeException("Nada Consta não está com status PENDING."));
+    mockMvc
+        .perform(
+            put("/nadaconsta/verificar-pendencias/13")
+                .with(
+                    SecurityMockMvcRequestPostProcessors.user("admin")
+                        .authorities(new SimpleGrantedAuthority("ROLE_ADMINISTRADOR"))))
+        .andExpect(status().isInternalServerError());
+  }
+
+  @Test
+  void shouldReturnOkWhenReenviarNadaConstaSuccess() throws Exception {
+    Long id = 1L;
+    Mockito.when(nadaConstaService.reenviarNadaConsta(id)).thenReturn(true);
+    mockMvc
+        .perform(
+            post("/nadaconsta/{id}/reenvio", id)
+                .with(
+                    SecurityMockMvcRequestPostProcessors.user("admin")
+                        .authorities(new SimpleGrantedAuthority("ROLE_ADMINISTRADOR"))))
+        .andExpect(status().isOk());
+  }
+
+  @Test
+  void shouldReturnNotFoundWhenReenviarNadaConstaFails() throws Exception {
+    Long id = 2L;
+    Mockito.when(nadaConstaService.reenviarNadaConsta(id)).thenReturn(false);
+    mockMvc
+        .perform(
+            post("/nadaconsta/{id}/reenvio", id)
+                .with(
+                    SecurityMockMvcRequestPostProcessors.user("admin")
+                        .authorities(new SimpleGrantedAuthority("ROLE_ADMINISTRADOR"))))
+        .andExpect(status().isNotFound());
+  }
+}

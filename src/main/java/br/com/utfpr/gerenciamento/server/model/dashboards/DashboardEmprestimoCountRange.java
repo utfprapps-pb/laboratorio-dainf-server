@@ -1,16 +1,14 @@
 package br.com.utfpr.gerenciamento.server.model.dashboards;
 
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.NoArgsConstructor;
-
-@Data
-@NoArgsConstructor
-@AllArgsConstructor
-public class DashboardEmprestimoCountRange {
-
-    private Integer total;
-    private Integer emAndamento;
-    private Integer emAtraso;
-    private Integer finalizado;
-}
+/**
+ * DTO para contadores de empréstimos agregados por status.
+ *
+ * <p>Usa Long para evitar overflow em sistemas de longo prazo com muitos registros.
+ *
+ * @param total Total de empréstimos no período
+ * @param emAndamento Empréstimos ativos dentro do prazo
+ * @param emAtraso Empréstimos ativos com prazo vencido
+ * @param finalizado Empréstimos devolvidos
+ */
+public record DashboardEmprestimoCountRange(
+    Long total, Long emAndamento, Long emAtraso, Long finalizado) {}
