@@ -186,13 +186,18 @@
         <dependency>
             <groupId>org.xhtmlrenderer</groupId>
             <artifactId>flying-saucer-pdf</artifactId>
-            <version>9.5.1</version>
+            <version>10.0.4</version>
         </dependency>
         <!-- Fix OGNL version compatibility with Thymeleaf 3.1.x -->
         <dependency>
             <groupId>ognl</groupId>
             <artifactId>ognl</artifactId>
-            <version>3.4.1</version>
+            <version>3.4.8</version>
+        </dependency>
+        <dependency>
+            <groupId>com.github.librepdf</groupId>
+            <artifactId>openpdf</artifactId>
+            <version>3.0.0</version>
         </dependency>
     </dependencies>
 
