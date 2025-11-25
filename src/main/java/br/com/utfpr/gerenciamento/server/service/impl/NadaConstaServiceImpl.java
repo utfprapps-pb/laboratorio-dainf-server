@@ -14,12 +14,7 @@ import br.com.utfpr.gerenciamento.server.service.NadaConstaService;
 import br.com.utfpr.gerenciamento.server.service.SystemConfigService;
 import br.com.utfpr.gerenciamento.server.service.UsuarioService;
 import br.com.utfpr.gerenciamento.server.util.EmailUtils;
-import com.openhtmltopdf.pdfboxout.PdfRendererBuilder;
 import java.io.ByteArrayOutputStream;
-import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
@@ -36,6 +31,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.thymeleaf.TemplateEngine;
 import org.thymeleaf.context.Context;
+import org.xhtmlrenderer.pdf.ITextRenderer;
 
 /**
  * Implementação do serviço de operações relacionadas ao Nada Consta.
@@ -69,7 +65,6 @@ public class NadaConstaServiceImpl extends CrudServiceImpl<NadaConsta, Long, Nad
   private static final String DATA_FORMATADA = "dataFormatada";
   private static final String EMPRESTIMOS = "emprestimos";
   private static final String ITEM_NOME = "itemNome";
-  private static final String FONT_FAMILY_HELVETICA = "font-family: Helvetica, Arial, sans-serif;";
 
   private final NadaConstaRepository nadaConstaRepository;
   private final UsuarioService usuarioService;
@@ -359,38 +354,21 @@ public class NadaConstaServiceImpl extends CrudServiceImpl<NadaConsta, Long, Nad
     String dataFormatada = createdDate.format(formatter);
     String logoUrl = "file:src/main/resources/static/logo-fallback.png";
     try {
-      // Usa o Thymeleaf configurado pelo Spring
       Context context = new Context();
       context.setVariable(NOME_ALUNO, nomeAluno);
       context.setVariable(REGISTRO_ACADEMICO, registroAcademico);
       context.setVariable(DATA_FORMATADA, dataFormatada);
       context.setVariable("logoUrl", logoUrl);
       String html = templateEngine.process("nada-consta-declaracao", context);
-      // Salva o HTML gerado em um arquivo temporário
-      Path tempHtmlPath = Files.createTempFile("nada-consta", ".html");
-      Files.writeString(tempHtmlPath, html, StandardCharsets.UTF_8);
-      String htmlFileUri = tempHtmlPath.toUri().toString();
       try (ByteArrayOutputStream baos = new ByteArrayOutputStream()) {
-        PdfRendererBuilder builder = new PdfRendererBuilder();
-        builder.withUri(htmlFileUri);
-        builder.toStream(baos);
-        builder.run();
+        ITextRenderer renderer = new ITextRenderer();
+        renderer.setDocumentFromString(html);
+        renderer.layout();
+        renderer.createPDF(baos);
         return baos.toByteArray();
-      } finally {
-        // Remove o arquivo temporário
-        java.nio.file.Files.deleteIfExists(tempHtmlPath);
       }
     } catch (Exception e) {
       throw new NadaConstaException("Erro ao gerar PDF: " + e.getMessage());
-    }
-  }
-
-  /** Salva o HTML gerado em um arquivo temporário para debug. */
-  private void salvarHtmlTemporario(String html) {
-    try {
-      Files.writeString(Paths.get("temp-nada-consta.html"), html, StandardCharsets.UTF_8);
-    } catch (Exception e) {
-      log.warn("Não foi possível salvar o HTML temporário: {}", e.getMessage());
     }
   }
 }

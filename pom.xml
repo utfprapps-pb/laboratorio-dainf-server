@@ -184,9 +184,9 @@
             <version>3.0.2</version>
         </dependency>
         <dependency>
-            <groupId>com.openhtmltopdf</groupId>
-            <artifactId>openhtmltopdf-pdfbox</artifactId>
-            <version>1.0.10</version>
+            <groupId>org.xhtmlrenderer</groupId>
+            <artifactId>flying-saucer-pdf</artifactId>
+            <version>9.5.1</version>
         </dependency>
         <!-- Fix OGNL version compatibility with Thymeleaf 3.1.x -->
         <dependency>
