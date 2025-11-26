@@ -155,7 +155,8 @@ class FornecedorServiceImplTest {
     String query = "teste";
     Pageable pageable = PageRequest.of(0, 10);
     Page<Fornecedor> page = new PageImpl<>(fornecedores, pageable, fornecedores.size());
-    when(fornecedorRepository.findByNomeFantasiaLikeIgnoreCaseOrRazaoSocialLikeIgnoreCase(eq(query), any(Pageable.class)))
+    when(fornecedorRepository.findByNomeFantasiaLikeIgnoreCaseOrRazaoSocialLikeIgnoreCase(
+            eq(query), any(Pageable.class)))
         .thenReturn(page);
 
     // When
@@ -164,7 +165,9 @@ class FornecedorServiceImplTest {
     // Then
     assertNotNull(result);
     assertEquals(2, result.size());
-    verify(fornecedorRepository).findByNomeFantasiaLikeIgnoreCaseOrRazaoSocialLikeIgnoreCase(eq(query), any(Pageable.class));
+    verify(fornecedorRepository)
+        .findByNomeFantasiaLikeIgnoreCaseOrRazaoSocialLikeIgnoreCase(
+            eq(query), any(Pageable.class));
     verify(fornecedorRepository, never()).findAll();
   }
 
@@ -181,7 +184,9 @@ class FornecedorServiceImplTest {
     assertNotNull(result);
     assertEquals(2, result.size());
     verify(fornecedorRepository).findAll();
-    verify(fornecedorRepository, never()).findByNomeFantasiaLikeIgnoreCaseOrRazaoSocialLikeIgnoreCase(anyString(), any(Pageable.class));
+    verify(fornecedorRepository, never())
+        .findByNomeFantasiaLikeIgnoreCaseOrRazaoSocialLikeIgnoreCase(
+            anyString(), any(Pageable.class));
   }
 
   @Test

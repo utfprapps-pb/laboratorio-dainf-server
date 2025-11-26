@@ -94,4 +94,7 @@ public interface EmprestimoRepository
       })
   @Query("SELECT e FROM Emprestimo e WHERE e.id = :id")
   Optional<Emprestimo> findEmprestimoByIdWithRelations(@Param("id") Long id);
+
+  @Query("SELECT DISTINCT e FROM Emprestimo e JOIN e.emprestimoItem ei WHERE ei.item.id = :itemId")
+  List<Emprestimo> findAllByItemId(@Param("itemId") Long itemId);
 }
