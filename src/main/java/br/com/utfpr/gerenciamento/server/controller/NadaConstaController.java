@@ -2,6 +2,7 @@ package br.com.utfpr.gerenciamento.server.controller;
 
 import br.com.utfpr.gerenciamento.server.dto.NadaConstaRequestDto;
 import br.com.utfpr.gerenciamento.server.dto.NadaConstaResponseDto;
+import br.com.utfpr.gerenciamento.server.exception.NadaConstaException;
 import br.com.utfpr.gerenciamento.server.model.NadaConsta;
 import br.com.utfpr.gerenciamento.server.service.CrudService;
 import br.com.utfpr.gerenciamento.server.service.NadaConstaService;
@@ -114,6 +115,24 @@ public class NadaConstaController extends CrudController<NadaConsta, Long, NadaC
     if (enviado) {
       return ResponseEntity.ok().build();
     } else {
+      return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
+    }
+  }
+
+  /**
+   * Retorna o PDF da declaração Nada Consta emitida.
+   *
+   * @param id Identificador da solicitação de Nada Consta
+   * @return PDF em bytes
+   */
+  @GetMapping(value = "/{id}/pdf", produces = "application/pdf")
+  public ResponseEntity<byte[]> getNadaConstaPdf(@PathVariable("id") Long id) {
+    try {
+      byte[] pdf = nadaConstaService.gerarNadaConstaPdf(id);
+      return ResponseEntity.ok()
+          .header("Content-Disposition", "attachment; filename=nada-consta.pdf")
+          .body(pdf);
+    } catch (NadaConstaException e) {
       return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
     }
   }

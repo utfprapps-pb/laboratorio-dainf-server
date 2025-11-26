@@ -58,4 +58,12 @@ public interface NadaConstaService extends CrudService<NadaConsta, Long, NadaCon
    * @return true se o reenvio foi realizado com sucesso
    */
   boolean reenviarNadaConsta(Long id);
+
+  /**
+   * Gera o PDF da declaração Nada Consta utilizando os dados originais de emissão.
+   *
+   * @param id Identificador da solicitação de Nada Consta
+   * @return PDF em bytes
+   */
+  byte[] gerarNadaConstaPdf(Long id);
 }
