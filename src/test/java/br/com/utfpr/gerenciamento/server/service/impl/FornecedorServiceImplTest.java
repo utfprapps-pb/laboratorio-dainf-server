@@ -153,8 +153,10 @@ class FornecedorServiceImplTest {
   void testCompleteFornecedor_WithQuery() {
     // Given
     String query = "teste";
-    when(fornecedorRepository.findByNomeFantasiaLikeIgnoreCaseOrRazaoSocialLikeIgnoreCase("%" + query + "%"))
-        .thenReturn(fornecedores);
+    Pageable pageable = PageRequest.of(0, 10);
+    Page<Fornecedor> page = new PageImpl<>(fornecedores, pageable, fornecedores.size());
+    when(fornecedorRepository.findByNomeFantasiaLikeIgnoreCaseOrRazaoSocialLikeIgnoreCase(eq(query), any(Pageable.class)))
+        .thenReturn(page);
 
     // When
     List<Fornecedor> result = fornecedorService.completeFornecedor(query);
@@ -162,7 +164,7 @@ class FornecedorServiceImplTest {
     // Then
     assertNotNull(result);
     assertEquals(2, result.size());
-    verify(fornecedorRepository).findByNomeFantasiaLikeIgnoreCaseOrRazaoSocialLikeIgnoreCase("%" + query + "%");
+    verify(fornecedorRepository).findByNomeFantasiaLikeIgnoreCaseOrRazaoSocialLikeIgnoreCase(eq(query), any(Pageable.class));
     verify(fornecedorRepository, never()).findAll();
   }
 
@@ -179,7 +181,7 @@ class FornecedorServiceImplTest {
     assertNotNull(result);
     assertEquals(2, result.size());
     verify(fornecedorRepository).findAll();
-    verify(fornecedorRepository, never()).findByNomeFantasiaLikeIgnoreCaseOrRazaoSocialLikeIgnoreCase(anyString());
+    verify(fornecedorRepository, never()).findByNomeFantasiaLikeIgnoreCaseOrRazaoSocialLikeIgnoreCase(anyString(), any(Pageable.class));
   }
 
   @Test
