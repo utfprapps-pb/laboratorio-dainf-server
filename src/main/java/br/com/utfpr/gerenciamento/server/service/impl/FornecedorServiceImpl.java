@@ -6,9 +6,12 @@ import br.com.utfpr.gerenciamento.server.repository.FornecedorRepository;
 import br.com.utfpr.gerenciamento.server.service.FornecedorService;
 import java.util.List;
 import org.modelmapper.ModelMapper;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.StringUtils;
 
 @Service
 public class FornecedorServiceImpl extends CrudServiceImpl<Fornecedor, Long, FornecedorResponseDto>
@@ -41,10 +44,10 @@ public class FornecedorServiceImpl extends CrudServiceImpl<Fornecedor, Long, For
   @Override
   @Transactional(readOnly = true)
   public List<Fornecedor> completeFornecedor(String query) {
-    if ("".equalsIgnoreCase(query)) {
+    if (!StringUtils.hasText(query)) {
       return fornecedorRepository.findAll();
     } else {
-      return fornecedorRepository.findByNomeFantasiaLikeIgnoreCase("%" + query + "%");
+      return fornecedorRepository.findByNomeFantasiaLikeIgnoreCaseOrRazaoSocialLikeIgnoreCase(query, PageRequest.of(0, 10)).getContent();
     }
   }
 }
