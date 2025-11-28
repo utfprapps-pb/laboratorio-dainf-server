@@ -114,7 +114,7 @@ public class WebSecurity {
                     .requestMatchers(HttpMethod.DELETE, EMPRESTIMO)
                     .hasAnyRole(ROLE_LABORATORISTA_NAME, ROLE_ADMINISTRADOR_NAME)
                     .requestMatchers(HttpMethod.GET, EMPRESTIMO_FIND_ALL_BY_USERNAME)
-                    .authenticated()
+                    .hasAnyRole(ROLE_LABORATORISTA_NAME, ROLE_ADMINISTRADOR_NAME)
 
                     // Nada Consta - solicitar requer LABORATORISTA ou ADMINISTRADOR
                     .requestMatchers(HttpMethod.POST, NADACONSTA_SOLICITAR)

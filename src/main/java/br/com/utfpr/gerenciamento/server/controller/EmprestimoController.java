@@ -1,6 +1,8 @@
 package br.com.utfpr.gerenciamento.server.controller;
 
+import static br.com.utfpr.gerenciamento.server.enumeration.UserRole.ROLE_ADMINISTRADOR_NAME;
 import static br.com.utfpr.gerenciamento.server.enumeration.UserRole.ROLE_ALUNO_NAME;
+import static br.com.utfpr.gerenciamento.server.enumeration.UserRole.ROLE_LABORATORISTA_NAME;
 import static br.com.utfpr.gerenciamento.server.enumeration.UserRole.ROLE_PROFESSOR_NAME;
 
 import br.com.utfpr.gerenciamento.server.dto.EmprestimoResponseDto;
@@ -16,6 +18,7 @@ import java.util.List;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -129,6 +132,12 @@ public class EmprestimoController extends CrudController<Emprestimo, Long, Empre
    * @return Lista de empréstimos do usuário especificado
    */
   @GetMapping("find-all-by-username/{username}")
+  @PreAuthorize(
+      "authentication.name == #username || hasAnyRole('"
+          + ROLE_LABORATORISTA_NAME
+          + "', '"
+          + ROLE_ADMINISTRADOR_NAME
+          + "')")
   public List<EmprestimoResponseDto> findAllByUsuarioEmprestimo(
       @PathVariable("username") String username) {
     return emprestimoService.findAllUsuarioEmprestimo(username);
