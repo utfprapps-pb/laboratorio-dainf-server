@@ -46,7 +46,8 @@ class RoleBasedFilterIntegrationTest {
   @ParameterizedTest
   @ValueSource(strings = {"ALUNO", "PROFESSOR"})
   @WithMockUser
-  void emprestimoFindAll_comRolesLimitados_deveRetornarApenasEmprestimosDoUsuario(String role) throws Exception {
+  void emprestimoFindAll_comRolesLimitados_deveRetornarApenasEmprestimosDoUsuario(String role)
+      throws Exception {
     // Act & Assert
     mockMvc
         .perform(get("/emprestimo"))
@@ -57,7 +58,8 @@ class RoleBasedFilterIntegrationTest {
   @ParameterizedTest
   @ValueSource(strings = {"ADMINISTRADOR", "LABORATORISTA"})
   @WithMockUser
-  void emprestimoFindAll_comRolesAcessoTotal_deveRetornarTodosEmprestimos(String role) throws Exception {
+  void emprestimoFindAll_comRolesAcessoTotal_deveRetornarTodosEmprestimos(String role)
+      throws Exception {
     // Act & Assert
     mockMvc
         .perform(get("/emprestimo"))
@@ -68,7 +70,8 @@ class RoleBasedFilterIntegrationTest {
   @ParameterizedTest
   @ValueSource(strings = {"aluno@utfpr.edu.br", "professor@utfpr.edu.br"})
   @WithMockUser
-  void emprestimoFilter_comRolesLimitados_deveAdicionarUsuarioAutenticado(String username) throws Exception {
+  void emprestimoFilter_comRolesLimitados_deveAdicionarUsuarioAutenticado(String username)
+      throws Exception {
     // Arrange
     String filtroJson = "{}";
 
@@ -97,7 +100,8 @@ class RoleBasedFilterIntegrationTest {
   @ParameterizedTest
   @ValueSource(strings = {"ALUNO", "PROFESSOR"})
   @WithMockUser
-  void reservaFindAll_comRolesLimitados_deveRetornarApenasReservasDoUsuario(String role) throws Exception {
+  void reservaFindAll_comRolesLimitados_deveRetornarApenasReservasDoUsuario(String role)
+      throws Exception {
     // Act & Assert
     mockMvc
         .perform(get("/reserva"))
@@ -119,7 +123,8 @@ class RoleBasedFilterIntegrationTest {
   @ParameterizedTest
   @ValueSource(strings = {"aluno@utfpr.edu.br", "professor@utfpr.edu.br"})
   @WithMockUser
-  void reservaFindAllPaged_comRolesLimitados_deveAplicarFiltroUsuario(String username) throws Exception {
+  void reservaFindAllPaged_comRolesLimitados_deveAplicarFiltroUsuario(String username)
+      throws Exception {
     // Act & Assert
     mockMvc
         .perform(get("/reserva/page").param("page", "0").param("size", "10"))
@@ -130,17 +135,15 @@ class RoleBasedFilterIntegrationTest {
   @ParameterizedTest
   @ValueSource(strings = {"aluno@utfpr.edu.br", "professor@utfpr.edu.br"})
   @WithMockUser
-  void reservaFindAllPaged_comRolesLimitadosEFilter_deveCombinarFiltros(String username) throws Exception {
+  void reservaFindAllPaged_comRolesLimitadosEFilter_deveCombinarFiltros(String username)
+      throws Exception {
     // Arrange
     String filter = username.contains("aluno") ? "item.nome:Laptop" : "dataReserva:27/10/2025";
-    
+
     // Act & Assert
     mockMvc
         .perform(
-            get("/reserva/page")
-                .param("page", "0")
-                .param("size", "10")
-                .param("filter", filter))
+            get("/reserva/page").param("page", "0").param("size", "10").param("filter", filter))
         .andExpect(status().isOk())
         .andExpect(content().contentType(MediaType.APPLICATION_JSON));
   }
@@ -148,7 +151,8 @@ class RoleBasedFilterIntegrationTest {
   @ParameterizedTest
   @ValueSource(strings = {"ADMINISTRADOR", "LABORATORISTA"})
   @WithMockUser
-  void reservaFindAllPaged_comRolesAcessoTotal_deveUsarFiltroOriginal(String role) throws Exception {
+  void reservaFindAllPaged_comRolesAcessoTotal_deveUsarFiltroOriginal(String role)
+      throws Exception {
     // Act & Assert
     mockMvc
         .perform(
@@ -175,7 +179,8 @@ class RoleBasedFilterIntegrationTest {
   @ParameterizedTest
   @ValueSource(strings = {"ADMINISTRADOR", "LABORATORISTA"})
   @WithMockUser
-  void reservaFindAllByIdItem_comRolesAcessoTotal_deveRetornarReservasDoItem(String role) throws Exception {
+  void reservaFindAllByIdItem_comRolesAcessoTotal_deveRetornarReservasDoItem(String role)
+      throws Exception {
     // Act & Assert
     mockMvc
         .perform(get("/reserva/find-all-by-item/{idItem}", 1L))

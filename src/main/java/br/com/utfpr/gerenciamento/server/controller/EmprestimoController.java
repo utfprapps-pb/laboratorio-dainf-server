@@ -151,37 +151,6 @@ public class EmprestimoController extends CrudController<Emprestimo, Long, Empre
   }
 
   /**
-   * Paginação otimizada de empréstimos com JOIN FETCH e cache.
-   *
-   * <p><b>Associações fetched via:</b>
-   *
-   * <ul>
-   *   <li>{@code usuarioEmprestimo} - Usuário que fez o empréstimo (LEFT JOIN FETCH)
-   *   <li>{@code usuarioEmprestimo.permissoes} - Permissões do usuário empréstimo (LEFT JOIN FETCH)
-   *   <li>{@code usuarioResponsavel} - Usuário responsável pela liberação (LEFT JOIN FETCH)
-   *   <li>{@code usuarioResponsavel.permissoes} - Permissões do responsável (LEFT JOIN FETCH)
-   *   <li>{@code emprestimoItem} - Itens do empréstimo (LEFT JOIN FETCH)
-   * </ul>
-   *
-   * <p><b>NÃO fetched:</b> {@code emprestimoDevolucaoItem} (usa @BatchSize para evitar
-   * MultipleBagFetchException)
-   *
-   * <p><b>Cache:</b> 5 minutos TTL com cache key estável (filter + pageable), resolvendo problema
-   * de Specification com equals/hashCode instável.
-   *
-   * <p>Esta estratégia previne N+1 queries mantendo performance ideal com DISTINCT e evitando
-   * cartesian product ao fetch apenas uma collection @OneToMany.
-   *
-   * <p>TODO: Padronizar demais findAllPaged depois
-   *
-   * @param page Número da página (0-indexed)
-   * @param size Tamanho da página
-   * @param filter Filtro opcional (busca textual em todos os campos)
-   * @param order Campo de ordenação (padrão: "id")
-   * @param asc Direção da ordenação (true = ASC, false = DESC, padrão: ASC)
-   * @return Página de entidades {@link Emprestimo} otimizada com associações carregadas e cache
-   */
-  /**
    * Lista paginada de empréstimos com filtro textual.
    *
    * <p>Alunos e professores veem apenas seus próprios empréstimos. Administradores e laboratoristas

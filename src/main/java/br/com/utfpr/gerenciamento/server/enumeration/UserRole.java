@@ -1,5 +1,7 @@
 package br.com.utfpr.gerenciamento.server.enumeration;
 
+import lombok.Getter;
+
 /**
  * Enum representando as roles (permissões) de usuário no sistema.
  *
@@ -7,6 +9,7 @@ package br.com.utfpr.gerenciamento.server.enumeration;
  * automaticamente adiciona o prefixo "ROLE_" ao verificar permissões, mas o valor armazenado no
  * banco de dados já inclui esse prefixo.
  */
+@Getter
 public enum UserRole {
   /** Administrador do sistema - acesso total */
   ADMINISTRADOR("ROLE_ADMINISTRADOR"),
@@ -33,57 +36,5 @@ public enum UserRole {
 
   UserRole(String authority) {
     this.authority = authority;
-  }
-
-  /**
-   * Retorna o nome da authority como armazenado no banco de dados.
-   *
-   * @return String com prefixo "ROLE_" (ex: "ROLE_ADMINISTRADOR")
-   */
-  public String getAuthority() {
-    return authority;
-  }
-
-  /**
-   * Retorna o nome da role SEM o prefixo "ROLE_" para uso com Spring Security annotations.
-   *
-   * <p>Spring Security automaticamente adiciona "ROLE_" ao verificar com hasRole() ou hasAnyRole().
-   *
-   * @return String sem prefixo "ROLE_" (ex: "ADMINISTRADOR")
-   */
-  public String getRoleName() {
-    return authority.substring(5); // Remove "ROLE_" prefix
-  }
-
-  /**
-   * Retorna array de role names para uso em hasAnyRole().
-   *
-   * @param roles varargs de UserRole
-   * @return array de Strings sem prefixo "ROLE_"
-   */
-  public static String[] toRoleNames(UserRole... roles) {
-    String[] names = new String[roles.length];
-    for (int i = 0; i < roles.length; i++) {
-      names[i] = roles[i].getRoleName();
-    }
-    return names;
-  }
-
-  /**
-   * Encontra o enum UserRole correspondente a uma authority string.
-   *
-   * <p>Útil para converter valores do banco de dados de volta para enum.
-   *
-   * @param authority String com prefixo "ROLE_" (ex: "ROLE_ADMINISTRADOR")
-   * @return UserRole correspondente
-   * @throws IllegalArgumentException se a authority não for reconhecida
-   */
-  public static UserRole fromAuthority(String authority) {
-    for (UserRole role : values()) {
-      if (role.authority.equals(authority)) {
-        return role;
-      }
-    }
-    throw new IllegalArgumentException("Role desconhecida: " + authority);
   }
 }
