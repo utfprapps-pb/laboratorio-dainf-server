@@ -13,8 +13,8 @@ import br.com.utfpr.gerenciamento.server.model.filter.EmprestimoFilter;
 import br.com.utfpr.gerenciamento.server.service.EmprestimoService;
 import br.com.utfpr.gerenciamento.server.service.UsuarioService;
 import br.com.utfpr.gerenciamento.server.util.SecurityUtils;
-import java.util.List;
 import java.util.Collections;
+import java.util.List;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -50,7 +50,7 @@ class EmprestimoControllerTest {
 
   @BeforeEach
   void setUp() {
-      mockMvc = MockMvcBuilders.standaloneSetup(emprestimoController).build();
+    mockMvc = MockMvcBuilders.standaloneSetup(emprestimoController).build();
     emprestimoFilter = new EmprestimoFilter();
 
     // Setup usuário aluno
@@ -383,39 +383,39 @@ class EmprestimoControllerTest {
     }
   }
 
-    @Test
-    void testFindByItemId_DeveRetornarListaVaziaQuandoNenhumEmprestimoEncontrado() throws Exception {
-        // Given
-        Long itemId = 999L;
+  @Test
+  void testFindByItemId_DeveRetornarListaVaziaQuandoNenhumEmprestimoEncontrado() throws Exception {
+    // Given
+    Long itemId = 999L;
 
-        when(emprestimoService.findAllByItemId(itemId)).thenReturn(Collections.emptyList());
+    when(emprestimoService.findAllByItemId(itemId)).thenReturn(Collections.emptyList());
 
-        // When & Then
-        mockMvc
-                .perform(
-                        get("/emprestimo/find-by-item/{itemId}", itemId).accept(MediaType.APPLICATION_JSON))
-                .andExpect(status().isOk())
-                .andExpect(content().contentType(MediaType.APPLICATION_JSON))
-                .andExpect(jsonPath("$").isArray())
-                .andExpect(jsonPath("$").isEmpty());
-    }
+    // When & Then
+    mockMvc
+        .perform(
+            get("/emprestimo/find-by-item/{itemId}", itemId).accept(MediaType.APPLICATION_JSON))
+        .andExpect(status().isOk())
+        .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+        .andExpect(jsonPath("$").isArray())
+        .andExpect(jsonPath("$").isEmpty());
+  }
 
-    @Test
-    void testFindByItemId_DeveRetornarListaDeEmprestimos() throws Exception {
-        // Given
-        Long itemId = 1L;
-        EmprestimoResponseDto emprestimoDto = new EmprestimoResponseDto();
-        emprestimoDto.setId(1L);
+  @Test
+  void testFindByItemId_DeveRetornarListaDeEmprestimos() throws Exception {
+    // Given
+    Long itemId = 1L;
+    EmprestimoResponseDto emprestimoDto = new EmprestimoResponseDto();
+    emprestimoDto.setId(1L);
 
-        when(emprestimoService.findAllByItemId(itemId))
-                .thenReturn(Collections.singletonList(emprestimoDto));
+    when(emprestimoService.findAllByItemId(itemId))
+        .thenReturn(Collections.singletonList(emprestimoDto));
 
-        // When & Then
-        mockMvc
-                .perform(
-                        get("/emprestimo/find-by-item/{itemId}", itemId).accept(MediaType.APPLICATION_JSON))
-                .andExpect(status().isOk())
-                .andExpect(content().contentType(MediaType.APPLICATION_JSON))
-                .andExpect(jsonPath("$[0].id").value(1L));
-    }
+    // When & Then
+    mockMvc
+        .perform(
+            get("/emprestimo/find-by-item/{itemId}", itemId).accept(MediaType.APPLICATION_JSON))
+        .andExpect(status().isOk())
+        .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+        .andExpect(jsonPath("$[0].id").value(1L));
+  }
 }

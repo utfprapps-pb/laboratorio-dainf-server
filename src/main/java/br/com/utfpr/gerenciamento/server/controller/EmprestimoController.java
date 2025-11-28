@@ -175,14 +175,14 @@ public class EmprestimoController extends CrudController<Emprestimo, Long, Empre
     emprestimoService.changePrazoDevolucao(id, DateUtil.parseStringToLocalDate(novaData));
   }
 
-    @PreAuthorize(
-            "hasAnyAuthority('" + ROLE_LABORATORISTA_NAME + "', '" + ROLE_ADMINISTRADOR_NAME + "')")
-    @GetMapping("find-by-item/{itemId}")
-    public List<EmprestimoResponseDto> findByItemId(@PathVariable("itemId") Long itemId) {
-        return emprestimoService.findAllByItemId(itemId);
-    }
+  @PreAuthorize(
+      "hasAnyAuthority('" + ROLE_LABORATORISTA_NAME + "', '" + ROLE_ADMINISTRADOR_NAME + "')")
+  @GetMapping("find-by-item/{itemId}")
+  public List<EmprestimoResponseDto> findByItemId(@PathVariable("itemId") Long itemId) {
+    return emprestimoService.findAllByItemId(itemId);
+  }
 
-    /**
+  /**
    * Lista paginada de empréstimos com filtro textual.
    *
    * <p>Alunos e professores veem apenas seus próprios empréstimos. Administradores e laboratoristas

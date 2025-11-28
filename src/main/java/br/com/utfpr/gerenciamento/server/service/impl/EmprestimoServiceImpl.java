@@ -345,9 +345,7 @@ public class EmprestimoServiceImpl extends CrudServiceImpl<Emprestimo, Long, Emp
   @Override
   @Transactional(readOnly = true)
   public List<EmprestimoResponseDto> findAllByItemId(Long itemId) {
-    return emprestimoRepository.findAllByItemId(itemId).stream()
-        .map(emprestimo -> toDto(emprestimo))
-        .collect(Collectors.toList());
+    return emprestimoRepository.findAllByItemId(itemId).stream().map(this::toDto).toList();
   }
 
   @Override
