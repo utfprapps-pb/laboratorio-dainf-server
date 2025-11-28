@@ -1,9 +1,9 @@
 package br.com.utfpr.gerenciamento.server.controller;
 
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.*;
 import static org.springframework.security.test.web.servlet.setup.SecurityMockMvcConfigurers.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
-import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.*;
 
 import br.com.utfpr.gerenciamento.server.repository.UsuarioRepository;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -76,7 +76,9 @@ class RoleBasedFilterIntegrationTest {
     // Act & Assert
     mockMvc
         .perform(
-            post("/emprestimo/filter").contentType(MediaType.APPLICATION_JSON).content(filtroJson)
+            post("/emprestimo/filter")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(filtroJson)
                 .with(user(username)))
         .andExpect(status().isOk())
         .andExpect(content().contentType(MediaType.APPLICATION_JSON));

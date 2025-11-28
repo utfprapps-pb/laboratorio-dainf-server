@@ -35,7 +35,6 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
-import java.util.stream.Collectors;
 import lombok.extern.slf4j.Slf4j;
 import org.modelmapper.ModelMapper;
 import org.springframework.cache.annotation.CacheEvict;
@@ -141,11 +140,11 @@ public class EmprestimoServiceImpl extends CrudServiceImpl<Emprestimo, Long, Emp
     return self.findAllSpecification(spec, pageable);
   }
 
-/**
+  /**
    * Busca paginada com filtro textual para usuário específico.
    *
-   * <p>Combina filtro textual com filtro de usuário de forma segura usando Specification,
-   * evitando injeção de filtro por concatenação de strings.
+   * <p>Combina filtro textual com filtro de usuário de forma segura usando Specification, evitando
+   * injeção de filtro por concatenação de strings.
    *
    * @param textFilter Filtro textual opcional
    * @param pageable Configuração de paginação
@@ -156,8 +155,7 @@ public class EmprestimoServiceImpl extends CrudServiceImpl<Emprestimo, Long, Emp
   @Cacheable(
       value = "emprestimos-page-user",
       key = "T(java.util.Objects).hash(#textFilter, #pageable.toString(), #username)",
-      unless = "#result == null || #result.isEmpty()"
-  )
+      unless = "#result == null || #result.isEmpty()")
   @Transactional(readOnly = true)
   public Page<EmprestimoResponseDto> findAllPagedByUserWithTextFilter(
       String textFilter, Pageable pageable, String username) {
@@ -322,9 +320,7 @@ public class EmprestimoServiceImpl extends CrudServiceImpl<Emprestimo, Long, Emp
     // OTIMIZAÇÃO: Usa Specification com JOIN FETCH ao invés de JDBC manual
     // Elimina N+1 queries: 200+ queries → 1 query (melhoria de 90-95%)
     Specification<Emprestimo> spec = EmprestimoSpecifications.fromFilter(emprestimoFilter);
-    return emprestimoRepository.findAll(spec, Sort.by("id")).stream()
-        .map(this::toDto)
-            .toList();
+    return emprestimoRepository.findAll(spec, Sort.by("id")).stream().map(this::toDto).toList();
   }
 
   @Override
@@ -333,7 +329,7 @@ public class EmprestimoServiceImpl extends CrudServiceImpl<Emprestimo, Long, Emp
     Usuario usuario = usuarioService.toEntity(usuarioService.findByUsername(username));
     return emprestimoRepository.findAllByUsuarioEmprestimo(usuario).stream()
         .map(this::toDto)
-            .toList();
+        .toList();
   }
 
   @Override
@@ -341,7 +337,7 @@ public class EmprestimoServiceImpl extends CrudServiceImpl<Emprestimo, Long, Emp
   public List<EmprestimoResponseDto> findAllEmprestimosAbertos() {
     return emprestimoRepository.findAllByDataDevolucaoIsNullOrderById().stream()
         .map(this::toDto)
-            .toList();
+        .toList();
   }
 
   @Override
@@ -353,7 +349,7 @@ public class EmprestimoServiceImpl extends CrudServiceImpl<Emprestimo, Long, Emp
     }
     return emprestimoRepository.findAllByUsuarioEmprestimoAndDataDevolucaoIsNull(usuario).stream()
         .map(this::toDto)
-            .toList();
+        .toList();
   }
 
   @Override

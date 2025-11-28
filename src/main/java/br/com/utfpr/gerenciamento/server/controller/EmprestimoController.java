@@ -111,7 +111,7 @@ public class EmprestimoController extends CrudController<Emprestimo, Long, Empre
     List<String> userRoles = SecurityUtils.getAuthenticatedUserRoles();
 
     if (userRoles.contains(PREFIXO_ROLE + ROLE_ALUNO_NAME)
-            || userRoles.contains(PREFIXO_ROLE + ROLE_PROFESSOR_NAME)) {
+        || userRoles.contains(PREFIXO_ROLE + ROLE_PROFESSOR_NAME)) {
       Usuario usuario = usuarioService.toEntity(usuarioService.findByUsername(username));
       emprestimoFilter.setUsuarioEmprestimo(usuario);
     }

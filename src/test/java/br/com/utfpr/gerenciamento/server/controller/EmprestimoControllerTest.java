@@ -233,7 +233,7 @@ class EmprestimoControllerTest {
     }
   }
 
-@Test
+  @Test
   void filter_comRoleAlunoEUsuarioDiferenteNoFiltro_deveSubstituirPeloUsuarioAutenticado() {
     try (MockedStatic<SecurityUtils> securityUtils = mockStatic(SecurityUtils.class)) {
       // Arrange
@@ -273,7 +273,9 @@ class EmprestimoControllerTest {
       usuarioDiferente.setUsername("outro@utfpr.edu.br");
       emprestimoFilter.setUsuarioEmprestimo(usuarioDiferente);
 
-      securityUtils.when(SecurityUtils::getAuthenticatedUsername).thenReturn("professor@utfpr.edu.br");
+      securityUtils
+          .when(SecurityUtils::getAuthenticatedUsername)
+          .thenReturn("professor@utfpr.edu.br");
       securityUtils
           .when(SecurityUtils::getAuthenticatedUserRoles)
           .thenReturn(List.of("ROLE_PROFESSOR"));
