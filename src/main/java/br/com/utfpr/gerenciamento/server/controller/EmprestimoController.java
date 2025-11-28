@@ -21,6 +21,23 @@ import org.springframework.data.domain.Sort;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
+/**
+ * Controller responsável pelos endpoints de Empréstimo.
+ *
+ * <p>Endpoints disponíveis:
+ *
+ * <ul>
+ *   <li>GET /emprestimo - Lista empréstimos abertos
+ *   <li>GET /emprestimo/{id} - Busca empréstimo por ID
+ *   <li>POST /emprestimo/save-emprestimo - Salva novo empréstimo
+ *   <li>POST /emprestimo/save-devolucao - Salva devolução
+ *   <li>POST /emprestimo/filter - Filtra empréstimos
+ *   <li>GET /emprestimo/find-all-by-username/{username} - Busca empréstimos por usuário
+ *   <li>GET /emprestimo/find-by-item/{itemId} - Busca empréstimos por item
+ *   <li>GET /emprestimo/change-prazo-devolucao - Altera prazo de devolução
+ *   <li>GET /emprestimo/page - Paginação de empréstimos
+ * </ul>
+ */
 @RestController
 @RequestMapping("emprestimo")
 public class EmprestimoController extends CrudController<Emprestimo, Long, EmprestimoResponseDto> {
@@ -156,6 +173,13 @@ public class EmprestimoController extends CrudController<Emprestimo, Long, Empre
   public void changePrazoDevolucao(
       @RequestParam("id") Long id, @RequestParam("novaData") String novaData) {
     emprestimoService.changePrazoDevolucao(id, DateUtil.parseStringToLocalDate(novaData));
+  }
+
+  @PreAuthorize(
+      "hasAnyAuthority('" + ROLE_LABORATORISTA_NAME + "', '" + ROLE_ADMINISTRADOR_NAME + "')")
+  @GetMapping("find-by-item/{itemId}")
+  public List<EmprestimoResponseDto> findByItemId(@PathVariable("itemId") Long itemId) {
+    return emprestimoService.findAllByItemId(itemId);
   }
 
   /**

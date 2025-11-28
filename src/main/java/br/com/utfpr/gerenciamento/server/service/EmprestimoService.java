@@ -41,6 +41,8 @@ public interface EmprestimoService extends CrudService<Emprestimo, Long, Emprest
 
   List<EmprestimoResponseDto> findAllUsuarioEmprestimo(String username);
 
+  List<EmprestimoResponseDto> findAllByItemId(Long itemId);
+
   List<EmprestimoResponseDto> findAllEmprestimosAbertos();
 
   List<EmprestimoResponseDto> findAllEmprestimosAbertosByUsuario(String username);
