@@ -16,5 +16,5 @@ public interface FornecedorRepository
           + "LOWER(f.nomeFantasia) LIKE LOWER(CONCAT(:query, '%')) OR "
           + "LOWER(f.razaoSocial) LIKE LOWER(CONCAT(:query, '%'))")
   Page<Fornecedor> findByNomeFantasiaLikeIgnoreCaseOrRazaoSocialLikeIgnoreCase(
-          @Param("query") String query, Pageable pageable);
+      @Param("query") String query, Pageable pageable);
 }
