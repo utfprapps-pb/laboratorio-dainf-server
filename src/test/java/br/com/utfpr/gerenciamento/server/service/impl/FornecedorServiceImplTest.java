@@ -133,7 +133,7 @@ class FornecedorServiceImplTest {
     assertEquals(fornecedor, result);
     verify(modelMapper).map(fornecedorResponseDto, Fornecedor.class);
   }
-  
+
   @Test
   void testCompleteFornecedor_WithQuery() {
     // Given
