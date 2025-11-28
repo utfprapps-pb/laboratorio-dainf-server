@@ -161,12 +161,10 @@ public class EmprestimoServiceImpl extends CrudServiceImpl<Emprestimo, Long, Emp
       String textFilter, Pageable pageable, String username) {
     Specification<Emprestimo> spec = EmprestimoSpecifications.withFetchCollections();
 
-    // Adiciona filtro de usuário de forma segura
     Usuario usuario = usuarioService.toEntity(usuarioService.findByUsername(username));
     spec = spec.and((root, query, cb) -> cb.equal(root.get("usuarioEmprestimo"), usuario));
 
     if (textFilter != null && !textFilter.isEmpty()) {
-      // Combina filtro textual de forma segura
       spec = spec.and(self.filterByAllFields(textFilter));
     }
 
@@ -203,7 +201,9 @@ public class EmprestimoServiceImpl extends CrudServiceImpl<Emprestimo, Long, Emp
   @Transactional
   @PreAuthorize("hasAnyRole('" + ROLE_LABORATORISTA_NAME + "', '" + ROLE_ADMINISTRADOR_NAME + "')")
   @InvalidateDashboardCache
-  @CacheEvict(value = "emprestimos-page", allEntries = true)
+  @CacheEvict(
+      value = {"emprestimos-page", "emprestimos-page-user"},
+      allEntries = true)
   public EmprestimoResponseDto save(Emprestimo entity) {
     if (entity.getUsuarioEmprestimo() == null) {
       throw new IllegalArgumentException("usuarioEmprestimo não pode ser null");
@@ -245,7 +245,9 @@ public class EmprestimoServiceImpl extends CrudServiceImpl<Emprestimo, Long, Emp
   @Transactional
   @PreAuthorize("hasAnyRole('" + ROLE_LABORATORISTA_NAME + "', '" + ROLE_ADMINISTRADOR_NAME + "')")
   @InvalidateDashboardCache
-  @CacheEvict(value = "emprestimos-page", allEntries = true)
+  @CacheEvict(
+      value = {"emprestimos-page", "emprestimos-page-user"},
+      allEntries = true)
   public void delete(Long id) {
     super.delete(id);
   }
@@ -262,7 +264,9 @@ public class EmprestimoServiceImpl extends CrudServiceImpl<Emprestimo, Long, Emp
   @Transactional
   @PreAuthorize("hasAnyRole('" + ROLE_LABORATORISTA_NAME + "', '" + ROLE_ADMINISTRADOR_NAME + "')")
   @InvalidateDashboardCache
-  @CacheEvict(value = "emprestimos-page", allEntries = true)
+  @CacheEvict(
+      value = {"emprestimos-page", "emprestimos-page-user"},
+      allEntries = true)
   public void delete(Emprestimo entity) {
     super.delete(entity);
   }
@@ -325,6 +329,12 @@ public class EmprestimoServiceImpl extends CrudServiceImpl<Emprestimo, Long, Emp
 
   @Override
   @Transactional(readOnly = true)
+  @PreAuthorize(
+      "authentication.name == #username || hasAnyRole('"
+          + ROLE_LABORATORISTA_NAME
+          + "', '"
+          + ROLE_ADMINISTRADOR_NAME
+          + "')")
   public List<EmprestimoResponseDto> findAllUsuarioEmprestimo(String username) {
     Usuario usuario = usuarioService.toEntity(usuarioService.findByUsername(username));
     return emprestimoRepository.findAllByUsuarioEmprestimo(usuario).stream()
@@ -355,9 +365,9 @@ public class EmprestimoServiceImpl extends CrudServiceImpl<Emprestimo, Long, Emp
   @Override
   @Transactional
   public void changePrazoDevolucao(Long idEmprestimo, LocalDate novaData) {
-    var emprestimo = toEntity(findOne(idEmprestimo));
+    var emprestimo = toEntity(self.findOne(idEmprestimo));
     emprestimo.setPrazoDevolucao(novaData);
-    EmprestimoResponseDto saved = save(emprestimo);
+    EmprestimoResponseDto saved = self.save(emprestimo);
 
     // Publica evento - email enviado APÓS commit
     String email = saved.getUsuarioEmprestimo().getEmail();
