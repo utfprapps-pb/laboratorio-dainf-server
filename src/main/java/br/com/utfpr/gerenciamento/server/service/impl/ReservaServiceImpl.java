@@ -12,6 +12,7 @@ import br.com.utfpr.gerenciamento.server.util.DateUtil;
 import br.com.utfpr.gerenciamento.server.util.SecurityUtils;
 import java.util.List;
 import org.modelmapper.ModelMapper;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -26,15 +27,19 @@ public class ReservaServiceImpl extends CrudServiceImpl<Reserva, Long, ReservaRe
 
   private final ModelMapper modelMapper;
 
+  @Lazy private ReservaService self;
+
   public ReservaServiceImpl(
       ReservaRepository reservaRepository,
       UsuarioService usuarioService,
       EmailService emailService,
-      ModelMapper modelMapper) {
+      ModelMapper modelMapper,
+      @Lazy ReservaService self) {
     this.reservaRepository = reservaRepository;
     this.usuarioService = usuarioService;
     this.emailService = emailService;
     this.modelMapper = modelMapper;
+    this.self = self;
   }
 
   @Override
@@ -79,13 +84,13 @@ public class ReservaServiceImpl extends CrudServiceImpl<Reserva, Long, ReservaRe
   @Override
   @Transactional
   public void finalizarReserva(Long idReserva) {
-    Reserva reserva = toEntity(this.findOne(idReserva));
+    Reserva reserva = toEntity(self.findOne(idReserva));
     emailService.sendEmailWithTemplate(
         converterObjectToTemplateEmail(reserva),
         reserva.getUsuario().getEmail(),
         "Reserva Finalizada",
         "templateFinalizacaoReserva");
-    this.delete(idReserva);
+    self.delete(idReserva);
   }
 
   @Override
