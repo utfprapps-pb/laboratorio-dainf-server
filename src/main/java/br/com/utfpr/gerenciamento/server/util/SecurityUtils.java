@@ -1,11 +1,11 @@
 package br.com.utfpr.gerenciamento.server.util;
 
+import java.util.Collection;
+import java.util.List;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
-import java.util.Collection;
-import java.util.List;
 
 /**
  * Utilitários para operações de segurança do Spring Security.
@@ -126,8 +126,6 @@ public final class SecurityUtils {
     }
 
     Collection<? extends GrantedAuthority> authorities = auth.getAuthorities();
-    return authorities.stream()
-        .map(GrantedAuthority::getAuthority)
-        .toList();
+    return authorities.stream().map(GrantedAuthority::getAuthority).toList();
   }
 }

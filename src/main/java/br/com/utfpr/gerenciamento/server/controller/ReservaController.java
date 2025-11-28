@@ -23,42 +23,43 @@ import org.springframework.web.bind.annotation.RestController;
 @RequestMapping("reserva")
 public class ReservaController extends CrudController<Reserva, Long, ReservaResponseDto> {
 
-    public static final String PREFIXO_ROLE = "ROLE_";
-    private final ReservaService reservaService;
+  public static final String PREFIXO_ROLE = "ROLE_";
+  private final ReservaService reservaService;
 
   public ReservaController(ReservaService reservaService) {
     this.reservaService = reservaService;
   }
 
-@Override
+  @Override
   protected CrudService<Reserva, Long, ReservaResponseDto> getService() {
     return reservaService;
   }
 
   /**
    * Lista todas as reservas do sistema.
-   * 
-   * <p>Alunos e professores veem apenas suas próprias reservas.
-   * Administradores e laboratoristas veem todas as reservas do sistema.</p>
-   * 
+   *
+   * <p>Alunos e professores veem apenas suas próprias reservas. Administradores e laboratoristas
+   * veem todas as reservas do sistema.
+   *
    * @return Lista de reservas conforme a role do usuário autenticado
    */
   @Override
   public List<ReservaResponseDto> findAll() {
     List<String> userRoles = SecurityUtils.getAuthenticatedUserRoles();
-    
-    if (userRoles.contains(PREFIXO_ROLE + ROLE_ALUNO_NAME) || userRoles.contains(PREFIXO_ROLE + ROLE_PROFESSOR_NAME)) {
+
+    if (userRoles.contains(PREFIXO_ROLE + ROLE_ALUNO_NAME)
+        || userRoles.contains(PREFIXO_ROLE + ROLE_PROFESSOR_NAME)) {
       return reservaService.findAllByAuthenticatedUser();
     }
-    
+
     return super.findAll();
   }
 
-/**
+  /**
    * Lista todas as reservas do usuário autenticado.
-   * 
-   * <p>Endpoint específico para o usuário autenticado visualizar suas próprias reservas.</p>
-   * 
+   *
+   * <p>Endpoint específico para o usuário autenticado visualizar suas próprias reservas.
+   *
    * @return Lista de reservas do usuário autenticado
    */
   @GetMapping("find-all-by-authenticated-user")
@@ -66,12 +67,12 @@ public class ReservaController extends CrudController<Reserva, Long, ReservaResp
     return reservaService.findAllByAuthenticatedUser();
   }
 
-/**
+  /**
    * Lista todas as reservas de um item específico.
-   * 
-   * <p>Endpoint administrativo para consulta de reservas por item.
-   * Acesso controlado por WebSecurity (requer LABORATORISTA ou ADMINISTRADOR).</p>
-   * 
+   *
+   * <p>Endpoint administrativo para consulta de reservas por item. Acesso controlado por
+   * WebSecurity (requer LABORATORISTA ou ADMINISTRADOR).
+   *
    * @param idItem ID do item a consultar reservas
    * @return Lista de reservas do item especificado
    */
@@ -82,10 +83,10 @@ public class ReservaController extends CrudController<Reserva, Long, ReservaResp
 
   /**
    * Lista paginada de reservas com filtro textual.
-   * 
-   * <p>Alunos e professores veem apenas suas próprias reservas.
-   * Administradores e laboratoristas veem todas as reservas do sistema.</p>
-   * 
+   *
+   * <p>Alunos e professores veem apenas suas próprias reservas. Administradores e laboratoristas
+   * veem todas as reservas do sistema.
+   *
    * @param page Número da página (0-indexed)
    * @param size Tamanho da página
    * @param filter Filtro opcional (busca textual em todos os campos)
@@ -101,25 +102,27 @@ public class ReservaController extends CrudController<Reserva, Long, ReservaResp
       @RequestParam(required = false) String filter,
       @RequestParam(required = false) String order,
       @RequestParam(required = false) Boolean asc) {
-    
+
     String username = SecurityUtils.getAuthenticatedUsername();
     List<String> userRoles = SecurityUtils.getAuthenticatedUserRoles();
-    
-    if (userRoles.contains(PREFIXO_ROLE + ROLE_ALUNO_NAME) || userRoles.contains(PREFIXO_ROLE + ROLE_PROFESSOR_NAME)) {
+
+    if (userRoles.contains(PREFIXO_ROLE + ROLE_ALUNO_NAME)
+        || userRoles.contains(PREFIXO_ROLE + ROLE_PROFESSOR_NAME)) {
       String userFilter = "usuario.username:" + username;
       if (filter != null && !filter.isEmpty()) {
         userFilter = "(" + filter + ") AND " + userFilter;
       }
-      
+
       PageRequest pageRequest = PageRequest.of(page, size);
       if (order != null && asc != null) {
-        pageRequest = PageRequest.of(page, size, asc ? Sort.Direction.ASC : Sort.Direction.DESC, order);
+        pageRequest =
+            PageRequest.of(page, size, asc ? Sort.Direction.ASC : Sort.Direction.DESC, order);
       }
 
-        Specification<Reserva> spec = getService().filterByAllFields(userFilter);
-        return getService().findAllSpecification(spec, pageRequest);
+      Specification<Reserva> spec = getService().filterByAllFields(userFilter);
+      return getService().findAllSpecification(spec, pageRequest);
     }
-    
+
     return super.findAllPaged(page, size, filter, order, asc);
   }
 
