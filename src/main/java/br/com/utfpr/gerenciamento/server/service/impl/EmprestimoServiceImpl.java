@@ -141,6 +141,40 @@ public class EmprestimoServiceImpl extends CrudServiceImpl<Emprestimo, Long, Emp
     return self.findAllSpecification(spec, pageable);
   }
 
+/**
+   * Busca paginada com filtro textual para usuário específico.
+   *
+   * <p>Combina filtro textual com filtro de usuário de forma segura usando Specification,
+   * evitando injeção de filtro por concatenação de strings.
+   *
+   * @param textFilter Filtro textual opcional
+   * @param pageable Configuração de paginação
+   * @param username Username do usuário para filtrar
+   * @return Página de empréstimos do usuário com filtro textual aplicado
+   */
+  @Override
+  @Cacheable(
+      value = "emprestimos-page-user",
+      key = "T(java.util.Objects).hash(#textFilter, #pageable.toString(), #username)",
+      unless = "#result == null || #result.isEmpty()"
+  )
+  @Transactional(readOnly = true)
+  public Page<EmprestimoResponseDto> findAllPagedByUserWithTextFilter(
+      String textFilter, Pageable pageable, String username) {
+    Specification<Emprestimo> spec = EmprestimoSpecifications.withFetchCollections();
+
+    // Adiciona filtro de usuário de forma segura
+    Usuario usuario = usuarioService.toEntity(usuarioService.findByUsername(username));
+    spec = spec.and((root, query, cb) -> cb.equal(root.get("usuarioEmprestimo"), usuario));
+
+    if (textFilter != null && !textFilter.isEmpty()) {
+      // Combina filtro textual de forma segura
+      spec = spec.and(self.filterByAllFields(textFilter));
+    }
+
+    return self.findAllSpecification(spec, pageable);
+  }
+
   /**
    * Metodo interno para executar Specification. Não deve ser chamado diretamente (use {@link
    * #findAllPagedWithTextFilter}).
@@ -240,8 +274,8 @@ public class EmprestimoServiceImpl extends CrudServiceImpl<Emprestimo, Long, Emp
   public List<EmprestimoResponseDto> findAllByDataEmprestimoBetween(
       LocalDate dtIni, LocalDate dtFim) {
     return emprestimoRepository.findAllByDataEmprestimoBetween(dtIni, dtFim).stream()
-        .map(emprestimo -> toDto(emprestimo))
-        .collect(Collectors.toList());
+        .map(this::toDto)
+        .toList();
   }
 
   @Override
@@ -289,8 +323,8 @@ public class EmprestimoServiceImpl extends CrudServiceImpl<Emprestimo, Long, Emp
     // Elimina N+1 queries: 200+ queries → 1 query (melhoria de 90-95%)
     Specification<Emprestimo> spec = EmprestimoSpecifications.fromFilter(emprestimoFilter);
     return emprestimoRepository.findAll(spec, Sort.by("id")).stream()
-        .map(emprestimo -> toDto(emprestimo))
-        .collect(Collectors.toList());
+        .map(this::toDto)
+            .toList();
   }
 
   @Override
@@ -298,16 +332,16 @@ public class EmprestimoServiceImpl extends CrudServiceImpl<Emprestimo, Long, Emp
   public List<EmprestimoResponseDto> findAllUsuarioEmprestimo(String username) {
     Usuario usuario = usuarioService.toEntity(usuarioService.findByUsername(username));
     return emprestimoRepository.findAllByUsuarioEmprestimo(usuario).stream()
-        .map(emprestimo -> toDto(emprestimo))
-        .collect(Collectors.toList());
+        .map(this::toDto)
+            .toList();
   }
 
   @Override
   @Transactional(readOnly = true)
   public List<EmprestimoResponseDto> findAllEmprestimosAbertos() {
     return emprestimoRepository.findAllByDataDevolucaoIsNullOrderById().stream()
-        .map(emprestimo -> toDto(emprestimo))
-        .collect(Collectors.toList());
+        .map(this::toDto)
+            .toList();
   }
 
   @Override
@@ -318,8 +352,8 @@ public class EmprestimoServiceImpl extends CrudServiceImpl<Emprestimo, Long, Emp
       return Collections.emptyList();
     }
     return emprestimoRepository.findAllByUsuarioEmprestimoAndDataDevolucaoIsNull(usuario).stream()
-        .map(emprestimo -> toDto(emprestimo))
-        .collect(Collectors.toList());
+        .map(this::toDto)
+            .toList();
   }
 
   @Override

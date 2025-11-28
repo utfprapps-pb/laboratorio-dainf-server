@@ -202,7 +202,7 @@ class EmprestimoControllerTest {
   }
 
   @Test
-  void filter_comRoleAlunoEUsuarioNoFiltro_deveManterUsuarioExistente() {
+  void filter_comRoleAlunoEUsuarioNoFiltro_deveSubstituirPeloUsuarioAutenticado() {
     try (MockedStatic<SecurityUtils> securityUtils = mockStatic(SecurityUtils.class)) {
       // Arrange
       Usuario usuarioExistente = new Usuario();
@@ -214,6 +214,12 @@ class EmprestimoControllerTest {
           .when(SecurityUtils::getAuthenticatedUserRoles)
           .thenReturn(List.of("ROLE_ALUNO"));
 
+      when(usuarioService.findByUsername("aluno@utfpr.edu.br"))
+          .thenReturn(new br.com.utfpr.gerenciamento.server.dto.UsuarioResponseDto());
+      when(usuarioService.toEntity(
+              any(br.com.utfpr.gerenciamento.server.dto.UsuarioResponseDto.class)))
+          .thenReturn(usuarioAluno);
+
       when(emprestimoService.filter(emprestimoFilter)).thenReturn(emprestimosLista);
 
       // Act
@@ -221,8 +227,72 @@ class EmprestimoControllerTest {
 
       // Assert
       assertEquals(emprestimosLista, resultado);
-      assertEquals(usuarioExistente, emprestimoFilter.getUsuarioEmprestimo());
-      verify(usuarioService, never()).findByUsername(anyString());
+      assertEquals(usuarioAluno, emprestimoFilter.getUsuarioEmprestimo());
+      verify(usuarioService).findByUsername("aluno@utfpr.edu.br");
+      verify(emprestimoService).filter(emprestimoFilter);
+    }
+  }
+
+@Test
+  void filter_comRoleAlunoEUsuarioDiferenteNoFiltro_deveSubstituirPeloUsuarioAutenticado() {
+    try (MockedStatic<SecurityUtils> securityUtils = mockStatic(SecurityUtils.class)) {
+      // Arrange
+      Usuario usuarioDiferente = new Usuario();
+      usuarioDiferente.setUsername("outro@utfpr.edu.br");
+      emprestimoFilter.setUsuarioEmprestimo(usuarioDiferente);
+
+      securityUtils.when(SecurityUtils::getAuthenticatedUsername).thenReturn("aluno@utfpr.edu.br");
+      securityUtils
+          .when(SecurityUtils::getAuthenticatedUserRoles)
+          .thenReturn(List.of("ROLE_ALUNO"));
+
+      when(usuarioService.findByUsername("aluno@utfpr.edu.br"))
+          .thenReturn(new br.com.utfpr.gerenciamento.server.dto.UsuarioResponseDto());
+      when(usuarioService.toEntity(
+              any(br.com.utfpr.gerenciamento.server.dto.UsuarioResponseDto.class)))
+          .thenReturn(usuarioAluno);
+
+      when(emprestimoService.filter(any(EmprestimoFilter.class))).thenReturn(emprestimosLista);
+
+      // Act
+      List<EmprestimoResponseDto> resultado = emprestimoController.filter(emprestimoFilter);
+
+      // Assert
+      assertEquals(emprestimosLista, resultado);
+      assertEquals(usuarioAluno, emprestimoFilter.getUsuarioEmprestimo());
+      verify(usuarioService).findByUsername("aluno@utfpr.edu.br");
+      verify(emprestimoService).filter(emprestimoFilter);
+    }
+  }
+
+  @Test
+  void filter_comRoleProfessorEUsuarioDiferenteNoFiltro_deveSubstituirPeloUsuarioAutenticado() {
+    try (MockedStatic<SecurityUtils> securityUtils = mockStatic(SecurityUtils.class)) {
+      // Arrange
+      Usuario usuarioDiferente = new Usuario();
+      usuarioDiferente.setUsername("outro@utfpr.edu.br");
+      emprestimoFilter.setUsuarioEmprestimo(usuarioDiferente);
+
+      securityUtils.when(SecurityUtils::getAuthenticatedUsername).thenReturn("professor@utfpr.edu.br");
+      securityUtils
+          .when(SecurityUtils::getAuthenticatedUserRoles)
+          .thenReturn(List.of("ROLE_PROFESSOR"));
+
+      when(usuarioService.findByUsername("professor@utfpr.edu.br"))
+          .thenReturn(new br.com.utfpr.gerenciamento.server.dto.UsuarioResponseDto());
+      when(usuarioService.toEntity(
+              any(br.com.utfpr.gerenciamento.server.dto.UsuarioResponseDto.class)))
+          .thenReturn(usuarioProfessor);
+
+      when(emprestimoService.filter(any(EmprestimoFilter.class))).thenReturn(emprestimosLista);
+
+      // Act
+      List<EmprestimoResponseDto> resultado = emprestimoController.filter(emprestimoFilter);
+
+      // Assert
+      assertEquals(emprestimosLista, resultado);
+      assertEquals(usuarioProfessor, emprestimoFilter.getUsuarioEmprestimo());
+      verify(usuarioService).findByUsername("professor@utfpr.edu.br");
       verify(emprestimoService).filter(emprestimoFilter);
     }
   }

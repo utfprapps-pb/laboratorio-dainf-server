@@ -17,9 +17,6 @@ public enum UserRole {
   /** Laboratorista - gerenciamento de laboratórios e equipamentos */
   LABORATORISTA("ROLE_LABORATORISTA"),
 
-  /** Usuário comum - acesso básico ao sistema */
-  USUARIO("ROLE_USUARIO"),
-
   /** Professor - acesso acadêmico com privilégios de docente */
   PROFESSOR("ROLE_PROFESSOR"),
 

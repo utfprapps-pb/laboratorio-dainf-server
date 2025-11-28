@@ -6,6 +6,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 
 public interface FornecedorRepository
     extends JpaRepository<Fornecedor, Long>, JpaSpecificationExecutor<Fornecedor> {
@@ -15,5 +16,5 @@ public interface FornecedorRepository
           + "LOWER(f.nomeFantasia) LIKE LOWER(CONCAT(:query, '%')) OR "
           + "LOWER(f.razaoSocial) LIKE LOWER(CONCAT(:query, '%'))")
   Page<Fornecedor> findByNomeFantasiaLikeIgnoreCaseOrRazaoSocialLikeIgnoreCase(
-      String query, Pageable pageable);
+      @Param("query") String query, Pageable pageable);
 }

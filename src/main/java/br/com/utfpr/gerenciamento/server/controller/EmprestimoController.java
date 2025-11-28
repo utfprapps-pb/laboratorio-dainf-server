@@ -110,9 +110,8 @@ public class EmprestimoController extends CrudController<Emprestimo, Long, Empre
     String username = SecurityUtils.getAuthenticatedUsername();
     List<String> userRoles = SecurityUtils.getAuthenticatedUserRoles();
 
-    if ((userRoles.contains(PREFIXO_ROLE + ROLE_ALUNO_NAME)
-            || userRoles.contains(PREFIXO_ROLE + ROLE_PROFESSOR_NAME))
-        && emprestimoFilter.getUsuarioEmprestimo() == null) {
+    if (userRoles.contains(PREFIXO_ROLE + ROLE_ALUNO_NAME)
+            || userRoles.contains(PREFIXO_ROLE + ROLE_PROFESSOR_NAME)) {
       Usuario usuario = usuarioService.toEntity(usuarioService.findByUsername(username));
       emprestimoFilter.setUsuarioEmprestimo(usuario);
     }
@@ -183,11 +182,7 @@ public class EmprestimoController extends CrudController<Emprestimo, Long, Empre
 
     if (userRoles.contains(PREFIXO_ROLE + ROLE_ALUNO_NAME)
         || userRoles.contains(PREFIXO_ROLE + ROLE_PROFESSOR_NAME)) {
-      String userFilter = "usuarioEmprestimo.username:" + username;
-      if (filter != null && !filter.isEmpty()) {
-        userFilter = "(" + filter + ") AND " + userFilter;
-      }
-      return emprestimoService.findAllPagedWithTextFilter(userFilter, pageRequest);
+      return emprestimoService.findAllPagedByUserWithTextFilter(filter, pageRequest, username);
     }
 
     return emprestimoService.findAllPagedWithTextFilter(filter, pageRequest);

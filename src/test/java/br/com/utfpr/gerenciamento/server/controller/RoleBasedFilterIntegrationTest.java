@@ -3,6 +3,7 @@ package br.com.utfpr.gerenciamento.server.controller;
 import static org.springframework.security.test.web.servlet.setup.SecurityMockMvcConfigurers.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.*;
 
 import br.com.utfpr.gerenciamento.server.repository.UsuarioRepository;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -45,31 +46,28 @@ class RoleBasedFilterIntegrationTest {
 
   @ParameterizedTest
   @ValueSource(strings = {"ALUNO", "PROFESSOR"})
-  @WithMockUser
   void emprestimoFindAll_comRolesLimitados_deveRetornarApenasEmprestimosDoUsuario(String role)
       throws Exception {
     // Act & Assert
     mockMvc
-        .perform(get("/emprestimo"))
+        .perform(get("/emprestimo").with(user("test").roles(role)))
         .andExpect(status().isOk())
         .andExpect(content().contentType(MediaType.APPLICATION_JSON));
   }
 
   @ParameterizedTest
   @ValueSource(strings = {"ADMINISTRADOR", "LABORATORISTA"})
-  @WithMockUser
   void emprestimoFindAll_comRolesAcessoTotal_deveRetornarTodosEmprestimos(String role)
       throws Exception {
     // Act & Assert
     mockMvc
-        .perform(get("/emprestimo"))
+        .perform(get("/emprestimo").with(user("test").roles(role)))
         .andExpect(status().isOk())
         .andExpect(content().contentType(MediaType.APPLICATION_JSON));
   }
 
   @ParameterizedTest
   @ValueSource(strings = {"aluno@utfpr.edu.br", "professor@utfpr.edu.br"})
-  @WithMockUser
   void emprestimoFilter_comRolesLimitados_deveAdicionarUsuarioAutenticado(String username)
       throws Exception {
     // Arrange
@@ -78,7 +76,8 @@ class RoleBasedFilterIntegrationTest {
     // Act & Assert
     mockMvc
         .perform(
-            post("/emprestimo/filter").contentType(MediaType.APPLICATION_JSON).content(filtroJson))
+            post("/emprestimo/filter").contentType(MediaType.APPLICATION_JSON).content(filtroJson)
+                .with(user(username)))
         .andExpect(status().isOk())
         .andExpect(content().contentType(MediaType.APPLICATION_JSON));
   }
