@@ -1,6 +1,7 @@
 package br.com.utfpr.gerenciamento.server.service.impl;
 
 import br.com.utfpr.gerenciamento.server.dto.ReservaResponseDto;
+import br.com.utfpr.gerenciamento.server.exception.EntityNotFoundException;
 import br.com.utfpr.gerenciamento.server.model.Reserva;
 import br.com.utfpr.gerenciamento.server.model.Usuario;
 import br.com.utfpr.gerenciamento.server.model.modelTemplateEmail.ReservaTemplate;
@@ -23,7 +24,6 @@ public class ReservaServiceImpl extends CrudServiceImpl<Reserva, Long, ReservaRe
   private final ReservaRepository reservaRepository;
   private final UsuarioService usuarioService;
   private final EmailService emailService;
-
   private final ModelMapper modelMapper;
 
   public ReservaServiceImpl(
@@ -55,7 +55,6 @@ public class ReservaServiceImpl extends CrudServiceImpl<Reserva, Long, ReservaRe
   @Override
   @Transactional
   public ReservaResponseDto save(Reserva reserva) {
-    // Extrai username de forma segura do Authentication (evita ClassCastException)
     String username = SecurityUtils.getAuthenticatedUsername();
     reserva.setUsuario(usuarioService.toEntity(usuarioService.findByUsername(username)));
     return super.save(reserva);
@@ -64,7 +63,6 @@ public class ReservaServiceImpl extends CrudServiceImpl<Reserva, Long, ReservaRe
   @Override
   @Transactional(readOnly = true)
   public List<ReservaResponseDto> findAllByAuthenticatedUser() {
-    // Extrai username de forma segura do Authentication (evita ClassCastException)
     String username = SecurityUtils.getAuthenticatedUsername();
     Usuario usuario = usuarioService.toEntity(usuarioService.findByUsername(username));
     return reservaRepository.findAllByUsuario(usuario).stream().map(this::toDto).toList();
@@ -79,13 +77,22 @@ public class ReservaServiceImpl extends CrudServiceImpl<Reserva, Long, ReservaRe
   @Override
   @Transactional
   public void finalizarReserva(Long idReserva) {
-    Reserva reserva = toEntity(this.findOne(idReserva));
+    Reserva reserva =
+        reservaRepository
+            .findById(idReserva)
+            .orElseThrow(() -> new EntityNotFoundException("Reserva não encontrada: " + idReserva));
+
+    String authenticatedUsername = SecurityUtils.getAuthenticatedUsername();
+    if (!reserva.getUsuario().getUsername().equals(authenticatedUsername)) {
+      throw new EntityNotFoundException("Usuário não tem permissão para finalizar esta reserva");
+    }
+
     emailService.sendEmailWithTemplate(
         converterObjectToTemplateEmail(reserva),
         reserva.getUsuario().getEmail(),
         "Reserva Finalizada",
         "templateFinalizacaoReserva");
-    this.delete(idReserva);
+    delete(idReserva);
   }
 
   @Override

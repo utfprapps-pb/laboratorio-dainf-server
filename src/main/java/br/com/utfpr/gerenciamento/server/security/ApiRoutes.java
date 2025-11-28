@@ -83,6 +83,10 @@ public final class ApiRoutes {
   /** Salvar devolução */
   public static final String EMPRESTIMO_DEVOLUCAO = "/emprestimo/save-devolucao";
 
+  /** Buscar empréstimos por username */
+  public static final String EMPRESTIMO_FIND_ALL_BY_USERNAME =
+      "/emprestimo/find-all-by-username/**";
+
   // ============ Endpoints Públicos ============
   /** Autenticação (login) */
   public static final String AUTH = "/auth";

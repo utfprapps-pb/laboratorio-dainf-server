@@ -1,14 +1,19 @@
 package br.com.utfpr.gerenciamento.server.controller;
 
 import static br.com.utfpr.gerenciamento.server.enumeration.UserRole.ROLE_ADMINISTRADOR_NAME;
+import static br.com.utfpr.gerenciamento.server.enumeration.UserRole.ROLE_ALUNO_NAME;
 import static br.com.utfpr.gerenciamento.server.enumeration.UserRole.ROLE_LABORATORISTA_NAME;
+import static br.com.utfpr.gerenciamento.server.enumeration.UserRole.ROLE_PROFESSOR_NAME;
 
 import br.com.utfpr.gerenciamento.server.dto.EmprestimoResponseDto;
 import br.com.utfpr.gerenciamento.server.model.Emprestimo;
+import br.com.utfpr.gerenciamento.server.model.Usuario;
 import br.com.utfpr.gerenciamento.server.model.filter.EmprestimoFilter;
 import br.com.utfpr.gerenciamento.server.service.CrudService;
 import br.com.utfpr.gerenciamento.server.service.EmprestimoService;
+import br.com.utfpr.gerenciamento.server.service.UsuarioService;
 import br.com.utfpr.gerenciamento.server.util.DateUtil;
+import br.com.utfpr.gerenciamento.server.util.SecurityUtils;
 import java.util.List;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -37,10 +42,13 @@ import org.springframework.web.bind.annotation.*;
 @RequestMapping("emprestimo")
 public class EmprestimoController extends CrudController<Emprestimo, Long, EmprestimoResponseDto> {
 
+  public static final String PREFIXO_ROLE = "ROLE_";
   private final EmprestimoService emprestimoService;
+  private final UsuarioService usuarioService;
 
-  public EmprestimoController(EmprestimoService emprestimoService) {
+  public EmprestimoController(EmprestimoService emprestimoService, UsuarioService usuarioService) {
     this.emprestimoService = emprestimoService;
+    this.usuarioService = usuarioService;
   }
 
   @Override
@@ -48,17 +56,46 @@ public class EmprestimoController extends CrudController<Emprestimo, Long, Empre
     return emprestimoService;
   }
 
+  /**
+   * Lista todos os empréstimos abertos.
+   *
+   * <p>Alunos e professores veem apenas seus próprios empréstimos abertos. Administradores e
+   * laboratoristas veem todos os empréstimos abertos do sistema.
+   *
+   * @return Lista de empréstimos abertos conforme a role do usuário autenticado
+   */
   @Override
   public List<EmprestimoResponseDto> findAll() {
+    String username = SecurityUtils.getAuthenticatedUsername();
+    List<String> userRoles = SecurityUtils.getAuthenticatedUserRoles();
+
+    if (userRoles.contains(PREFIXO_ROLE + ROLE_ALUNO_NAME)
+        || userRoles.contains(PREFIXO_ROLE + ROLE_PROFESSOR_NAME)) {
+      return this.emprestimoService.findAllEmprestimosAbertosByUsuario(username);
+    }
+
     return this.emprestimoService.findAllEmprestimosAbertos();
   }
 
+  /**
+   * Processa criação/edição de empréstimo com toda lógica de negócio.
+   *
+   * @param emprestimo Empréstimo a ser processado
+   * @param idReserva ID da reserva a finalizar (0 se não houver)
+   * @return DTO do empréstimo salvo
+   */
   @PostMapping("save-emprestimo")
   public EmprestimoResponseDto save(
       @RequestBody Emprestimo emprestimo, @RequestParam("idReserva") Long idReserva) {
     return emprestimoService.processEmprestimo(emprestimo, idReserva);
   }
 
+  /**
+   * Processa devolução de empréstimo com toda lógica de negócio.
+   *
+   * @param emprestimo Empréstimo com dados de devolução
+   * @return DTO do empréstimo atualizado
+   */
   @PostMapping("save-devolucao")
   public EmprestimoResponseDto saveDevolucao(@RequestBody Emprestimo emprestimo) {
     return emprestimoService.processDevolucao(emprestimo);
@@ -79,66 +116,84 @@ public class EmprestimoController extends CrudController<Emprestimo, Long, Empre
     emprestimoService.cleanupAfterDelete(object);
   }
 
+  /**
+   * Filtra empréstimos com base nos critérios informados.
+   *
+   * <p>Alunos e professores veem apenas seus próprios empréstimos. Administradores e laboratoristas
+   * veem todos os empréstimos do sistema.
+   *
+   * @param emprestimoFilter Critérios de filtragem
+   * @return Lista de empréstimos filtrados conforme a role do usuário autenticado
+   */
   @PostMapping("filter")
   public List<EmprestimoResponseDto> filter(@RequestBody EmprestimoFilter emprestimoFilter) {
+    String username = SecurityUtils.getAuthenticatedUsername();
+    List<String> userRoles = SecurityUtils.getAuthenticatedUserRoles();
+
+    if (userRoles.contains(PREFIXO_ROLE + ROLE_ALUNO_NAME)
+        || userRoles.contains(PREFIXO_ROLE + ROLE_PROFESSOR_NAME)) {
+      Usuario usuario = usuarioService.toEntity(usuarioService.findByUsername(username));
+      emprestimoFilter.setUsuarioEmprestimo(usuario);
+    }
+
     return emprestimoService.filter(emprestimoFilter);
   }
 
+  /**
+   * Lista todos os empréstimos de um usuário específico.
+   *
+   * <p>Endpoint mantido para compatibilidade. Acesso controlado por WebSecurity: - Usuário só pode
+   * ver seus próprios empréstimos - Admin/Laboratorista podem ver todos os empréstimos
+   *
+   * @param username Username do usuário a consultar
+   * @return Lista de empréstimos do usuário especificado
+   */
+  @GetMapping("find-all-by-username/{username}")
   @PreAuthorize(
-      "#username == authentication.name or hasAnyAuthority('"
+      "authentication.name == #username || hasAnyRole('"
           + ROLE_LABORATORISTA_NAME
           + "', '"
           + ROLE_ADMINISTRADOR_NAME
           + "')")
-  @GetMapping("find-all-by-username/{username}")
   public List<EmprestimoResponseDto> findAllByUsuarioEmprestimo(
       @PathVariable("username") String username) {
     return emprestimoService.findAllUsuarioEmprestimo(username);
   }
 
-  @PreAuthorize(
-      "hasAnyAuthority('" + ROLE_LABORATORISTA_NAME + "', '" + ROLE_ADMINISTRADOR_NAME + "')")
-  @GetMapping("find-by-item/{itemId}")
-  public List<EmprestimoResponseDto> findByItemId(@PathVariable("itemId") Long itemId) {
-    return emprestimoService.findAllByItemId(itemId);
-  }
-
+  /**
+   * Altera o prazo de devolução de um empréstimo.
+   *
+   * <p>Endpoint administrativo para alterar prazos de devolução. Acesso controlado por WebSecurity
+   * (requer LABORATORISTA ou ADMINISTRADOR).
+   *
+   * @param id ID do empréstimo
+   * @param novaData Nova data de devolução (formato: dd/MM/yyyy)
+   */
   @GetMapping("change-prazo-devolucao")
   public void changePrazoDevolucao(
       @RequestParam("id") Long id, @RequestParam("novaData") String novaData) {
     emprestimoService.changePrazoDevolucao(id, DateUtil.parseStringToLocalDate(novaData));
   }
 
-  /**
-   * Paginação otimizada de empréstimos com JOIN FETCH e cache.
+    @PreAuthorize(
+            "hasAnyAuthority('" + ROLE_LABORATORISTA_NAME + "', '" + ROLE_ADMINISTRADOR_NAME + "')")
+    @GetMapping("find-by-item/{itemId}")
+    public List<EmprestimoResponseDto> findByItemId(@PathVariable("itemId") Long itemId) {
+        return emprestimoService.findAllByItemId(itemId);
+    }
+
+    /**
+   * Lista paginada de empréstimos com filtro textual.
    *
-   * <p><b>Associações fetched via :</b>
-   *
-   * <ul>
-   *   <li>{@code usuarioEmprestimo} - Usuário que fez o empréstimo (LEFT JOIN FETCH)
-   *   <li>{@code usuarioEmprestimo.permissoes} - Permissões do usuário empréstimo (LEFT JOIN FETCH)
-   *   <li>{@code usuarioResponsavel} - Usuário responsável pela liberação (LEFT JOIN FETCH)
-   *   <li>{@code usuarioResponsavel.permissoes} - Permissões do responsável (LEFT JOIN FETCH)
-   *   <li>{@code emprestimoItem} - Itens do empréstimo (LEFT JOIN FETCH)
-   * </ul>
-   *
-   * <p><b>NÃO fetched:</b> {@code emprestimoDevolucaoItem} (usa @BatchSize para evitar
-   * MultipleBagFetchException)
-   *
-   * <p><b>Cache:</b> 5 minutos TTL com cache key estável (filter + pageable), resolvendo problema
-   * de Specification com equals/hashCode instável.
-   *
-   * <p>Esta estratégia previne N+1 queries mantendo performance ideal com DISTINCT e evitando
-   * cartesian product ao fetch apenas uma collection @OneToMany.
-   *
-   * <p>TODO: Padronizar demais findAllPaged depois
+   * <p>Alunos e professores veem apenas seus próprios empréstimos. Administradores e laboratoristas
+   * veem todos os empréstimos do sistema.
    *
    * @param page Número da página (0-indexed)
    * @param size Tamanho da página
    * @param filter Filtro opcional (busca textual em todos os campos)
    * @param order Campo de ordenação (padrão: "id")
    * @param asc Direção da ordenação (true = ASC, false = DESC, padrão: ASC)
-   * @return Página de entidades {@link Emprestimo} otimizada com associações carregadas e cache
+   * @return Página de empréstimos conforme a role do usuário autenticado
    */
   @GetMapping("page")
   @Override
@@ -149,14 +204,20 @@ public class EmprestimoController extends CrudController<Emprestimo, Long, Empre
       @RequestParam(required = false) String order,
       @RequestParam(required = false) Boolean asc) {
 
-    // Configura ordenação
     Sort sort = Sort.by("id");
     if (order != null && asc != null) {
       sort = Sort.by(asc ? Sort.Direction.ASC : Sort.Direction.DESC, order);
     }
     PageRequest pageRequest = PageRequest.of(page, size, sort);
 
-    // Usa novo método com cache key estável
+    String username = SecurityUtils.getAuthenticatedUsername();
+    List<String> userRoles = SecurityUtils.getAuthenticatedUserRoles();
+
+    if (userRoles.contains(PREFIXO_ROLE + ROLE_ALUNO_NAME)
+        || userRoles.contains(PREFIXO_ROLE + ROLE_PROFESSOR_NAME)) {
+      return emprestimoService.findAllPagedByUserWithTextFilter(filter, pageRequest, username);
+    }
+
     return emprestimoService.findAllPagedWithTextFilter(filter, pageRequest);
   }
 }

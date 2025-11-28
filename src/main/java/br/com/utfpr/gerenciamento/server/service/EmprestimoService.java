@@ -26,6 +26,9 @@ public interface EmprestimoService extends CrudService<Emprestimo, Long, Emprest
    */
   Page<EmprestimoResponseDto> findAllPagedWithTextFilter(String textFilter, Pageable pageable);
 
+  Page<EmprestimoResponseDto> findAllPagedByUserWithTextFilter(
+      String textFilter, Pageable pageable, String username);
+
   List<EmprestimoResponseDto> findAllByDataEmprestimoBetween(LocalDate dtIni, LocalDate dtFim);
 
   List<DashboardEmprestimoDia> countByDataEmprestimo(LocalDate dtIni, LocalDate dtFim);
