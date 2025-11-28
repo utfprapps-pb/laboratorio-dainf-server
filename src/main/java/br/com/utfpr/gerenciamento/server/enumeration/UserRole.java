@@ -26,7 +26,6 @@ public enum UserRole {
   // Constantes para uso em anotações (compile-time constants)
   public static final String ROLE_ADMINISTRADOR_NAME = "ADMINISTRADOR";
   public static final String ROLE_LABORATORISTA_NAME = "LABORATORISTA";
-  public static final String ROLE_USUARIO_NAME = "USUARIO";
   public static final String ROLE_PROFESSOR_NAME = "PROFESSOR";
   public static final String ROLE_ALUNO_NAME = "ALUNO";
 
