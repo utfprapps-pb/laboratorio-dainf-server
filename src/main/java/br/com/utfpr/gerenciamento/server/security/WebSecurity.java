@@ -15,6 +15,7 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.core.env.Environment;
 import org.springframework.http.HttpMethod;
 import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
+import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
@@ -26,6 +27,7 @@ import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
 @EnableWebSecurity
+@EnableMethodSecurity(securedEnabled = true, jsr250Enabled = true)
 @Configuration
 public class WebSecurity {
   private final UsuarioServiceImpl usuarioService;
@@ -110,6 +112,8 @@ public class WebSecurity {
                     .requestMatchers(HttpMethod.POST, EMPRESTIMO_SAVE, EMPRESTIMO_DEVOLUCAO)
                     .hasAnyRole(ROLE_LABORATORISTA_NAME, ROLE_ADMINISTRADOR_NAME)
                     .requestMatchers(HttpMethod.DELETE, EMPRESTIMO)
+                    .hasAnyRole(ROLE_LABORATORISTA_NAME, ROLE_ADMINISTRADOR_NAME)
+                    .requestMatchers(HttpMethod.GET, EMPRESTIMO_FIND_ALL_BY_USERNAME)
                     .hasAnyRole(ROLE_LABORATORISTA_NAME, ROLE_ADMINISTRADOR_NAME)
 
                     // Nada Consta - solicitar requer LABORATORISTA ou ADMINISTRADOR

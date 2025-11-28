@@ -7,7 +7,6 @@ import br.com.utfpr.gerenciamento.server.service.FornecedorService;
 import java.util.List;
 import org.modelmapper.ModelMapper;
 import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -47,7 +46,9 @@ public class FornecedorServiceImpl extends CrudServiceImpl<Fornecedor, Long, For
     if (!StringUtils.hasText(query)) {
       return fornecedorRepository.findAll();
     } else {
-      return fornecedorRepository.findByNomeFantasiaLikeIgnoreCaseOrRazaoSocialLikeIgnoreCase(query, PageRequest.of(0, 10)).getContent();
+      return fornecedorRepository
+          .findByNomeFantasiaLikeIgnoreCaseOrRazaoSocialLikeIgnoreCase(query, PageRequest.of(0, 10))
+          .getContent();
     }
   }
 }

@@ -1,6 +1,9 @@
 package br.com.utfpr.gerenciamento.server.util;
 
+import java.util.Collection;
+import java.util.List;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
 
@@ -37,7 +40,11 @@ public final class SecurityUtils {
    *     extraído
    */
   public static String getAuthenticatedUsername() {
-    Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+    var context = SecurityContextHolder.getContext();
+    if (context == null) {
+      throw new IllegalStateException("Authentication não pode ser null");
+    }
+    Authentication auth = context.getAuthentication();
     return extractUsername(auth);
   }
 
@@ -78,13 +85,11 @@ public final class SecurityUtils {
       throw new IllegalStateException("Authentication não pode ser null");
     }
 
-    // Estratégia 1: auth.getName() - funciona para ambos String e UserDetails
     String username = auth.getName();
     if (username != null && !username.trim().isEmpty()) {
       return username;
     }
 
-    // Estratégia 2: UserDetails.getUsername()
     Object principal = auth.getPrincipal();
     if (principal instanceof UserDetails userDetails) {
       username = userDetails.getUsername();
@@ -93,14 +98,34 @@ public final class SecurityUtils {
       }
     }
 
-    // Estratégia 3: String principal (compatibilidade com configurações antigas)
     if (principal instanceof String stringPrincipal && !stringPrincipal.trim().isEmpty()) {
       return stringPrincipal;
     }
 
-    // Nenhuma estratégia funcionou - lança exceção com diagnóstico
     throw new IllegalStateException(
         "Não foi possível extrair username do Authentication. Principal type: "
             + (principal != null ? principal.getClass().getName() : "null"));
+  }
+
+  /**
+   * Extrai as roles/autoridades do usuário autenticado atual.
+   *
+   * <p>Retorna uma coleção de autoridades (roles) do usuário autenticado no contexto.
+   *
+   * @return Lista de strings com as autoridades do usuário (ex: ["ROLE_ADMINISTRADOR"])
+   * @throws IllegalStateException se não houver usuário autenticado
+   */
+  public static List<String> getAuthenticatedUserRoles() {
+    var context = SecurityContextHolder.getContext();
+    if (context == null) {
+      throw new IllegalStateException("Authentication não pode ser null");
+    }
+    Authentication auth = context.getAuthentication();
+    if (auth == null) {
+      throw new IllegalStateException("Authentication não pode ser null");
+    }
+
+    Collection<? extends GrantedAuthority> authorities = auth.getAuthorities();
+    return authorities.stream().map(GrantedAuthority::getAuthority).toList();
   }
 }

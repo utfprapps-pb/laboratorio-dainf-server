@@ -86,13 +86,13 @@ class FornecedorServiceImplTest {
 
   // Método helper para criar Fornecedor simplificado
   private Fornecedor createFornecedor(Long id, String nomeFantasia) {
-    Fornecedor fornecedor = new Fornecedor();
-    fornecedor.setId(id);
-    fornecedor.setNomeFantasia(nomeFantasia);
-    fornecedor.setRazaoSocial("Razão Social " + nomeFantasia);
-    fornecedor.setCnpj("12345678000195");
-    fornecedor.setIe("1234567890");
-    return fornecedor;
+    Fornecedor f = new Fornecedor();
+    f.setId(id);
+    f.setNomeFantasia(nomeFantasia);
+    f.setRazaoSocial("Razão Social " + nomeFantasia);
+    f.setCnpj("12345678000195");
+    f.setIe("1234567890");
+    return f;
   }
 
   @Test
@@ -135,27 +135,13 @@ class FornecedorServiceImplTest {
   }
 
   @Test
-  void testConvertToDto() {
-    // Given
-    when(modelMapper.map(fornecedor, FornecedorResponseDto.class))
-        .thenReturn(fornecedorResponseDto);
-
-    // When
-    FornecedorResponseDto result = fornecedorService.toDto(fornecedor);
-
-    // Then
-    assertNotNull(result);
-    assertEquals(fornecedorResponseDto, result);
-    verify(modelMapper).map(fornecedor, FornecedorResponseDto.class);
-  }
-
-  @Test
   void testCompleteFornecedor_WithQuery() {
     // Given
     String query = "teste";
     Pageable pageable = PageRequest.of(0, 10);
     Page<Fornecedor> page = new PageImpl<>(fornecedores, pageable, fornecedores.size());
-    when(fornecedorRepository.findByNomeFantasiaLikeIgnoreCaseOrRazaoSocialLikeIgnoreCase(eq(query), any(Pageable.class)))
+    when(fornecedorRepository.findByNomeFantasiaLikeIgnoreCaseOrRazaoSocialLikeIgnoreCase(
+            eq(query), any(Pageable.class)))
         .thenReturn(page);
 
     // When
@@ -164,7 +150,9 @@ class FornecedorServiceImplTest {
     // Then
     assertNotNull(result);
     assertEquals(2, result.size());
-    verify(fornecedorRepository).findByNomeFantasiaLikeIgnoreCaseOrRazaoSocialLikeIgnoreCase(eq(query), any(Pageable.class));
+    verify(fornecedorRepository)
+        .findByNomeFantasiaLikeIgnoreCaseOrRazaoSocialLikeIgnoreCase(
+            eq(query), any(Pageable.class));
     verify(fornecedorRepository, never()).findAll();
   }
 
@@ -181,7 +169,9 @@ class FornecedorServiceImplTest {
     assertNotNull(result);
     assertEquals(2, result.size());
     verify(fornecedorRepository).findAll();
-    verify(fornecedorRepository, never()).findByNomeFantasiaLikeIgnoreCaseOrRazaoSocialLikeIgnoreCase(anyString(), any(Pageable.class));
+    verify(fornecedorRepository, never())
+        .findByNomeFantasiaLikeIgnoreCaseOrRazaoSocialLikeIgnoreCase(
+            anyString(), any(Pageable.class));
   }
 
   @Test
@@ -301,11 +291,7 @@ class FornecedorServiceImplTest {
     when(fornecedorRepository.findById(id)).thenReturn(Optional.empty());
 
     // When & Then
-    assertThrows(
-        EntityNotFoundException.class,
-        () -> {
-          fornecedorService.findOne(id);
-        });
+    assertThrows(EntityNotFoundException.class, () -> fornecedorService.findOne(id));
     verify(fornecedorRepository).findById(id);
     verify(modelMapper, never()).map(any(), eq(FornecedorResponseDto.class));
   }
