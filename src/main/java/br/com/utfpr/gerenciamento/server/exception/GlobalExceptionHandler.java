@@ -103,7 +103,7 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
     return criarProblemDetail(
         HttpStatus.UNAUTHORIZED,
         "Falha na autenticação",
-        ex.getMessage(),
+        "Operação não autorizada.",
         URI.create("/errors/autenticacao-falhou"));
   }
 
