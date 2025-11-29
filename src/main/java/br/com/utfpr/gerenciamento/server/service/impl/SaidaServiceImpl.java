@@ -52,6 +52,10 @@ public class SaidaServiceImpl extends CrudServiceImpl<Saida, Long, SaidaResponse
   @Transactional
   public void createSaidaByDevolucaoEmprestimo(
       List<EmprestimoDevolucaoItem> emprestimoDevolucaoItem) {
+    if (emprestimoDevolucaoItem == null || emprestimoDevolucaoItem.isEmpty()) {
+      throw new IllegalArgumentException("Lista de itens de devolução não pode estar vazia");
+    }
+
     Saida saida = new Saida();
     List<SaidaItem> saidaItemList = new ArrayList<>();
     saida.setIdEmprestimo(emprestimoDevolucaoItem.get(0).getEmprestimo().getId());

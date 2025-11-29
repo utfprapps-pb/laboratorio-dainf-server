@@ -22,7 +22,7 @@ import org.springframework.stereotype.Component;
 public class RateLimitProperties {
 
   /** Configuracao para endpoint /login */
-  private EndpointLimit login = new EndpointLimit(5, 15);
+  private EndpointLimit login = new EndpointLimit(10, 15);
 
   /** Configuracao para endpoint /auth (OAuth) */
   private EndpointLimit auth = new EndpointLimit(10, 15);

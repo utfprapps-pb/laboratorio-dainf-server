@@ -21,7 +21,9 @@ import org.springframework.security.config.annotation.web.configuration.EnableWe
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.security.web.AuthenticationEntryPoint;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.access.AccessDeniedHandler;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
@@ -146,6 +148,11 @@ public class WebSecurity {
             new JWTAuthenticationFilter(
                 authenticationManager, usuarioService, usuarioRepository, env))
         .addFilter(new JWTAuthorizationFilter(authenticationManager, usuarioService, env))
+        .exceptionHandling(
+            exceptions ->
+                exceptions
+                    .authenticationEntryPoint(authenticationEntryPoint())
+                    .accessDeniedHandler(accessDeniedHandler()))
         .sessionManagement(
             session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
         .build();
@@ -154,6 +161,27 @@ public class WebSecurity {
   @Bean
   protected PasswordEncoder passwordEncoder() {
     return new BCryptPasswordEncoder();
+  }
+
+  /**
+   * Configura o AuthenticationEntryPoint para retornar 401 Unauthorized quando o usuario nao esta
+   * autenticado, seguindo o padrao RFC 9457 (Problem Details).
+   */
+  @Bean
+  public AuthenticationEntryPoint authenticationEntryPoint() {
+    return (request, response, authException) ->
+        ProblemDetailResponseWriter.writeUnauthorized(
+            response, "Autenticacao necessaria para acessar este recurso.");
+  }
+
+  /**
+   * Configura o AccessDeniedHandler para retornar 403 Forbidden quando o usuario este autenticado,
+   * mas não tem permissao para acessar o recurso, seguindo o padrao RFC 9457 (Problem Details).
+   */
+  @Bean
+  public AccessDeniedHandler accessDeniedHandler() {
+    return (request, response, accessDeniedException) ->
+        ProblemDetailResponseWriter.writeAccessDenied(response);
   }
 
   /**

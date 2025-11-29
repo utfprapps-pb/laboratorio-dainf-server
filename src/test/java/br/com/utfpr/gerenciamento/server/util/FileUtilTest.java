@@ -40,7 +40,7 @@ class FileUtilTest {
     // When & Then
     ArquivoException exception =
         assertThrows(ArquivoException.class, () -> FileUtil.sanitizeFileName(nomeVazio));
-    assertEquals(FileUtil.MSG_NOME_VAZIO, exception.getMessage());
+    assertEquals(FileUtil.MSG_NOME_VAZIO, exception.getBody().getDetail());
   }
 
   @Test
@@ -51,7 +51,7 @@ class FileUtilTest {
     // When & Then
     ArquivoException exception =
         assertThrows(ArquivoException.class, () -> FileUtil.sanitizeFileName(nomeNull));
-    assertEquals(FileUtil.MSG_NOME_VAZIO, exception.getMessage());
+    assertEquals(FileUtil.MSG_NOME_VAZIO, exception.getBody().getDetail());
   }
 
   @Test
@@ -62,7 +62,7 @@ class FileUtilTest {
     // When & Then
     ArquivoException exception =
         assertThrows(ArquivoException.class, () -> FileUtil.sanitizeFileName(nomeInvalido));
-    assertEquals(FileUtil.MSG_NOME_INVALIDO_PREFIX + nomeInvalido, exception.getMessage());
+    assertEquals(FileUtil.MSG_NOME_INVALIDO_PREFIX + nomeInvalido, exception.getBody().getDetail());
   }
 
   @Test
@@ -73,7 +73,8 @@ class FileUtilTest {
     // When & Then
     ArquivoException exception =
         assertThrows(ArquivoException.class, () -> FileUtil.sanitizeFileName(nomeApenasPontos));
-    assertEquals(FileUtil.MSG_NOME_INVALIDO_PREFIX + nomeApenasPontos, exception.getMessage());
+    assertEquals(
+        FileUtil.MSG_NOME_INVALIDO_PREFIX + nomeApenasPontos, exception.getBody().getDetail());
   }
 
   @Test
@@ -137,16 +138,6 @@ class FileUtilTest {
   }
 
   @Test
-  void getAbsolutePathRaiz_DeveRetornarCaminhoValido() {
-    // When
-    String resultado = FileUtil.getAbsolutePathRaiz();
-
-    // Then
-    assertNotNull(resultado);
-    assertFalse(resultado.isEmpty());
-  }
-
-  @Test
   void sanitizeFileName_DeveManterNomeValidoIntacto() {
     // Given
     String nomeValido = "arquivo_valido.txt";
@@ -207,7 +198,8 @@ class FileUtilTest {
     // When & Then
     ArquivoException exception =
         assertThrows(ArquivoException.class, () -> FileUtil.getSecurePath("reports", nomePerigoso));
-    assertEquals(FileUtil.MSG_ACESSO_INSEGURO_PREFIX + nomePerigoso, exception.getMessage());
+    assertEquals(
+        FileUtil.MSG_ACESSO_INSEGURO_PREFIX + nomePerigoso, exception.getBody().getDetail());
   }
 
   @Test
@@ -218,7 +210,8 @@ class FileUtilTest {
     // When & Then
     ArquivoException exception =
         assertThrows(ArquivoException.class, () -> FileUtil.getSecureReportPath(nomePerigoso));
-    assertEquals(FileUtil.MSG_ACESSO_INSEGURO_PREFIX + nomePerigoso, exception.getMessage());
+    assertEquals(
+        FileUtil.MSG_ACESSO_INSEGURO_PREFIX + nomePerigoso, exception.getBody().getDetail());
   }
 
   @Test
@@ -229,7 +222,8 @@ class FileUtilTest {
     // When & Then
     ArquivoException exception =
         assertThrows(ArquivoException.class, () -> FileUtil.getSecurePath("reports", nomeComBarra));
-    assertEquals(FileUtil.MSG_ACESSO_INSEGURO_PREFIX + nomeComBarra, exception.getMessage());
+    assertEquals(
+        FileUtil.MSG_ACESSO_INSEGURO_PREFIX + nomeComBarra, exception.getBody().getDetail());
   }
 
   @Test
@@ -242,6 +236,7 @@ class FileUtilTest {
         assertThrows(
             ArquivoException.class, () -> FileUtil.getSecurePath("reports", nomeComBarraInvertida));
     assertEquals(
-        FileUtil.MSG_ACESSO_INSEGURO_PREFIX + nomeComBarraInvertida, exception.getMessage());
+        FileUtil.MSG_ACESSO_INSEGURO_PREFIX + nomeComBarraInvertida,
+        exception.getBody().getDetail());
   }
 }

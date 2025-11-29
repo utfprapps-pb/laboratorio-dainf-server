@@ -2,23 +2,20 @@ package br.com.utfpr.gerenciamento.server.exception;
 
 import static org.junit.jupiter.api.Assertions.*;
 
+import br.com.utfpr.gerenciamento.server.util.TraceIdUtil;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 
-/** Testes unitários para EmailException. */
+/**
+ * Testes unitarios especificos para EmailException.
+ *
+ * <p>Testes de estrutura RFC 9457 estao em BaseApiExceptionSubclassesTest.
+ */
 class EmailExceptionTest {
 
-  @Test
-  void deveInstanciarComMensagem() {
-    // Given
-    String mensagem = "Falha ao enviar email";
-
-    // When
-    EmailException exception = new EmailException(mensagem);
-
-    // Then
-    assertNotNull(exception);
-    assertEquals(mensagem, exception.getMessage());
-    assertNull(exception.getCause());
+  @AfterEach
+  void cleanup() {
+    TraceIdUtil.clear();
   }
 
   @Test
@@ -32,31 +29,8 @@ class EmailExceptionTest {
 
     // Then
     assertNotNull(exception);
-    assertEquals(mensagem, exception.getMessage());
+    assertEquals(mensagem, exception.getBody().getDetail());
     assertEquals(causa, exception.getCause());
     assertEquals("SMTP connection timeout", exception.getCause().getMessage());
-  }
-
-  @Test
-  void deveSerRuntimeException() {
-    // Given/When
-    EmailException exception = new EmailException("Erro de email");
-
-    // Then
-    assertInstanceOf(RuntimeException.class, exception);
-  }
-
-  @Test
-  void devePreservarStackTrace() {
-    // Given
-    Exception causaOriginal = new IllegalStateException("Serviço indisponível");
-    EmailException exception = new EmailException("Erro no envio", causaOriginal);
-
-    // When
-    StackTraceElement[] stackTrace = exception.getStackTrace();
-
-    // Then
-    assertNotNull(stackTrace);
-    assertTrue(stackTrace.length > 0);
   }
 }

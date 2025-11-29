@@ -14,6 +14,7 @@ import br.com.utfpr.gerenciamento.server.service.EmprestimoService;
 import br.com.utfpr.gerenciamento.server.service.UsuarioService;
 import br.com.utfpr.gerenciamento.server.util.DateUtil;
 import br.com.utfpr.gerenciamento.server.util.SecurityUtils;
+import jakarta.validation.Valid;
 import java.util.List;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -69,7 +70,7 @@ public class EmprestimoController extends CrudController<Emprestimo, Long, Empre
    */
   @PostMapping("save-emprestimo")
   public EmprestimoResponseDto save(
-      @RequestBody Emprestimo emprestimo, @RequestParam("idReserva") Long idReserva) {
+      @RequestBody @Valid Emprestimo emprestimo, @RequestParam("idReserva") Long idReserva) {
     return emprestimoService.processEmprestimo(emprestimo, idReserva);
   }
 
@@ -80,7 +81,7 @@ public class EmprestimoController extends CrudController<Emprestimo, Long, Empre
    * @return DTO do empréstimo atualizado
    */
   @PostMapping("save-devolucao")
-  public EmprestimoResponseDto saveDevolucao(@RequestBody Emprestimo emprestimo) {
+  public EmprestimoResponseDto saveDevolucao(@RequestBody @Valid Emprestimo emprestimo) {
     return emprestimoService.processDevolucao(emprestimo);
   }
 

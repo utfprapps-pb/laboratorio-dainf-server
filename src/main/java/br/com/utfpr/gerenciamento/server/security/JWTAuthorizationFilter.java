@@ -5,11 +5,13 @@ import static br.com.utfpr.gerenciamento.server.security.SecurityConstants.*;
 import br.com.utfpr.gerenciamento.server.service.impl.UsuarioServiceImpl;
 import com.auth0.jwt.JWT;
 import com.auth0.jwt.algorithms.Algorithm;
+import com.auth0.jwt.exceptions.JWTVerificationException;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.core.env.Environment;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -18,6 +20,7 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.web.authentication.www.BasicAuthenticationFilter;
 
+@Slf4j
 public class JWTAuthorizationFilter extends BasicAuthenticationFilter {
 
   private final UsuarioServiceImpl usuarioService;
@@ -50,24 +53,26 @@ public class JWTAuthorizationFilter extends BasicAuthenticationFilter {
 
   private UsernamePasswordAuthenticationToken getAuthentication(HttpServletRequest request) {
     String token = request.getHeader(HEADER_STRING);
+    log.debug("Processando token: {}", token != null ? "presente" : "ausente");
     if (token != null) {
-      String user =
-          JWT.require(Algorithm.HMAC512(tokenSecret))
-              .build()
-              .verify(token.replace(TOKEN_PREFIX, ""))
-              .getSubject();
-      if (user != null) {
-        try {
+      try {
+        String user =
+            JWT.require(Algorithm.HMAC512(tokenSecret))
+                .build()
+                .verify(token.replace(TOKEN_PREFIX, ""))
+                .getSubject();
+        log.debug("Usuario extraido do token: {}", user);
+        if (user != null) {
           // Usa UserDetailsService padrão - busca por username ou email COM permissoes via
           // @EntityGraph
           UserDetails userDetails = usuarioService.loadUserByUsername(user);
           return new UsernamePasswordAuthenticationToken(user, null, userDetails.getAuthorities());
-        } catch (UsernameNotFoundException e) {
-          // Usuário não encontrado, interrompe autenticação
-          return null;
         }
+      } catch (JWTVerificationException e) {
+        log.warn("Token JWT invalido: {}", e.getMessage());
+      } catch (UsernameNotFoundException e) {
+        log.warn("Usuario do token nao encontrado: {}", e.getMessage());
       }
-      return null;
     }
     return null;
   }

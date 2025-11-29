@@ -389,11 +389,11 @@ class JWTAuthenticationSecurityTest {
     // Por enquanto, apenas garante que o sistema trata os diferentes casos de forma consistente
   }
 
-  @ParameterizedTest(name = "{index}: Acesso com token {0} deve retornar 403_FORBIDDEN")
+  @ParameterizedTest(name = "{index}: Acesso com token {0} deve retornar 401_UNAUTHORIZED")
   @CsvSource({"malformado_sem_pontos", "prefixo_incorreto_Basic", "sem_token"})
   @DisplayName(
       "Deve bloquear acesso com token inválido, incorreto ou ausente em endpoint protegido")
-  void acessoComTokenInvalido_DeveRetornar403(String tipoTokenInvalido) {
+  void acessoComTokenInvalido_DeveRetornar401(String tipoTokenInvalido) {
     HttpHeaders headers = new HttpHeaders();
     headers.set("Content-Type", "application/json");
 
@@ -421,9 +421,11 @@ class JWTAuthenticationSecurityTest {
         restTemplate.exchange(
             baseUrl + "/usuario/user-info", HttpMethod.GET, request, String.class);
 
+    // RFC 7807: Token ausente ou inválido retorna 401 Unauthorized (não 403 Forbidden)
+    // 403 Forbidden é usado quando o usuário está autenticado mas não tem permissão
     assertEquals(
-        HttpStatus.FORBIDDEN,
+        HttpStatus.UNAUTHORIZED,
         response.getStatusCode(),
-        String.format("Acesso com token %s deve retornar 403", tipoTokenInvalido));
+        String.format("Acesso com token %s deve retornar 401", tipoTokenInvalido));
   }
 }

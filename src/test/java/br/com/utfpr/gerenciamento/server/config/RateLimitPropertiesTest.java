@@ -24,7 +24,7 @@ class RateLimitPropertiesTest {
   void shouldHaveCorrectDefaultLoginLimits() {
     RateLimitProperties properties = new RateLimitProperties();
 
-    assertEquals(5, properties.getLogin().getRequests());
+    assertEquals(10, properties.getLogin().getRequests());
     assertEquals(15, properties.getLogin().getDurationMinutes());
   }
 

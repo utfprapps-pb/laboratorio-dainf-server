@@ -14,7 +14,6 @@ public class CompraController extends CrudController<Compra, Long, CompraRespons
 
   private final CompraService compraService;
   private final ItemService itemService;
-  private Compra compraOld;
 
   public CompraController(CompraService compraService, ItemService itemService) {
     this.compraService = compraService;
@@ -30,30 +29,36 @@ public class CompraController extends CrudController<Compra, Long, CompraRespons
   public void preSave(Compra object) {
     if (object.getId() != null) {
       // remove o saldo antigo do item
-      compraOld = compraService.toEntity(compraService.findOne(object.getId()));
-      compraOld.getCompraItem().stream()
-          .forEach(
-              compraItem ->
-                  itemService.diminuiSaldoItem(
-                      compraItem.getItem().getId(), compraItem.getQtde(), false));
+      Compra compraOld = compraService.toEntity(compraService.findOne(object.getId()));
+      if (compraOld.getCompraItem() != null) {
+        compraOld.getCompraItem().stream()
+            .forEach(
+                compraItem ->
+                    itemService.diminuiSaldoItem(
+                        compraItem.getItem().getId(), compraItem.getQtde(), false));
+      }
     }
   }
 
   @Override
   public void postSave(Compra object) {
     // aumenta o novo saldo do item
-    object.getCompraItem().stream()
-        .forEach(
-            compraItem ->
-                itemService.aumentaSaldoItem(compraItem.getItem().getId(), compraItem.getQtde()));
+    if (object.getCompraItem() != null) {
+      object.getCompraItem().stream()
+          .forEach(
+              compraItem ->
+                  itemService.aumentaSaldoItem(compraItem.getItem().getId(), compraItem.getQtde()));
+    }
   }
 
   @Override
   public void postDelete(Compra object) {
-    object.getCompraItem().stream()
-        .forEach(
-            compraItem ->
-                itemService.diminuiSaldoItem(
-                    compraItem.getItem().getId(), compraItem.getQtde(), true));
+    if (object.getCompraItem() != null) {
+      object.getCompraItem().stream()
+          .forEach(
+              compraItem ->
+                  itemService.diminuiSaldoItem(
+                      compraItem.getItem().getId(), compraItem.getQtde(), true));
+    }
   }
 }

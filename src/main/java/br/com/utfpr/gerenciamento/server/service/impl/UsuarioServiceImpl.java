@@ -213,10 +213,7 @@ public class UsuarioServiceImpl extends CrudServiceImpl<Usuario, Long, UsuarioRe
       Usuario usuarioExistente =
           usuarioRepository
               .findById(usuario.getId())
-              .orElseThrow(
-                  () ->
-                      new EntityNotFoundException(
-                          "Usuário não encontrado com ID: " + usuario.getId()));
+              .orElseThrow(() -> new EntityNotFoundException("Usuário não encontrado."));
 
       // Se a nova senha é nula ou vazia, mantém a senha antiga
       if (usuario.getPassword() == null || usuario.getPassword().isBlank()) {

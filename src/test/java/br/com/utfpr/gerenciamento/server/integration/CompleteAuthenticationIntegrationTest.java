@@ -43,26 +43,7 @@ class CompleteAuthenticationIntegrationTest {
     // Limpa tabela nada_consta para evitar interferências entre testes
     try (Connection conn = dataSource.getConnection();
         Statement stmt = conn.createStatement()) {
-      int deleted = stmt.executeUpdate("DELETE FROM nada_consta");
-      System.out.println("Cleanup: deletados " + deleted + " registros da tabela nada_consta");
-
-      // Verifica se há algum usuário inativo
-      var inactiveUsers =
-          stmt.executeQuery("SELECT id, nome, username, ativo FROM usuario WHERE ativo = false");
-      if (inactiveUsers.next()) {
-        System.out.println("AVISO: Usuários inativos encontrados no banco de teste:");
-        do {
-          System.out.println(
-              "  - ID: "
-                  + inactiveUsers.getInt("id")
-                  + ", Nome: "
-                  + inactiveUsers.getString("nome")
-                  + ", Username: "
-                  + inactiveUsers.getString("username")
-                  + ", Ativo: "
-                  + inactiveUsers.getBoolean("ativo"));
-        } while (inactiveUsers.next());
-      }
+      stmt.executeUpdate("DELETE FROM nada_consta");
     }
   }
 
@@ -168,119 +149,30 @@ class CompleteAuthenticationIntegrationTest {
     assertEquals(HttpStatus.UNAUTHORIZED, response.getStatusCode());
   }
 
-  // Teste removido - agora coberto pelo teste parametrizado
-  // loginComCredenciaisValidas_DeveRetornarToken
-
   @Test
-  void debugVerificarDadosUsuarios() throws SQLException {
-    // Verificar dados atuais dos usuários no banco de teste
+  void verificarDadosIniciaisMigrations_DeveConterUsuariosEPermissoes() throws SQLException {
+    // Valida que as migrations criaram os dados iniciais corretamente
     try (Connection conn = dataSource.getConnection();
         Statement stmt = conn.createStatement()) {
 
-      System.out.println("=== DADOS DOS USUÁRIOS NO BANCO DE TESTE ===");
-      var usuarios =
+      // Conta usuários no banco
+      var usuariosResult = stmt.executeQuery("SELECT COUNT(*) as count FROM usuario");
+      usuariosResult.next();
+      int usuarioCount = usuariosResult.getInt("count");
+
+      // Conta permissões associadas a usuários
+      var permissoesResult =
           stmt.executeQuery(
-              "SELECT id, nome, username, email, ativo, email_verificado FROM usuario ORDER BY id");
-      int usuarioCount = 0;
-      while (usuarios.next()) {
-        usuarioCount++;
-        System.out.println(
-            "ID: "
-                + usuarios.getInt("id")
-                + ", Nome: "
-                + usuarios.getString("nome")
-                + ", Username: '"
-                + usuarios.getString("username")
-                + "'"
-                + ", Email: '"
-                + usuarios.getString("email")
-                + "'"
-                + ", Ativo: "
-                + usuarios.getBoolean("ativo")
-                + ", EmailVerificado: "
-                + usuarios.getBoolean("email_verificado"));
-      }
-      if (usuarioCount == 0) {
-        System.out.println("NENHUM USUÁRIO ENCONTRADO! As migrations podem não ter executado.");
-      }
-
-      System.out.println("\n=== VERIFICANDO SE TABELAS EXISTEM ===");
-      var tables =
-          stmt.executeQuery(
-              "SELECT table_name FROM information_schema.tables WHERE table_schema = 'PUBLIC' ORDER BY table_name");
-      while (tables.next()) {
-        System.out.println("Tabela: " + tables.getString("table_name"));
-      }
-
-      System.out.println("\n=== DADOS DA TABELA NADA CONSTA ===");
-      var nadaConsta =
-          stmt.executeQuery("SELECT usuario_id, status, send_at, created_at FROM nada_consta");
-      int nadaConstaCount = 0;
-      while (nadaConsta.next()) {
-        nadaConstaCount++;
-        System.out.println(
-            "UsuarioID: "
-                + nadaConsta.getInt("usuario_id")
-                + ", Status: "
-                + nadaConsta.getString("status")
-                + ", SendAt: "
-                + nadaConsta.getTimestamp("send_at")
-                + ", CreatedAt: "
-                + nadaConsta.getTimestamp("created_at"));
-      }
-      if (nadaConstaCount == 0) {
-        System.out.println("NENHUM REGISTRO ENCONTRADO EM NADA CONSTA (isso é bom!)");
-      }
-
-      System.out.println("\n=== VERIFICANDO SE HÁ DADOS NAS TABELAS ===");
-      var permissoesTable = stmt.executeQuery("SELECT COUNT(*) as count FROM permissao");
-      if (permissoesTable.next()) {
-        System.out.println("Total de permissões: " + permissoesTable.getInt("count"));
-      }
-
-      var usuariosTable = stmt.executeQuery("SELECT COUNT(*) as count FROM usuario");
-      if (usuariosTable.next()) {
-        System.out.println("Total de usuários: " + usuariosTable.getInt("count"));
-      }
-
-      System.out.println("\n=== PERMISSÕES DOS USUÁRIOS ===");
-      var permissoes =
-          stmt.executeQuery(
-              "SELECT u.id, u.nome, u.username, p.nome as permissao "
-                  + "FROM usuario u "
+              "SELECT COUNT(*) as count FROM usuario u "
                   + "JOIN usuario_permissoes up ON u.id = up.usuario_id "
-                  + "JOIN permissao p ON up.permissoes_id = p.id "
-                  + "ORDER BY u.id, p.nome");
-      int permissaoCount = 0;
-      while (permissoes.next()) {
-        permissaoCount++;
-        System.out.println(
-            "UsuarioID: "
-                + permissoes.getInt("id")
-                + ", Nome: "
-                + permissoes.getString("nome")
-                + ", Username: '"
-                + permissoes.getString("username")
-                + "'"
-                + ", Permissao: "
-                + permissoes.getString("permissao"));
-      }
-      if (permissaoCount == 0) {
-        System.out.println("NENHUMA PERMISSÃO ENCONTRADA!");
-      }
+                  + "JOIN permissao p ON up.permissoes_id = p.id");
+      permissoesResult.next();
+      int permissaoCount = permissoesResult.getInt("count");
 
-      // Assert para garantir que o teste tem validação
       assertTrue(
           usuarioCount > 0,
           "Deve haver usuários no banco de teste - verifique se as migrations executaram");
       assertTrue(permissaoCount > 0, "Deve haver permissões associadas aos usuários");
     }
   }
-
-  // Testes removidos - agora cobertos pelo teste parametrizado
-  // loginComCredenciaisValidas_DeveRetornarToken
-  // - loginProfessorNaoAdmin_DeveCarregarPermissoesCorretamente (favarim@professores.utfpr.edu.br)
-  // - loginLaboratorista_DeveCarregarPermissoesCorretamente (joao@alunos.utfpr.edu.br)
-  // - loginAluno_DeveCarregarPermissoesCorretamente (gzaffani@alunos.utfpr.edu.br)
-  // - loginAdministradorAlternativo_DeveCarregarPermissoesCorretamente (utfprapps-pb@utfpr.edu.br)
 }

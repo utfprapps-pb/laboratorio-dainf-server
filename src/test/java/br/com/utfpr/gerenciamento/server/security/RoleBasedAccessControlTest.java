@@ -80,7 +80,6 @@ class RoleBasedAccessControlTest {
       }
       return null;
     } catch (Exception e) {
-      System.err.println("Erro na autenticação para " + username + ": " + e.getMessage());
       return null;
     }
   }
@@ -241,8 +240,10 @@ class RoleBasedAccessControlTest {
     ResponseEntity<String> response =
         restTemplate.postForEntity(baseUrl + "/usuario/user-info", request, String.class);
 
+    // RFC 7807: Sem token retorna 401 Unauthorized (autenticacao necessaria)
+    // 403 Forbidden e usado quando autenticado mas sem permissao
     assertEquals(
-        HttpStatus.FORBIDDEN,
+        HttpStatus.UNAUTHORIZED,
         response.getStatusCode(),
         "Endpoint autenticado deve bloquear acesso sem token");
   }
@@ -256,8 +257,10 @@ class RoleBasedAccessControlTest {
     ResponseEntity<String> response =
         restTemplate.postForEntity(baseUrl + "/usuario/user-info", request, String.class);
 
+    // RFC 7807: Token invalido retorna 401 Unauthorized (autenticacao falhou)
+    // 403 Forbidden e usado quando autenticado mas sem permissao
     assertEquals(
-        HttpStatus.FORBIDDEN,
+        HttpStatus.UNAUTHORIZED,
         response.getStatusCode(),
         "Endpoint autenticado deve bloquear token inválido");
   }
@@ -359,8 +362,10 @@ class RoleBasedAccessControlTest {
     ResponseEntity<String> response =
         restTemplate.exchange(baseUrl + "/item", HttpMethod.GET, request, String.class);
 
+    // RFC 7807: Sem autenticacao retorna 401 Unauthorized
+    // 403 Forbidden e usado quando autenticado mas sem permissao
     assertEquals(
-        HttpStatus.FORBIDDEN,
+        HttpStatus.UNAUTHORIZED,
         response.getStatusCode(),
         "Endpoint de itens deve bloquear acesso sem autenticação");
   }

@@ -69,8 +69,7 @@ public abstract class CrudServiceImpl<T, ID extends Serializable, DTO>
     T entity =
         getRepository()
             .findById(id)
-            .orElseThrow(
-                () -> new EntityNotFoundException("Entidade não encontrada com ID: " + id));
+            .orElseThrow(() -> new EntityNotFoundException("Entidade não encontrada."));
     return toDto(entity);
   }
 
