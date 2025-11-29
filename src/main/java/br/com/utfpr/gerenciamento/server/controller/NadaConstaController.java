@@ -66,7 +66,7 @@ public class NadaConstaController extends CrudController<NadaConsta, Long, NadaC
   @Override
   @DeleteMapping("/{id}")
   public void delete(@PathVariable("id") Long id) {
-    throw new MethodNotAllowedException("Nao e permitido excluir nada consta.");
+    throw new MethodNotAllowedException("Não é permitido excluir Nada Consta.");
   }
 
   /**
@@ -120,6 +120,7 @@ public class NadaConstaController extends CrudController<NadaConsta, Long, NadaC
     byte[] pdf = nadaConstaService.gerarNadaConstaPdf(id);
     return ResponseEntity.ok()
         .header("Content-Disposition", "attachment; filename=nada-consta.pdf")
+        .header("X-Content-Type-Options", "nosniff")
         .body(pdf);
   }
 }

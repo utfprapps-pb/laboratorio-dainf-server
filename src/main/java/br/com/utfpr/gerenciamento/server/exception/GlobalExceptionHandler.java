@@ -167,7 +167,7 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
     return criarProblemDetail(
         HttpStatus.BAD_REQUEST,
         "Argumento inválido",
-        ex.getMessage(),
+        "Parâmetro inválido.",
         URI.create("/errors/argumento-invalido"));
   }
 

@@ -14,6 +14,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
+import org.springframework.core.MethodParameter;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ProblemDetail;
@@ -199,7 +200,9 @@ class GlobalExceptionHandlerTest {
       FieldError fieldError2 = new FieldError("objeto", "email", "Email inválido");
       when(bindingResult.getFieldErrors()).thenReturn(java.util.List.of(fieldError1, fieldError2));
 
-      MethodArgumentNotValidException ex = new MethodArgumentNotValidException(null, bindingResult);
+      MethodParameter methodParameter = mock(MethodParameter.class);
+      MethodArgumentNotValidException ex =
+          new MethodArgumentNotValidException(methodParameter, bindingResult);
 
       ResponseEntity<Object> response =
           handler.handleMethodArgumentNotValid(
@@ -227,7 +230,9 @@ class GlobalExceptionHandlerTest {
       BindingResult bindingResult = mock(BindingResult.class);
       when(bindingResult.getFieldErrors()).thenReturn(java.util.List.of());
 
-      MethodArgumentNotValidException ex = new MethodArgumentNotValidException(null, bindingResult);
+      MethodParameter methodParameter = mock(MethodParameter.class);
+      MethodArgumentNotValidException ex =
+          new MethodArgumentNotValidException(methodParameter, bindingResult);
 
       ResponseEntity<Object> response =
           handler.handleMethodArgumentNotValid(
@@ -254,7 +259,7 @@ class GlobalExceptionHandlerTest {
 
       assertEquals(HttpStatus.BAD_REQUEST.value(), result.getStatus());
       assertEquals("Argumento inválido", result.getTitle());
-      assertEquals("Argumento não pode ser nulo", result.getDetail());
+      assertEquals("Parâmetro inválido.", result.getDetail());
       assertTrue(result.getType().toString().contains("/errors/argumento-invalido"));
     }
 
