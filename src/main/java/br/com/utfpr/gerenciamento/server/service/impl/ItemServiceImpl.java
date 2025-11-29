@@ -36,7 +36,7 @@ import org.springframework.web.multipart.MultipartHttpServletRequest;
 @Slf4j
 public class ItemServiceImpl extends CrudServiceImpl<Item, Long, ItemResponseDto>
     implements ItemService {
-  public static final String ITEM_NAO_ENCONTRADO_COM_ID = "Item não encontrado com ID: ";
+  private static final String ITEM_NAO_ENCONTRADO = "Item não encontrado.";
 
   /**
    * Endereço(s) de email para notificações administrativas.
@@ -171,7 +171,7 @@ public class ItemServiceImpl extends CrudServiceImpl<Item, Long, ItemResponseDto
     Item itemToSave =
         itemRepository
             .findById(idItem)
-            .orElseThrow(() -> new EntityNotFoundException(ITEM_NAO_ENCONTRADO_COM_ID + idItem));
+            .orElseThrow(() -> new EntityNotFoundException(ITEM_NAO_ENCONTRADO));
     if (!needValidationSaldo
         || Boolean.TRUE.equals(this.saldoItemIsValid(itemToSave.getSaldo(), qtde))) {
       itemToSave.setSaldo(itemToSave.getSaldo().subtract(qtde));
@@ -185,7 +185,7 @@ public class ItemServiceImpl extends CrudServiceImpl<Item, Long, ItemResponseDto
     Item itemToSave =
         itemRepository
             .findById(idItem)
-            .orElseThrow(() -> new EntityNotFoundException(ITEM_NAO_ENCONTRADO_COM_ID + idItem));
+            .orElseThrow(() -> new EntityNotFoundException(ITEM_NAO_ENCONTRADO));
     itemToSave.setSaldo(itemToSave.getSaldo().add(qtde));
     itemRepository.save(itemToSave);
   }
@@ -195,7 +195,7 @@ public class ItemServiceImpl extends CrudServiceImpl<Item, Long, ItemResponseDto
   public BigDecimal getSaldoItem(Long idItem) {
     return itemRepository
         .findById(idItem)
-        .orElseThrow(() -> new EntityNotFoundException(ITEM_NAO_ENCONTRADO_COM_ID + idItem))
+        .orElseThrow(() -> new EntityNotFoundException(ITEM_NAO_ENCONTRADO))
         .getSaldo();
   }
 
@@ -318,7 +318,7 @@ public class ItemServiceImpl extends CrudServiceImpl<Item, Long, ItemResponseDto
     ItemWithQtdeEmprestada projection =
         itemRepository
             .findByIdWithQtdeEmprestada(id)
-            .orElseThrow(() -> new EntityNotFoundException(ITEM_NAO_ENCONTRADO_COM_ID + id));
+            .orElseThrow(() -> new EntityNotFoundException(ITEM_NAO_ENCONTRADO));
 
     Item item = projection.getItem();
     BigDecimal qtdeEmprestada = projection.getQtdeEmprestada();

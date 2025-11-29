@@ -37,7 +37,6 @@ public class JWTAuthenticationFilter extends UsernamePasswordAuthenticationFilte
     this.usuarioService = usuarioService;
     this.usuarioRepository = usuarioRepository;
     this.tokenSecret = env.getProperty("utfpr.token.secret");
-    // URL padrão é /login para UsernamePasswordAuthenticationFilter
   }
 
   @Override
@@ -48,7 +47,6 @@ public class JWTAuthenticationFilter extends UsernamePasswordAuthenticationFilte
       String loginIdentifier = credentials.getUsername();
       String password = credentials.getPassword();
 
-      // Validação de campos obrigatórios com mensagem genérica para prevenir user enumeration
       if (loginIdentifier == null
           || loginIdentifier.trim().isEmpty()
           || password == null
@@ -56,15 +54,12 @@ public class JWTAuthenticationFilter extends UsernamePasswordAuthenticationFilte
         throw new BadCredentialsException("Credenciais inválidas");
       }
 
-      // Usuário já vem com permissões carregadas via @EntityGraph
       Usuario user =
           usuarioRepository.findWithPermissoesByUsernameOrEmail(loginIdentifier, loginIdentifier);
       if (user == null) {
         throw new BadCredentialsException("Credenciais inválidas");
       }
 
-      // CRÍTICO: Autenticar senha ANTES de qualquer outra verificação para prevenir user
-      // enumeration
       Authentication auth =
           authenticationManager.authenticate(
               new UsernamePasswordAuthenticationToken(
@@ -81,7 +76,6 @@ public class JWTAuthenticationFilter extends UsernamePasswordAuthenticationFilte
 
       return auth;
     } catch (com.fasterxml.jackson.core.JsonProcessingException e) {
-      // Mensagem genérica para prevenir user enumeration via JSON parsing errors
       throw new BadCredentialsException("Credenciais inválidas");
     } catch (IOException e) {
       throw new RuntimeException(e);
@@ -107,21 +101,13 @@ public class JWTAuthenticationFilter extends UsernamePasswordAuthenticationFilte
       HttpServletRequest request, HttpServletResponse response, AuthenticationException failed)
       throws IOException {
     String message = failed.getMessage();
-    ObjectMapper mapper = new ObjectMapper();
-    response.setContentType("application/json");
 
     if (failed instanceof PreconditionRequiredAuthenticationException) {
-      response.setStatus(428); // PRECONDITION REQUIRED para nada consta
+      ProblemDetailResponseWriter.writePreconditionRequired(response, message);
     } else if (failed instanceof DisabledException) {
-      response.setStatus(HttpServletResponse.SC_FORBIDDEN); // 403 para email não verificado
+      ProblemDetailResponseWriter.writeForbiddenDisabled(response, message);
     } else {
-      // Todas as outras falhas de autenticação retornam 401 UNAUTHORIZED
-      // Isso inclui: BadCredentialsException, campos vazios, JSON malformado, usuário não
-      // encontrado
-      response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+      ProblemDetailResponseWriter.writeBadCredentials(response);
     }
-
-    var errorObject = java.util.Map.of("error", message);
-    mapper.writeValue(response.getWriter(), errorObject);
   }
 }

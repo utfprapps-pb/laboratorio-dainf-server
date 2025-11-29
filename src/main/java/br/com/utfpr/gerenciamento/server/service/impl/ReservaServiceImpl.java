@@ -80,7 +80,7 @@ public class ReservaServiceImpl extends CrudServiceImpl<Reserva, Long, ReservaRe
     Reserva reserva =
         reservaRepository
             .findById(idReserva)
-            .orElseThrow(() -> new EntityNotFoundException("Reserva não encontrada: " + idReserva));
+            .orElseThrow(() -> new EntityNotFoundException("Reserva não encontrada."));
 
     String authenticatedUsername = SecurityUtils.getAuthenticatedUsername();
     if (!reserva.getUsuario().getUsername().equals(authenticatedUsername)) {
@@ -92,7 +92,7 @@ public class ReservaServiceImpl extends CrudServiceImpl<Reserva, Long, ReservaRe
         reserva.getUsuario().getEmail(),
         "Reserva Finalizada",
         "templateFinalizacaoReserva");
-    delete(idReserva);
+    reservaRepository.deleteById(idReserva);
   }
 
   @Override

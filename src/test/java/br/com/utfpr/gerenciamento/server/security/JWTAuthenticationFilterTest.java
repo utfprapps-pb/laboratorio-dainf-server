@@ -82,11 +82,11 @@ class JWTAuthenticationFilterTest {
             "Foi realizado uma solicitação de nada consta para o usuário. Contate a administração.");
     filter.unsuccessfulAuthentication(request, response, ex);
     verify(response).setStatus(428);
-    verify(response).setContentType("application/json");
+    verify(response).setContentType("application/problem+json");
     pw.flush();
     String json = sw.toString();
     assertTrue(json.contains("nada consta"));
-    assertTrue(json.contains("error"));
+    assertTrue(json.contains("detail")); // RFC 7807 usa "detail" em vez de "error"
   }
 
   @Test
@@ -196,6 +196,7 @@ class JWTAuthenticationFilterTest {
     filter.unsuccessfulAuthentication(request, response, ex);
     writer.flush();
     verify(response).setStatus(428);
+    verify(response).setContentType("application/problem+json");
     String json = stringWriter.toString();
     assertTrue(json.contains("Nada consta"));
   }
@@ -211,8 +212,10 @@ class JWTAuthenticationFilterTest {
     filter.unsuccessfulAuthentication(request, response, ex);
     writer.flush();
     verify(response).setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+    verify(response).setContentType("application/problem+json");
     String json = stringWriter.toString();
-    assertTrue(json.contains("Unauthorized"));
+    // RFC 9457 ProblemDetail usa formato padronizado com "detail"
+    assertTrue(json.contains("Usuario ou senha incorretos") || json.contains("detail"));
   }
 
   @Test

@@ -41,11 +41,10 @@ class NadaConstaControllerTest {
 
   @Test
   void testGetNadaConstaPdf_NotFound() throws Exception {
-    // Simula a exception de domínio para 404
     when(nadaConstaService.gerarNadaConstaPdf(99L))
         .thenThrow(
-            new br.com.utfpr.gerenciamento.server.exception.NadaConstaException(
-                "Nada Consta não encontrado"));
+            new br.com.utfpr.gerenciamento.server.exception.EntityNotFoundException(
+                "Nada Consta não encontrado."));
     mockMvc.perform(get("/nadaconsta/99/pdf")).andExpect(status().isNotFound());
   }
 }

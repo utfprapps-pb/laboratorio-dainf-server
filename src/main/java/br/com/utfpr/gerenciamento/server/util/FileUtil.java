@@ -25,18 +25,6 @@ public class FileUtil {
   static final String MSG_ERRO_CRIAR_DIRETORIO_PREFIX = "Não foi possível criar o diretório: ";
 
   /**
-   * Retorna o caminho absoluto da raiz do projeto. Mantido apenas para retrocompatibilidade com
-   * código legado.
-   *
-   * @return caminho absoluto da raiz do projeto
-   * @deprecated Use getSecurePath() ou os metodos específicos ao invés deste
-   */
-  @Deprecated(since = "31/08/2025", forRemoval = false)
-  public static String getAbsolutePathRaiz() {
-    return RAIZ_PROJETO.toString();
-  }
-
-  /**
    * Cria um caminho seguro num subdiretório especificado, realizando sanitização do nome do arquivo
    * e validação contra path traversal.
    *

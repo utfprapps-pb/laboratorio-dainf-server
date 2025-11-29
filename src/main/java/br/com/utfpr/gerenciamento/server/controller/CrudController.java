@@ -1,6 +1,7 @@
 package br.com.utfpr.gerenciamento.server.controller;
 
 import br.com.utfpr.gerenciamento.server.service.CrudService;
+import jakarta.validation.Valid;
 import java.io.Serializable;
 import java.util.List;
 import org.springframework.data.domain.Page;
@@ -19,7 +20,7 @@ public abstract class CrudController<T, ID extends Serializable, DTO> {
   }
 
   @PostMapping
-  public DTO save(@RequestBody T object) {
+  public DTO save(@RequestBody @Valid T object) {
     preSave(object);
     DTO toReturn = getService().save(object);
     postSave(object);

@@ -62,7 +62,7 @@ public class UsuarioController {
   }
 
   @PostMapping
-  public UsuarioResponseDto save(@RequestBody Usuario usuario) {
+  public UsuarioResponseDto save(@RequestBody @Valid Usuario usuario) {
     return usuarioService.save(usuario);
   }
 
@@ -73,7 +73,7 @@ public class UsuarioController {
 
   @PostMapping("change-senha")
   public UsuarioResponseDto redefinirSenha(
-      @RequestBody Usuario usuario, @RequestParam("senhaAtual") String senhaAtual) {
+      @RequestBody @Valid Usuario usuario, @RequestParam("senhaAtual") String senhaAtual) {
     return usuarioService.updatePassword(usuario, senhaAtual);
   }
 
@@ -120,7 +120,7 @@ public class UsuarioController {
   }
 
   @PostMapping("/update-user")
-  public void atualizarUsuario(@RequestBody Usuario usuario) {
+  public void atualizarUsuario(@RequestBody @Valid Usuario usuario) {
     usuarioService.updateUsuario(usuario);
   }
 

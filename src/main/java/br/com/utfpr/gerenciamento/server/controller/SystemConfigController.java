@@ -1,10 +1,10 @@
 package br.com.utfpr.gerenciamento.server.controller;
 
 import br.com.utfpr.gerenciamento.server.dto.SystemConfigDTO;
+import br.com.utfpr.gerenciamento.server.exception.EntityNotFoundException;
 import br.com.utfpr.gerenciamento.server.model.SystemConfig;
 import br.com.utfpr.gerenciamento.server.service.SystemConfigService;
 import jakarta.validation.Valid;
-import java.util.Optional;
 import org.modelmapper.ModelMapper;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -38,10 +38,12 @@ public class SystemConfigController {
   @GetMapping
   @PreAuthorize("hasAuthority('ROLE_ADMINISTRADOR')")
   public ResponseEntity<SystemConfigDTO> getConfig() {
-    Optional<SystemConfig> configOpt = service.getConfig();
-    return configOpt
-        .map(config -> ResponseEntity.ok(modelMapper.map(config, SystemConfigDTO.class)))
-        .orElseGet(() -> ResponseEntity.notFound().build());
+    SystemConfig config =
+        service
+            .getConfig()
+            .orElseThrow(
+                () -> new EntityNotFoundException("Configuração do sistema não encontrada."));
+    return ResponseEntity.ok(modelMapper.map(config, SystemConfigDTO.class));
   }
 
   /**

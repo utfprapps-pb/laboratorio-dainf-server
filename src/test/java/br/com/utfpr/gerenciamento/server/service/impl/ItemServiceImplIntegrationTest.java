@@ -174,7 +174,7 @@ class ItemServiceImplIntegrationTest {
     // Act & Assert
     assertThatThrownBy(() -> itemService.diminuiSaldoItem(itemIdInexistente, qtde, true))
         .isInstanceOf(EntityNotFoundException.class)
-        .hasMessageContaining("Item não encontrado com ID: 999");
+        .hasMessageContaining("Item não encontrado");
   }
 
   @Test
@@ -200,7 +200,7 @@ class ItemServiceImplIntegrationTest {
     // Act & Assert
     assertThatThrownBy(() -> itemService.aumentaSaldoItem(itemIdInexistente, qtde))
         .isInstanceOf(EntityNotFoundException.class)
-        .hasMessageContaining("Item não encontrado com ID: 999");
+        .hasMessageContaining("Item não encontrado");
   }
 
   @Test
@@ -217,7 +217,7 @@ class ItemServiceImplIntegrationTest {
     // Act & Assert
     assertThatThrownBy(() -> itemService.getSaldoItem(999L))
         .isInstanceOf(EntityNotFoundException.class)
-        .hasMessageContaining("Item não encontrado com ID: 999");
+        .hasMessageContaining("Item não encontrado");
   }
 
   @Test
