@@ -721,4 +721,23 @@ class EmprestimoServiceImplTest {
     // cleanupAfterDelete does)
     verify(saidaService).deleteSaidaByEmprestimo(1L);
   }
+
+  @Test
+  void testFindAllByItemId() {
+    // Given
+    Long itemId = 1L;
+    List<Emprestimo> emprestimos = Collections.singletonList(emprestimo);
+
+    when(emprestimoRepository.findAllByItemId(itemId)).thenReturn(emprestimos);
+    doReturn(emprestimoDto).when(service).toDto(emprestimo);
+
+    // When
+    List<EmprestimoResponseDto> result = service.findAllByItemId(itemId);
+
+    // Then
+    assertNotNull(result);
+    assertEquals(1, result.size());
+    verify(emprestimoRepository).findAllByItemId(itemId);
+    verify(service).toDto(emprestimo);
+  }
 }
