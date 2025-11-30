@@ -2,10 +2,13 @@ package br.com.utfpr.gerenciamento.server.repository;
 
 import br.com.utfpr.gerenciamento.server.model.Item;
 import br.com.utfpr.gerenciamento.server.repository.projection.ItemCompleteWithDisponibilidade;
+import br.com.utfpr.gerenciamento.server.repository.projection.ItemListProjection;
 import br.com.utfpr.gerenciamento.server.repository.projection.ItemWithQtdeEmprestada;
 import java.math.BigDecimal;
 import java.util.List;
 import java.util.Optional;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.data.jpa.repository.Query;
@@ -123,4 +126,52 @@ public interface ItemRepository extends JpaRepository<Item, Long>, JpaSpecificat
       ORDER BY i.nome
       """)
   List<ItemCompleteWithDisponibilidade> findCompleteAvailableForLoan(@Param("query") String query);
+
+  /**
+   * Busca paginada de itens para listagem com campos otimizados.
+   *
+   * <p>Inclui primeira imagem via subquery para exibição na tabela.
+   *
+   * @param pageable paginação e ordenação
+   * @return Page de projeções com apenas campos necessários para tabela
+   */
+  @Query(
+      """
+      SELECT i.id as id,
+             i.nome as nome,
+             i.localizacao as localizacao,
+             i.saldo as saldo,
+             g.id as grupoId,
+             g.descricao as grupoDescricao,
+             (SELECT ii.nameImage FROM ItemImage ii WHERE ii.item.id = i.id ORDER BY ii.id ASC LIMIT 1) as imagemUrl
+      FROM Item i
+      LEFT JOIN i.grupo g
+      """)
+  Page<ItemListProjection> findAllProjected(Pageable pageable);
+
+  /**
+   * Busca paginada de itens com filtro de texto.
+   *
+   * @param filter texto para filtrar por id, nome, localização ou grupo
+   * @param pageable paginação e ordenação
+   * @return Page de projeções filtradas
+   */
+  @Query(
+      """
+      SELECT i.id as id,
+             i.nome as nome,
+             i.localizacao as localizacao,
+             i.saldo as saldo,
+             g.id as grupoId,
+             g.descricao as grupoDescricao,
+             (SELECT ii.nameImage FROM ItemImage ii WHERE ii.item.id = i.id ORDER BY ii.id ASC LIMIT 1) as imagemUrl
+      FROM Item i
+      LEFT JOIN i.grupo g
+      WHERE CAST(i.id AS string) LIKE CONCAT('%', :filter, '%')
+         OR LOWER(i.nome) LIKE LOWER(CONCAT('%', :filter, '%'))
+         OR LOWER(i.localizacao) LIKE LOWER(CONCAT('%', :filter, '%'))
+         OR LOWER(g.descricao) LIKE LOWER(CONCAT('%', :filter, '%'))
+      """)
+  Page<ItemListProjection> findAllProjectedWithFilter(
+      @Param("filter") String filter, Pageable pageable);
 }

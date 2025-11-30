@@ -1,11 +1,13 @@
 package br.com.utfpr.gerenciamento.server.service.impl;
 
+import br.com.utfpr.gerenciamento.server.dto.ReservaListDto;
 import br.com.utfpr.gerenciamento.server.dto.ReservaResponseDto;
 import br.com.utfpr.gerenciamento.server.exception.EntityNotFoundException;
 import br.com.utfpr.gerenciamento.server.model.Reserva;
 import br.com.utfpr.gerenciamento.server.model.Usuario;
 import br.com.utfpr.gerenciamento.server.model.modelTemplateEmail.ReservaTemplate;
 import br.com.utfpr.gerenciamento.server.repository.ReservaRepository;
+import br.com.utfpr.gerenciamento.server.repository.projection.ReservaListProjection;
 import br.com.utfpr.gerenciamento.server.service.EmailService;
 import br.com.utfpr.gerenciamento.server.service.ReservaService;
 import br.com.utfpr.gerenciamento.server.service.UsuarioService;
@@ -13,6 +15,8 @@ import br.com.utfpr.gerenciamento.server.util.DateUtil;
 import br.com.utfpr.gerenciamento.server.util.SecurityUtils;
 import java.util.List;
 import org.modelmapper.ModelMapper;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -50,6 +54,31 @@ public class ReservaServiceImpl extends CrudServiceImpl<Reserva, Long, ReservaRe
   @Override
   public Reserva toEntity(ReservaResponseDto reservaResponseDto) {
     return modelMapper.map(reservaResponseDto, Reserva.class);
+  }
+
+  @Override
+  @Transactional(readOnly = true)
+  public Page<ReservaListDto> findAllPagedList(String filter, Pageable pageable) {
+    Page<ReservaListProjection> page;
+    if (filter != null && !filter.isBlank()) {
+      page = reservaRepository.findAllProjectedWithFilter(filter, pageable);
+    } else {
+      page = reservaRepository.findAllProjected(pageable);
+    }
+    return page.map(ReservaListDto::fromProjection);
+  }
+
+  @Override
+  @Transactional(readOnly = true)
+  public Page<ReservaListDto> findAllPagedListByUser(
+      String filter, Pageable pageable, String username) {
+    Page<ReservaListProjection> page;
+    if (filter != null && !filter.isBlank()) {
+      page = reservaRepository.findAllProjectedByUsernameWithFilter(username, filter, pageable);
+    } else {
+      page = reservaRepository.findAllProjectedByUsername(username, pageable);
+    }
+    return page.map(ReservaListDto::fromProjection);
   }
 
   @Override

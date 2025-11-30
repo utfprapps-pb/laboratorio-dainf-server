@@ -1,6 +1,11 @@
 package br.com.utfpr.gerenciamento.server.controller;
 
-import br.com.utfpr.gerenciamento.server.dto.*;
+import br.com.utfpr.gerenciamento.server.dto.ConfirmEmailRequestDto;
+import br.com.utfpr.gerenciamento.server.dto.GenericResponse;
+import br.com.utfpr.gerenciamento.server.dto.PermissaoResponseDTO;
+import br.com.utfpr.gerenciamento.server.dto.RecoverPasswordRequestDto;
+import br.com.utfpr.gerenciamento.server.dto.UsuarioListDto;
+import br.com.utfpr.gerenciamento.server.dto.UsuarioResponseDto;
 import br.com.utfpr.gerenciamento.server.model.Usuario;
 import br.com.utfpr.gerenciamento.server.service.PermissaoService;
 import br.com.utfpr.gerenciamento.server.service.UsuarioService;
@@ -12,7 +17,6 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
-import org.springframework.data.jpa.domain.Specification;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -39,8 +43,20 @@ public class UsuarioController {
     return usuarioService.findOne(id);
   }
 
+  /**
+   * Lista paginada de usuários com filtro textual usando DTO simplificado.
+   *
+   * <p><b>Otimização:</b> Retorna apenas campos necessários para listagem via projeção SQL.
+   *
+   * @param page Número da página (0-indexed)
+   * @param size Tamanho da página
+   * @param filter Filtro opcional (busca textual em todos os campos)
+   * @param order Campo de ordenação (padrão: "id")
+   * @param asc Direção da ordenação (true = ASC, false = DESC, padrão: ASC)
+   * @return Página de usuários simplificados
+   */
   @GetMapping("page")
-  public Page<UsuarioResponseDto> findAllPaged(
+  public Page<UsuarioListDto> findAllPagedList(
       @RequestParam("page") int page,
       @RequestParam("size") int size,
       @RequestParam(required = false) String filter,
@@ -51,14 +67,7 @@ public class UsuarioController {
       pageRequest =
           PageRequest.of(page, size, asc ? Sort.Direction.ASC : Sort.Direction.DESC, order);
     }
-    Page<UsuarioResponseDto> result;
-    if (filter != null && !filter.isEmpty()) {
-      Specification<Usuario> spec = usuarioService.filterByAllFields(filter);
-      result = usuarioService.findAllSpecification(spec, pageRequest);
-    } else {
-      result = usuarioService.findAll(pageRequest);
-    }
-    return result;
+    return usuarioService.findAllPagedList(filter, pageRequest);
   }
 
   @PostMapping

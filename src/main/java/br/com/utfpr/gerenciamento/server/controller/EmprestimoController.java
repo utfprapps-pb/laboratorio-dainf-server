@@ -184,27 +184,29 @@ public class EmprestimoController extends CrudController<Emprestimo, Long, Empre
   }
 
   /**
-   * Lista paginada de empréstimos com filtro textual.
+   * Lista paginada de empréstimos com filtro textual usando DTO simplificado.
    *
    * <p>Alunos e professores veem apenas seus próprios empréstimos. Administradores e laboratoristas
    * veem todos os empréstimos do sistema.
+   *
+   * <p><b>Otimização:</b> Retorna apenas campos necessários para listagem via projeção SQL.
    *
    * @param page Número da página (0-indexed)
    * @param size Tamanho da página
    * @param filter Filtro opcional (busca textual em todos os campos)
    * @param order Campo de ordenação (padrão: "id")
    * @param asc Direção da ordenação (true = ASC, false = DESC, padrão: ASC)
-   * @return Página de empréstimos conforme a role do usuário autenticado
+   * @return Página de empréstimos simplificados conforme a role do usuário autenticado
    */
-  @GetMapping("page")
   @Override
+  @GetMapping("page")
+  @SuppressWarnings("unchecked")
   public Page<EmprestimoResponseDto> findAllPaged(
       @RequestParam("page") int page,
       @RequestParam("size") int size,
       @RequestParam(required = false) String filter,
       @RequestParam(required = false) String order,
       @RequestParam(required = false) Boolean asc) {
-
     Sort sort = Sort.by("id");
     if (order != null && asc != null) {
       sort = Sort.by(asc ? Sort.Direction.ASC : Sort.Direction.DESC, order);
@@ -216,9 +218,11 @@ public class EmprestimoController extends CrudController<Emprestimo, Long, Empre
 
     if (userRoles.contains(PREFIXO_ROLE + ROLE_ALUNO_NAME)
         || userRoles.contains(PREFIXO_ROLE + ROLE_PROFESSOR_NAME)) {
-      return emprestimoService.findAllPagedByUserWithTextFilter(filter, pageRequest, username);
+      return (Page<EmprestimoResponseDto>)
+          (Page<?>) emprestimoService.findAllPagedListByUser(filter, pageRequest, username);
     }
 
-    return emprestimoService.findAllPagedWithTextFilter(filter, pageRequest);
+    return (Page<EmprestimoResponseDto>)
+        (Page<?>) emprestimoService.findAllPagedList(filter, pageRequest);
   }
 }

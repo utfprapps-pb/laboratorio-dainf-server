@@ -3,12 +3,22 @@ package br.com.utfpr.gerenciamento.server.service;
 import br.com.utfpr.gerenciamento.server.dto.ConfirmEmailRequestDto;
 import br.com.utfpr.gerenciamento.server.dto.GenericResponse;
 import br.com.utfpr.gerenciamento.server.dto.RecoverPasswordRequestDto;
+import br.com.utfpr.gerenciamento.server.dto.UsuarioListDto;
 import br.com.utfpr.gerenciamento.server.dto.UsuarioResponseDto;
 import br.com.utfpr.gerenciamento.server.model.Usuario;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 
 public interface UsuarioService extends CrudService<Usuario, Long, UsuarioResponseDto> {
+
+  /**
+   * Busca paginada para listagem com DTO simplificado.
+   *
+   * @param filter Filtro textual opcional
+   * @param pageable Configuração de paginação
+   * @return Página de DTOs simplificados
+   */
+  Page<UsuarioListDto> findAllPagedList(String filter, Pageable pageable);
 
   Page<UsuarioResponseDto> usuarioComplete(String query, Pageable pageable);
 

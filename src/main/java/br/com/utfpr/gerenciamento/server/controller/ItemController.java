@@ -10,7 +10,6 @@ import java.util.List;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
-import org.springframework.data.jpa.domain.Specification;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartHttpServletRequest;
 
@@ -52,27 +51,33 @@ public class ItemController extends CrudController<Item, Long, ItemResponseDto> 
     return getService().findAll(Sort.by("id"));
   }
 
+  /**
+   * Lista paginada de itens com filtro textual usando DTO simplificado.
+   *
+   * <p><b>Otimização:</b> Retorna apenas campos necessários para listagem via projeção SQL.
+   *
+   * @param page Número da página (0-indexed)
+   * @param size Tamanho da página
+   * @param filter Filtro opcional (busca textual em todos os campos)
+   * @param order Campo de ordenação (padrão: "id")
+   * @param asc Direção da ordenação (true = ASC, false = DESC, padrão: ASC)
+   * @return Página de itens simplificados
+   */
   @Override
   @GetMapping("page")
+  @SuppressWarnings("unchecked")
   public Page<ItemResponseDto> findAllPaged(
       @RequestParam("page") int page,
       @RequestParam("size") int size,
       @RequestParam(required = false) String filter,
       @RequestParam(required = false) String order,
       @RequestParam(required = false) Boolean asc) {
-
     PageRequest pageRequest = PageRequest.of(page, size);
     if (order != null && asc != null) {
       pageRequest =
           PageRequest.of(page, size, asc ? Sort.Direction.ASC : Sort.Direction.DESC, order);
     }
-
-    if (filter != null && !filter.isEmpty()) {
-      Specification<Item> spec = getService().filterByAllFields(filter);
-      return getService().findAllSpecification(spec, pageRequest);
-    }
-
-    return getService().findAll(pageRequest);
+    return (Page<ItemResponseDto>) (Page<?>) itemService.findAllPagedList(filter, pageRequest);
   }
 
   @Override

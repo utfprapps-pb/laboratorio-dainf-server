@@ -2,8 +2,11 @@ package br.com.utfpr.gerenciamento.server.controller;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.Mockito.when;
 
+import br.com.utfpr.gerenciamento.server.dto.ItemListDto;
 import br.com.utfpr.gerenciamento.server.dto.ItemResponseDto;
 import br.com.utfpr.gerenciamento.server.enumeration.TipoItem;
 import br.com.utfpr.gerenciamento.server.model.Item;
@@ -96,42 +99,37 @@ class ItemControllerTest {
   @Test
   void testFindAllPaged_DeveRetornarPaginaDoService() {
     // Given
-    ItemResponseDto itemDto = new ItemResponseDto();
-    itemDto.setId(1L);
-    itemDto.setTipoItem(TipoItem.P);
-    itemDto.setSaldo(new BigDecimal("8"));
+    ItemListDto itemListDto =
+        ItemListDto.builder().id(1L).nome("Item Teste").saldo(new BigDecimal("8")).build();
 
-    Page<ItemResponseDto> page = new PageImpl<>(List.of(itemDto));
+    Page<ItemListDto> page = new PageImpl<>(List.of(itemListDto));
 
-    when(itemService.findAll(any(PageRequest.class))).thenReturn(page);
+    when(itemService.findAllPagedList(isNull(), any(PageRequest.class))).thenReturn(page);
 
     // When
-    Page<ItemResponseDto> result = itemController.findAllPaged(0, 10, null, null, null);
+    Page<?> result = itemController.findAllPaged(0, 10, null, null, null);
 
     // Then
     assertThat(result.getContent()).hasSize(1);
-    assertThat(result.getContent().get(0).getId()).isEqualTo(1L);
-    assertThat(result.getContent().get(0).getTipoItem()).isEqualTo(TipoItem.P);
+    assertThat(((ItemListDto) result.getContent().get(0)).getId()).isEqualTo(1L);
   }
 
   @Test
   void testFindAllPaged_ComFiltro_DeveRetornarPaginaFiltrada() {
     // Given
-    ItemResponseDto itemDto = new ItemResponseDto();
-    itemDto.setId(1L);
-    itemDto.setTipoItem(TipoItem.P);
-    itemDto.setSaldo(new BigDecimal("8"));
+    ItemListDto itemListDto =
+        ItemListDto.builder().id(1L).nome("Item Teste").saldo(new BigDecimal("8")).build();
 
-    Page<ItemResponseDto> page = new PageImpl<>(List.of(itemDto));
+    Page<ItemListDto> page = new PageImpl<>(List.of(itemListDto));
 
-    when(itemService.findAllSpecification(any(), any(PageRequest.class))).thenReturn(page);
+    when(itemService.findAllPagedList(eq("filtro"), any(PageRequest.class))).thenReturn(page);
 
     // When
-    Page<ItemResponseDto> result = itemController.findAllPaged(0, 10, "filtro", "nome", true);
+    Page<?> result = itemController.findAllPaged(0, 10, "filtro", "nome", true);
 
     // Then
     assertThat(result.getContent()).hasSize(1);
-    assertThat(result.getContent().get(0).getId()).isEqualTo(1L);
+    assertThat(((ItemListDto) result.getContent().get(0)).getId()).isEqualTo(1L);
   }
 
   @Test

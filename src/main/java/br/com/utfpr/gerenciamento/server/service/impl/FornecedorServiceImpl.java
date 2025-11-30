@@ -1,12 +1,16 @@
 package br.com.utfpr.gerenciamento.server.service.impl;
 
+import br.com.utfpr.gerenciamento.server.dto.FornecedorListDto;
 import br.com.utfpr.gerenciamento.server.dto.FornecedorResponseDto;
 import br.com.utfpr.gerenciamento.server.model.Fornecedor;
 import br.com.utfpr.gerenciamento.server.repository.FornecedorRepository;
+import br.com.utfpr.gerenciamento.server.repository.projection.FornecedorListProjection;
 import br.com.utfpr.gerenciamento.server.service.FornecedorService;
 import java.util.List;
 import org.modelmapper.ModelMapper;
+import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -38,6 +42,18 @@ public class FornecedorServiceImpl extends CrudServiceImpl<Fornecedor, Long, For
   @Override
   public Fornecedor toEntity(FornecedorResponseDto fornecedorResponseDto) {
     return modelMapper.map(fornecedorResponseDto, Fornecedor.class);
+  }
+
+  @Override
+  @Transactional(readOnly = true)
+  public Page<FornecedorListDto> findAllPagedList(String filter, Pageable pageable) {
+    Page<FornecedorListProjection> page;
+    if (filter != null && !filter.isBlank()) {
+      page = fornecedorRepository.findAllProjectedWithFilter(filter, pageable);
+    } else {
+      page = fornecedorRepository.findAllProjected(pageable);
+    }
+    return page.map(FornecedorListDto::fromProjection);
   }
 
   @Override
