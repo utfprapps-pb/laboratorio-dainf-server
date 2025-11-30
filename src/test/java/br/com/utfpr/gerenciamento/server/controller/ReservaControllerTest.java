@@ -4,6 +4,7 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 
+import br.com.utfpr.gerenciamento.server.dto.ReservaListDto;
 import br.com.utfpr.gerenciamento.server.dto.ReservaResponseDto;
 import br.com.utfpr.gerenciamento.server.service.ReservaService;
 import br.com.utfpr.gerenciamento.server.util.SecurityUtils;
@@ -19,7 +20,6 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
-import org.springframework.data.jpa.domain.Specification;
 
 /**
  * Testes unitários para o ReservaController com foco nos filtros de dados por role (ALUNO e
@@ -33,12 +33,14 @@ class ReservaControllerTest {
   @InjectMocks private ReservaController reservaController;
 
   private List<ReservaResponseDto> reservasLista;
-  private Page<ReservaResponseDto> reservasPage;
+  private List<ReservaListDto> reservasListDtoLista;
+  private Page<ReservaListDto> reservasListDtoPage;
 
   @BeforeEach
   void setUp() {
     reservasLista = List.of(new ReservaResponseDto());
-    reservasPage = new PageImpl<>(reservasLista);
+    reservasListDtoLista = List.of(new ReservaListDto());
+    reservasListDtoPage = new PageImpl<>(reservasListDtoLista);
   }
 
   @Test
@@ -143,19 +145,18 @@ class ReservaControllerTest {
           .when(SecurityUtils::getAuthenticatedUserRoles)
           .thenReturn(List.of("ROLE_ALUNO"));
 
-      when(reservaService.filterByAllFields("usuario.username:aluno@utfpr.edu.br"))
-          .thenReturn(mock(Specification.class));
-      when(reservaService.findAllSpecification(any(Specification.class), any(PageRequest.class)))
-          .thenReturn(reservasPage);
+      when(reservaService.findAllPagedListByUser(
+              isNull(), any(PageRequest.class), eq("aluno@utfpr.edu.br")))
+          .thenReturn(reservasListDtoPage);
 
       // Act
-      Page<ReservaResponseDto> resultado = reservaController.findAllPaged(0, 10, null, null, null);
+      Page<?> resultado = reservaController.findAllPaged(0, 10, null, null, null);
 
       // Assert
-      assertEquals(reservasPage, resultado);
-      verify(reservaService).filterByAllFields("usuario.username:aluno@utfpr.edu.br");
-      verify(reservaService).findAllSpecification(any(Specification.class), any(PageRequest.class));
-      verify(reservaService, never()).findAll(any(PageRequest.class));
+      assertEquals(reservasListDtoPage, resultado);
+      verify(reservaService)
+          .findAllPagedListByUser(isNull(), any(PageRequest.class), eq("aluno@utfpr.edu.br"));
+      verify(reservaService, never()).findAllPagedList(any(), any(PageRequest.class));
     }
   }
 
@@ -170,19 +171,18 @@ class ReservaControllerTest {
           .when(SecurityUtils::getAuthenticatedUserRoles)
           .thenReturn(List.of("ROLE_PROFESSOR"));
 
-      when(reservaService.filterByAllFields("usuario.username:professor@utfpr.edu.br"))
-          .thenReturn(mock(Specification.class));
-      when(reservaService.findAllSpecification(any(Specification.class), any(PageRequest.class)))
-          .thenReturn(reservasPage);
+      when(reservaService.findAllPagedListByUser(
+              isNull(), any(PageRequest.class), eq("professor@utfpr.edu.br")))
+          .thenReturn(reservasListDtoPage);
 
       // Act
-      Page<ReservaResponseDto> resultado = reservaController.findAllPaged(0, 10, null, null, null);
+      Page<?> resultado = reservaController.findAllPaged(0, 10, null, null, null);
 
       // Assert
-      assertEquals(reservasPage, resultado);
-      verify(reservaService).filterByAllFields("usuario.username:professor@utfpr.edu.br");
-      verify(reservaService).findAllSpecification(any(Specification.class), any(PageRequest.class));
-      verify(reservaService, never()).findAll(any(PageRequest.class));
+      assertEquals(reservasListDtoPage, resultado);
+      verify(reservaService)
+          .findAllPagedListByUser(isNull(), any(PageRequest.class), eq("professor@utfpr.edu.br"));
+      verify(reservaService, never()).findAllPagedList(any(), any(PageRequest.class));
     }
   }
 
@@ -195,19 +195,18 @@ class ReservaControllerTest {
           .when(SecurityUtils::getAuthenticatedUserRoles)
           .thenReturn(List.of("ROLE_ALUNO"));
 
-      String filtroCombinado = "(item.nome:Laptop) AND usuario.username:aluno@utfpr.edu.br";
-      when(reservaService.filterByAllFields(filtroCombinado)).thenReturn(mock(Specification.class));
-      when(reservaService.findAllSpecification(any(Specification.class), any(PageRequest.class)))
-          .thenReturn(reservasPage);
+      when(reservaService.findAllPagedListByUser(
+              eq("item.nome:Laptop"), any(PageRequest.class), eq("aluno@utfpr.edu.br")))
+          .thenReturn(reservasListDtoPage);
 
       // Act
-      Page<ReservaResponseDto> resultado =
-          reservaController.findAllPaged(0, 10, "item.nome:Laptop", null, null);
+      Page<?> resultado = reservaController.findAllPaged(0, 10, "item.nome:Laptop", null, null);
 
       // Assert
-      assertEquals(reservasPage, resultado);
-      verify(reservaService).filterByAllFields(filtroCombinado);
-      verify(reservaService).findAllSpecification(any(Specification.class), any(PageRequest.class));
+      assertEquals(reservasListDtoPage, resultado);
+      verify(reservaService)
+          .findAllPagedListByUser(
+              eq("item.nome:Laptop"), any(PageRequest.class), eq("aluno@utfpr.edu.br"));
     }
   }
 
@@ -222,20 +221,19 @@ class ReservaControllerTest {
           .when(SecurityUtils::getAuthenticatedUserRoles)
           .thenReturn(List.of("ROLE_PROFESSOR"));
 
-      String filtroCombinado =
-          "(dataReserva:27/10/2025) AND usuario.username:professor@utfpr.edu.br";
-      when(reservaService.filterByAllFields(filtroCombinado)).thenReturn(mock(Specification.class));
-      when(reservaService.findAllSpecification(any(Specification.class), any(PageRequest.class)))
-          .thenReturn(reservasPage);
+      when(reservaService.findAllPagedListByUser(
+              eq("dataReserva:27/10/2025"), any(PageRequest.class), eq("professor@utfpr.edu.br")))
+          .thenReturn(reservasListDtoPage);
 
       // Act
-      Page<ReservaResponseDto> resultado =
+      Page<?> resultado =
           reservaController.findAllPaged(0, 10, "dataReserva:27/10/2025", null, null);
 
       // Assert
-      assertEquals(reservasPage, resultado);
-      verify(reservaService).filterByAllFields(filtroCombinado);
-      verify(reservaService).findAllSpecification(any(Specification.class), any(PageRequest.class));
+      assertEquals(reservasListDtoPage, resultado);
+      verify(reservaService)
+          .findAllPagedListByUser(
+              eq("dataReserva:27/10/2025"), any(PageRequest.class), eq("professor@utfpr.edu.br"));
     }
   }
 
@@ -248,19 +246,17 @@ class ReservaControllerTest {
           .when(SecurityUtils::getAuthenticatedUserRoles)
           .thenReturn(List.of("ROLE_ALUNO"));
 
-      when(reservaService.filterByAllFields("usuario.username:aluno@utfpr.edu.br"))
-          .thenReturn(mock(Specification.class));
-      when(reservaService.findAllSpecification(any(Specification.class), any(PageRequest.class)))
-          .thenReturn(reservasPage);
+      when(reservaService.findAllPagedListByUser(
+              isNull(), any(PageRequest.class), eq("aluno@utfpr.edu.br")))
+          .thenReturn(reservasListDtoPage);
 
       // Act
-      Page<ReservaResponseDto> resultado =
-          reservaController.findAllPaged(0, 10, null, "dataReserva", true);
+      Page<?> resultado = reservaController.findAllPaged(0, 10, null, "dataReserva", true);
 
       // Assert
-      assertEquals(reservasPage, resultado);
-      verify(reservaService).filterByAllFields("usuario.username:aluno@utfpr.edu.br");
-      verify(reservaService).findAllSpecification(any(Specification.class), any(PageRequest.class));
+      assertEquals(reservasListDtoPage, resultado);
+      verify(reservaService)
+          .findAllPagedListByUser(isNull(), any(PageRequest.class), eq("aluno@utfpr.edu.br"));
     }
   }
 
@@ -273,18 +269,17 @@ class ReservaControllerTest {
           .when(SecurityUtils::getAuthenticatedUserRoles)
           .thenReturn(List.of("ROLE_ALUNO", "ROLE_USUARIO"));
 
-      when(reservaService.filterByAllFields("usuario.username:aluno@utfpr.edu.br"))
-          .thenReturn(mock(Specification.class));
-      when(reservaService.findAllSpecification(any(Specification.class), any(PageRequest.class)))
-          .thenReturn(reservasPage);
+      when(reservaService.findAllPagedListByUser(
+              isNull(), any(PageRequest.class), eq("aluno@utfpr.edu.br")))
+          .thenReturn(reservasListDtoPage);
 
       // Act
-      Page<ReservaResponseDto> resultado = reservaController.findAllPaged(0, 10, null, null, null);
+      Page<?> resultado = reservaController.findAllPaged(0, 10, null, null, null);
 
       // Assert
-      assertEquals(reservasPage, resultado);
-      verify(reservaService).filterByAllFields("usuario.username:aluno@utfpr.edu.br");
-      verify(reservaService).findAllSpecification(any(Specification.class), any(PageRequest.class));
+      assertEquals(reservasListDtoPage, resultado);
+      verify(reservaService)
+          .findAllPagedListByUser(isNull(), any(PageRequest.class), eq("aluno@utfpr.edu.br"));
     }
   }
 

@@ -1,5 +1,6 @@
 package br.com.utfpr.gerenciamento.server.service;
 
+import br.com.utfpr.gerenciamento.server.dto.EmprestimoListDto;
 import br.com.utfpr.gerenciamento.server.dto.EmprestimoResponseDto;
 import br.com.utfpr.gerenciamento.server.model.Emprestimo;
 import br.com.utfpr.gerenciamento.server.model.EmprestimoDevolucaoItem;
@@ -13,6 +14,28 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 
 public interface EmprestimoService extends CrudService<Emprestimo, Long, EmprestimoResponseDto> {
+
+  /**
+   * Busca paginada para listagem com DTO simplificado.
+   *
+   * <p>Utiliza projection para otimizar performance, retornando apenas campos necessários para
+   * tabelas.
+   *
+   * @param filter Filtro textual opcional
+   * @param pageable Configuração de paginação
+   * @return Página de DTOs simplificados
+   */
+  Page<EmprestimoListDto> findAllPagedList(String filter, Pageable pageable);
+
+  /**
+   * Busca paginada para listagem por usuário com DTO simplificado.
+   *
+   * @param filter Filtro textual opcional
+   * @param pageable Configuração de paginação
+   * @param username Username do usuário
+   * @return Página de DTOs simplificados do usuário
+   */
+  Page<EmprestimoListDto> findAllPagedListByUser(String filter, Pageable pageable, String username);
 
   /**
    * Busca paginada com filtro textual e cache otimizado.

@@ -1,12 +1,15 @@
 package br.com.utfpr.gerenciamento.server.repository;
 
 import br.com.utfpr.gerenciamento.server.model.Usuario;
+import br.com.utfpr.gerenciamento.server.repository.projection.UsuarioListProjection;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 
 public interface UsuarioRepository
     extends JpaRepository<Usuario, Long>, JpaSpecificationExecutor<Usuario> {
@@ -58,4 +61,34 @@ public interface UsuarioRepository
    */
   @EntityGraph(attributePaths = {"permissoes"})
   Page<Usuario> findAll(Specification<Usuario> spec, Pageable pageable);
+
+  /**
+   * Busca paginada de usuários para listagem com campos otimizados.
+   *
+   * <p>Inclui permissões via nested projection para exibição de grupos de acesso.
+   *
+   * @param pageable paginação e ordenação
+   * @return Page de projeções com apenas campos necessários para tabela
+   */
+  @EntityGraph(attributePaths = {"permissoes"})
+  @Query("SELECT u FROM Usuario u")
+  Page<UsuarioListProjection> findAllProjected(Pageable pageable);
+
+  /**
+   * Busca paginada de usuários com filtro de texto.
+   *
+   * @param filter texto para filtrar por id, nome ou username
+   * @param pageable paginação e ordenação
+   * @return Page de projeções filtradas
+   */
+  @EntityGraph(attributePaths = {"permissoes"})
+  @Query(
+      """
+      SELECT u FROM Usuario u
+      WHERE CAST(u.id AS string) LIKE CONCAT('%', :filter, '%')
+         OR LOWER(u.nome) LIKE LOWER(CONCAT('%', :filter, '%'))
+         OR LOWER(u.username) LIKE LOWER(CONCAT('%', :filter, '%'))
+      """)
+  Page<UsuarioListProjection> findAllProjectedWithFilter(
+      @Param("filter") String filter, Pageable pageable);
 }

@@ -4,6 +4,7 @@ import static br.com.utfpr.gerenciamento.server.enumeration.UserRole.ROLE_ADMINI
 import static br.com.utfpr.gerenciamento.server.enumeration.UserRole.ROLE_LABORATORISTA_NAME;
 
 import br.com.utfpr.gerenciamento.server.annotation.InvalidateDashboardCache;
+import br.com.utfpr.gerenciamento.server.dto.EmprestimoListDto;
 import br.com.utfpr.gerenciamento.server.dto.EmprestimoResponseDto;
 import br.com.utfpr.gerenciamento.server.enumeration.StatusDevolucao;
 import br.com.utfpr.gerenciamento.server.enumeration.TipoItem;
@@ -21,6 +22,7 @@ import br.com.utfpr.gerenciamento.server.model.dashboards.DashboardItensEmpresta
 import br.com.utfpr.gerenciamento.server.model.filter.EmprestimoFilter;
 import br.com.utfpr.gerenciamento.server.repository.EmprestimoRepository;
 import br.com.utfpr.gerenciamento.server.repository.UsuarioRepository;
+import br.com.utfpr.gerenciamento.server.repository.projection.EmprestimoListProjection;
 import br.com.utfpr.gerenciamento.server.service.EmprestimoService;
 import br.com.utfpr.gerenciamento.server.service.ItemService;
 import br.com.utfpr.gerenciamento.server.service.ReservaService;
@@ -99,6 +101,31 @@ public class EmprestimoServiceImpl extends CrudServiceImpl<Emprestimo, Long, Emp
   @Override
   public Emprestimo toEntity(EmprestimoResponseDto entity) {
     return modelMapper.map(entity, Emprestimo.class);
+  }
+
+  @Override
+  @Transactional(readOnly = true)
+  public Page<EmprestimoListDto> findAllPagedList(String filter, Pageable pageable) {
+    Page<EmprestimoListProjection> page;
+    if (filter != null && !filter.isBlank()) {
+      page = emprestimoRepository.findAllProjectedWithFilter(filter, pageable);
+    } else {
+      page = emprestimoRepository.findAllProjected(pageable);
+    }
+    return page.map(EmprestimoListDto::fromProjection);
+  }
+
+  @Override
+  @Transactional(readOnly = true)
+  public Page<EmprestimoListDto> findAllPagedListByUser(
+      String filter, Pageable pageable, String username) {
+    Page<EmprestimoListProjection> page;
+    if (filter != null && !filter.isBlank()) {
+      page = emprestimoRepository.findAllProjectedByUsernameWithFilter(username, filter, pageable);
+    } else {
+      page = emprestimoRepository.findAllProjectedByUsername(username, pageable);
+    }
+    return page.map(EmprestimoListDto::fromProjection);
   }
 
   /**

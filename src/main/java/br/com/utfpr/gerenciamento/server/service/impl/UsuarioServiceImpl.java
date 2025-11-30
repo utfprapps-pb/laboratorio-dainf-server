@@ -1,6 +1,11 @@
 package br.com.utfpr.gerenciamento.server.service.impl;
 
-import br.com.utfpr.gerenciamento.server.dto.*;
+import br.com.utfpr.gerenciamento.server.dto.ConfirmEmailRequestDto;
+import br.com.utfpr.gerenciamento.server.dto.EmailDto;
+import br.com.utfpr.gerenciamento.server.dto.GenericResponse;
+import br.com.utfpr.gerenciamento.server.dto.RecoverPasswordRequestDto;
+import br.com.utfpr.gerenciamento.server.dto.UsuarioListDto;
+import br.com.utfpr.gerenciamento.server.dto.UsuarioResponseDto;
 import br.com.utfpr.gerenciamento.server.enumeration.NadaConstaStatus;
 import br.com.utfpr.gerenciamento.server.enumeration.UserRole;
 import br.com.utfpr.gerenciamento.server.event.usuario.UsuarioCriadoEvent;
@@ -14,6 +19,7 @@ import br.com.utfpr.gerenciamento.server.model.Usuario;
 import br.com.utfpr.gerenciamento.server.repository.NadaConstaRepository;
 import br.com.utfpr.gerenciamento.server.repository.RecoverPasswordRepository;
 import br.com.utfpr.gerenciamento.server.repository.UsuarioRepository;
+import br.com.utfpr.gerenciamento.server.repository.projection.UsuarioListProjection;
 import br.com.utfpr.gerenciamento.server.repository.specification.UsuarioSpecifications;
 import br.com.utfpr.gerenciamento.server.service.EmailService;
 import br.com.utfpr.gerenciamento.server.service.PermissaoService;
@@ -108,6 +114,18 @@ public class UsuarioServiceImpl extends CrudServiceImpl<Usuario, Long, UsuarioRe
       return null;
     }
     return modelMapper.map(usuarioResponseDto, Usuario.class);
+  }
+
+  @Override
+  @Transactional(readOnly = true)
+  public Page<UsuarioListDto> findAllPagedList(String filter, Pageable pageable) {
+    Page<UsuarioListProjection> page;
+    if (filter != null && !filter.isBlank()) {
+      page = usuarioRepository.findAllProjectedWithFilter(filter, pageable);
+    } else {
+      page = usuarioRepository.findAllProjected(pageable);
+    }
+    return page.map(UsuarioListDto::fromProjection);
   }
 
   @Override

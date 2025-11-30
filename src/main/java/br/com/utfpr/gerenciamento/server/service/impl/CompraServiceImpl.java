@@ -1,13 +1,17 @@
 package br.com.utfpr.gerenciamento.server.service.impl;
 
+import br.com.utfpr.gerenciamento.server.dto.CompraListDto;
 import br.com.utfpr.gerenciamento.server.dto.CompraResponseDTO;
 import br.com.utfpr.gerenciamento.server.model.Compra;
 import br.com.utfpr.gerenciamento.server.model.dashboards.DashboardItensAdquiridos;
 import br.com.utfpr.gerenciamento.server.repository.CompraRepository;
+import br.com.utfpr.gerenciamento.server.repository.projection.CompraListProjection;
 import br.com.utfpr.gerenciamento.server.service.CompraService;
 import java.time.LocalDate;
 import java.util.List;
 import org.modelmapper.ModelMapper;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -37,6 +41,18 @@ public class CompraServiceImpl extends CrudServiceImpl<Compra, Long, CompraRespo
   @Override
   public Compra toEntity(CompraResponseDTO compraResponseDTO) {
     return modelMapper.map(compraResponseDTO, Compra.class);
+  }
+
+  @Override
+  @Transactional(readOnly = true)
+  public Page<CompraListDto> findAllPagedList(String filter, Pageable pageable) {
+    Page<CompraListProjection> page;
+    if (filter != null && !filter.isBlank()) {
+      page = compraRepository.findAllProjectedWithFilter(filter, pageable);
+    } else {
+      page = compraRepository.findAllProjected(pageable);
+    }
+    return page.map(CompraListDto::fromProjection);
   }
 
   @Override

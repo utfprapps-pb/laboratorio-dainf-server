@@ -1,5 +1,6 @@
 package br.com.utfpr.gerenciamento.server.service.impl;
 
+import br.com.utfpr.gerenciamento.server.dto.ItemListDto;
 import br.com.utfpr.gerenciamento.server.dto.ItemResponseDto;
 import br.com.utfpr.gerenciamento.server.enumeration.TipoItem;
 import br.com.utfpr.gerenciamento.server.event.item.EstoqueMinNotificacaoEvent;
@@ -14,6 +15,7 @@ import br.com.utfpr.gerenciamento.server.model.ItemImage;
 import br.com.utfpr.gerenciamento.server.repository.ItemImageRepository;
 import br.com.utfpr.gerenciamento.server.repository.ItemRepository;
 import br.com.utfpr.gerenciamento.server.repository.projection.ItemCompleteWithDisponibilidade;
+import br.com.utfpr.gerenciamento.server.repository.projection.ItemListProjection;
 import br.com.utfpr.gerenciamento.server.repository.projection.ItemWithQtdeEmprestada;
 import br.com.utfpr.gerenciamento.server.service.ItemService;
 import br.com.utfpr.gerenciamento.server.util.FileUtil;
@@ -26,6 +28,8 @@ import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.annotation.Lazy;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -137,6 +141,18 @@ public class ItemServiceImpl extends CrudServiceImpl<Item, Long, ItemResponseDto
   @Override
   public Item toEntity(ItemResponseDto itemResponseDto) {
     return modelMapper.map(itemResponseDto, Item.class);
+  }
+
+  @Override
+  @Transactional(readOnly = true)
+  public Page<ItemListDto> findAllPagedList(String filter, Pageable pageable) {
+    Page<ItemListProjection> page;
+    if (filter != null && !filter.isBlank()) {
+      page = itemRepository.findAllProjectedWithFilter(filter, pageable);
+    } else {
+      page = itemRepository.findAllProjected(pageable);
+    }
+    return page.map(ItemListDto::fromProjection);
   }
 
   @Override

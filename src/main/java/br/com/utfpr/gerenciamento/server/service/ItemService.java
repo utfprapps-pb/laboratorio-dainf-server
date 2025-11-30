@@ -1,14 +1,26 @@
 package br.com.utfpr.gerenciamento.server.service;
 
+import br.com.utfpr.gerenciamento.server.dto.ItemListDto;
 import br.com.utfpr.gerenciamento.server.dto.ItemResponseDto;
 import br.com.utfpr.gerenciamento.server.model.Item;
 import br.com.utfpr.gerenciamento.server.model.ItemImage;
 import jakarta.servlet.http.HttpServletRequest;
 import java.math.BigDecimal;
 import java.util.List;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.web.multipart.MultipartHttpServletRequest;
 
 public interface ItemService extends CrudService<Item, Long, ItemResponseDto> {
+
+  /**
+   * Busca paginada para listagem com DTO simplificado.
+   *
+   * @param filter Filtro textual opcional
+   * @param pageable Configuração de paginação
+   * @return Página de DTOs simplificados
+   */
+  Page<ItemListDto> findAllPagedList(String filter, Pageable pageable);
 
   List<ItemResponseDto> itemComplete(String query, boolean disponivelParaEmprestimo);
 

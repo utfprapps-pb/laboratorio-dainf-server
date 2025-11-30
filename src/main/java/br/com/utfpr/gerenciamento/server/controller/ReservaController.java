@@ -12,7 +12,6 @@ import java.util.List;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
-import org.springframework.data.jpa.domain.Specification;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -82,48 +81,46 @@ public class ReservaController extends CrudController<Reserva, Long, ReservaResp
   }
 
   /**
-   * Lista paginada de reservas com filtro textual.
+   * Lista paginada de reservas com filtro textual usando DTO simplificado.
    *
    * <p>Alunos e professores veem apenas suas próprias reservas. Administradores e laboratoristas
    * veem todas as reservas do sistema.
+   *
+   * <p><b>Otimização:</b> Retorna apenas campos necessários para listagem via projeção SQL.
    *
    * @param page Número da página (0-indexed)
    * @param size Tamanho da página
    * @param filter Filtro opcional (busca textual em todos os campos)
    * @param order Campo de ordenação (padrão: "id")
    * @param asc Direção da ordenação (true = ASC, false = DESC, padrão: ASC)
-   * @return Página de reservas conforme a role do usuário autenticado
+   * @return Página de reservas simplificadas conforme a role do usuário autenticado
    */
-  @GetMapping("page")
   @Override
+  @GetMapping("page")
+  @SuppressWarnings("unchecked")
   public Page<ReservaResponseDto> findAllPaged(
       @RequestParam("page") int page,
       @RequestParam("size") int size,
       @RequestParam(required = false) String filter,
       @RequestParam(required = false) String order,
       @RequestParam(required = false) Boolean asc) {
+    Sort sort = Sort.by("id");
+    if (order != null && asc != null) {
+      sort = Sort.by(asc ? Sort.Direction.ASC : Sort.Direction.DESC, order);
+    }
+    PageRequest pageRequest = PageRequest.of(page, size, sort);
 
     String username = SecurityUtils.getAuthenticatedUsername();
     List<String> userRoles = SecurityUtils.getAuthenticatedUserRoles();
 
     if (userRoles.contains(PREFIXO_ROLE + ROLE_ALUNO_NAME)
         || userRoles.contains(PREFIXO_ROLE + ROLE_PROFESSOR_NAME)) {
-      String userFilter = "usuario.username:" + username;
-      if (filter != null && !filter.isEmpty()) {
-        userFilter = "(" + filter + ") AND " + userFilter;
-      }
-
-      PageRequest pageRequest = PageRequest.of(page, size);
-      if (order != null && asc != null) {
-        pageRequest =
-            PageRequest.of(page, size, asc ? Sort.Direction.ASC : Sort.Direction.DESC, order);
-      }
-
-      Specification<Reserva> spec = getService().filterByAllFields(userFilter);
-      return getService().findAllSpecification(spec, pageRequest);
+      return (Page<ReservaResponseDto>)
+          (Page<?>) reservaService.findAllPagedListByUser(filter, pageRequest, username);
     }
 
-    return super.findAllPaged(page, size, filter, order, asc);
+    return (Page<ReservaResponseDto>)
+        (Page<?>) reservaService.findAllPagedList(filter, pageRequest);
   }
 
   @Override
