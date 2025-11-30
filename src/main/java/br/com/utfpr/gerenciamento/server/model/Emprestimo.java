@@ -18,11 +18,13 @@ import lombok.Setter;
 import org.hibernate.annotations.BatchSize;
 import org.hibernate.annotations.Fetch;
 import org.hibernate.annotations.FetchMode;
+import org.hibernate.envers.Audited;
 import org.hibernate.proxy.HibernateProxy;
 
 @Getter
 @Setter
 @Entity
+@Audited
 @NoArgsConstructor
 @AllArgsConstructor
 @Table(name = "emprestimo")

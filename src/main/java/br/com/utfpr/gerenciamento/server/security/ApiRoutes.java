@@ -107,4 +107,17 @@ public final class ApiRoutes {
 
   /** Endpoint de solicitação de nada consta */
   public static final String NADACONSTA_SOLICITAR = "/nadaconsta/solicitar";
+
+  // ============ Auditoria Endpoints ============
+  /** Histórico de auditoria por entidade */
+  public static final String AUDIT_HISTORICO = "/audit/{entidade}/{id}";
+
+  /** Contagem de revisões */
+  public static final String AUDIT_COUNT = "/audit/{entidade}/{id}/count";
+
+  /** Informações de revisão específica */
+  public static final String AUDIT_REVISAO = "/audit/revisao/{revisao}";
+
+  /** Lista de entidades auditadas */
+  public static final String AUDIT_ENTIDADES = "/audit/entidades";
 }

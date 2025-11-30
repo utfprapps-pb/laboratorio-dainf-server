@@ -14,11 +14,14 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Set;
 import lombok.*;
+import org.hibernate.envers.Audited;
+import org.hibernate.envers.NotAudited;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 
 @Entity
 @Table(name = "usuario")
+@Audited
 @Getter
 @Setter
 @NoArgsConstructor
@@ -46,6 +49,7 @@ public class Usuario implements Serializable, UserDetails {
 
   @Column(name = "password", length = 255, nullable = false)
   @JsonProperty(access = JsonProperty.Access.WRITE_ONLY)
+  @NotAudited // Nunca auditar senhas por segurança
   private String password;
 
   @Column(name = "email", length = 100, nullable = false)
@@ -57,6 +61,7 @@ public class Usuario implements Serializable, UserDetails {
   @ManyToMany(
       cascade = {},
       fetch = FetchType.LAZY) // LAZY é o padrão correto - use @EntityGraph quando precisar carregar
+  @NotAudited // Permissao não é auditada
   private Set<Permissao> permissoes;
 
   @Column(name = "foto_url", length = 2048)
