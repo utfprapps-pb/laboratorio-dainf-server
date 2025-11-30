@@ -2,8 +2,38 @@ package br.com.utfpr.gerenciamento.server.security;
 
 import static br.com.utfpr.gerenciamento.server.enumeration.UserRole.ROLE_ADMINISTRADOR_NAME;
 import static br.com.utfpr.gerenciamento.server.enumeration.UserRole.ROLE_LABORATORISTA_NAME;
-import static br.com.utfpr.gerenciamento.server.security.ApiRoutes.*;
+import static br.com.utfpr.gerenciamento.server.security.ApiRoutes.ACTUATOR;
+import static br.com.utfpr.gerenciamento.server.security.ApiRoutes.AUDIT_COUNT;
+import static br.com.utfpr.gerenciamento.server.security.ApiRoutes.AUDIT_ENTIDADES;
+import static br.com.utfpr.gerenciamento.server.security.ApiRoutes.AUDIT_HISTORICO;
+import static br.com.utfpr.gerenciamento.server.security.ApiRoutes.AUDIT_REVISAO;
+import static br.com.utfpr.gerenciamento.server.security.ApiRoutes.AUTH;
+import static br.com.utfpr.gerenciamento.server.security.ApiRoutes.CIDADE;
+import static br.com.utfpr.gerenciamento.server.security.ApiRoutes.COMPRA;
+import static br.com.utfpr.gerenciamento.server.security.ApiRoutes.CONFIG;
+import static br.com.utfpr.gerenciamento.server.security.ApiRoutes.EMPRESTIMO;
+import static br.com.utfpr.gerenciamento.server.security.ApiRoutes.EMPRESTIMO_DEVOLUCAO;
+import static br.com.utfpr.gerenciamento.server.security.ApiRoutes.EMPRESTIMO_FIND_ALL_BY_USERNAME;
+import static br.com.utfpr.gerenciamento.server.security.ApiRoutes.EMPRESTIMO_SAVE;
+import static br.com.utfpr.gerenciamento.server.security.ApiRoutes.ENTRADA;
+import static br.com.utfpr.gerenciamento.server.security.ApiRoutes.ESTADO;
+import static br.com.utfpr.gerenciamento.server.security.ApiRoutes.FORNECEDOR;
+import static br.com.utfpr.gerenciamento.server.security.ApiRoutes.GRUPO;
+import static br.com.utfpr.gerenciamento.server.security.ApiRoutes.ITEM;
 import static br.com.utfpr.gerenciamento.server.security.ApiRoutes.NADACONSTA_SOLICITAR;
+import static br.com.utfpr.gerenciamento.server.security.ApiRoutes.PAIS;
+import static br.com.utfpr.gerenciamento.server.security.ApiRoutes.RELATORIO;
+import static br.com.utfpr.gerenciamento.server.security.ApiRoutes.SAIDA;
+import static br.com.utfpr.gerenciamento.server.security.ApiRoutes.TEST;
+import static br.com.utfpr.gerenciamento.server.security.ApiRoutes.USUARIO;
+import static br.com.utfpr.gerenciamento.server.security.ApiRoutes.USUARIO_CONFIRM_EMAIL;
+import static br.com.utfpr.gerenciamento.server.security.ApiRoutes.USUARIO_FIND_BY_USERNAME;
+import static br.com.utfpr.gerenciamento.server.security.ApiRoutes.USUARIO_INFO;
+import static br.com.utfpr.gerenciamento.server.security.ApiRoutes.USUARIO_NEW_USER;
+import static br.com.utfpr.gerenciamento.server.security.ApiRoutes.USUARIO_REQUEST_CODE_RESET;
+import static br.com.utfpr.gerenciamento.server.security.ApiRoutes.USUARIO_RESEND_CONFIRM;
+import static br.com.utfpr.gerenciamento.server.security.ApiRoutes.USUARIO_RESET_PASSWORD;
+import static br.com.utfpr.gerenciamento.server.security.ApiRoutes.USUARIO_UPDATE;
 
 import br.com.utfpr.gerenciamento.server.repository.UsuarioRepository;
 import br.com.utfpr.gerenciamento.server.service.impl.UsuarioServiceImpl;
@@ -129,6 +159,10 @@ public class WebSecurity {
                     .permitAll()
                     .requestMatchers(HttpMethod.GET, TEST)
                     .permitAll()
+
+                    // Auditoria - requer ADMINISTRADOR (endpoints explícitos)
+                    .requestMatchers(AUDIT_HISTORICO, AUDIT_COUNT, AUDIT_REVISAO, AUDIT_ENTIDADES)
+                    .hasRole(ROLE_ADMINISTRADOR_NAME)
 
                     // Actuator endpoints - requerem ADMINISTRADOR
                     .requestMatchers(ACTUATOR)

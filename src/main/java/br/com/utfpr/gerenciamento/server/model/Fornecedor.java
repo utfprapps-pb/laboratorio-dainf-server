@@ -8,11 +8,14 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import org.hibernate.envers.Audited;
+import org.hibernate.envers.NotAudited;
 import org.hibernate.proxy.HibernateProxy;
 
 @Getter
 @Setter
 @Entity
+@Audited
 @NoArgsConstructor
 @AllArgsConstructor
 @Table(name = "fornecedor")
@@ -49,10 +52,12 @@ public class Fornecedor {
 
   @NotNull(message = "O campo 'Cidade' deve ser selecionado.") @ManyToOne
   @JoinColumn(name = "cidade_id", referencedColumnName = "id")
+  @NotAudited // Cidade é dado de referência estático, não auditado
   private Cidade cidade;
 
   @NotNull(message = "O campo 'Estado' deve ser selecionado.") @ManyToOne
   @JoinColumn(name = "estado_id", referencedColumnName = "id")
+  @NotAudited // Estado é dado de referência estático, não auditado
   private Estado estado;
 
   @Override
