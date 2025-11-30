@@ -16,6 +16,8 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
+import lombok.Getter;
+import lombok.Setter;
 import org.hibernate.envers.AuditReader;
 import org.hibernate.envers.AuditReaderFactory;
 import org.hibernate.envers.RevisionType;
@@ -50,13 +52,12 @@ class AuditServiceTest {
   @Mock private AuditReader auditReader;
 
   private AuditService auditService;
-  private ObjectMapper objectMapper;
 
   private MockedStatic<AuditReaderFactory> auditReaderFactoryMock;
 
   @BeforeEach
   void setUp() throws Exception {
-    objectMapper = new ObjectMapper();
+    ObjectMapper objectMapper = new ObjectMapper();
     objectMapper.findAndRegisterModules();
     auditService = new AuditService(objectMapper);
 
@@ -153,10 +154,10 @@ class AuditServiceTest {
       // Assert
       assertThat(resultado.getContent()).hasSize(1);
       assertThat(resultado.getTotalElements()).isEqualTo(1);
-      assertThat(resultado.getContent().get(0).getRevisao()).isEqualTo(10L);
-      assertThat(resultado.getContent().get(0).getUsuario()).isEqualTo("admin");
-      assertThat(resultado.getContent().get(0).getIp()).isEqualTo("192.168.1.1");
-      assertThat(resultado.getContent().get(0).getTipoOperacao()).isEqualTo("CRIACAO");
+      assertThat(resultado.getContent().getFirst().getRevisao()).isEqualTo(10L);
+      assertThat(resultado.getContent().getFirst().getUsuario()).isEqualTo("admin");
+      assertThat(resultado.getContent().getFirst().getIp()).isEqualTo("192.168.1.1");
+      assertThat(resultado.getContent().getFirst().getTipoOperacao()).isEqualTo("CRIACAO");
     }
 
     @Test
@@ -337,7 +338,7 @@ class AuditServiceTest {
       emprestimo.setObservacao("Estado em 15/06/2025");
 
       when(auditReader.getRevisionNumberForDate(any(Date.class))).thenReturn(3L);
-      when(auditReader.find(Emprestimo.class, 1L, (Number) 3L)).thenReturn(emprestimo);
+      when(auditReader.find(Emprestimo.class, 1L, 3L)).thenReturn(emprestimo);
 
       // Act
       Emprestimo resultado = auditService.getEstadoEm(Emprestimo.class, 1L, dataHora);
@@ -411,6 +412,8 @@ class AuditServiceTest {
      * POJO simples para testes de entityToMap. Usa campos com os mesmos nomes que as entidades
      * reais para testar a filtragem de campos sensíveis sem as complexidades de serialização JPA.
      */
+    @Setter
+    @Getter
     static class TestEntity {
       private Long id;
       private String nome;
@@ -419,62 +422,6 @@ class AuditServiceTest {
       private String codigoVerificacao;
       private String documento;
       private String telefone;
-
-      public Long getId() {
-        return id;
-      }
-
-      public void setId(Long id) {
-        this.id = id;
-      }
-
-      public String getNome() {
-        return nome;
-      }
-
-      public void setNome(String nome) {
-        this.nome = nome;
-      }
-
-      public String getEmail() {
-        return email;
-      }
-
-      public void setEmail(String email) {
-        this.email = email;
-      }
-
-      public String getPassword() {
-        return password;
-      }
-
-      public void setPassword(String password) {
-        this.password = password;
-      }
-
-      public String getCodigoVerificacao() {
-        return codigoVerificacao;
-      }
-
-      public void setCodigoVerificacao(String codigoVerificacao) {
-        this.codigoVerificacao = codigoVerificacao;
-      }
-
-      public String getDocumento() {
-        return documento;
-      }
-
-      public void setDocumento(String documento) {
-        this.documento = documento;
-      }
-
-      public String getTelefone() {
-        return telefone;
-      }
-
-      public void setTelefone(String telefone) {
-        this.telefone = telefone;
-      }
     }
 
     @Test
