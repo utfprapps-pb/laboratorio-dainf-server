@@ -6,7 +6,7 @@ pipeline {
         POSTGRESQL_CRED = credentials('postgres-id')
         DB_JDBC_USER = "${POSTGRESQL_CRED_USR}"
         DB_JDBC_PASSWORD = "${POSTGRESQL_CRED_PSW}"
-        SERVER_PORT=8099
+        SERVER_PORT=8999
         DATABASE_URL="jdbc:postgresql://postgresql:5432/dainf_labs"
         DATABASE_USERNAME="${POSTGRESQL_CRED_USR}"
         DATABASE_PASSWORD="${POSTGRESQL_CRED_PSW}"
@@ -23,7 +23,7 @@ pipeline {
         UTFPR_EMAIL_HOST="smtp.utfpr.edu.br"
         UTFPR_EMAIL_PORT="587"
 
-        UTFPR_FRONT_URL="https://dainf-labs.app.pb.utfpr.edu.br/#"
+        UTFPR_FRONT_URL="https://dainf-labs-old.app.pb.utfpr.edu.br/#"
 
 
         MINIO_CRED = credentials('dainf_labs_minio_id')

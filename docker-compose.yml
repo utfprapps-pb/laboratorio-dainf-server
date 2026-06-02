@@ -1,16 +1,14 @@
-version: "3.9"
-
 ########################### SERVICES
 services:
   ########################### DAINF LABS API
-  dainf-labs-api:
-    image: dainf-labs-api
-    container_name: dainf-labs-api
+  dainf-labs-api-old:
+    image: dainf-labs-api-old
+    container_name: dainf-labs-api-old
     build:
       context: ./
       dockerfile: Dockerfile
     environment:
-      - SERVER_PORT=8099
+      - SERVER_PORT=8999
       - DATABASE_URL=${DATABASE_URL}
       - SPRING_DATASOURCE_USERNAME=${DATABASE_USERNAME}
       - SPRING_DATASOURCE_PASSWORD=${DATABASE_PASSWORD}
@@ -32,16 +30,13 @@ services:
       - SPRING_PROFILES_ACTIVE=${SPRING_PROFILES_ACTIVE}
       - TZ=America/Sao_Paulo
     ports:
-      - "8099:8099"
+      - "8999:8999"
     labels:
         # Traefik Config
       - "traefik.enable=true"
-      - "traefik.http.routers.dainf-labs-api.rule=Host(`dainf-labs-api.app.pb.utfpr.edu.br`)"
-      - "traefik.http.routers.dainf-labs-api.tls.certresolver=letsencrypt"
-      - "traefik.http.routers.dainf-labs-api.entrypoints=websecure"
-
-    volumes:
-      - ./appdata/dainf-labs/upload:/opt/uploads
+      - "traefik.http.routers.dainf-labs-api-old.rule=Host(`dainf-labs-api-old.app.pb.utfpr.edu.br`)"
+      - "traefik.http.routers.dainf-labs-api-old.tls.certresolver=letsencrypt"
+      - "traefik.http.routers.dainf-labs-api-old.entrypoints=websecure"
     restart: unless-stopped
     networks:
       - web
@@ -57,6 +52,6 @@ networks:
   database:
     name: database
     driver: bridge
-    external: false
+    external: true
     attachable: true
       
