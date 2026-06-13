@@ -16,6 +16,8 @@
 
     <properties>
         <java.version>21</java.version>
+        <maven.compiler.source>21</maven.compiler.source>
+        <maven.compiler.target>21</maven.compiler.target>
     </properties>
 
     <dependencies>
@@ -74,12 +76,12 @@
         <dependency>
             <groupId>commons-io</groupId>
             <artifactId>commons-io</artifactId>
-            <version>2.11.0</version>
+            <version>2.15.1</version>
         </dependency>
         <dependency>
             <groupId>net.sf.jasperreports</groupId>
             <artifactId>jasperreports</artifactId>
-            <version>6.20.4</version>
+            <version>6.20.6</version>
         </dependency>
         <dependency>
             <groupId>com.google.api-client</groupId>
@@ -98,19 +100,19 @@
         <dependency>
             <groupId>me.paulschwarz</groupId>
             <artifactId>spring-dotenv</artifactId>
-            <version>3.0.0</version>
+            <version>4.0.0</version>
         </dependency>
         <dependency>
             <groupId>org.modelmapper</groupId>
             <artifactId>modelmapper</artifactId>
-            <version>3.1.1</version>
+            <version>3.2.0</version>
         </dependency>
 
         <!-- File Storage com MINIO -->
         <dependency>
             <groupId>io.minio</groupId>
             <artifactId>minio</artifactId>
-            <version>8.5.2</version>
+            <version>8.5.7</version>
         </dependency>
         <dependency>
             <groupId>org.apache.commons</groupId>
@@ -119,7 +121,7 @@
         <dependency>
             <groupId>cn.hutool</groupId>
             <artifactId>hutool-all</artifactId>
-            <version>5.8.15</version>
+            <version>5.8.25</version>
         </dependency>
 
         <dependency>
@@ -158,6 +160,28 @@
             <plugin>
                 <groupId>org.springframework.boot</groupId>
                 <artifactId>spring-boot-maven-plugin</artifactId>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <version>3.11.0</version>
+                <configuration>
+                    <source>21</source>
+                    <target>21</target>
+                </configuration>
+            </plugin>
+            <plugin>
+                <groupId>org.flywaydb</groupId>
+                <artifactId>flyway-maven-plugin</artifactId>
+                <version>10.11.0</version>
+                <configuration>
+                    <url>${spring.datasource.url}</url>
+                    <user>${spring.datasource.username}</user>
+                    <password>${spring.datasource.password}</password>
+                    <locations>
+                        <location>classpath:db/dev</location>
+                    </locations>
+                </configuration>
             </plugin>
         </plugins>
     </build>
